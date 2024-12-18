@@ -42,7 +42,7 @@ const ContestStatsPage = () => {
         .select(`
           id,
           score,
-          profile:profiles!inner (
+          profile:members!inner (
             full_name,
             avatar_url
           )
