@@ -9,7 +9,7 @@ interface Profile {
 interface TopParticipant {
   id: string;
   score: number;
-  profile: Profile;
+  profile: Profile[];
 }
 
 interface TopParticipantsListProps {
@@ -43,7 +43,7 @@ const TopParticipantsList = ({ participants }: TopParticipantsListProps) => {
                   {index + 1}
                 </div>
                 <span className="font-medium">
-                  {participant.profile?.full_name || 'Participant anonyme'}
+                  {participant.profile[0]?.full_name || 'Participant anonyme'}
                 </span>
               </div>
               <span className="text-lg font-bold text-indigo-600">
