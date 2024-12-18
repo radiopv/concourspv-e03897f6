@@ -1,20 +1,9 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import { Plus } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Collapsible } from "@/components/ui/collapsible";
-import { PrizeCard } from "./prize/PrizeCard";
+import { PrizeList } from "./prize/PrizeList";
+import { PrizeCatalogDialog } from "./prize/PrizeCatalogDialog";
 
 interface ContestPrizeManagerProps {
   contestId: string;
@@ -31,47 +20,6 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     value: '',
     image_url: '',
     shop_url: '',
-  });
-
-  // Load catalog prizes
-  const { data: catalogPrizes, isLoading: loadingCatalog } = useQuery({
-    queryKey: ['prize-catalog'],
-    queryFn: async () => {
-      console.log('Fetching prize catalog...');
-      const { data, error } = await supabase
-        .from('prize_catalog')
-        .select('*')
-        .order('name');
-      
-      if (error) {
-        console.error('Error fetching prize catalog:', error);
-        throw error;
-      }
-      console.log('Prize catalog data:', data);
-      return data;
-    }
-  });
-
-  // Load contest prizes
-  const { data: contestPrizes, isLoading: loadingPrizes } = useQuery({
-    queryKey: ['prizes', contestId],
-    queryFn: async () => {
-      console.log('Fetching contest prizes...');
-      const { data, error } = await supabase
-        .from('prizes')
-        .select(`
-          *,
-          catalog_item:prize_catalog(*)
-        `)
-        .eq('contest_id', contestId);
-      
-      if (error) {
-        console.error('Error fetching contest prizes:', error);
-        throw error;
-      }
-      console.log('Contest prizes data:', data);
-      return data;
-    }
   });
 
   const addPrizeMutation = useMutation({
@@ -227,77 +175,20 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     setEditForm(prev => ({ ...prev, [field]: value }));
   };
 
-  if (loadingCatalog || loadingPrizes) {
-    return <div>Chargement des prix...</div>;
-  }
-
   return (
     <div className="space-y-6">
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter un prix du catalogue
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Catalogue des prix</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="h-[500px] pr-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {catalogPrizes?.map((prize) => (
-                <Card key={prize.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="pt-6">
-                    {prize.image_url && (
-                      <div className="aspect-square relative mb-4">
-                        <img
-                          src={prize.image_url}
-                          alt={prize.name}
-                          className="object-cover rounded-lg w-full h-full"
-                        />
-                      </div>
-                    )}
-                    <h3 className="font-semibold mb-2">{prize.name}</h3>
-                    {prize.description && (
-                      <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
-                    )}
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">
-                        {prize.value ? `${prize.value}€` : 'Prix non défini'}
-                      </span>
-                      <Button
-                        onClick={() => addPrizeMutation.mutate(prize.id)}
-                        size="sm"
-                      >
-                        Ajouter
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {contestPrizes?.map((prize) => (
-          <Collapsible key={prize.id}>
-            <PrizeCard
-              prize={prize}
-              editForm={editForm}
-              onEdit={startEditing}
-              onDelete={(id) => deletePrizeMutation.mutate(id)}
-              onFormChange={handleFormChange}
-              onImageUpload={handleImageUpload}
-              onCancelEdit={() => setEditingPrize(null)}
-              onSaveEdit={handleSaveEdit}
-              uploading={uploading}
-            />
-          </Collapsible>
-        ))}
-      </div>
+      <PrizeCatalogDialog onSelectPrize={(id) => addPrizeMutation.mutate(id)} />
+      <PrizeList
+        contestId={contestId}
+        onEdit={startEditing}
+        onDelete={(id) => deletePrizeMutation.mutate(id)}
+        editForm={editForm}
+        onFormChange={handleFormChange}
+        onImageUpload={handleImageUpload}
+        onCancelEdit={() => setEditingPrize(null)}
+        onSaveEdit={handleSaveEdit}
+        uploading={uploading}
+      />
     </div>
   );
 };
