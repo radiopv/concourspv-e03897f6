@@ -1,20 +1,20 @@
-import { LogoutButton } from "./auth/LogoutButton";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "./AppSidebar";
 
-const Layout = ({ children }: { children: React.ReactNode }) => {
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
-      <header className="border-b bg-white/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            Concours
-          </h1>
-          <LogoutButton />
-        </div>
-      </header>
-      <main>
-        {children}
-      </main>
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <main className="flex-1 p-4 overflow-auto">
+          {children}
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 
