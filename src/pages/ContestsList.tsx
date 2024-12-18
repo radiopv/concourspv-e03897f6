@@ -8,9 +8,12 @@ import { fr } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { Trophy, Calendar, Users, Percent } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import QuestionnaireComponent from "@/components/QuestionnaireComponent";
+import { useState } from "react";
 
 const ContestsList = () => {
   const navigate = useNavigate();
+  const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
 
   const { data: contests, isLoading } = useQuery({
     queryKey: ['contests'],
@@ -30,6 +33,10 @@ const ContestsList = () => {
       return data;
     }
   });
+
+  if (selectedContestId) {
+    return <QuestionnaireComponent contestId={selectedContestId} />;
+  }
 
   if (isLoading) {
     return (
@@ -119,7 +126,7 @@ const ContestsList = () => {
                       <span>{calculateWinningChance(contest.participants?.count || 0, contest.total_prizes || 1)}% de chances de gagner</span>
                     </div>
                     <Button 
-                      onClick={() => navigate(`/contest/${contest.id}`)}
+                      onClick={() => setSelectedContestId(contest.id)}
                       className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                     >
                       Participer
