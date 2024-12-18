@@ -17,43 +17,59 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
 
   const handlePrizeSelect = async (catalogItemId: string) => {
     try {
+      console.log('Selecting prize for contest:', contestId, 'catalog item:', catalogItemId);
+      
       // Vérifier si un prix existe déjà pour ce concours
-      const { data: existingPrizes, error: checkError } = await supabase
+      const { data: existingPrize, error: checkError } = await supabase
         .from('prizes')
         .select('id')
         .eq('contest_id', contestId)
         .single();
 
+      console.log('Existing prize check:', { existingPrize, checkError });
+
+      // Si l'erreur n'est pas "No rows returned" (PGRST116), c'est une vraie erreur
       if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing prize:', checkError);
         throw checkError;
       }
 
-      if (existingPrizes) {
-        // Si un prix existe, on le met à jour
-        const { error: updateError } = await supabase
+      let result;
+      
+      if (existingPrize) {
+        // Mettre à jour le prix existant
+        result = await supabase
           .from('prizes')
           .update({ catalog_item_id: catalogItemId })
-          .eq('contest_id', contestId);
-
-        if (updateError) throw updateError;
+          .eq('id', existingPrize.id);
+          
+        console.log('Update result:', result);
       } else {
-        // Si aucun prix n'existe, on en crée un nouveau
-        const { error: insertError } = await supabase
+        // Créer un nouveau prix
+        result = await supabase
           .from('prizes')
           .insert([{
             contest_id: contestId,
             catalog_item_id: catalogItemId
           }]);
-
-        if (insertError) throw insertError;
+          
+        console.log('Insert result:', result);
       }
 
+      if (result.error) {
+        throw result.error;
+      }
+
+      // Invalider les requêtes pour forcer un rafraîchissement
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
       
       toast({
         title: "Succès",
-        description: "Le prix a été associé au concours",
+        description: existingPrize 
+          ? "Le prix a été mis à jour"
+          : "Le prix a été associé au concours",
       });
     } catch (error) {
       console.error('Error selecting prize:', error);
@@ -67,6 +83,8 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
 
   const handlePrizeRemove = async () => {
     try {
+      console.log('Removing prize for contest:', contestId);
+      
       const { error } = await supabase
         .from('prizes')
         .delete()
@@ -74,8 +92,10 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
 
       if (error) throw error;
 
+      // Invalider les requêtes pour forcer un rafraîchissement
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
       
       toast({
         title: "Succès",
