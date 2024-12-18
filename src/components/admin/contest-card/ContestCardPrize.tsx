@@ -18,12 +18,17 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
   const handlePrizeSelect = async (catalogItemId: string) => {
     try {
       // Vérifier si un prix existe déjà pour ce concours
-      const { data: existingPrizes } = await supabase
+      const { data: existingPrizes, error: checkError } = await supabase
         .from('prizes')
         .select('id')
-        .eq('contest_id', contestId);
+        .eq('contest_id', contestId)
+        .single();
 
-      if (existingPrizes && existingPrizes.length > 0) {
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
+      if (existingPrizes) {
         // Si un prix existe, on le met à jour
         const { error: updateError } = await supabase
           .from('prizes')
