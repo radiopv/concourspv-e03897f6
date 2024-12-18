@@ -1,197 +1,106 @@
-import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { supabase } from "../App";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import QuestionnaireComponent from "@/components/QuestionnaireComponent";
-import { checkExistingParticipant, createParticipant } from "@/utils/participantUtils";
-
-interface Contest {
-  id: string;
-  title: string;
-  description: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-}
-
-interface UserInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-}
+import { Trophy, Gift, Users, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Contest = () => {
-  const { toast } = useToast();
-  const [step, setStep] = useState<"list" | "info" | "questions">("list");
-  const [selectedContest, setSelectedContest] = useState<string | null>(null);
-  const [userInfo, setUserInfo] = useState<UserInfo>({
-    firstName: "",
-    lastName: "",
-    email: "",
-  });
-
-  const { data: contests, isLoading, error } = useQuery({
-    queryKey: ['contests'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contests')
-        .select('*')
-        .eq('status', 'active');
-      
-      if (error) throw error;
-      return data as Contest[];
-    }
-  });
-
-  const handleContestSelect = (contestId: string) => {
-    setSelectedContest(contestId);
-    setStep("info");
-  };
-
-  const handleSubmitInfo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedContest) return;
-
-    try {
-      const existingParticipant = await checkExistingParticipant(userInfo.email, selectedContest);
-
-      if (existingParticipant) {
-        toast({
-          title: "Participation impossible",
-          description: "Vous avez déjà participé à ce concours.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      await createParticipant(
-        userInfo.firstName,
-        userInfo.lastName,
-        userInfo.email,
-        selectedContest
-      );
-
-      setStep("questions");
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue. Veuillez réessayer.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg">Chargement des concours...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center space-y-4">
-          <p className="text-lg text-red-600">Une erreur est survenue lors du chargement des concours.</p>
-          <Button onClick={() => window.location.reload()}>Réessayer</Button>
-        </div>
-      </div>
-    );
-  }
+  const navigate = useNavigate();
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="text-center mb-8 animate-fadeIn">
-        <h1 className="text-4xl font-bold mb-2">Concours</h1>
-        <p className="text-gray-600">
-          Participez à nos concours et tentez de gagner des prix exceptionnels
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center mb-16 animate-fadeIn">
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">
+            Concours Exclusifs
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Participez à nos concours et gagnez des prix exceptionnels. Une expérience unique vous attend !
+          </p>
+        </div>
 
-      {step === "list" && (
-        <div className="grid gap-6">
-          {contests?.map((contest) => (
-            <Card key={contest.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle>{contest.title}</CardTitle>
-                <CardDescription>{contest.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center">
-                  <div className="space-y-1">
-                    <p className="text-sm text-gray-500">
-                      Du {new Date(contest.start_date).toLocaleDateString()} au{" "}
-                      {new Date(contest.end_date).toLocaleDateString()}
-                    </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          <Card className="glass-card transform hover:scale-105 transition-all duration-300">
+            <CardHeader>
+              <Trophy className="w-12 h-12 text-indigo-600 mb-4" />
+              <CardTitle>Prix Exclusifs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                Des récompenses uniques et prestigieuses à gagner chaque mois.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card transform hover:scale-105 transition-all duration-300">
+            <CardHeader>
+              <Gift className="w-12 h-12 text-indigo-600 mb-4" />
+              <CardTitle>Participation Simple</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                Un processus de participation rapide et facile pour tous.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card transform hover:scale-105 transition-all duration-300">
+            <CardHeader>
+              <Users className="w-12 h-12 text-indigo-600 mb-4" />
+              <CardTitle>Communauté Active</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                Rejoignez une communauté dynamique de participants passionnés.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="max-w-4xl mx-auto">
+          <Card className="glass-card overflow-hidden">
+            <CardHeader className="text-center bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <CardTitle className="text-3xl font-bold">
+                Comment Participer ?
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="grid gap-6">
+                <div className="flex items-center gap-4">
+                  <CheckCircle className="w-8 h-8 text-green-500 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">1. Inscrivez-vous</h3>
+                    <p className="text-gray-600">Créez votre compte en quelques clics</p>
                   </div>
-                  <Button onClick={() => handleContestSelect(contest.id)}>
-                    Participer
-                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                <div className="flex items-center gap-4">
+                  <CheckCircle className="w-8 h-8 text-green-500 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">2. Choisissez un Concours</h3>
+                    <p className="text-gray-600">Sélectionnez le concours qui vous intéresse</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <CheckCircle className="w-8 h-8 text-green-500 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">3. Participez</h3>
+                    <p className="text-gray-600">Répondez aux questions et validez votre participation</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 text-center">
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-lg px-8 py-6 h-auto"
+                  onClick={() => navigate("/admin")}
+                >
+                  Commencer Maintenant
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      )}
-
-      {step === "info" && (
-        <form onSubmit={handleSubmitInfo} className="space-y-6 animate-fadeIn">
-          <div className="glass-card p-8 rounded-lg space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">Prénom</Label>
-              <Input
-                id="firstName"
-                required
-                value={userInfo.firstName}
-                onChange={(e) =>
-                  setUserInfo({ ...userInfo, firstName: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Nom</Label>
-              <Input
-                id="lastName"
-                required
-                value={userInfo.lastName}
-                onChange={(e) =>
-                  setUserInfo({ ...userInfo, lastName: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={userInfo.email}
-                onChange={(e) =>
-                  setUserInfo({ ...userInfo, email: e.target.value })
-                }
-              />
-            </div>
-
-            <Button type="submit" className="w-full">
-              Commencer le questionnaire
-            </Button>
-          </div>
-        </form>
-      )}
-
-      {step === "questions" && selectedContest && (
-        <div className="glass-card p-8 rounded-lg animate-fadeIn">
-          <QuestionnaireComponent contestId={selectedContest} />
-        </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -9,14 +9,15 @@ interface AdminAuthProps {
 }
 
 const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password === "Concours123") {
+    if (email === "renaudcanuel@me.com") {
       localStorage.setItem("adminAuthenticated", "true");
+      localStorage.setItem("adminEmail", email);
       onAuthenticated();
       toast({
         title: "Succès",
@@ -25,7 +26,7 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
     } else {
       toast({
         title: "Erreur",
-        description: "Mot de passe incorrect",
+        description: "Email non autorisé",
         variant: "destructive",
       });
     }
@@ -33,18 +34,19 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
 
   return (
     <div className="max-w-md mx-auto mt-8">
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
-          <CardTitle>Connexion Admin</CardTitle>
+          <CardTitle className="text-2xl font-bold">Connexion Admin</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Input
-                type="password"
-                placeholder="Mot de passe"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full"
               />
             </div>
             <Button type="submit" className="w-full">
