@@ -43,7 +43,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         }
 
         const finalScore = await calculateFinalScore(session.session.user.id);
-        await completeQuestionnaire(session.session.user.id, contestId, finalScore);
+        await completeQuestionnaire(session.session.user.id, finalScore);
 
         const { data: participant } = await supabase
           .from('participants')
@@ -54,13 +54,11 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
         const newAttempts = (participant?.attempts || 0) + 1;
 
-        const { error: updateError } = await supabase
+        await supabase
           .from('participants')
           .update({ attempts: newAttempts })
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id);
-
-        if (updateError) throw updateError;
 
         toast({
           title: "Questionnaire terminé ! 🎉",
