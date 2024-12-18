@@ -98,15 +98,17 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       setHasAnswered(false);
       setIsCorrect(null);
     } else {
-      // Questionnaire completed
+      // Show completion message
       toast({
         title: "Félicitations ! 🎉",
-        description: "Vous avez terminé le questionnaire. Vous allez être redirigé vers la liste des concours.",
+        description: "Vous avez terminé le questionnaire. Redirection en cours...",
       });
-      // Redirect to contests list after a short delay
-      setTimeout(() => {
-        navigate('/contests');
-      }, 2000);
+      
+      // Disable the button to prevent multiple clicks
+      setIsSubmitting(true);
+      
+      // Redirect to contests list immediately
+      navigate('/contests');
     }
   };
 
@@ -175,6 +177,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
               onClick={handleNextQuestion}
               className="w-full"
               variant="outline"
+              disabled={isSubmitting}
             >
               {currentQuestionIndex === questions.length - 1 ? (
                 "Terminer le quiz"
