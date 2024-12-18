@@ -53,7 +53,11 @@ export const LoginForm = () => {
           title: "Connexion réussie",
           description: "Bienvenue sur votre espace membre !",
         });
-        navigate("/dashboard");
+        
+        // Ajout d'un délai pour laisser le temps au toast de s'afficher
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1000);
       }
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
