@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ContestCard from './ContestCard';
 import EditContestForm from './EditContestForm';
 import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
 
 interface ContestListProps {
@@ -28,21 +28,24 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleDelete = async (id: string) => {
-    try {
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('contests')
         .delete()
         .eq('id', id);
-
+      
       if (error) throw error;
-
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
       toast({
         title: "Succès",
         description: "Le concours a été supprimé",
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Error deleting contest:', error);
       toast({
         title: "Erreur",
@@ -50,23 +53,26 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
         variant: "destructive",
       });
     }
-  };
+  });
 
-  const handleArchive = async (id: string) => {
-    try {
+  const archiveMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('contests')
         .update({ status: 'archived' })
         .eq('id', id);
-
+      
       if (error) throw error;
-
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
       toast({
         title: "Succès",
         description: "Le concours a été archivé",
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Error archiving contest:', error);
       toast({
         title: "Erreur",
@@ -74,23 +80,26 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
         variant: "destructive",
       });
     }
-  };
+  });
 
-  const handleFeatureToggle = async (id: string, featured: boolean) => {
-    try {
+  const featureToggleMutation = useMutation({
+    mutationFn: async ({ id, featured }: { id: string; featured: boolean }) => {
       const { error } = await supabase
         .from('contests')
         .update({ is_featured: featured })
         .eq('id', id);
-
+      
       if (error) throw error;
-
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
       toast({
         title: "Succès",
-        description: featured ? "Le concours est maintenant en vedette" : "Le concours n'est plus en vedette",
+        description: "Le statut en vedette a été mis à jour",
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Error updating contest feature status:', error);
       toast({
         title: "Erreur",
@@ -98,23 +107,26 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
         variant: "destructive",
       });
     }
-  };
+  });
 
-  const handleStatusUpdate = async (id: string, updates: { is_new?: boolean; has_big_prizes?: boolean }) => {
-    try {
+  const statusUpdateMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: { is_new?: boolean; has_big_prizes?: boolean } }) => {
       const { error } = await supabase
         .from('contests')
         .update(updates)
         .eq('id', id);
-
+      
       if (error) throw error;
-
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
       toast({
         title: "Succès",
         description: "Le statut du concours a été mis à jour",
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Error updating contest status:', error);
       toast({
         title: "Erreur",
@@ -122,7 +134,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
         variant: "destructive",
       });
     }
-  };
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -130,10 +142,10 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
         <ContestCard
           key={contest.id}
           contest={contest}
-          onDelete={handleDelete}
-          onArchive={handleArchive}
-          onFeatureToggle={handleFeatureToggle}
-          onStatusUpdate={handleStatusUpdate}
+          onDelete={(id) => deleteMutation.mutate(id)}
+          onArchive={(id) => archiveMutation.mutate(id)}
+          onFeatureToggle={(id, featured) => featureToggleMutation.mutate({ id, featured })}
+          onStatusUpdate={(id, updates) => statusUpdateMutation.mutate({ id, updates })}
           onSelect={onSelectContest}
           onEdit={() => setEditingContestId(contest.id)}
         />
@@ -144,7 +156,11 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <EditContestForm
               contestId={editingContestId}
-              onClose={() => setEditingContestId(null)}
+              onClose={() => {
+                setEditingContestId(null);
+                queryClient.invalidateQueries({ queryKey: ['contests'] });
+                queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+              }}
             />
           </DialogContent>
         </Dialog>
