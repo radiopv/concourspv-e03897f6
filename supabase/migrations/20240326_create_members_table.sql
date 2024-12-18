@@ -33,8 +33,7 @@ create policy "Users can update own profile"
 
 -- Create storage bucket for avatars
 insert into storage.buckets (id, name, public)
-values ('avatars', 'avatars', true)
-on conflict (id) do nothing;
+values ('avatars', 'avatars', true);
 
 -- Enable public access to avatars
 create policy "Avatar images are publicly accessible"

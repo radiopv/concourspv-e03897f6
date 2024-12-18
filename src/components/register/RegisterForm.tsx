@@ -43,29 +43,13 @@ export const RegisterForm = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Vérifier d'abord si l'utilisateur existe déjà
-      const { data: existingUser } = await supabase
-        .from('members')
-        .select('email')
-        .eq('email', values.email)
-        .single();
-
-      if (existingUser) {
-        toast({
-          variant: "destructive",
-          title: "Erreur d'inscription",
-          description: "Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse email.",
-        });
-        return;
-      }
-
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
       });
 
       if (authError) {
-        console.log("Auth Error:", authError);
+        console.error("Erreur d'authentification:", authError);
         
         if (authError.message.includes("already registered") || 
             authError.message === "User already registered" ||
@@ -77,7 +61,13 @@ export const RegisterForm = () => {
           });
           return;
         }
-        throw authError;
+
+        toast({
+          variant: "destructive",
+          title: "Erreur d'inscription",
+          description: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
+        });
+        return;
       }
 
       if (!authData.user) {
@@ -104,7 +94,7 @@ export const RegisterForm = () => {
         ]);
 
       if (profileError) {
-        console.log("Profile Error:", profileError);
+        console.error("Erreur de création du profil:", profileError);
         throw profileError;
       }
 
