@@ -1,17 +1,32 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
-const useRegisterForm = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const { toast } = useToast();
+interface RegisterFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phoneNumber?: string;
+}
 
-  const handleRegister = async () => {
+const useRegisterForm = () => {
+  const { toast } = useToast();
+  const form = useForm<RegisterFormData>();
+
+  const handleRegistration = async (data: RegisterFormData) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+      const { error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            phone_number: data.phoneNumber,
+          },
+        },
       });
 
       if (error) throw error;
@@ -20,8 +35,6 @@ const useRegisterForm = () => {
         title: "Succès",
         description: "Inscription réussie !",
       });
-
-      return data;
     } catch (error) {
       console.error("Error during registration:", error);
       toast({
@@ -33,11 +46,8 @@ const useRegisterForm = () => {
   };
 
   return {
-    email,
-    setEmail,
-    password,
-    setPassword,
-    handleRegister,
+    form,
+    handleRegistration,
   };
 };
 
