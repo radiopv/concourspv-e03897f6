@@ -84,7 +84,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
 
@@ -105,16 +104,12 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       });
     } else {
       toast({
+        variant: "destructive",
         title: "Accès refusé",
         description: "Mot de passe incorrect",
-        variant: "destructive",
       });
     }
   };
-
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
 
   if (!isAuthenticated) {
     return (
