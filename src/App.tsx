@@ -84,68 +84,59 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, loading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [isChecking, setIsChecking] = useState(true);
+  const { session } = useAuth();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!session?.user?.email) {
-        setIsAdmin(false);
-        setIsChecking(false);
-        return;
-      }
+    const adminPassword = localStorage.getItem('adminPassword');
+    if (adminPassword === 'Lechef200!!') {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
-      try {
-        const { data: adminData, error } = await supabase
-          .from('members')
-          .select('role')
-          .eq('email', session.user.email)
-          .single();
-
-        if (error) {
-          console.error('Erreur lors de la vérification du rôle:', error);
-          setIsAdmin(false);
-          setIsChecking(false);
-          return;
-        }
-
-        const hasAdminRole = adminData?.role === 'admin';
-        console.log('Email:', session.user.email);
-        console.log('Rôle trouvé:', adminData?.role);
-        console.log('Est admin:', hasAdminRole);
-        
-        setIsAdmin(hasAdminRole);
-        setIsChecking(false);
-
-        if (!hasAdminRole) {
-          toast({
-            title: "Accès refusé",
-            description: "Vous n'avez pas les droits d'administrateur nécessaires.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error('Erreur lors de la vérification des droits admin:', error);
-        setIsAdmin(false);
-        setIsChecking(false);
-      }
-    };
-    
-    checkAdminStatus();
-  }, [session, toast]);
-
-  if (loading || isChecking) {
-    return <div>Vérification des droits d'accès...</div>;
-  }
+  const authenticateAdmin = (password: string) => {
+    if (password === 'Lechef200!!') {
+      localStorage.setItem('adminPassword', password);
+      setIsAuthenticated(true);
+      toast({
+        title: "Accès autorisé",
+        description: "Bienvenue dans l'espace administrateur",
+      });
+    } else {
+      toast({
+        title: "Accès refusé",
+        description: "Mot de passe incorrect",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (!session) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+        <div className="w-full max-w-md space-y-4 bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-center text-gray-900">Accès Administrateur</h2>
+          <input
+            type="password"
+            placeholder="Mot de passe administrateur"
+            className="w-full px-4 py-2 border rounded-md"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                authenticateAdmin(e.currentTarget.value);
+              }
+            }}
+          />
+          <p className="text-sm text-gray-500 text-center">
+            Entrez le mot de passe administrateur et appuyez sur Entrée
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
