@@ -26,28 +26,37 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
   useEffect(() => {
     const checkAttempts = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user?.id) return;
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session?.session?.user?.id) return;
 
-      const { data: participant } = await supabase
-        .from('participants')
-        .select('attempts')
-        .eq('contest_id', contestId)
-        .eq('id', session.session.user.id)
-        .single();
+        const { data: participant, error } = await supabase
+          .from('participants')
+          .select('attempts')
+          .eq('contest_id', contestId)
+          .eq('id', session.session.user.id)
+          .single();
 
-      if (participant && participant.attempts >= 3) {
-        toast({
-          title: "Limite atteinte",
-          description: "Vous avez déjà utilisé vos 3 tentatives pour ce questionnaire.",
-          variant: "destructive",
-        });
-        navigate('/contests');
+        if (error) {
+          console.error('Error checking attempts:', error);
+          return;
+        }
+
+        if (participant && participant.attempts >= 3) {
+          toast({
+            title: "Limite atteinte",
+            description: "Vous avez déjà utilisé vos 3 tentatives pour ce questionnaire.",
+            variant: "destructive",
+          });
+          navigate('/contests');
+        }
+      } catch (error) {
+        console.error('Error in checkAttempts:', error);
       }
     };
 
     checkAttempts();
-  }, [contestId]);
+  }, [contestId, navigate, toast]);
 
   const handleSubmitAnswer = async () => {
     if (!state.selectedAnswer || !currentQuestion) return;
@@ -125,12 +134,22 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         const finalScore = await calculateFinalScore(session.session.user.id);
         await completeQuestionnaire(session.session.user.id, contestId, finalScore);
 
-        // Increment attempts count
+        // Get current attempts and increment
+        const { data: participant, error: fetchError } = await supabase
+          .from('participants')
+          .select('attempts')
+          .eq('contest_id', contestId)
+          .eq('id', session.session.user.id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        const newAttempts = (participant?.attempts || 0) + 1;
+
+        // Update attempts count
         const { error: updateError } = await supabase
           .from('participants')
-          .update({ 
-            attempts: supabase.sql`attempts + 1`
-          })
+          .update({ attempts: newAttempts })
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id);
 
