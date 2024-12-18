@@ -1,16 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../App";
 import { useQuestions } from './questionnaire/useQuestions';
-import { ensureParticipantExists } from './questionnaire/ParticipantManager';
-import { getRandomMessage } from './questionnaire/messages';
-import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
-import QuestionDisplay from './questionnaire/QuestionDisplay';
 import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
 import { calculateFinalScore, completeQuestionnaire } from './questionnaire/QuestionnaireManager';
+import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
+import QuestionDisplay from './questionnaire/QuestionDisplay';
+import { useAttempts } from './questionnaire/hooks/useAttempts';
+import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -22,94 +22,10 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const queryClient = useQueryClient();
   const state = useQuestionnaireState();
   const { data: questions } = useQuestions(contestId);
+  const { handleSubmitAnswer } = useAnswerSubmission(contestId);
   const currentQuestion = questions?.[state.currentQuestionIndex];
 
-  useEffect(() => {
-    const checkAttempts = async () => {
-      try {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user?.id) return;
-
-        const { data: participant } = await supabase
-          .from('participants')
-          .select('attempts')
-          .eq('contest_id', contestId)
-          .eq('id', session.session.user.id)
-          .maybeSingle();
-
-        if (participant && participant.attempts >= 3) {
-          toast({
-            title: "Limite atteinte",
-            description: "Vous avez déjà utilisé vos 3 tentatives pour ce questionnaire.",
-            variant: "destructive",
-          });
-          navigate('/contests');
-        }
-      } catch (error) {
-        console.error('Error in checkAttempts:', error);
-      }
-    };
-
-    checkAttempts();
-  }, [contestId, navigate, toast]);
-
-  const handleSubmitAnswer = async () => {
-    if (!state.selectedAnswer || !currentQuestion) return;
-
-    state.setIsSubmitting(true);
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user?.id) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté pour participer",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const participantId = await ensureParticipantExists(session.session.user.id, contestId);
-
-      const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
-      state.setIsCorrect(isAnswerCorrect);
-      state.setHasAnswered(true);
-      state.setTotalAnswered(prev => prev + 1);
-      if (isAnswerCorrect) {
-        state.setScore(prev => prev + 1);
-      }
-
-      const { error } = await supabase
-        .from('participant_answers')
-        .insert([{
-          participant_id: participantId,
-          question_id: currentQuestion.id,
-          answer: state.selectedAnswer
-        }]);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
-      queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
-
-      const message = getRandomMessage(isAnswerCorrect);
-      toast({
-        title: isAnswerCorrect ? "Bonne réponse ! 🎉" : "Mauvaise réponse",
-        description: message,
-        variant: isAnswerCorrect ? "default" : "destructive",
-      });
-
-    } catch (error) {
-      console.error('Error submitting answer:', error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la soumission de votre réponse",
-        variant: "destructive",
-      });
-    } finally {
-      state.setIsSubmitting(false);
-    }
-  };
+  useAttempts(contestId);
 
   const handleNextQuestion = async () => {
     if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
@@ -129,19 +45,15 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         const finalScore = await calculateFinalScore(session.session.user.id);
         await completeQuestionnaire(session.session.user.id, contestId, finalScore);
 
-        // Get current attempts and increment
-        const { data: participant, error: fetchError } = await supabase
+        const { data: participant } = await supabase
           .from('participants')
           .select('attempts')
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id)
-          .single();
-
-        if (fetchError) throw fetchError;
+          .maybeSingle();
 
         const newAttempts = (participant?.attempts || 0) + 1;
 
-        // Update attempts count
         const { error: updateError } = await supabase
           .from('participants')
           .update({ attempts: newAttempts })
@@ -160,7 +72,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           duration: 5000,
         });
 
-        // Redirection vers la page de statistiques
         navigate(`/contests/${contestId}/stats`, { 
           state: { 
             finalScore: finalScore
@@ -214,7 +125,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           isSubmitting={state.isSubmitting}
           onArticleRead={() => state.setHasClickedLink(true)}
           onAnswerSelect={state.setSelectedAnswer}
-          onSubmitAnswer={handleSubmitAnswer}
+          onSubmitAnswer={() => handleSubmitAnswer(currentQuestion)}
           onNextQuestion={handleNextQuestion}
           isLastQuestion={state.currentQuestionIndex === questions.length - 1}
         />
