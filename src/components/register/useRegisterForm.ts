@@ -30,33 +30,42 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Vérifier d'abord si l'utilisateur existe déjà
+      const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
-      if (authError) {
-        console.error("Auth error details:", authError);
-        
-        // Try to parse the error body if it exists
-        let errorBody;
-        try {
-          errorBody = JSON.parse(authError.message);
-        } catch {
-          errorBody = null;
-        }
+      if (existingUser?.user) {
+        toast({
+          variant: "destructive",
+          title: "Utilisateur existant",
+          description: "Cet email est déjà enregistré. Veuillez vous connecter avec votre mot de passe.",
+        });
+        navigate("/login");
+        return;
+      }
 
-        // Check both the error message and parsed body for user exists error
-        if (
-          errorBody?.code === "user_already_exists" ||
-          authError.message?.includes("already registered") ||
-          authError.message?.includes("already exists")
-        ) {
+      // Si l'utilisateur n'existe pas, procéder à l'inscription
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (authError) {
+        console.error("Erreur d'authentification:", authError);
+
+        if (authError.message?.includes("already registered") || 
+            authError.message?.includes("already exists")) {
           toast({
             variant: "destructive",
-            title: "Erreur d'inscription",
-            description: "Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse email.",
+            title: "Utilisateur existant",
+            description: "Cet email est déjà enregistré. Veuillez vous connecter ou utiliser un autre email.",
           });
+          navigate("/login");
           return;
         }
 
@@ -77,6 +86,7 @@ export const useRegisterForm = () => {
         return;
       }
 
+      // Créer le profil utilisateur dans la table members
       const { error: profileError } = await supabase
         .from('members')
         .insert([
@@ -98,10 +108,10 @@ export const useRegisterForm = () => {
 
       toast({
         title: "Inscription réussie !",
-        description: "Bienvenue sur notre plateforme de concours !",
+        description: "Un email de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception.",
       });
 
-      navigate("/contests");
+      navigate("/login");
     } catch (error) {
       console.error("Erreur lors de l'inscription:", error);
       toast({
