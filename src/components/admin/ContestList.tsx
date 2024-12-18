@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 interface Contest {
   id: string;
   title: string;
+  description?: string;
   status: string;
   start_date: string;
   end_date: string;
@@ -123,7 +124,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
       {contests?.map((contest) => (
         <ContestCard
           key={contest.id}
