@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -79,9 +80,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 // Route protégée spécifique pour l'admin
 const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const checkAdminStatus = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email === "renaudcanuel@me.com") {
