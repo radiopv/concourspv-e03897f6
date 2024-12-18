@@ -15,6 +15,10 @@ interface Prize {
   prize_catalog: PrizeCatalog;
 }
 
+interface ParticipantScore {
+  score: number | null;
+}
+
 const ContestStats = ({ contestId }: ContestStatsProps) => {
   const { data: stats } = useQuery({
     queryKey: ['contest-stats', contestId],
@@ -36,8 +40,11 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
         .eq('contest_id', contestId);
 
       // Calculer la valeur totale des prix
-      const totalPrizeValue = (prizesData as Prize[] || []).reduce((total, prize) => {
-        return total + (prize.prize_catalog?.value || 0);
+      const totalPrizeValue = (prizesData || []).reduce((total, prize) => {
+        if (prize.prize_catalog && typeof prize.prize_catalog.value === 'number') {
+          return total + prize.prize_catalog.value;
+        }
+        return total;
       }, 0);
 
       // Calculer le score moyen
