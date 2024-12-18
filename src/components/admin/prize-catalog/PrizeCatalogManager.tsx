@@ -28,20 +28,24 @@ export const PrizeCatalogManager = () => {
     shop_url: '',
   });
 
+  // Mise à jour de la requête pour inclure explicitement toutes les colonnes
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
+      console.log("Fetching prize catalog...");
       const { data, error } = await supabase
         .from('prize_catalog')
-        .select('*')
+        .select('id, name, description, value, image_url, shop_url, created_at, is_active')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching prize catalog:", error);
+        throw error;
+      }
+      console.log("Prize catalog data:", data);
       return data;
     }
   });
-
-  const { addPrizeToCatalog, updatePrize, deletePrize } = usePrizeMutations();
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -80,6 +84,8 @@ export const PrizeCatalogManager = () => {
       setUploading(false);
     }
   };
+
+  const { addPrizeToCatalog, updatePrize, deletePrize } = usePrizeMutations();
 
   const handleEdit = (prize: any) => {
     setEditingPrize(prize.id);
