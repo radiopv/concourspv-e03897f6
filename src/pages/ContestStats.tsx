@@ -1,24 +1,15 @@
 import React from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Users, Star, Medal } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Trophy } from "lucide-react";
 import { supabase } from "../App";
 import ContestStats from '@/components/contest/ContestStats';
+import TopParticipantsList from '@/components/contest/TopParticipantsList';
+import ContestGeneralStats from '@/components/contest/ContestGeneralStats';
 
 interface LocationState {
   finalScore?: number;
-}
-
-interface Profile {
-  full_name: string;
-  avatar_url: string | null;
-}
-
-interface TopParticipant {
-  id: string;
-  score: number;
-  profiles: Profile[];  // Changed to Profile[] since Supabase returns an array
 }
 
 const ContestStatsPage = () => {
@@ -51,7 +42,7 @@ const ContestStatsPage = () => {
         .select(`
           id,
           score,
-          profiles:id (
+          profile:profiles!inner (
             full_name,
             avatar_url
           )
@@ -61,7 +52,7 @@ const ContestStatsPage = () => {
         .limit(10);
 
       if (error) throw error;
-      return data as TopParticipant[];
+      return data;
     }
   });
 
@@ -130,72 +121,15 @@ const ContestStatsPage = () => {
             endDate={contest.end_date}
           />
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Medal className="w-6 h-6 text-amber-500" />
-                Top 10 des participants
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {topParticipants?.map((participant, index) => (
-                  <div
-                    key={participant.id}
-                    className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`
-                        w-8 h-8 rounded-full flex items-center justify-center font-bold
-                        ${index === 0 ? 'bg-amber-500 text-white' : 
-                          index === 1 ? 'bg-gray-300 text-gray-800' :
-                          index === 2 ? 'bg-amber-700 text-white' :
-                          'bg-gray-100 text-gray-600'}
-                      `}>
-                        {index + 1}
-                      </div>
-                      <span className="font-medium">
-                        {participant.profiles[0]?.full_name || 'Participant anonyme'}
-                      </span>
-                    </div>
-                    <span className="text-lg font-bold text-indigo-600">
-                      {participant.score}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {topParticipants && (
+            <TopParticipantsList participants={topParticipants} />
+          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="w-6 h-6 text-yellow-500" />
-                  Score moyen
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-center text-yellow-600">
-                  {stats.averageScore}%
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-6 h-6 text-green-500" />
-                  Participants qualifiés
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-center text-green-600">
-                  {stats.qualifiedCount} / {contest.participants_count || 0}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <ContestGeneralStats
+            averageScore={stats.averageScore}
+            qualifiedCount={stats.qualifiedCount}
+            totalParticipants={contest.participants_count || 0}
+          />
         </div>
       </div>
     </div>
