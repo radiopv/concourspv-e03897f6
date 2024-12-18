@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +23,31 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const state = useQuestionnaireState();
   const { data: questions } = useQuestions(contestId);
   const currentQuestion = questions?.[state.currentQuestionIndex];
+
+  useEffect(() => {
+    const checkAttempts = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) return;
+
+      const { data: participant } = await supabase
+        .from('participants')
+        .select('attempts')
+        .eq('contest_id', contestId)
+        .eq('id', session.session.user.id)
+        .single();
+
+      if (participant && participant.attempts >= 3) {
+        toast({
+          title: "Limite atteinte",
+          description: "Vous avez déjà utilisé vos 3 tentatives pour ce questionnaire.",
+          variant: "destructive",
+        });
+        navigate('/contests');
+      }
+    };
+
+    checkAttempts();
+  }, [contestId]);
 
   const handleSubmitAnswer = async () => {
     if (!state.selectedAnswer || !currentQuestion) return;
@@ -100,6 +125,17 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         const finalScore = await calculateFinalScore(session.session.user.id);
         await completeQuestionnaire(session.session.user.id, contestId, finalScore);
 
+        // Increment attempts count
+        const { error: updateError } = await supabase
+          .from('participants')
+          .update({ 
+            attempts: supabase.sql`attempts + 1`
+          })
+          .eq('contest_id', contestId)
+          .eq('id', session.session.user.id);
+
+        if (updateError) throw updateError;
+
         toast({
           title: "Questionnaire terminé ! 🎉",
           description: `Votre score final est de ${finalScore}%. ${
@@ -110,11 +146,13 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           duration: 5000,
         });
 
+        // Redirection après 3 secondes
         setTimeout(() => {
           navigate('/contests', { 
             state: { 
               completedContestId: contestId,
-              showResults: true
+              showResults: true,
+              finalScore: finalScore
             }
           });
         }, 3000);
