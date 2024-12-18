@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
+import { plus } from "lucide-react";
 import QuestionsManager from "../components/admin/QuestionsManager";
 import ParticipantsList from "../components/admin/ParticipantsList";
 import DrawManager from "../components/admin/DrawManager";
@@ -17,6 +19,8 @@ import { useToast } from "@/components/ui/use-toast";
 const Admin = () => {
   const [selectedContest, setSelectedContest] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isNewContestOpen, setIsNewContestOpen] = useState(false);
+  const [isValidatorOpen, setIsValidatorOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -83,9 +87,35 @@ const Admin = () => {
 
       {!selectedContest ? (
         <div className="space-y-8">
-          <AdminContestManager />
-          <ContentValidator />
+          <Collapsible open={isNewContestOpen} onOpenChange={setIsNewContestOpen}>
+            <div className="flex items-center justify-between mb-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <plus className="w-4 h-4" />
+                  Créer un nouveau concours
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent className="space-y-2">
+              <AdminContestManager />
+            </CollapsibleContent>
+          </Collapsible>
+
+          <Collapsible open={isValidatorOpen} onOpenChange={setIsValidatorOpen}>
+            <div className="flex items-center justify-between mb-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline">
+                  Validation du contenu
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent className="space-y-2">
+              <ContentValidator />
+            </CollapsibleContent>
+          </Collapsible>
+
           <PrizeCatalogManager />
+          
           <ContestList 
             contests={contests || []} 
             onSelectContest={setSelectedContest} 
