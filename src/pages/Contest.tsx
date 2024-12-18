@@ -1,16 +1,18 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Timer, CheckCircle } from "lucide-react";
-import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
-import { fr } from "date-fns/locale";
+import { Card, CardContent } from "@/components/ui/card";
+import { differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { useState, useEffect } from "react";
+import ContestHeader from "@/components/contest/ContestHeader";
+import ContestStats from "@/components/contest/ContestStats";
+import ContestPrizes from "@/components/contest/ContestPrizes";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 
 const Contest = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
 
@@ -110,92 +112,27 @@ const Contest = () => {
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto space-y-8">
-          {/* En-tête du concours */}
-          <div className="text-center animate-fadeIn">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              {contest.title}
-            </h1>
-            <p className="text-xl text-gray-600">
-              {contest.description}
-            </p>
-          </div>
+          <ContestHeader 
+            title={contest.title}
+            description={contest.description}
+          />
 
-          {/* Statistiques et informations */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-white/50 backdrop-blur-sm">
-              <CardHeader className="text-center">
-                <Users className="w-8 h-8 mx-auto text-indigo-600 mb-2" />
-                <CardTitle className="text-lg">Participants</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-3xl font-bold text-gray-900">
-                  {contest.participants_count || 0}
-                </p>
-                <p className="text-sm text-gray-600">inscrits</p>
-              </CardContent>
-            </Card>
+          <ContestStats
+            participantsCount={contest.participants_count || 0}
+            successPercentage={successPercentage}
+            timeLeft={timeLeft}
+            endDate={contest.end_date}
+          />
 
-            <Card className="bg-white/50 backdrop-blur-sm">
-              <CardHeader className="text-center">
-                <CheckCircle className="w-8 h-8 mx-auto text-indigo-600 mb-2" />
-                <CardTitle className="text-lg">Taux de réussite</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-3xl font-bold text-gray-900">
-                  {successPercentage}%
-                </p>
-                <p className="text-sm text-gray-600">≥ 70% de bonnes réponses</p>
-              </CardContent>
-            </Card>
+          <ContestPrizes prizes={contest.prizes || []} />
 
-            <Card className="bg-white/50 backdrop-blur-sm">
-              <CardHeader className="text-center">
-                <Timer className="w-8 h-8 mx-auto text-indigo-600 mb-2" />
-                <CardTitle className="text-lg">Temps restant</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-3xl font-bold text-gray-900">
-                  {timeLeft}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Fin le {format(new Date(contest.end_date), 'dd MMMM yyyy', { locale: fr })}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Prix à gagner */}
-          <Card className="bg-white/50 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <Trophy className="w-8 h-8 mx-auto text-indigo-600 mb-2" />
-              <CardTitle>Prix à gagner</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {contest.prizes?.map((prize: any) => (
-                  <div key={prize.id} className="text-center">
-                    {prize.image_url && (
-                      <img
-                        src={prize.image_url}
-                        alt={prize.name}
-                        className="w-full h-48 object-cover rounded-lg mb-2"
-                      />
-                    )}
-                    <p className="font-medium">{prize.name}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Bouton de participation */}
           <div className="text-center">
             <Button
               size="lg"
-              onClick={() => setShowQuestionnaire(true)}
+              onClick={() => navigate('/contests')}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-lg px-8 py-6 h-auto animate-pulse"
             >
-              Participer maintenant
+              Voir les concours disponibles
             </Button>
           </div>
         </div>
