@@ -95,6 +95,12 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      // Définir directement comme admin si c'est l'email spécifique
+      if (session.user.email === "renaudcanuel@me.com") {
+        setIsAdmin(true);
+        return;
+      }
+
       try {
         const { data: adminData, error } = await supabase
           .from('members')
@@ -108,10 +114,9 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        const isUserAdmin = adminData?.role === 'admin' || session.user.email === "renaudcanuel@me.com";
-        setIsAdmin(isUserAdmin);
+        setIsAdmin(adminData?.role === 'admin');
 
-        if (!isUserAdmin) {
+        if (!adminData?.role === 'admin') {
           toast({
             title: "Accès refusé",
             description: "Vous n'avez pas les droits d'administrateur nécessaires.",
