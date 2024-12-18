@@ -2,36 +2,18 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../App";
 import { ArrowRight } from "lucide-react";
 import ArticleLink from './questionnaire/ArticleLink';
 import AnswerOptions from './questionnaire/AnswerOptions';
+import { useQuestions } from './questionnaire/useQuestions';
+import { ensureParticipantExists } from './questionnaire/ParticipantManager';
+import { getRandomMessage } from './questionnaire/messages';
 
 interface QuestionnaireComponentProps {
   contestId: string;
 }
-
-const getRandomMessage = (isCorrect: boolean) => {
-  const correctMessages = [
-    "Excellente réponse ! Continuez comme ça ! 🎉",
-    "Bravo ! Vous êtes sur la bonne voie pour le tirage au sort ! 🌟",
-    "Parfait ! Gardez ce rythme pour atteindre les 70% ! 🎯",
-    "Superbe ! Votre attention aux détails paie ! 🏆",
-    "Fantastique ! Vous vous rapprochez du tirage au sort ! ⭐"
-  ];
-
-  const incorrectMessages = [
-    "N'oubliez pas de bien lire les articles pour trouver les bonnes réponses. Un score de 70% est nécessaire pour le tirage ! 📚",
-    "Prenez votre temps pour lire les articles, les réponses s'y trouvent ! Objectif 70% pour le tirage ! 🎯",
-    "Les articles contiennent toutes les informations nécessaires. Visez les 70% pour participer au tirage ! 📖",
-    "Un peu plus de lecture et vous trouverez la bonne réponse ! Rappelez-vous : 70% pour le tirage ! 🔍",
-    "Consultez attentivement les articles du blog, ils sont la clé du succès ! Objectif 70% ! 🗝️"
-  ];
-
-  const randomIndex = Math.floor(Math.random() * (isCorrect ? correctMessages.length : incorrectMessages.length));
-  return isCorrect ? correctMessages[randomIndex] : incorrectMessages[randomIndex];
-};
 
 const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const { toast } = useToast();
@@ -43,62 +25,8 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
-  const { data: questions } = useQuery({
-    queryKey: ['questions', contestId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('id, question_text, options, correct_answer, article_url, order_number')
-        .eq('contest_id', contestId)
-        .order('order_number');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
+  const { data: questions } = useQuestions(contestId);
   const currentQuestion = questions?.[currentQuestionIndex];
-
-  const ensureParticipantExists = async (userId: string) => {
-    // First check if participant already exists
-    const { data: existingParticipant } = await supabase
-      .from('participants')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('contest_id', contestId)
-      .single();
-
-    if (existingParticipant) {
-      return existingParticipant.id;
-    }
-
-    // If not, create new participant
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('first_name, last_name, email')
-      .eq('id', userId)
-      .single();
-
-    if (!userProfile) {
-      throw new Error("User profile not found");
-    }
-
-    const { data: newParticipant, error: participantError } = await supabase
-      .from('participants')
-      .insert([{
-        user_id: userId,
-        contest_id: contestId,
-        first_name: userProfile.first_name,
-        last_name: userProfile.last_name,
-        email: userProfile.email,
-        status: 'active'
-      }])
-      .select('id')
-      .single();
-
-    if (participantError) throw participantError;
-    return newParticipant.id;
-  };
 
   const handleSubmitAnswer = async () => {
     if (!selectedAnswer || !currentQuestion) return;
@@ -116,7 +44,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       }
 
       // Ensure participant exists and get participant ID
-      const participantId = await ensureParticipantExists(session.session.user.id);
+      const participantId = await ensureParticipantExists(session.session.user.id, contestId);
 
       const isAnswerCorrect = selectedAnswer === currentQuestion.correct_answer;
       setIsCorrect(isAnswerCorrect);
