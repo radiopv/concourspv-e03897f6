@@ -30,18 +30,15 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         const { data: session } = await supabase.auth.getSession();
         if (!session?.session?.user?.id) return;
 
+        // First check if participant exists
         const { data: participant, error } = await supabase
           .from('participants')
           .select('attempts')
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id)
-          .single();
+          .maybeSingle(); // Changed from single() to maybeSingle()
 
-        if (error) {
-          console.error('Error checking attempts:', error);
-          return;
-        }
-
+        // If participant exists and has 3 or more attempts
         if (participant && participant.attempts >= 3) {
           toast({
             title: "Limite atteinte",
