@@ -1,13 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/App";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useEffect } from "react";
 
@@ -67,9 +66,8 @@ export const LoginForm = () => {
           description: "Bienvenue sur votre espace membre !",
         });
         
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1000);
+        // Utilisation de navigate sans setTimeout pour une redirection immédiate
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
