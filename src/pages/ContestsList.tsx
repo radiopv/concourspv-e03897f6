@@ -1,3 +1,4 @@
+import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,22 +17,27 @@ const ContestsList = () => {
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
 
   const { data: contests, isLoading } = useQuery({
-    queryKey: ['contests'],
+    queryKey: ['active-contests'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contests')
         .select(`
           *,
           participants:participants(count),
-          winners:participants(count)
+          questions:questions(count)
         `)
         .eq('status', 'active')
-        .eq('is_featured', true)
-        .order('end_date', { ascending: true });
+        .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data;
-    }
+      if (error) {
+        console.error('Error fetching contests:', error);
+        throw error;
+      }
+      
+      console.log('Fetched contests:', data); // Debug log
+      return data || [];
+    },
+    refetchInterval: 5000
   });
 
   if (selectedContestId) {
@@ -75,12 +81,18 @@ const ContestsList = () => {
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Concours Disponibles
-          </h1>
-          <p className="text-xl text-gray-600">
-            Choisissez un concours et tentez votre chance !
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-4">
+              Concours Disponibles
+            </h1>
+            <p className="text-xl text-gray-600">
+              Choisissez un concours et tentez votre chance !
+            </p>
+          </motion.div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -90,6 +102,7 @@ const ContestsList = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="h-full"
             >
               <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
                 <CardHeader>
@@ -109,29 +122,64 @@ const ContestsList = () => {
                   )}
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col">
-                  <p className="text-gray-600 mb-6 flex-1">
-                    {contest.description}
-                  </p>
-                  <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4 text-indigo-600" />
-                      <span>Fin le {format(new Date(contest.end_date), 'dd MMMM yyyy', { locale: fr })}</span>
+                  {contest.description && (
+                    <p className="text-gray-600 mb-6 flex-1">
+                      {contest.description}
+                    </p>
+                  )}
+                  
+                  {contest.prize_image_url && (
+                    <div className="aspect-video relative overflow-hidden rounded-lg mb-4">
+                      <img
+                        src={contest.prize_image_url}
+                        alt="Prix à gagner"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users className="w-4 h-4 text-indigo-600" />
-                      <span>{contest.participants?.count || 0} participants</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Percent className="w-4 h-4 text-indigo-600" />
-                      <span>{calculateWinningChance(contest.participants?.count || 0, contest.total_prizes || 1)}% de chances de gagner</span>
-                    </div>
-                    <Button 
-                      onClick={() => setSelectedContestId(contest.id)}
-                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                  )}
+
+                  {contest.shop_url && (
+                    <a
+                      href={contest.shop_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-1"
                     >
-                      Participer
-                    </Button>
+                      <Trophy className="w-4 h-4" />
+                      Voir le prix sur la boutique
+                    </a>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-6">
+                    <div>
+                      <p className="font-medium flex items-center gap-1">
+                        <Users className="w-4 h-4 text-indigo-600" />
+                        Participants
+                      </p>
+                      <p>{contest.participants?.count || 0}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium flex items-center gap-1">
+                        <Percent className="w-4 h-4 text-indigo-600" />
+                        Chances de gagner
+                      </p>
+                      <p>{calculateWinningChance(contest.participants?.count || 0, contest.total_prizes || 1)}%</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="font-medium flex items-center gap-1">
+                        <Calendar className="w-4 h-4 text-indigo-600" />
+                        Date de fin
+                      </p>
+                      <p>{format(new Date(contest.end_date), 'dd MMMM yyyy', { locale: fr })}</p>
+                    </div>
                   </div>
+
+                  <Button 
+                    onClick={() => setSelectedContestId(contest.id)}
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                  >
+                    Participer
+                  </Button>
                 </CardContent>
               </Card>
             </motion.div>
