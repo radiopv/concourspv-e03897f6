@@ -26,10 +26,34 @@ const ContestStatsPage = () => {
 
   if (!id) return null;
 
+  // Calculate stats from participants data
+  const calculateStats = () => {
+    if (!participants) return { averageScore: 0, qualifiedCount: 0, totalParticipants: 0 };
+
+    const totalParticipants = participants.length;
+    const scores = participants.map(p => p.score || 0);
+    const averageScore = totalParticipants > 0
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / totalParticipants)
+      : 0;
+    const qualifiedCount = participants.filter(p => (p.score || 0) >= 70).length;
+
+    return {
+      averageScore,
+      qualifiedCount,
+      totalParticipants
+    };
+  };
+
+  const stats = calculateStats();
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       <WinnerDisplay contestId={id} />
-      <ContestGeneralStats contestId={id} />
+      <ContestGeneralStats 
+        averageScore={stats.averageScore}
+        qualifiedCount={stats.qualifiedCount}
+        totalParticipants={stats.totalParticipants}
+      />
       {participants && <TopParticipantsList participants={participants} />}
     </div>
   );
