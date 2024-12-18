@@ -30,6 +30,16 @@ export const LoginForm = () => {
   });
 
   useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/dashboard", { replace: true });
+      }
+    };
+    checkSession();
+  }, [navigate]);
+
+  useEffect(() => {
     if (state?.message) {
       toast({
         title: "Information",
