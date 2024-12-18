@@ -11,12 +11,10 @@ interface Participant {
   score: number | null;
 }
 
-interface PrizeCatalog {
-  value: number;
-}
-
-interface Prize {
-  prize_catalog: PrizeCatalog | null;
+interface PrizeData {
+  prize_catalog: {
+    value: number;
+  } | null;
 }
 
 const ContestStats = ({ contestId }: ContestStatsProps) => {
@@ -39,13 +37,15 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
         `)
         .eq('contest_id', contestId);
 
+      const participants = participantsData as Participant[] || [];
+      const prizes = prizesData as PrizeData[] || [];
+
       // Calculer la valeur totale des prix
-      const totalPrizeValue = (prizesData as Prize[] || []).reduce((total, prize) => {
+      const totalPrizeValue = prizes.reduce((total, prize) => {
         return total + (prize.prize_catalog?.value || 0);
       }, 0);
 
       // Calculer le score moyen
-      const participants = participantsData as Participant[] || [];
       const averageScore = participants.length 
         ? participants.reduce((sum, p) => sum + (p.score || 0), 0) / participants.length 
         : 0;
