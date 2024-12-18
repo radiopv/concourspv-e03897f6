@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../../App";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { Plus } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Edit, Trash2, Plus, Link } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,15 +12,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import PrizeCard from './PrizeCard';
-import PrizeEditForm from './PrizeEditForm';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { PrizeForm } from "./PrizeForm";
+import { usePrizeMutations } from "@/hooks/usePrizeMutations";
 
-const PrizeCatalogManager = () => {
+export const PrizeCatalogManager = () => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [editingPrize, setEditingPrize] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({
+  const [formData, setFormData] = useState({
     name: '',
     description: '',
     value: '',
@@ -39,6 +40,8 @@ const PrizeCatalogManager = () => {
       return data;
     }
   });
+
+  const { addPrizeToCatalog, updatePrize, deletePrize } = usePrizeMutations();
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -60,7 +63,7 @@ const PrizeCatalogManager = () => {
         .from('prizes')
         .getPublicUrl(filePath);
 
-      setEditForm({ ...editForm, image_url: publicUrl });
+      setFormData({ ...formData, image_url: publicUrl });
       
       toast({
         title: "Succès",
@@ -78,94 +81,9 @@ const PrizeCatalogManager = () => {
     }
   };
 
-  const addPrizeMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const { error } = await supabase
-        .from('prize_catalog')
-        .insert([data]);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
-      setEditForm({
-        name: '',
-        description: '',
-        value: '',
-        image_url: '',
-        shop_url: '',
-      });
-      toast({
-        title: "Succès",
-        description: "Le prix a été ajouté au catalogue",
-      });
-    },
-    onError: (error) => {
-      console.error("Add prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le prix",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const updatePrizeMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const { error } = await supabase
-        .from('prize_catalog')
-        .update(data)
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
-      setEditingPrize(null);
-      toast({
-        title: "Succès",
-        description: "Le prix a été mis à jour",
-      });
-    },
-    onError: (error) => {
-      console.error("Update prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le prix",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const deletePrizeMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('prize_catalog')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
-      toast({
-        title: "Succès",
-        description: "Le prix a été supprimé du catalogue",
-      });
-    },
-    onError: (error) => {
-      console.error("Delete prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le prix",
-        variant: "destructive",
-      });
-    }
-  });
-
   const handleEdit = (prize: any) => {
     setEditingPrize(prize.id);
-    setEditForm({
+    setFormData({
       name: prize.name,
       description: prize.description || '',
       value: prize.value?.toString() || '',
@@ -174,22 +92,28 @@ const PrizeCatalogManager = () => {
     });
   };
 
-  const handleFormChange = (field: string, value: string) => {
-    setEditForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveEdit = () => {
-    if (!editingPrize) return;
-    
+  const handleSave = () => {
     const data = {
-      name: editForm.name,
-      description: editForm.description,
-      value: editForm.value ? parseFloat(editForm.value) : null,
-      image_url: editForm.image_url,
-      shop_url: editForm.shop_url,
+      name: formData.name,
+      description: formData.description,
+      value: formData.value ? parseFloat(formData.value) : null,
+      image_url: formData.image_url,
+      shop_url: formData.shop_url,
     };
 
-    updatePrizeMutation.mutate({ id: editingPrize, data });
+    if (editingPrize) {
+      updatePrize.mutate({ prizeId: editingPrize, data });
+      setEditingPrize(null);
+    } else {
+      addPrizeToCatalog.mutate(data);
+      setFormData({
+        name: '',
+        description: '',
+        value: '',
+        image_url: '',
+        shop_url: '',
+      });
+    }
   };
 
   if (isLoading) {
@@ -209,27 +133,18 @@ const PrizeCatalogManager = () => {
           <DialogHeader>
             <DialogTitle>Ajouter un prix au catalogue</DialogTitle>
           </DialogHeader>
-          <PrizeEditForm
-            formData={editForm}
-            onFormChange={handleFormChange}
+          <PrizeForm
+            formData={formData}
+            onFormChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
             onImageUpload={handleImageUpload}
-            onCancelEdit={() => setEditForm({
+            onCancel={() => setFormData({
               name: '',
               description: '',
               value: '',
               image_url: '',
               shop_url: '',
             })}
-            onSaveEdit={() => {
-              const data = {
-                name: editForm.name,
-                description: editForm.description,
-                value: editForm.value ? parseFloat(editForm.value) : null,
-                image_url: editForm.image_url,
-                shop_url: editForm.shop_url,
-              };
-              addPrizeMutation.mutate(data);
-            }}
+            onSave={handleSave}
             uploading={uploading}
           />
         </DialogContent>
@@ -237,19 +152,70 @@ const PrizeCatalogManager = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {prizes?.map((prize) => (
-          <PrizeCard
-            key={prize.id}
-            prize={prize}
-            editForm={editForm}
-            onEdit={handleEdit}
-            onDelete={(id) => deletePrizeMutation.mutate(id)}
-            onFormChange={handleFormChange}
-            onImageUpload={handleImageUpload}
-            onCancelEdit={() => setEditingPrize(null)}
-            onSaveEdit={handleSaveEdit}
-            uploading={uploading}
-            isEditing={editingPrize === prize.id}
-          />
+          <Collapsible key={prize.id}>
+            <Card>
+              <CardContent className="pt-6">
+                {prize.image_url && (
+                  <div className="aspect-square relative mb-4">
+                    <img
+                      src={prize.image_url}
+                      alt={prize.name}
+                      className="object-cover rounded-lg w-full h-full"
+                    />
+                    <div className="absolute top-2 right-2 space-x-2">
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          onClick={() => handleEdit(prize)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => deletePrize.mutate(prize.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <h3 className="font-semibold mb-2">{prize.name}</h3>
+                {prize.description && (
+                  <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">
+                    {prize.value ? `${prize.value}€` : 'Prix non défini'}
+                  </span>
+                  {prize.shop_url && (
+                    <a
+                      href={prize.shop_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <Link className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              </CardContent>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <PrizeForm
+                    formData={formData}
+                    onFormChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
+                    onImageUpload={handleImageUpload}
+                    onCancel={() => setEditingPrize(null)}
+                    onSave={handleSave}
+                    uploading={uploading}
+                  />
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         ))}
       </div>
     </div>
