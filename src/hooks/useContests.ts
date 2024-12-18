@@ -13,13 +13,8 @@ export const useContests = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        toast({
-          variant: "destructive",
-          title: "Non connecté",
-          description: "Veuillez vous connecter pour voir les concours.",
-        });
         navigate('/login');
-        throw new Error("Not authenticated");
+        return [];
       }
 
       const { data: contests, error } = await supabase
@@ -32,20 +27,9 @@ export const useContests = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching contests:', error);
-        if (error.code === '401') {
-          toast({
-            variant: "destructive",
-            title: "Session expirée",
-            description: "Votre session a expiré. Veuillez vous reconnecter.",
-          });
+        if (error.status === 401) {
           navigate('/login');
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Erreur",
-            description: "Impossible de charger les concours. Veuillez réessayer.",
-          });
+          return [];
         }
         throw error;
       }
@@ -54,6 +38,7 @@ export const useContests = () => {
     },
     retry: 1,
     refetchOnWindowFocus: false,
-    refetchInterval: 300000 // 5 minutes
+    refetchInterval: 300000, // 5 minutes
+    staleTime: 300000, // 5 minutes
   });
 };
