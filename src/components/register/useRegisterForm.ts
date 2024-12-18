@@ -36,9 +36,22 @@ export const useRegisterForm = () => {
       });
 
       if (authError) {
-        const errorMessage = authError.message?.toLowerCase() || '';
-        if (errorMessage.includes("already registered") || 
-            errorMessage.includes("already exists")) {
+        console.error("Auth error details:", authError);
+        
+        // Try to parse the error body if it exists
+        let errorBody;
+        try {
+          errorBody = JSON.parse(authError.message);
+        } catch {
+          errorBody = null;
+        }
+
+        // Check both the error message and parsed body for user exists error
+        if (
+          errorBody?.code === "user_already_exists" ||
+          authError.message?.includes("already registered") ||
+          authError.message?.includes("already exists")
+        ) {
           toast({
             variant: "destructive",
             title: "Erreur d'inscription",
