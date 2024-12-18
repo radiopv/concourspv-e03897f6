@@ -30,31 +30,18 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Première étape : vérifier si l'utilisateur existe déjà dans auth
-      const { data: { users }, error: authCheckError } = await supabase.auth.admin.listUsers({
-        filters: {
-          email: values.email
-        }
-      });
+      // Première étape : vérifier si l'utilisateur existe dans la table members
+      const { data: existingMembers, error: membersError } = await supabase
+        .from('members')
+        .select('id')
+        .eq('email', values.email);
 
-      if (authCheckError) {
-        console.error("Erreur lors de la vérification de l'utilisateur:", authCheckError);
-        throw authCheckError;
+      if (membersError) {
+        console.error("Erreur lors de la vérification dans members:", membersError);
+        throw membersError;
       }
 
-      if (users && users.length > 0) {
-        // L'utilisateur existe déjà, on vérifie s'il a confirmé son email
-        const user = users[0];
-        if (!user.email_confirmed_at) {
-          toast({
-            title: "Email non confirmé",
-            description: "Votre compte existe déjà mais n'est pas confirmé. Veuillez vérifier votre boîte mail.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Si l'email est confirmé, on propose de se connecter
+      if (existingMembers && existingMembers.length > 0) {
         toast({
           title: "Compte existant",
           description: "Un compte existe déjà avec cet email. Vous allez être redirigé vers la page de connexion.",
