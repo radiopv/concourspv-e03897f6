@@ -31,10 +31,10 @@ create policy "Users can update own profile"
     on members for update
     using (auth.uid() = id);
 
--- Create storage bucket for avatars if it doesn't exist
-insert into storage.buckets (id, name)
-values ('avatars', 'avatars')
-on conflict do nothing;
+-- Create storage bucket for avatars
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
 
 -- Enable public access to avatars
 create policy "Avatar images are publicly accessible"
@@ -43,15 +43,12 @@ create policy "Avatar images are publicly accessible"
 
 create policy "Users can upload their own avatar"
     on storage.objects for insert
-    to authenticated
-    with check ( bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text );
+    with check ( bucket_id = 'avatars' );
 
 create policy "Users can update their own avatar"
     on storage.objects for update
-    to authenticated
-    using ( bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text );
+    using ( bucket_id = 'avatars' );
 
 create policy "Users can delete their own avatar"
     on storage.objects for delete
-    to authenticated
-    using ( bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text );
+    using ( bucket_id = 'avatars' );
