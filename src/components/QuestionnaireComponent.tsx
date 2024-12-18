@@ -1,18 +1,11 @@
-import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../App";
-import { useNavigate } from "react-router-dom";
-
-interface Question {
-  id: string;
-  question_text: string;
-  type: "multiple_choice" | "open";
-  options?: string[];
-}
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -20,156 +13,120 @@ interface QuestionnaireComponentProps {
 
 const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('contest_id', contestId)
-          .order('order_number');
+  const { data: questions } = useQuery({
+    queryKey: ['questions', contestId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('contest_id', contestId)
+        .order('order_number');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
-        if (error) {
-          throw error;
-        }
+  const currentQuestion = questions?.[currentQuestionIndex];
 
-        if (!data || data.length === 0) {
-          toast({
-            title: "Information",
-            description: "Aucune question n'est disponible pour ce concours.",
-          });
-          navigate("/");
-          return;
-        }
+  const handleSubmitAnswer = async () => {
+    if (!selectedAnswer || !currentQuestion) return;
 
-        setQuestions(data);
-      } catch (error) {
+    setIsSubmitting(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) {
         toast({
           title: "Erreur",
-          description: "Impossible de charger les questions",
+          description: "Vous devez être connecté pour participer",
           variant: "destructive",
         });
-        navigate("/");
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
 
-    fetchQuestions();
-  }, [contestId, toast, navigate]);
-
-  const handleAnswer = (answer: string) => {
-    setAnswers({
-      ...answers,
-      [questions[currentQuestion].id]: answer,
-    });
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const { error: answersError } = await supabase
+      const { error } = await supabase
         .from('participant_answers')
-        .insert(
-          Object.entries(answers).map(([questionId, answer]) => ({
-            question_id: questionId,
-            answer,
-            participant_id: contestId,
-          }))
-        );
+        .insert([
+          {
+            participant_id: session.session.user.id,
+            question_id: currentQuestion.id,
+            answer: selectedAnswer,
+            is_correct: selectedAnswer === currentQuestion.correct_answer
+          }
+        ]);
 
-      if (answersError) throw answersError;
+      if (error) throw error;
 
-      toast({
-        title: "Succès",
-        description: "Vos réponses ont été enregistrées avec succès !",
-      });
+      // Invalider les requêtes après soumission d'une réponse
+      queryClient.invalidateQueries({ queryKey: ['contests'] });
+      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
 
-      navigate("/");
+      setSelectedAnswer("");
+      
+      if (currentQuestionIndex < (questions?.length || 0) - 1) {
+        setCurrentQuestionIndex(prev => prev + 1);
+      } else {
+        toast({
+          title: "Félicitations !",
+          description: "Vous avez terminé le questionnaire",
+        });
+      }
     } catch (error) {
+      console.error('Error submitting answer:', error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'enregistrement des réponses",
+        description: "Une erreur est survenue lors de la soumission de votre réponse",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  if (loading) {
-    return <div className="flex justify-center items-center">Chargement des questions...</div>;
-  }
-
-  if (questions.length === 0) {
-    return <div className="flex justify-center items-center">Aucune question disponible.</div>;
-  }
-
-  const currentQ = questions[currentQuestion];
-
-  if (!currentQ) {
-    return <div className="flex justify-center items-center">Question non trouvée.</div>;
+  if (!questions || questions.length === 0) {
+    return <div>Aucune question disponible.</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">
-          Question {currentQuestion + 1} sur {questions.length}
-        </h2>
-        <div className="text-sm text-gray-500">
-          {Math.round(((currentQuestion + 1) / questions.length) * 100)}%
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <p className="text-lg">{currentQ.question_text}</p>
-
-        {currentQ.type === "multiple_choice" ? (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>
+          Question {currentQuestionIndex + 1} sur {questions.length}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          <p className="text-lg font-medium">{currentQuestion?.question_text}</p>
+          
           <RadioGroup
-            value={answers[currentQ.id] || ""}
-            onValueChange={(value) => handleAnswer(value)}
+            value={selectedAnswer}
+            onValueChange={setSelectedAnswer}
+            className="space-y-3"
           >
-            {currentQ.options?.map((option, index) => (
+            {currentQuestion?.options?.map((option: string, index: number) => (
               <div key={index} className="flex items-center space-x-2">
                 <RadioGroupItem value={option} id={`option-${index}`} />
                 <Label htmlFor={`option-${index}`}>{option}</Label>
               </div>
             ))}
           </RadioGroup>
-        ) : (
-          <Input
-            value={answers[currentQ.id] || ""}
-            onChange={(e) => handleAnswer(e.target.value)}
-            placeholder="Votre réponse..."
-          />
-        )}
-      </div>
 
-      <div className="flex justify-between mt-6">
-        <Button
-          variant="outline"
-          onClick={() => setCurrentQuestion(currentQuestion - 1)}
-          disabled={currentQuestion === 0}
-        >
-          Précédent
-        </Button>
-
-        {currentQuestion === questions.length - 1 ? (
-          <Button onClick={handleSubmit}>Terminer</Button>
-        ) : (
           <Button
-            onClick={() => setCurrentQuestion(currentQuestion + 1)}
-            disabled={!answers[currentQ.id]}
+            onClick={handleSubmitAnswer}
+            disabled={!selectedAnswer || isSubmitting}
+            className="w-full"
           >
-            Suivant
+            {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
           </Button>
-        )}
-      </div>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

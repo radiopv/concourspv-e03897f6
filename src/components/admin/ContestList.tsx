@@ -36,7 +36,10 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
       
       if (error) throw error;
 
+      // Invalider toutes les requêtes liées aux concours
+      queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      
       toast({
         title: "Succès",
         description: "Le concours a été supprimé",
@@ -60,7 +63,10 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
       
       if (error) throw error;
 
+      // Invalider toutes les requêtes liées aux concours
+      queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      
       toast({
         title: "Succès",
         description: "Le concours a été archivé",
@@ -84,7 +90,10 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
       
       if (error) throw error;
 
+      // Invalider toutes les requêtes liées aux concours
+      queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      
       toast({
         title: "Succès",
         description: featured ? "Le concours sera affiché sur la page d'accueil" : "Le concours ne sera plus affiché sur la page d'accueil",
@@ -108,7 +117,10 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
       
       if (error) throw error;
 
+      // Invalider toutes les requêtes liées aux concours
+      queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      
       toast({
         title: "Succès",
         description: "Le statut du concours a été mis à jour",
