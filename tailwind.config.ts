@@ -68,12 +68,18 @@ export default {
           to: { height: "0" },
         },
         fadeIn: {
-          "0%": { opacity: "0", transform: "translateY(10px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
+          "0%": { opacity: "0", transform: "translateY(-50%)" },
+          "100%": { opacity: "1", transform: "translateY(-50%)" },
         },
         slideIn: {
-          "0%": { transform: "translateX(100%)" },
-          "100%": { transform: "translateX(0)" },
+          "0%": { 
+            opacity: "0",
+            transform: "translate(-50%, -40%)" 
+          },
+          "100%": { 
+            opacity: "1",
+            transform: "translate(-50%, -50%)" 
+          },
         },
       },
       animation: {

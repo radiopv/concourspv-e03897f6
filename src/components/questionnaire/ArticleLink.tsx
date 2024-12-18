@@ -14,6 +14,11 @@ const ArticleLink = ({ url, onArticleRead }: ArticleLinkProps) => {
   const READING_TIME = 5; // 5 seconds minimum reading time
 
   useEffect(() => {
+    setHasClicked(false);
+    setReadingTimer(0);
+  }, [url]); // Reset when URL changes (new question)
+
+  useEffect(() => {
     let interval: NodeJS.Timeout;
     if (hasClicked && readingTimer < READING_TIME) {
       interval = setInterval(() => {
