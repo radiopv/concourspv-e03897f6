@@ -29,8 +29,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         .from('prizes')
         .insert([{
           contest_id: contestId,
-          catalog_item_id: catalogItemId,
-          image_url: null // Explicitly set to null
+          catalog_item_id: catalogItemId
         }]);
       
       if (error) {

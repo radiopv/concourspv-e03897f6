@@ -1,10 +1,9 @@
--- Create prizes table
+-- Create prizes table (junction table between contests and prize_catalog)
 create table public.prizes (
     id uuid default gen_random_uuid() primary key,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     contest_id uuid references public.contests(id) on delete cascade not null,
-    catalog_item_id uuid references public.prize_catalog(id) not null,
-    image_url text default null
+    catalog_item_id uuid references public.prize_catalog(id) not null
 );
 
 -- Enable RLS
