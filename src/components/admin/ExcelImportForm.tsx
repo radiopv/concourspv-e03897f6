@@ -38,12 +38,13 @@ const ExcelImportForm = () => {
         if (contestError) throw contestError;
 
         // Ajouter les questions au concours
-        const questionsData = questions.map((q) => ({
+        const questionsData = questions.map((q, index) => ({
           contest_id: contest[0].id,
           question_text: q.question_text,
           options: q.options,
           correct_answer: q.correct_answer,
-          order_number: 1
+          order_number: index + 1,
+          type: 'multiple_choice' // Adding the required type field
         }));
 
         const { error: questionsError } = await supabase
