@@ -10,9 +10,9 @@ export const useContests = () => {
   return useQuery({
     queryKey: ['active-contests'],
     queryFn: async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (sessionError || !session) {
+      if (!session) {
         toast({
           variant: "destructive",
           title: "Non connecté",
