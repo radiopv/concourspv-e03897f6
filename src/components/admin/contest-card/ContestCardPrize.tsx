@@ -20,28 +20,26 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
       console.log('Selecting prize for contest:', contestId, 'catalog item:', catalogItemId);
       
       // Vérifier si un prix existe déjà pour ce concours
-      const { data: existingPrize, error: checkError } = await supabase
+      const { data: existingPrizes, error: checkError } = await supabase
         .from('prizes')
         .select('id')
-        .eq('contest_id', contestId)
-        .single();
+        .eq('contest_id', contestId);
 
-      console.log('Existing prize check:', { existingPrize, checkError });
+      console.log('Existing prizes check:', { existingPrizes, checkError });
 
-      // Si l'erreur n'est pas "No rows returned" (PGRST116), c'est une vraie erreur
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking existing prize:', checkError);
+      if (checkError) {
+        console.error('Error checking existing prizes:', checkError);
         throw checkError;
       }
 
       let result;
       
-      if (existingPrize) {
+      if (existingPrizes && existingPrizes.length > 0) {
         // Mettre à jour le prix existant
         result = await supabase
           .from('prizes')
           .update({ catalog_item_id: catalogItemId })
-          .eq('id', existingPrize.id);
+          .eq('id', existingPrizes[0].id);
           
         console.log('Update result:', result);
       } else {
@@ -67,7 +65,7 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
       
       toast({
         title: "Succès",
-        description: existingPrize 
+        description: existingPrizes && existingPrizes.length > 0
           ? "Le prix a été mis à jour"
           : "Le prix a été associé au concours",
       });
