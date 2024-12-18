@@ -57,7 +57,14 @@ const AdminContestManager = () => {
         .select()
         .single();
 
-      if (contestError) throw contestError;
+      if (contestError) {
+        console.error('Error creating contest:', contestError);
+        throw contestError;
+      }
+
+      if (!contest) {
+        throw new Error('No contest was created');
+      }
 
       // Invalidate queries to refresh the contests list
       await Promise.all([
