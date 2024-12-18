@@ -55,8 +55,9 @@ const AdminContestManager = () => {
       if (contestError) throw contestError;
 
       // Invalidate queries to refresh the contests list
-      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
+      await queryClient.invalidateQueries({ queryKey: ['contests'] });
 
       toast({
         title: "Succès",
