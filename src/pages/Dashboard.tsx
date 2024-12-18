@@ -6,9 +6,9 @@ import { supabase } from "@/App";
 import { Loader2 } from "lucide-react";
 
 interface UserStats {
-  totalParticipations: number;
-  totalPoints: number;
-  contestsWon: number;
+  contests_participated: number;
+  total_points: number;
+  contests_won: number;
 }
 
 const Dashboard = () => {
@@ -60,7 +60,7 @@ const Dashboard = () => {
             <CardDescription>Nombre total de participations</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{userStats?.totalParticipations || 0}</p>
+            <p className="text-3xl font-bold">{userStats?.contests_participated || 0}</p>
           </CardContent>
         </Card>
 
@@ -70,7 +70,7 @@ const Dashboard = () => {
             <CardDescription>Total des points gagnés</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{userStats?.totalPoints || 0}</p>
+            <p className="text-3xl font-bold">{userStats?.total_points || 0}</p>
           </CardContent>
         </Card>
 
@@ -80,7 +80,7 @@ const Dashboard = () => {
             <CardDescription>Nombre de concours gagnés</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{userStats?.contestsWon || 0}</p>
+            <p className="text-3xl font-bold">{userStats?.contests_won || 0}</p>
           </CardContent>
         </Card>
       </div>
