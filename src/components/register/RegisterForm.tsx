@@ -15,7 +15,7 @@ import { ProfilePhotoUpload } from "./ProfilePhotoUpload";
 import { NotificationPreferences } from "./NotificationPreferences";
 import { SharingPreferences } from "./SharingPreferences";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/App";
 
 const formSchema = z.object({
@@ -49,7 +49,9 @@ export const RegisterForm = () => {
       });
 
       if (authError) {
-        if (authError.message === "User already registered") {
+        console.log("Auth Error:", authError); // Ajout d'un log pour déboguer
+        
+        if (authError.message.includes("already registered") || authError.message === "User already registered") {
           toast({
             variant: "destructive",
             title: "Erreur d'inscription",
@@ -60,30 +62,40 @@ export const RegisterForm = () => {
         throw authError;
       }
 
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('members')
-          .insert([
-            {
-              id: authData.user.id,
-              first_name: values.firstName,
-              last_name: values.lastName,
-              email: values.email,
-              phone_number: values.phoneNumber || null,
-              notifications_enabled: true,
-              share_scores: true,
-            }
-          ]);
-
-        if (profileError) throw profileError;
-
+      if (!authData.user) {
         toast({
-          title: "Inscription réussie !",
-          description: "Bienvenue sur notre plateforme de concours !",
+          variant: "destructive",
+          title: "Erreur d'inscription",
+          description: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
         });
-
-        navigate("/contests");
+        return;
       }
+
+      const { error: profileError } = await supabase
+        .from('members')
+        .insert([
+          {
+            id: authData.user.id,
+            first_name: values.firstName,
+            last_name: values.lastName,
+            email: values.email,
+            phone_number: values.phoneNumber || null,
+            notifications_enabled: true,
+            share_scores: true,
+          }
+        ]);
+
+      if (profileError) {
+        console.log("Profile Error:", profileError); // Ajout d'un log pour déboguer
+        throw profileError;
+      }
+
+      toast({
+        title: "Inscription réussie !",
+        description: "Bienvenue sur notre plateforme de concours !",
+      });
+
+      navigate("/contests");
     } catch (error) {
       console.error("Erreur lors de l'inscription:", error);
       toast({
