@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -6,7 +7,6 @@ import { supabase } from "../App";
 import { useQuestions } from './questionnaire/useQuestions';
 import { ensureParticipantExists } from './questionnaire/ParticipantManager';
 import { getRandomMessage } from './questionnaire/messages';
-import { useQuestionnaireCompletion } from './questionnaire/QuestionnaireCompletion';
 import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
 import QuestionDisplay from './questionnaire/QuestionDisplay';
 
@@ -15,6 +15,7 @@ interface QuestionnaireComponentProps {
 }
 
 const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -25,7 +26,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const { data: questions } = useQuestions(contestId);
-  const { completeQuestionnaire } = useQuestionnaireCompletion();
   const currentQuestion = questions?.[currentQuestionIndex];
 
   const handleSubmitAnswer = async () => {
@@ -82,6 +82,25 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     }
   };
 
+  const completeQuestionnaire = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) return false;
+
+      const { error } = await supabase
+        .from('participants')
+        .update({ status: 'completed' })
+        .eq('contest_id', contestId)
+        .eq('id', session.session.user.id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error completing questionnaire:', error);
+      return false;
+    }
+  };
+
   const handleNextQuestion = async () => {
     if (currentQuestionIndex < (questions?.length || 0) - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -91,9 +110,23 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       setIsCorrect(null);
     } else {
       setIsSubmitting(true);
-      const success = await completeQuestionnaire(contestId);
-      if (!success) {
+      const success = await completeQuestionnaire();
+      if (success) {
+        toast({
+          title: "Félicitations ! 🎉",
+          description: "Vous avez terminé le questionnaire avec succès !",
+        });
+        // Redirection après un court délai
+        setTimeout(() => {
+          navigate('/contests');
+        }, 2000);
+      } else {
         setIsSubmitting(false);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la finalisation du questionnaire",
+          variant: "destructive",
+        });
       }
     }
   };
