@@ -1,53 +1,59 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export const useContests = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   return useQuery({
     queryKey: ['active-contests'],
     queryFn: async () => {
-      try {
-        const { data: session } = await supabase.auth.getSession();
-        
-        if (!session?.session?.user) {
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session?.session?.user) {
+        toast({
+          variant: "destructive",
+          title: "Non connecté",
+          description: "Veuillez vous connecter pour voir les concours.",
+        });
+        navigate('/login');
+        throw new Error("Not authenticated");
+      }
+
+      const { data: contests, error } = await supabase
+        .from('contests')
+        .select(`
+          *,
+          participants:participants(count),
+          questions:questions(count)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching contests:', error);
+        if (error.code === '401') {
           toast({
             variant: "destructive",
-            title: "Non connecté",
-            description: "Veuillez vous connecter pour voir les concours.",
+            title: "Session expirée",
+            description: "Votre session a expiré. Veuillez vous reconnecter.",
           });
-          throw new Error("Not authenticated");
-        }
-
-        const { data: contests, error } = await supabase
-          .from('contests')
-          .select(`
-            *,
-            participants:participants(count),
-            questions:questions(count)
-          `)
-          .order('created_at', { ascending: false })
-          .throwOnError();
-
-        if (error) {
-          console.error('Error fetching contests:', error);
+          navigate('/login');
+        } else {
           toast({
             variant: "destructive",
             title: "Erreur",
             description: "Impossible de charger les concours. Veuillez réessayer.",
           });
-          throw error;
         }
-
-        return contests || [];
-      } catch (error) {
-        console.error('Error in useContests:', error);
         throw error;
       }
+
+      return contests || [];
     },
-    retry: false,
+    retry: 1,
     refetchOnWindowFocus: false,
-    refetchInterval: 30000 // Reduced from 5000 to prevent too frequent requests
+    refetchInterval: 300000 // 5 minutes
   });
 };
