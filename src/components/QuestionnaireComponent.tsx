@@ -5,13 +5,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../App";
 import { ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import ArticleLink from './questionnaire/ArticleLink';
 import AnswerOptions from './questionnaire/AnswerOptions';
 import { useQuestions } from './questionnaire/useQuestions';
 import { ensureParticipantExists } from './questionnaire/ParticipantManager';
 import { getRandomMessage } from './questionnaire/messages';
-import { saveQuestionnaireCompletion } from './questionnaire/QuestionnaireService';
+import { useQuestionnaireCompletion } from './questionnaire/QuestionnaireCompletion';
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -19,7 +18,6 @@ interface QuestionnaireComponentProps {
 
 const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
@@ -29,6 +27,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const { data: questions } = useQuestions(contestId);
+  const { completeQuestionnaire } = useQuestionnaireCompletion();
   const currentQuestion = questions?.[currentQuestionIndex];
 
   const calculateProgress = () => {
@@ -99,26 +98,8 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       setIsCorrect(null);
     } else {
       setIsSubmitting(true);
-      try {
-        // Sauvegarder la complétion du questionnaire
-        await saveQuestionnaireCompletion(contestId);
-        
-        toast({
-          title: "Félicitations ! 🎉",
-          description: "Questionnaire terminé avec succès !",
-        });
-
-        // Attendre un court instant pour que le toast soit visible
-        setTimeout(() => {
-          navigate('/contests');
-        }, 1500);
-      } catch (error) {
-        console.error('Error completing questionnaire:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la finalisation du questionnaire",
-        });
+      const success = await completeQuestionnaire(contestId);
+      if (!success) {
         setIsSubmitting(false);
       }
     }
