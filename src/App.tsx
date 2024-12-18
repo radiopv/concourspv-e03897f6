@@ -9,6 +9,7 @@ import Admin from "./pages/Admin";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import ContestsList from "./pages/ContestsList";
+import Register from "./pages/Register";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => {
               <Route path="/contests" element={<ContestsList />} />
               <Route path="/contest/:id" element={<Contest />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/register" element={<Register />} />
             </Route>
           </Routes>
           <Toaster />
