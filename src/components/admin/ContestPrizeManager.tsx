@@ -33,24 +33,30 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     shop_url: '',
   });
 
-  // Charger les prix du catalogue
+  // Load catalog prizes
   const { data: catalogPrizes, isLoading: loadingCatalog } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
+      console.log('Fetching prize catalog...');
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching prize catalog:', error);
+        throw error;
+      }
+      console.log('Prize catalog data:', data);
       return data;
     }
   });
 
-  // Charger les prix actuels du concours
+  // Load contest prizes
   const { data: contestPrizes, isLoading: loadingPrizes } = useQuery({
     queryKey: ['prizes', contestId],
     queryFn: async () => {
+      console.log('Fetching contest prizes...');
       const { data, error } = await supabase
         .from('prizes')
         .select(`
@@ -59,8 +65,44 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         `)
         .eq('contest_id', contestId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching contest prizes:', error);
+        throw error;
+      }
+      console.log('Contest prizes data:', data);
       return data;
+    }
+  });
+
+  const addPrizeMutation = useMutation({
+    mutationFn: async (catalogItemId: string) => {
+      console.log('Adding prize to contest:', { contestId, catalogItemId });
+      const { error } = await supabase
+        .from('prizes')
+        .insert([{
+          contest_id: contestId,
+          catalog_item_id: catalogItemId
+        }]);
+      
+      if (error) {
+        console.error('Error adding prize:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été ajouté au concours",
+      });
+    },
+    onError: (error) => {
+      console.error("Add prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le prix",
+        variant: "destructive",
+      });
     }
   });
 
@@ -87,6 +129,32 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le prix",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deletePrizeMutation = useMutation({
+    mutationFn: async (prizeId: string) => {
+      const { error } = await supabase
+        .from('prizes')
+        .delete()
+        .eq('id', prizeId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été retiré du concours",
+      });
+    },
+    onError: (error) => {
+      console.error("Delete prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de retirer le prix",
         variant: "destructive",
       });
     }
@@ -129,60 +197,6 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
       setUploading(false);
     }
   };
-
-  const addPrizeMutation = useMutation({
-    mutationFn: async (catalogItemId: string) => {
-      const { error } = await supabase
-        .from('prizes')
-        .insert([{
-          contest_id: contestId,
-          catalog_item_id: catalogItemId
-        }]);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
-      toast({
-        title: "Succès",
-        description: "Le prix a été ajouté au concours",
-      });
-    },
-    onError: (error) => {
-      console.error("Add prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le prix",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const deletePrizeMutation = useMutation({
-    mutationFn: async (prizeId: string) => {
-      const { error } = await supabase
-        .from('prizes')
-        .delete()
-        .eq('id', prizeId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
-      toast({
-        title: "Succès",
-        description: "Le prix a été retiré du concours",
-      });
-    },
-    onError: (error) => {
-      console.error("Delete prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de retirer le prix",
-        variant: "destructive",
-      });
-    }
-  });
 
   const startEditing = (prize: any) => {
     setEditingPrize(prize.catalog_item.id);
