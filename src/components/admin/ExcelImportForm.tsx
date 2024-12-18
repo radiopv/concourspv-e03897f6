@@ -37,14 +37,15 @@ const ExcelImportForm = () => {
 
         if (contestError) throw contestError;
 
-        // Ajouter les questions au concours
+        // Ajouter les questions au concours avec l'URL de l'article
         const questionsData = questions.map((q, index) => ({
           contest_id: contest[0].id,
           question_text: q.question_text,
           options: q.options,
           correct_answer: q.correct_answer,
+          article_url: q.article_url,
           order_number: index + 1,
-          type: 'multiple_choice' // Adding the required type field
+          type: 'multiple_choice'
         }));
 
         const { error: questionsError } = await supabase
@@ -78,7 +79,7 @@ const ExcelImportForm = () => {
     <div className="mt-4">
       <Label htmlFor="file-upload">Importer des questions (Excel)</Label>
       <p className="text-sm text-gray-500 mb-2">
-        Le fichier doit contenir les colonnes: Question, Choix A, Choix B, Choix C, Choix D, Réponse correcte
+        Le fichier doit contenir les colonnes: Question, Choix A, Choix B, Choix C, Choix D, Réponse correcte, Lien Article (optionnel)
       </p>
       <Input
         id="file-upload"

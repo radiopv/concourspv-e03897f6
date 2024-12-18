@@ -4,6 +4,7 @@ export interface QuestionImport {
   question_text: string;
   options: string[];
   correct_answer: string;
+  article_url?: string;
 }
 
 export const validateAndParseQuestions = (worksheet: XLSX.WorkSheet): QuestionImport[] => {
@@ -29,6 +30,7 @@ export const validateAndParseQuestions = (worksheet: XLSX.WorkSheet): QuestionIm
       row['Choix C'],
       row['Choix D']
     ],
-    correct_answer: row['Réponse correcte']
+    correct_answer: row['Réponse correcte'],
+    article_url: row['Lien Article'] || null
   }));
 };
