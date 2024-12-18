@@ -1,20 +1,32 @@
 import { supabase } from "../../App";
 
-export const calculateFinalScore = async (participationId: string) => {
-  const { data: answers, error } = await supabase
-    .from('participant_answers')
-    .select('*')
-    .eq('participant_id', participationId);
+export const calculateFinalScore = async (participantId: string) => {
+  try {
+    // Récupérer toutes les réponses du participant
+    const { data: answers, error: answersError } = await supabase
+      .from('participant_answers')
+      .select('is_correct')
+      .eq('participant_id', participantId);
 
-  if (error) throw error;
+    if (answersError) throw answersError;
 
-  const totalQuestions = answers?.length || 0;
-  const correctAnswers = answers?.filter(a => a.is_correct)?.length || 0;
-  
-  return totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+    if (!answers || answers.length === 0) return 0;
+
+    // Compter le nombre de réponses correctes
+    const correctAnswers = answers.filter(answer => answer.is_correct).length;
+    
+    // Calculer le pourcentage
+    const percentage = (correctAnswers / answers.length) * 100;
+    
+    // Arrondir le pourcentage à l'entier le plus proche
+    return Math.round(percentage);
+  } catch (error) {
+    console.error('Error calculating final score:', error);
+    return 0;
+  }
 };
 
-export const completeQuestionnaire = async (participationId: string, finalScore: number) => {
+export const completeQuestionnaire = async (participantId: string, finalScore: number) => {
   const { error } = await supabase
     .from('participants')
     .update({
@@ -22,7 +34,7 @@ export const completeQuestionnaire = async (participationId: string, finalScore:
       score: finalScore,
       completed_at: new Date().toISOString()
     })
-    .eq('participation_id', participationId);
+    .eq('id', participantId);
 
   if (error) throw error;
 };
