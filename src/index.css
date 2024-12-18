@@ -52,3 +52,20 @@
 .fade-exit-active {
   @apply opacity-0 transition-opacity duration-300;
 }
+
+/* Ajout des animations pour la liste des concours */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}

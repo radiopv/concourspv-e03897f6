@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import ContestCard from './ContestCard';
 import EditContestForm from './EditContestForm';
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
+import ContestListHeader from './contest-list/ContestListHeader';
+import ContestListGrid from './contest-list/ContestListGrid';
 
 interface ContestListProps {
   contests: Array<{
@@ -28,7 +29,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: contestsWithCounts } = useQuery({
+  const { data: contestsWithCounts, isLoading } = useQuery({
     queryKey: ['admin-contests-with-counts'],
     queryFn: async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -36,7 +37,6 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
         throw new Error("Not authenticated");
       }
 
-      // Récupérer les concours avec le nombre de participants et de questions
       const { data: contests, error: contestsError } = await supabase
         .from('contests')
         .select(`
@@ -48,7 +48,6 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
       
       if (contestsError) throw contestsError;
 
-      // Pour chaque concours, récupérer le nombre exact de questions
       const contestsWithQuestionCounts = await Promise.all(contests.map(async (contest) => {
         const { count: questionsCount, error: questionsError } = await supabase
           .from('questions')
@@ -67,7 +66,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
     },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 5000 // Rafraîchir toutes les 5 secondes
+    refetchInterval: 5000
   });
 
   const deleteMutation = useMutation({
@@ -182,20 +181,27 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
     }
   });
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {(contestsWithCounts || contests).map((contest) => (
-        <ContestCard
-          key={contest.id}
-          contest={contest}
-          onDelete={(id) => deleteMutation.mutate(id)}
-          onArchive={(id) => archiveMutation.mutate(id)}
-          onFeatureToggle={(id, featured) => featureToggleMutation.mutate({ id, featured })}
-          onStatusUpdate={(id, updates) => statusUpdateMutation.mutate({ id, updates })}
-          onSelect={onSelectContest}
-          onEdit={() => setEditingContestId(contest.id)}
-        />
-      ))}
+    <div className="container mx-auto px-4 py-8">
+      <ContestListHeader />
+      
+      <ContestListGrid
+        contests={contestsWithCounts || contests}
+        onDelete={(id) => deleteMutation.mutate(id)}
+        onArchive={(id) => archiveMutation.mutate(id)}
+        onFeatureToggle={(id, featured) => featureToggleMutation.mutate({ id, featured })}
+        onStatusUpdate={(id, updates) => statusUpdateMutation.mutate({ id, updates })}
+        onSelect={onSelectContest}
+        onEdit={() => setEditingContestId(contest.id)}
+      />
 
       {editingContestId && (
         <Dialog open={true} onOpenChange={() => setEditingContestId(null)}>
