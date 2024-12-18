@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import QuestionForm from './QuestionForm';
 
 interface EditQuestionsListProps {
@@ -23,6 +23,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [isAddingQuestion, setIsAddingQuestion] = useState(false);
 
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', contestId],
@@ -69,6 +70,38 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     }
   };
 
+  const handleAddQuestion = async (newQuestionData: Partial<Question>) => {
+    try {
+      const { error } = await supabase
+        .from('questions')
+        .insert([{
+          contest_id: contestId,
+          question_text: newQuestionData.question_text,
+          options: newQuestionData.options,
+          correct_answer: newQuestionData.correct_answer,
+          article_url: newQuestionData.article_url,
+          order_number: (questions?.length || 0) + 1
+        }]);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      toast({
+        title: "Succès",
+        description: "La question a été ajoutée",
+      });
+      
+      setIsAddingQuestion(false);
+    } catch (error) {
+      console.error('Error adding question:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter la question",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDelete = async (questionId: string) => {
     try {
       const { error } = await supabase
@@ -99,10 +132,32 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Questions du concours</CardTitle>
+        <Button
+          onClick={() => setIsAddingQuestion(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" /> Ajouter une question
+        </Button>
       </CardHeader>
       <CardContent className="space-y-4">
+        {isAddingQuestion && (
+          <Card className="p-4">
+            <QuestionForm
+              question={{
+                id: 'new',
+                question_text: '',
+                options: ['', '', '', ''],
+                correct_answer: '',
+                article_url: ''
+              }}
+              onSave={handleAddQuestion}
+              onCancel={() => setIsAddingQuestion(false)}
+            />
+          </Card>
+        )}
+
         {questions?.map((question, index) => (
           <Card key={question.id} className="p-4">
             {editingQuestionId === question.id ? (
