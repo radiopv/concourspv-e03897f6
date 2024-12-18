@@ -85,19 +85,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!session?.user?.email) {
         setIsAdmin(false);
-        return;
-      }
-
-      // Définir directement comme admin si c'est l'email spécifique
-      if (session.user.email === "renaudcanuel@me.com") {
-        setIsAdmin(true);
         return;
       }
 
@@ -117,11 +111,9 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         }
 
         console.log("Données admin reçues:", adminData);
+        setIsAdmin(adminData?.role === 'admin');
         
-        if (adminData && adminData.role === 'admin') {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
+        if (!adminData?.role === 'admin') {
           toast({
             title: "Accès refusé",
             description: "Vous n'avez pas les droits d'administrateur nécessaires.",
@@ -137,7 +129,7 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     checkAdminStatus();
   }, [session, toast]);
 
-  if (loading || isAdmin === null) {
+  if (loading) {
     return <div>Vérification des droits d'accès...</div>;
   }
 
