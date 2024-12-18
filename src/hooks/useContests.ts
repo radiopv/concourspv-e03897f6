@@ -13,6 +13,11 @@ export const useContests = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Non connecté",
+          description: "Veuillez vous connecter pour voir les concours.",
+        });
         navigate('/login');
         return [];
       }
@@ -27,10 +32,22 @@ export const useContests = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        if (error.status === 401) {
+        console.error('Error fetching contests:', error);
+        if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
+          toast({
+            variant: "destructive",
+            title: "Session expirée",
+            description: "Votre session a expiré. Veuillez vous reconnecter.",
+          });
           navigate('/login');
           return [];
         }
+        
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les concours. Veuillez réessayer.",
+        });
         throw error;
       }
 
