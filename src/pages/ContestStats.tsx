@@ -18,7 +18,7 @@ interface Profile {
 interface TopParticipant {
   id: string;
   score: number;
-  profiles: Profile;
+  profiles: Profile[];  // Changed to Profile[] since Supabase returns an array
 }
 
 const ContestStatsPage = () => {
@@ -155,7 +155,7 @@ const ContestStatsPage = () => {
                         {index + 1}
                       </div>
                       <span className="font-medium">
-                        {participant.profiles.full_name || 'Participant anonyme'}
+                        {participant.profiles[0]?.full_name || 'Participant anonyme'}
                       </span>
                     </div>
                     <span className="text-lg font-bold text-indigo-600">
