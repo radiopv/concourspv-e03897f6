@@ -28,27 +28,41 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
   useEffect(() => {
     const fetchQuestions = async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('contest_id', contestId)
-        .order('order_number');
+      try {
+        const { data, error } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('contest_id', contestId)
+          .order('order_number');
 
-      if (error) {
+        if (error) {
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          toast({
+            title: "Information",
+            description: "Aucune question n'est disponible pour ce concours.",
+          });
+          navigate("/");
+          return;
+        }
+
+        setQuestions(data);
+      } catch (error) {
         toast({
           title: "Erreur",
           description: "Impossible de charger les questions",
           variant: "destructive",
         });
-        return;
+        navigate("/");
+      } finally {
+        setLoading(false);
       }
-
-      setQuestions(data);
-      setLoading(false);
     };
 
     fetchQuestions();
-  }, [contestId]);
+  }, [contestId, toast, navigate]);
 
   const handleAnswer = (answer: string) => {
     setAnswers({
@@ -59,14 +73,13 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
   const handleSubmit = async () => {
     try {
-      // Enregistrer les réponses
       const { error: answersError } = await supabase
         .from('participant_answers')
         .insert(
           Object.entries(answers).map(([questionId, answer]) => ({
             question_id: questionId,
             answer,
-            participant_id: contestId, // Vous devrez adapter ceci pour utiliser le vrai participant_id
+            participant_id: contestId,
           }))
         );
 
@@ -88,10 +101,18 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   };
 
   if (loading) {
-    return <div>Chargement des questions...</div>;
+    return <div className="flex justify-center items-center">Chargement des questions...</div>;
+  }
+
+  if (questions.length === 0) {
+    return <div className="flex justify-center items-center">Aucune question disponible.</div>;
   }
 
   const currentQ = questions[currentQuestion];
+
+  if (!currentQ) {
+    return <div className="flex justify-center items-center">Question non trouvée.</div>;
+  }
 
   return (
     <div className="space-y-6">
