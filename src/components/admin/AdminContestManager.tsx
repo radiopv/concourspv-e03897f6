@@ -18,9 +18,14 @@ const AdminContestManager = () => {
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreateContest = async () => {
+    if (isSubmitting) return;
+    
     try {
+      setIsSubmitting(true);
+
       if (!newContest.title || !newContest.start_date || !newContest.end_date) {
         toast({
           title: "Erreur",
@@ -55,9 +60,11 @@ const AdminContestManager = () => {
       if (contestError) throw contestError;
 
       // Invalidate queries to refresh the contests list
-      await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
-      await queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
-      await queryClient.invalidateQueries({ queryKey: ['contests'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-contests'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] }),
+        queryClient.invalidateQueries({ queryKey: ['contests'] })
+      ]);
 
       toast({
         title: "Succès",
@@ -77,6 +84,8 @@ const AdminContestManager = () => {
         description: "Erreur lors de la création du concours",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -123,8 +132,12 @@ const AdminContestManager = () => {
             required
           />
         </div>
-        <Button onClick={handleCreateContest} className="w-full">
-          Créer le concours
+        <Button 
+          onClick={handleCreateContest} 
+          className="w-full"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Création en cours...' : 'Créer le concours'}
         </Button>
         
         <ExcelImportForm />
