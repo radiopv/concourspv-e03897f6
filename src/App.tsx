@@ -11,7 +11,7 @@ import ContestsList from "@/pages/ContestsList";
 import Contest from "@/pages/Contest";
 import Admin from "@/pages/Admin";
 import Dashboard from "@/pages/Dashboard";
-import ContestStatsPage from "@/pages/ContestStats"; // Import the new ContestStatsPage
+import ContestStatsPage from "@/pages/ContestStats";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -50,7 +50,8 @@ function App() {
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/contests" element={<ProtectedRoute><ContestsList /></ProtectedRoute>} />
               <Route path="/contests/:id" element={<ProtectedRoute><Contest /></ProtectedRoute>} />
-              <Route path="/contests/:id/stats" element={<ProtectedRoute><ContestStatsPage /></ProtectedRoute>} /> {/* New route for ContestStatsPage */}
+              <Route path="/contests/:id/stats" element={<ProtectedRoute><ContestStatsPage /></ProtectedRoute>} />
+              <Route path="/admin" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
               <Route path="/admin/*" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
             </Routes>
           </Layout>
