@@ -1,38 +1,70 @@
-import { supabase } from "../App";
+import { supabase } from "@/lib/supabase";
 
-export const checkExistingParticipant = async (email: string, contestId: string) => {
-  const { data, error } = await supabase
-    .from('participants')
-    .select()
-    .eq('email', email)
-    .eq('contest_id', contestId);
+export const ensureParticipantExists = async (userId: string, contestId: string) => {
+  try {
+    // Check if user already participates in this contest
+    const { data: existingParticipant, error: fetchError } = await supabase
+      .from('participants')
+      .select('participation_id, attempts')
+      .eq('id', userId)
+      .eq('contest_id', contestId)
+      .maybeSingle();
 
-  if (error) {
+    if (fetchError) {
+      console.error('Error checking participant:', fetchError);
+      throw fetchError;
+    }
+
+    if (existingParticipant) {
+      return existingParticipant.participation_id;
+    }
+
+    // Get user's email from auth session
+    const { data: { session } } = await supabase.auth.getSession();
+    const userEmail = session?.user?.email || 'anonymous@user.com';
+
+    // Create new participation entry
+    const { data: newParticipant, error: insertError } = await supabase
+      .from('participants')
+      .insert([{
+        id: userId,
+        contest_id: contestId,
+        status: 'pending',
+        first_name: userEmail.split('@')[0],
+        last_name: 'Participant',
+        email: userEmail,
+        attempts: 0
+      }])
+      .select('participation_id')
+      .single();
+
+    if (insertError) {
+      console.error('Error creating participant:', insertError);
+      throw insertError;
+    }
+
+    return newParticipant.participation_id;
+  } catch (error) {
+    console.error('Error in ensureParticipantExists:', error);
     throw error;
   }
-
-  return data && data.length > 0 ? data[0] : null;
 };
 
-export const createParticipant = async (
-  firstName: string,
-  lastName: string,
-  email: string,
-  contestId: string
-) => {
-  const { error } = await supabase
+export const getParticipantStats = async (userId: string) => {
+  const { data, error } = await supabase
     .from('participants')
-    .insert([
-      {
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
-        contest_id: contestId,
-        status: 'pending'
-      }
-    ]);
+    .select(`
+      contest_id,
+      status,
+      attempts,
+      score,
+      completed_at,
+      contests (
+        title
+      )
+    `)
+    .eq('id', userId);
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
+  return data;
 };

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 import ExcelImportForm from "./ExcelImportForm";
 import { useQueryClient } from "@tanstack/react-query";
 
