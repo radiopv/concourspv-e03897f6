@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "../App";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
+import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 
 interface Contest {
   id: string;
@@ -34,11 +35,7 @@ const Contest = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contests')
-        .select(`
-          *,
-          participants (count)
-        `)
-        .eq('status', 'active');
+        .select('*, participants(count)');
       
       if (error) throw error;
       return data as Contest[];
@@ -201,9 +198,9 @@ const Contest = () => {
         </form>
       )}
 
-      {step === "questions" && (
+      {step === "questions" && selectedContest && (
         <div className="glass-card p-8 rounded-lg animate-fadeIn">
-          <QuestionnaireComponent contestId={selectedContest!} />
+          <QuestionnaireComponent contestId={selectedContest} />
         </div>
       )}
     </div>
