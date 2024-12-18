@@ -13,4 +13,4 @@ check (role in ('user', 'admin'));
 -- Update your email to be admin
 update public.members 
 set role = 'admin' 
-where email = 'admin@passionvaradero.com';
+where email = 'renaudcanuel@me.com';

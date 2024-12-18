@@ -86,12 +86,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isChecking, setIsChecking] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!session?.user?.email) {
         setIsAdmin(false);
+        setIsChecking(false);
         return;
       }
 
@@ -105,6 +107,7 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         if (error) {
           console.error('Erreur lors de la vérification du rôle:', error);
           setIsAdmin(false);
+          setIsChecking(false);
           return;
         }
 
@@ -114,6 +117,7 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         console.log('Est admin:', hasAdminRole);
         
         setIsAdmin(hasAdminRole);
+        setIsChecking(false);
 
         if (!hasAdminRole) {
           toast({
@@ -125,17 +129,22 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error('Erreur lors de la vérification des droits admin:', error);
         setIsAdmin(false);
+        setIsChecking(false);
       }
     };
     
     checkAdminStatus();
   }, [session, toast]);
 
-  if (loading) {
+  if (loading || isChecking) {
     return <div>Vérification des droits d'accès...</div>;
   }
 
-  if (!session || !isAdmin) {
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 
