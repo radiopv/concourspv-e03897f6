@@ -39,6 +39,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
     is_featured: contest?.is_featured || false,
     is_new: contest?.is_new || false,
     has_big_prizes: contest?.has_big_prizes || false,
+    shop_url: contest?.shop_url || '',
   });
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,19 +52,20 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
+      // Utiliser le bucket "prizes" au lieu de "contests"
       const { error: uploadError } = await supabase.storage
-        .from('contests')
+        .from('prizes')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('contests')
+        .from('prizes')
         .getPublicUrl(filePath);
 
       const { error: updateError } = await supabase
         .from('contests')
-        .update({ image_url: publicUrl })
+        .update({ prize_image_url: publicUrl })
         .eq('id', contestId);
 
       if (updateError) throw updateError;
@@ -98,6 +100,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
           is_featured: formData.is_featured,
           is_new: formData.is_new,
           has_big_prizes: formData.has_big_prizes,
+          shop_url: formData.shop_url,
         })
         .eq('id', contestId);
 
