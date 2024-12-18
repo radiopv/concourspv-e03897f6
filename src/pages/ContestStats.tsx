@@ -10,6 +10,17 @@ interface LocationState {
   finalScore?: number;
 }
 
+interface Profile {
+  full_name: string;
+  avatar_url: string | null;
+}
+
+interface TopParticipant {
+  id: string;
+  score: number;
+  profiles: Profile;
+}
+
 const ContestStatsPage = () => {
   const { id } = useParams();
   const location = useLocation();
@@ -50,7 +61,7 @@ const ContestStatsPage = () => {
         .limit(10);
 
       if (error) throw error;
-      return data;
+      return data as TopParticipant[];
     }
   });
 
@@ -144,7 +155,7 @@ const ContestStatsPage = () => {
                         {index + 1}
                       </div>
                       <span className="font-medium">
-                        {participant.profiles?.full_name || 'Participant anonyme'}
+                        {participant.profiles.full_name || 'Participant anonyme'}
                       </span>
                     </div>
                     <span className="text-lg font-bold text-indigo-600">
