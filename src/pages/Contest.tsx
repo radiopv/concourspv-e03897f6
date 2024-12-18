@@ -15,9 +15,6 @@ interface Contest {
   start_date: string;
   end_date: string;
   status: string;
-  participants: {
-    count: number;
-  }
 }
 
 const Contest = () => {
@@ -35,7 +32,7 @@ const Contest = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contests')
-        .select('*, participants(count)')
+        .select('*')
         .eq('status', 'active');
       
       if (error) throw error;
@@ -152,9 +149,6 @@ const Contest = () => {
                     <p className="text-sm text-gray-500">
                       Du {new Date(contest.start_date).toLocaleDateString()} au{" "}
                       {new Date(contest.end_date).toLocaleDateString()}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {contest.participants?.count || 0} participants
                     </p>
                   </div>
                   <Button onClick={() => handleContestSelect(contest.id)}>
