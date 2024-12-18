@@ -30,13 +30,14 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Vérifier si l'utilisateur existe déjà via auth
-      const { data: { user: existingUser }, error: signInError } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+      // First, check if the user exists in the members table
+      const { data: existingMembers } = await supabase
+        .from('members')
+        .select('id')
+        .eq('email', values.email)
+        .single();
 
-      if (existingUser) {
+      if (existingMembers) {
         toast({
           variant: "destructive",
           title: "Utilisateur existant",
@@ -46,19 +47,20 @@ export const useRegisterForm = () => {
         return;
       }
 
-      // Si l'utilisateur n'existe pas, procéder à l'inscription
+      // If not in members table, proceed with auth signup
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            first_name: values.firstName,
+            last_name: values.lastName,
+          },
         },
       });
 
       if (signUpError) {
-        // Vérifier si l'erreur indique que l'utilisateur existe déjà
-        if (signUpError.message?.toLowerCase().includes("already registered") || 
-            signUpError.message?.toLowerCase().includes("already exists")) {
+        if (signUpError.message.includes("already registered")) {
           toast({
             variant: "destructive",
             title: "Utilisateur existant",
@@ -68,26 +70,14 @@ export const useRegisterForm = () => {
           return;
         }
 
-        // Autres erreurs d'inscription
-        console.error("Erreur d'inscription:", signUpError);
-        toast({
-          variant: "destructive",
-          title: "Erreur d'inscription",
-          description: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
-        });
-        return;
+        throw signUpError;
       }
 
       if (!authData.user) {
-        toast({
-          variant: "destructive",
-          title: "Erreur d'inscription",
-          description: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
-        });
-        return;
+        throw new Error("Erreur lors de la création du compte");
       }
 
-      // Créer le profil utilisateur dans la table members
+      // Create the profile in members table
       const { error: profileError } = await supabase
         .from('members')
         .insert([
@@ -104,12 +94,7 @@ export const useRegisterForm = () => {
 
       if (profileError) {
         console.error("Erreur de création du profil:", profileError);
-        toast({
-          variant: "destructive",
-          title: "Erreur de création du profil",
-          description: "Une erreur est survenue lors de la création de votre profil. Veuillez réessayer.",
-        });
-        return;
+        throw profileError;
       }
 
       toast({
@@ -117,7 +102,11 @@ export const useRegisterForm = () => {
         description: "Un email de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception.",
       });
 
-      navigate("/login");
+      // Redirect after successful registration
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+
     } catch (error) {
       console.error("Erreur lors de l'inscription:", error);
       toast({
