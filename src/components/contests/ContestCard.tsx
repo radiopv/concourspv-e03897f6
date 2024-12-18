@@ -1,5 +1,6 @@
-import { Badge } from "@/components/ui/badge";
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trophy, Gift, HelpCircle, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
@@ -51,20 +52,17 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       if (!data) return [];
 
       return data
-        .filter((item): item is { prize_catalog: PrizeCatalogItem } => 
+        .filter((item): item is Prize => 
           item.prize_catalog !== null && 
           typeof item.prize_catalog === 'object' &&
           'name' in item.prize_catalog &&
           'value' in item.prize_catalog
-        )
-        .map(item => ({
-          prize_catalog: item.prize_catalog
-        }));
+        );
     },
   });
 
   const totalPrizeValue = prizesData?.reduce((total, prize) => {
-    return total + (prize.prize_catalog?.value || 0);
+    return total + (prize.prize_catalog.value || 0);
   }, 0);
 
   return (
