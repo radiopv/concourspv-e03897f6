@@ -20,6 +20,11 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prizes', contestId],
     queryFn: async () => {
+      const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
+      if (!isAuthenticated) {
+        throw new Error("Not authenticated");
+      }
+
       const { data, error } = await supabase
         .from('prizes')
         .select('*')
@@ -32,6 +37,11 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
 
   const deletePrizeMutation = useMutation({
     mutationFn: async (prizeId: string) => {
+      const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
+      if (!isAuthenticated) {
+        throw new Error("Not authenticated");
+      }
+
       const prize = prizes?.find(p => p.id === prizeId);
       if (prize?.image_url) {
         await supabase.storage
@@ -52,11 +62,29 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         title: "Succès",
         description: "Le prix a été supprimé",
       });
+    },
+    onError: (error) => {
+      console.error("Delete prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le prix",
+        variant: "destructive",
+      });
     }
   });
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
+      const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
+      if (!isAuthenticated) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être authentifié",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setUploading(true);
       const file = event.target.files?.[0];
       if (!file) return;
@@ -69,7 +97,10 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         .from('prizes')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('prizes')
@@ -85,7 +116,10 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
           }
         ]);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("Database error:", dbError);
+        throw dbError;
+      }
 
       queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
       toast({
@@ -93,6 +127,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         description: "L'image du prix a été ajoutée",
       });
     } catch (error) {
+      console.error("Image upload error:", error);
       toast({
         title: "Erreur",
         description: "Impossible d'ajouter l'image",
