@@ -50,12 +50,16 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       
       if (!data) return [];
 
-      return data.map(item => {
-        if (!item.prize_catalog) return null;
-        return {
-          prize_catalog: item.prize_catalog as PrizeCatalogItem
-        };
-      }).filter((item): item is Prize => item !== null);
+      return data
+        .filter(item => item.prize_catalog)
+        .map(item => ({
+          prize_catalog: {
+            name: item.prize_catalog.name,
+            image_url: item.prize_catalog.image_url,
+            shop_url: item.prize_catalog.shop_url,
+            value: item.prize_catalog.value
+          }
+        })) as Prize[];
     },
   });
 
