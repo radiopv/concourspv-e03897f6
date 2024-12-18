@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import * as XLSX from 'xlsx';
 import { supabase } from "../../App";
+import { validateAndParseQuestions, type QuestionImport } from "../../utils/excelImport";
 
 const AdminContestManager = () => {
   const [newContest, setNewContest] = useState({
@@ -19,7 +20,6 @@ const AdminContestManager = () => {
 
   const handleCreateContest = async () => {
     try {
-      // Validate required fields
       if (!newContest.title || !newContest.start_date || !newContest.end_date) {
         toast({
           title: "Erreur",
@@ -39,7 +39,7 @@ const AdminContestManager = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: contest, error: contestError } = await supabase
         .from('contests')
         .insert([{
           title: newContest.title,
@@ -50,7 +50,7 @@ const AdminContestManager = () => {
         }])
         .select();
 
-      if (error) throw error;
+      if (contestError) throw contestError;
 
       toast({
         title: "Succès",
@@ -84,63 +84,52 @@ const AdminContestManager = () => {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        
+        const questions = validateAndParseQuestions(worksheet);
 
-        // First, check if the file is empty
-        if (jsonData.length === 0) {
-          throw new Error("Le fichier est vide");
-        }
-
-        // Check if all required columns exist in the first row
-        const firstRow = jsonData[0] as Record<string, unknown>;
-        const requiredColumns = ['title', 'start_date', 'end_date'];
-        const missingColumns = requiredColumns.filter(col => !(col in firstRow));
-
-        if (missingColumns.length > 0) {
-          throw new Error(`Colonnes manquantes dans le fichier : ${missingColumns.join(', ')}`);
-        }
-
-        // Validate and transform the data
-        const contestData = jsonData.map((row: any, index: number) => {
-          // Check for empty required fields
-          for (const col of requiredColumns) {
-            if (!row[col]) {
-              throw new Error(`La ligne ${index + 1} a une valeur manquante pour la colonne '${col}'`);
-            }
-          }
-
-          return {
-            title: row.title,
-            description: row.description || null,
-            start_date: row.start_date,
-            end_date: row.end_date,
-            status: 'active'
-          };
-        });
-
-        const { error } = await supabase
+        // Créer un nouveau concours avec les questions
+        const { data: contest, error: contestError } = await supabase
           .from('contests')
-          .insert(contestData);
+          .insert([{
+            title: file.name.replace(/\.[^/.]+$/, ""), // Utilise le nom du fichier comme titre
+            description: `Concours importé le ${new Date().toLocaleDateString()}`,
+            start_date: new Date().toISOString(), // Date actuelle
+            end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // +30 jours par défaut
+            status: 'draft' // Statut brouillon par défaut
+          }])
+          .select();
 
-        if (error) throw error;
+        if (contestError) throw contestError;
+
+        // Ajouter les questions au concours
+        const questionsData = questions.map((q: QuestionImport) => ({
+          contest_id: contest[0].id,
+          question: q.question,
+          choices: [q.choix_a, q.choix_b, q.choix_c, q.choix_d],
+          correct_answer: q.reponse_correcte
+        }));
+
+        const { error: questionsError } = await supabase
+          .from('questions')
+          .insert(questionsData);
+
+        if (questionsError) throw questionsError;
 
         toast({
           title: "Succès",
-          description: `${contestData.length} concours ont été importés avec succès`,
+          description: `${questions.length} questions ont été importées avec succès. Le concours est en mode brouillon.`,
         });
 
-        // Reset the file input
         event.target.value = '';
       };
       reader.readAsArrayBuffer(file);
     } catch (error) {
-      console.error('Error importing contests:', error);
+      console.error('Error importing questions:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors de l'importation des concours",
+        description: error instanceof Error ? error.message : "Erreur lors de l'importation des questions",
         variant: "destructive",
       });
-      // Reset the file input on error
       if (event.target) {
         event.target.value = '';
       }
@@ -194,14 +183,14 @@ const AdminContestManager = () => {
           Créer le concours
         </Button>
         <div className="mt-4">
-          <Label htmlFor="file-upload">Importer des concours (CSV/Excel)</Label>
+          <Label htmlFor="file-upload">Importer des questions (Excel)</Label>
           <p className="text-sm text-gray-500 mb-2">
-            Le fichier doit contenir les colonnes: title, start_date, end_date (obligatoires) et description (optionnelle)
+            Le fichier doit contenir les colonnes: Question, Choix A, Choix B, Choix C, Choix D, Réponse correcte
           </p>
           <Input
             id="file-upload"
             type="file"
-            accept=".csv,.xlsx,.xls"
+            accept=".xlsx,.xls"
             onChange={handleFileUpload}
             className="mt-2"
           />
