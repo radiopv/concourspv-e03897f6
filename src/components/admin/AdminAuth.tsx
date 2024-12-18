@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "../../App";
 
 interface AdminAuthProps {
   onAuthenticated: () => void;
@@ -10,23 +11,39 @@ interface AdminAuthProps {
 
 const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (email === "renaudcanuel@me.com") {
-      localStorage.setItem("adminAuthenticated", "true");
-      localStorage.setItem("adminEmail", email);
-      onAuthenticated();
-      toast({
-        title: "Succès",
-        description: "Vous êtes maintenant connecté",
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-    } else {
+
+      if (error) throw error;
+
+      if (email === "renaudcanuel@me.com") {
+        localStorage.setItem("adminAuthenticated", "true");
+        localStorage.setItem("adminEmail", email);
+        onAuthenticated();
+        toast({
+          title: "Succès",
+          description: "Vous êtes maintenant connecté",
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Email non autorisé",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
         title: "Erreur",
-        description: "Email non autorisé",
+        description: "Erreur de connexion",
         variant: "destructive",
       });
     }
@@ -46,6 +63,15 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Mot de passe"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full"
               />
             </div>
