@@ -4,8 +4,6 @@ import { supabase } from "../App";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { Trophy, Calendar, Users, Percent } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +17,7 @@ const ContestsList = () => {
   const { data: contests, isLoading } = useQuery({
     queryKey: ['active-contests'],
     queryFn: async () => {
+      console.log("Fetching contests...");
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -26,7 +25,6 @@ const ContestsList = () => {
           participants:participants(count),
           questions:questions(count)
         `)
-        .eq('status', 'active')
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -34,7 +32,7 @@ const ContestsList = () => {
         throw error;
       }
       
-      console.log('Fetched contests:', data); // Debug log
+      console.log('Fetched contests:', data);
       return data || [];
     },
     refetchInterval: 5000
@@ -46,7 +44,7 @@ const ContestsList = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-indigo-50 to-white">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -54,9 +52,10 @@ const ContestsList = () => {
 
   if (!contests || contests.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center">
-        <Card className="max-w-lg w-full mx-4">
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center p-4">
+        <Card className="max-w-lg w-full glass-card">
           <CardContent className="text-center py-12">
+            <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-bounce" />
             <h2 className="text-2xl font-semibold mb-4">
               Aucun concours n'est actuellement disponible
             </h2>
@@ -72,7 +71,7 @@ const ContestsList = () => {
     );
   }
 
-  const calculateWinningChance = (participants: number, totalPrizes: number) => {
+  const calculateWinningChance = (participants: number, totalPrizes: number = 1) => {
     if (participants === 0) return 100;
     return Math.round((totalPrizes / participants) * 100);
   };
@@ -80,20 +79,21 @@ const ContestsList = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-4">
-              Concours Disponibles
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
+        >
+          <div className="flex items-center justify-center mb-4">
+            <Trophy className="w-12 h-12 text-amber-500 mr-3" />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-500 to-purple-600 bg-clip-text text-transparent">
+              Nos Concours
             </h1>
-            <p className="text-xl text-gray-600">
-              Choisissez un concours et tentez votre chance !
-            </p>
-          </motion.div>
-        </div>
+          </div>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Découvrez nos concours exceptionnels et leurs lots incroyables à gagner !
+          </p>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {contests.map((contest, index) => (
@@ -104,10 +104,10 @@ const ContestsList = () => {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="h-full"
             >
-              <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
+              <Card className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card float">
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-xl">{contest.title}</CardTitle>
+                    <CardTitle className="text-xl font-bold">{contest.title}</CardTitle>
                     {contest.is_new && (
                       <Badge variant="secondary" className="bg-blue-500 text-white">
                         Nouveau
@@ -123,60 +123,57 @@ const ContestsList = () => {
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col">
                   {contest.description && (
-                    <p className="text-gray-600 mb-6 flex-1">
+                    <p className="text-gray-600 mb-6">
                       {contest.description}
                     </p>
                   )}
                   
                   {contest.prize_image_url && (
-                    <div className="aspect-video relative overflow-hidden rounded-lg mb-4">
+                    <div className="aspect-video relative overflow-hidden rounded-lg mb-6 group">
                       <img
                         src={contest.prize_image_url}
                         alt="Prix à gagner"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transform transition-transform group-hover:scale-105"
                       />
+                      {contest.shop_url && (
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <a
+                            href={contest.shop_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white bg-amber-500 px-4 py-2 rounded-full hover:bg-amber-600 transition-colors"
+                          >
+                            Voir le prix sur la boutique
+                          </a>
+                        </div>
+                      )}
                     </div>
-                  )}
-
-                  {contest.shop_url && (
-                    <a
-                      href={contest.shop_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-1"
-                    >
-                      <Trophy className="w-4 h-4" />
-                      Voir le prix sur la boutique
-                    </a>
                   )}
 
                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-6">
-                    <div>
-                      <p className="font-medium flex items-center gap-1">
+                    <div className="bg-white/50 p-4 rounded-lg">
+                      <p className="font-medium flex items-center gap-1 mb-1">
                         <Users className="w-4 h-4 text-indigo-600" />
                         Participants
                       </p>
-                      <p>{contest.participants?.count || 0}</p>
-                    </div>
-                    <div>
-                      <p className="font-medium flex items-center gap-1">
-                        <Percent className="w-4 h-4 text-indigo-600" />
-                        Chances de gagner
+                      <p className="text-2xl font-bold text-indigo-600">
+                        {contest.participants?.count || 0}
                       </p>
-                      <p>{calculateWinningChance(contest.participants?.count || 0, contest.total_prizes || 1)}%</p>
                     </div>
-                    <div className="col-span-2">
-                      <p className="font-medium flex items-center gap-1">
-                        <Calendar className="w-4 h-4 text-indigo-600" />
-                        Date de fin
+                    <div className="bg-white/50 p-4 rounded-lg">
+                      <p className="font-medium flex items-center gap-1 mb-1">
+                        <Percent className="w-4 h-4 text-green-600" />
+                        Chances
                       </p>
-                      <p>{format(new Date(contest.end_date), 'dd MMMM yyyy', { locale: fr })}</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {calculateWinningChance(contest.participants?.count || 0)}%
+                      </p>
                     </div>
                   </div>
 
                   <Button 
                     onClick={() => setSelectedContestId(contest.id)}
-                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
                   >
                     Participer
                   </Button>
