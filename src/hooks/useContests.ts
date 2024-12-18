@@ -9,10 +9,9 @@ export const useContests = () => {
     queryKey: ['active-contests'],
     queryFn: async () => {
       try {
-        console.log("Fetching contests...");
-        
         const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.access_token) {
+        
+        if (!session?.session?.user) {
           toast({
             variant: "destructive",
             title: "Non connecté",
@@ -21,15 +20,16 @@ export const useContests = () => {
           throw new Error("Not authenticated");
         }
 
-        const { data, error } = await supabase
+        const { data: contests, error } = await supabase
           .from('contests')
           .select(`
             *,
             participants:participants(count),
             questions:questions(count)
           `)
-          .order('created_at', { ascending: false });
-        
+          .order('created_at', { ascending: false })
+          .throwOnError();
+
         if (error) {
           console.error('Error fetching contests:', error);
           toast({
@@ -39,14 +39,15 @@ export const useContests = () => {
           });
           throw error;
         }
-        
-        return data || [];
+
+        return contests || [];
       } catch (error) {
-        console.error('Error fetching contests:', error);
+        console.error('Error in useContests:', error);
         throw error;
       }
     },
-    retry: 1,
-    refetchInterval: 5000
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchInterval: 30000 // Reduced from 5000 to prevent too frequent requests
   });
 };

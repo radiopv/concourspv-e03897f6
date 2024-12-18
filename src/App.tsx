@@ -17,15 +17,22 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: window.localStorage
+  },
+  global: {
+    headers: {
+      'Content-Type': 'application/json'
+    }
   }
 });
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      refetchOnWindowFocus: false
+      retry: false,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5 // 5 minutes
     }
   }
 });
