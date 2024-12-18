@@ -25,11 +25,20 @@ const Contest = () => {
     
     try {
       // Check if user has already participated
-      const { data: existingParticipant } = await supabase
+      const { data: existingParticipant, error: fetchError } = await supabase
         .from('participants')
         .select()
         .eq('email', userInfo.email)
         .single();
+
+      if (fetchError && !fetchError.message.includes('Results contain 0 rows')) {
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la vérification. Veuillez réessayer.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       if (existingParticipant) {
         toast({
@@ -40,11 +49,32 @@ const Contest = () => {
         return;
       }
 
+      // Create new participant
+      const { error: insertError } = await supabase
+        .from('participants')
+        .insert([
+          {
+            first_name: userInfo.firstName,
+            last_name: userInfo.lastName,
+            email: userInfo.email,
+            status: 'en_cours'
+          }
+        ]);
+
+      if (insertError) {
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setStep("questions");
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue. Veuillez réessayer.",
+        description: "Une erreur inattendue est survenue. Veuillez réessayer.",
         variant: "destructive",
       });
     }
