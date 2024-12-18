@@ -39,8 +39,8 @@ const Admin = () => {
         .from('contests')
         .select(`
           *,
-          participants (count),
-          questions (count)
+          participants:participants(count),
+          questions:questions(count)
         `)
         .order('created_at', { ascending: false });
       
