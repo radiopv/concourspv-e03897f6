@@ -29,11 +29,11 @@ interface PrizeCatalogItem {
 }
 
 interface Prize {
-  prize_catalog: PrizeCatalogItem | null;
+  prize_catalog: PrizeCatalogItem;
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
-  const { data: prizes } = useQuery({
+  const { data: prizesData } = useQuery({
     queryKey: ['contest-prizes', contest.id],
     queryFn: async () => {
       const { data } = await supabase
@@ -47,11 +47,15 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           )
         `)
         .eq('contest_id', contest.id);
-      return (data || []) as Prize[];
+      
+      // Transform the data to match our Prize interface
+      return (data || []).map(item => ({
+        prize_catalog: item.prize_catalog[0] // Take the first item since it's returning an array
+      })) as Prize[];
     },
   });
 
-  const totalPrizeValue = prizes?.reduce((total, prize) => {
+  const totalPrizeValue = prizesData?.reduce((total, prize) => {
     return total + (prize.prize_catalog?.value || 0);
   }, 0);
 
@@ -98,7 +102,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
               Prix à gagner ({totalPrizeValue}€)
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {prizes?.map((prize, idx) => (
+              {prizesData?.map((prize, idx) => (
                 prize.prize_catalog && (
                   <div key={idx} className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white/50 backdrop-blur-sm">
                     {prize.prize_catalog.image_url ? (
