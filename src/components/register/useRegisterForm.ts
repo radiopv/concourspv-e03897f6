@@ -30,24 +30,24 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Vérifier d'abord si l'utilisateur existe déjà
-      const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
+      // Vérifier si l'utilisateur existe déjà via auth
+      const { data: { user: existingUser }, error: signInError } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
-      if (existingUser?.user) {
+      if (existingUser) {
         toast({
           variant: "destructive",
           title: "Utilisateur existant",
-          description: "Cet email est déjà enregistré. Veuillez vous connecter avec votre mot de passe.",
+          description: "Cet email est déjà enregistré. Veuillez vous connecter.",
         });
         navigate("/login");
         return;
       }
 
       // Si l'utilisateur n'existe pas, procéder à l'inscription
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -55,20 +55,21 @@ export const useRegisterForm = () => {
         },
       });
 
-      if (authError) {
-        console.error("Erreur d'authentification:", authError);
-
-        if (authError.message?.includes("already registered") || 
-            authError.message?.includes("already exists")) {
+      if (signUpError) {
+        // Vérifier si l'erreur indique que l'utilisateur existe déjà
+        if (signUpError.message?.toLowerCase().includes("already registered") || 
+            signUpError.message?.toLowerCase().includes("already exists")) {
           toast({
             variant: "destructive",
             title: "Utilisateur existant",
-            description: "Cet email est déjà enregistré. Veuillez vous connecter ou utiliser un autre email.",
+            description: "Cet email est déjà enregistré. Veuillez vous connecter.",
           });
           navigate("/login");
           return;
         }
 
+        // Autres erreurs d'inscription
+        console.error("Erreur d'inscription:", signUpError);
         toast({
           variant: "destructive",
           title: "Erreur d'inscription",
@@ -103,7 +104,12 @@ export const useRegisterForm = () => {
 
       if (profileError) {
         console.error("Erreur de création du profil:", profileError);
-        throw profileError;
+        toast({
+          variant: "destructive",
+          title: "Erreur de création du profil",
+          description: "Une erreur est survenue lors de la création de votre profil. Veuillez réessayer.",
+        });
+        return;
       }
 
       toast({
