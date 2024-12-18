@@ -27,55 +27,51 @@ const Dashboard = () => {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // First, try to fetch the member profile
-      const { data, error } = await supabase
+      // Essayer de récupérer le profil existant
+      const { data: existingProfile, error: fetchError } = await supabase
         .from("members")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      // If no profile exists, create one
-      if (error && error.code === "PGRST116") {
-        const newProfile = {
-          id: user.id,
-          email: user.email,
-          first_name: "",
-          last_name: "",
-          total_points: 0,
-          contests_participated: 0,
-          contests_won: 0
-        };
-
-        const { data: createdProfile, error: createError } = await supabase
-          .from("members")
-          .insert([newProfile])
-          .select()
-          .single();
-
-        if (createError) {
-          toast({
-            variant: "destructive",
-            title: "Erreur",
-            description: "Impossible de créer votre profil",
-          });
-          throw createError;
-        }
-
-        return createdProfile as UserProfile;
+      // Si le profil existe, le retourner
+      if (existingProfile) {
+        return existingProfile as UserProfile;
       }
 
-      if (error) {
+      // Si pas de profil, en créer un nouveau
+      const { data: userData } = await supabase.auth.getUser();
+      const newProfile = {
+        id: user.id,
+        email: userData.user?.email || "",
+        first_name: userData.user?.user_metadata?.first_name || "",
+        last_name: userData.user?.user_metadata?.last_name || "",
+        total_points: 0,
+        contests_participated: 0,
+        contests_won: 0,
+        notifications_enabled: true,
+        share_scores: true,
+      };
+
+      const { data: createdProfile, error: createError } = await supabase
+        .from("members")
+        .insert([newProfile])
+        .select()
+        .single();
+
+      if (createError) {
+        console.error("Erreur création profil:", createError);
         toast({
           variant: "destructive",
           title: "Erreur",
-          description: "Impossible de charger votre profil",
+          description: "Impossible de créer votre profil. Veuillez réessayer.",
         });
-        throw error;
+        throw createError;
       }
 
-      return data as UserProfile;
+      return createdProfile as UserProfile;
     },
-    enabled: !!user?.id,
+    retry: 1,
   });
 
   if (isLoading) {
@@ -91,11 +87,12 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600">Une erreur est survenue</h1>
+          <p className="text-gray-600 mt-2">Impossible de charger votre profil</p>
           <Button 
-            onClick={() => navigate("/profile")} 
+            onClick={() => window.location.reload()} 
             className="mt-4"
           >
-            Configurer mon profil
+            Réessayer
           </Button>
         </div>
       </div>
