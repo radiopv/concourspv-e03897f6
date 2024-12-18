@@ -102,6 +102,8 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
+        console.log("Vérification des droits admin pour:", session.user.email);
+        
         const { data: adminData, error } = await supabase
           .from('members')
           .select('role')
@@ -114,9 +116,12 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        setIsAdmin(adminData?.role === 'admin');
-
-        if (adminData?.role !== 'admin') {
+        console.log("Données admin reçues:", adminData);
+        
+        if (adminData && adminData.role === 'admin') {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
           toast({
             title: "Accès refusé",
             description: "Vous n'avez pas les droits d'administrateur nécessaires.",
