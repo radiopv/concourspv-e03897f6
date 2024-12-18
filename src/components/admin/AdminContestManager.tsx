@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "../../App";
 import ExcelImportForm from "./ExcelImportForm";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AdminContestManager = () => {
   const [newContest, setNewContest] = useState({
@@ -16,6 +17,7 @@ const AdminContestManager = () => {
     end_date: "",
   });
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleCreateContest = async () => {
     try {
@@ -47,9 +49,14 @@ const AdminContestManager = () => {
           end_date: newContest.end_date,
           status: 'draft'
         }])
-        .select();
+        .select()
+        .single();
 
       if (contestError) throw contestError;
+
+      // Invalidate queries to refresh the contests list
+      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
 
       toast({
         title: "Succès",
