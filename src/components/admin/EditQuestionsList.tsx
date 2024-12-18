@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import { Pencil, Save, Trash2, X } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
+import QuestionForm from './QuestionForm';
 
 interface EditQuestionsListProps {
   contestId: string;
@@ -24,14 +23,13 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Question | null>(null);
 
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('*')
+        .select('id, question_text, options, correct_answer, article_url, order_number')
         .eq('contest_id', contestId)
         .order('order_number');
       
@@ -40,29 +38,17 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     }
   });
 
-  const handleEdit = (question: Question) => {
-    setEditingQuestionId(question.id);
-    setEditForm(question);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingQuestionId(null);
-    setEditForm(null);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editForm) return;
-
+  const handleSaveEdit = async (questionId: string, updatedData: Partial<Question>) => {
     try {
       const { error } = await supabase
         .from('questions')
         .update({
-          question_text: editForm.question_text,
-          options: editForm.options,
-          correct_answer: editForm.correct_answer,
-          article_url: editForm.article_url
+          question_text: updatedData.question_text,
+          options: updatedData.options,
+          correct_answer: updatedData.correct_answer,
+          article_url: updatedData.article_url
         })
-        .eq('id', editForm.id);
+        .eq('id', questionId);
 
       if (error) throw error;
 
@@ -73,7 +59,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
       });
       
       setEditingQuestionId(null);
-      setEditForm(null);
     } catch (error) {
       console.error('Error updating question:', error);
       toast({
@@ -121,66 +106,11 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         {questions?.map((question, index) => (
           <Card key={question.id} className="p-4">
             {editingQuestionId === question.id ? (
-              <div className="space-y-4">
-                <div>
-                  <Label>Question</Label>
-                  <Input
-                    value={editForm?.question_text || ''}
-                    onChange={(e) => setEditForm(prev => prev ? {
-                      ...prev,
-                      question_text: e.target.value
-                    } : null)}
-                  />
-                </div>
-
-                <div>
-                  <Label>Lien de l'article</Label>
-                  <Input
-                    value={editForm?.article_url || ''}
-                    onChange={(e) => setEditForm(prev => prev ? {
-                      ...prev,
-                      article_url: e.target.value
-                    } : null)}
-                  />
-                </div>
-
-                {editForm?.options.map((option, optionIndex) => (
-                  <div key={optionIndex}>
-                    <Label>Option {optionIndex + 1}</Label>
-                    <Input
-                      value={option}
-                      onChange={(e) => {
-                        const newOptions = [...editForm.options];
-                        newOptions[optionIndex] = e.target.value;
-                        setEditForm(prev => prev ? {
-                          ...prev,
-                          options: newOptions
-                        } : null);
-                      }}
-                    />
-                  </div>
-                ))}
-
-                <div>
-                  <Label>Réponse correcte</Label>
-                  <Input
-                    value={editForm?.correct_answer || ''}
-                    onChange={(e) => setEditForm(prev => prev ? {
-                      ...prev,
-                      correct_answer: e.target.value
-                    } : null)}
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <Button onClick={handleSaveEdit} className="flex items-center gap-2">
-                    <Save className="w-4 h-4" /> Enregistrer
-                  </Button>
-                  <Button variant="outline" onClick={handleCancelEdit} className="flex items-center gap-2">
-                    <X className="w-4 h-4" /> Annuler
-                  </Button>
-                </div>
-              </div>
+              <QuestionForm
+                question={question}
+                onSave={(updatedData) => handleSaveEdit(question.id, updatedData)}
+                onCancel={() => setEditingQuestionId(null)}
+              />
             ) : (
               <div className="space-y-2">
                 <div className="flex justify-between items-start">
@@ -202,7 +132,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleEdit(question)}
+                      onClick={() => setEditingQuestionId(question.id)}
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>

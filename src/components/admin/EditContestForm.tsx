@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "../../App";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EditQuestionsList from './EditQuestionsList';
+import { Switch } from "@/components/ui/switch";
 
 interface EditContestFormProps {
   contestId: string;
@@ -38,6 +39,9 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
     description: contest?.description || '',
     start_date: contest?.start_date || '',
     end_date: contest?.end_date || '',
+    is_featured: contest?.is_featured || false,
+    is_new: contest?.is_new || false,
+    has_big_prizes: contest?.has_big_prizes || false,
   });
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +98,9 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
           description: formData.description,
           start_date: formData.start_date,
           end_date: formData.end_date,
+          is_featured: formData.is_featured,
+          is_new: formData.is_new,
+          has_big_prizes: formData.has_big_prizes,
         })
         .eq('id', contestId);
 
@@ -180,6 +187,35 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                 required
               />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="is_featured">Afficher en page d'accueil</Label>
+                <Switch
+                  id="is_featured"
+                  checked={formData.is_featured}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="is_new">Marquer comme nouveau</Label>
+                <Switch
+                  id="is_new"
+                  checked={formData.is_new}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_new: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="has_big_prizes">Gros lots à gagner</Label>
+                <Switch
+                  id="has_big_prizes"
+                  checked={formData.has_big_prizes}
+                  onCheckedChange={(checked) => setFormData({ ...formData, has_big_prizes: checked })}
+                />
+              </div>
             </div>
 
             <Button type="submit" className="w-full">
