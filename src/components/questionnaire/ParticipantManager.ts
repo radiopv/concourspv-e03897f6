@@ -7,7 +7,7 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     .select('id')
     .eq('id', userId)
     .eq('contest_id', contestId)
-    .maybeSingle(); // Use maybeSingle() instead of single() to handle no results case
+    .maybeSingle();
 
   if (existingParticipant) {
     return existingParticipant.id;
@@ -23,9 +23,9 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     .insert([{
       id: userId,
       contest_id: contestId,
-      status: 'active',
-      first_name: userEmail.split('@')[0], // Use email username as first_name
-      last_name: 'Participant', // Default last name
+      status: 'pending', // Changed from 'active' to 'pending' to match the check constraint
+      first_name: userEmail.split('@')[0],
+      last_name: 'Participant',
       email: userEmail
     }])
     .select('id')
