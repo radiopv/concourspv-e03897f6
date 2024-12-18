@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "../../App";
-import { Image, Trash2, Plus, Edit, X, Check } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -15,8 +13,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible } from "@/components/ui/collapsible";
+import { PrizeCard } from "./prize/PrizeCard";
 
 interface ContestPrizeManagerProps {
   contestId: string;
@@ -211,6 +209,10 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     updatePrizeMutation.mutate({ prizeId: editingPrize, data });
   };
 
+  const handleFormChange = (field: string, value: string) => {
+    setEditForm(prev => ({ ...prev, [field]: value }));
+  };
+
   if (loadingCatalog || loadingPrizes) {
     return <div>Chargement des prix...</div>;
   }
@@ -268,127 +270,22 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {contestPrizes?.map((prize) => (
           <Collapsible key={prize.id}>
-            <Card>
-              <CardContent className="pt-6">
-                {prize.catalog_item?.image_url && (
-                  <div className="aspect-square relative mb-4">
-                    <img
-                      src={prize.catalog_item.image_url}
-                      alt={prize.catalog_item.name}
-                      className="object-cover rounded-lg w-full h-full"
-                    />
-                    <div className="absolute top-2 right-2 space-x-2">
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          onClick={() => startEditing(prize)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => deletePrizeMutation.mutate(prize.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                <h3 className="font-semibold mb-2">{prize.catalog_item?.name}</h3>
-                {prize.catalog_item?.description && (
-                  <p className="text-sm text-gray-500">{prize.catalog_item.description}</p>
-                )}
-              </CardContent>
-              <CollapsibleContent>
-                <CardContent className="pt-0">
-                  <form className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Nom du prix</Label>
-                      <Input
-                        id="name"
-                        value={editForm.name}
-                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={editForm.description}
-                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="value">Valeur (€)</Label>
-                      <Input
-                        id="value"
-                        type="number"
-                        step="0.01"
-                        value={editForm.value}
-                        onChange={(e) => setEditForm({ ...editForm, value: e.target.value })}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="shop_url">Lien vers la boutique</Label>
-                      <Input
-                        id="shop_url"
-                        type="url"
-                        value={editForm.shop_url}
-                        onChange={(e) => setEditForm({ ...editForm, shop_url: e.target.value })}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="image">Image du prix</Label>
-                      <Input
-                        id="image"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        disabled={uploading}
-                      />
-                      {editForm.image_url && (
-                        <div className="mt-2">
-                          <img
-                            src={editForm.image_url}
-                            alt="Aperçu"
-                            className="w-32 h-32 object-cover rounded"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setEditingPrize(null)}
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Annuler
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={handleSaveEdit}
-                      >
-                        <Check className="w-4 h-4 mr-2" />
-                        Enregistrer
-                      </Button>
-                    </div>
-                  </form>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-          ))}
-        </div>
+            <PrizeCard
+              prize={prize}
+              editForm={editForm}
+              onEdit={startEditing}
+              onDelete={(id) => deletePrizeMutation.mutate(id)}
+              onFormChange={handleFormChange}
+              onImageUpload={handleImageUpload}
+              onCancelEdit={() => setEditingPrize(null)}
+              onSaveEdit={handleSaveEdit}
+              uploading={uploading}
+            />
+          </Collapsible>
+        ))}
       </div>
-    );
+    </div>
+  );
 };
 
 export default ContestPrizeManager;
