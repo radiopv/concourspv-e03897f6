@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,8 @@ interface Contest {
   start_date: string;
   end_date: string;
   status: string;
-  _count?: {
-    participants: number;
+  participants: {
+    count: number;
   }
 }
 
@@ -30,12 +30,13 @@ const Contest = () => {
     email: "",
   });
 
-  const { data: contests, isLoading } = useQuery({
+  const { data: contests, isLoading, error } = useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contests')
-        .select('*, participants(count)');
+        .select('*, participants(count)')
+        .eq('status', 'active');
       
       if (error) throw error;
       return data as Contest[];
@@ -86,7 +87,7 @@ const Contest = () => {
             last_name: userInfo.lastName,
             email: userInfo.email,
             contest_id: selectedContest,
-            status: 'en_cours'
+            status: 'pending'
           }
         ]);
 
@@ -110,7 +111,22 @@ const Contest = () => {
   };
 
   if (isLoading) {
-    return <div>Chargement des concours...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-lg">Chargement des concours...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <p className="text-lg text-red-600">Une erreur est survenue lors du chargement des concours.</p>
+          <Button onClick={() => window.location.reload()}>Réessayer</Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -138,7 +154,7 @@ const Contest = () => {
                       {new Date(contest.end_date).toLocaleDateString()}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {contest._count?.participants || 0} participants
+                      {contest.participants?.count || 0} participants
                     </p>
                   </div>
                   <Button onClick={() => handleContestSelect(contest.id)}>
