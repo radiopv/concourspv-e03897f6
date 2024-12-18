@@ -43,12 +43,12 @@ create policy "Avatar images are publicly accessible"
 
 create policy "Users can upload their own avatar"
     on storage.objects for insert
-    with check ( bucket_id = 'avatars' );
+    with check ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
 
 create policy "Users can update their own avatar"
     on storage.objects for update
-    using ( bucket_id = 'avatars' );
+    using ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
 
 create policy "Users can delete their own avatar"
     on storage.objects for delete
-    using ( bucket_id = 'avatars' );
+    using ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
