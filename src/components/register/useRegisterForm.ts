@@ -31,13 +31,17 @@ export const useRegisterForm = () => {
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
       // First, check if the user exists in the members table
-      const { data: existingMembers } = await supabase
+      const { data: existingMembers, error: membersError } = await supabase
         .from('members')
         .select('id')
-        .eq('email', values.email)
-        .single();
+        .eq('email', values.email);
 
-      if (existingMembers) {
+      if (membersError) {
+        console.error("Erreur lors de la vérification du membre:", membersError);
+        throw membersError;
+      }
+
+      if (existingMembers && existingMembers.length > 0) {
         toast({
           variant: "destructive",
           title: "Utilisateur existant",
@@ -60,6 +64,7 @@ export const useRegisterForm = () => {
       });
 
       if (signUpError) {
+        // Handle specific error cases
         if (signUpError.message.includes("already registered")) {
           toast({
             variant: "destructive",
