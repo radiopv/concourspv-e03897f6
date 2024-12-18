@@ -50,7 +50,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         return;
       }
 
-      // Ensure participant exists and get participant ID
       const participantId = await ensureParticipantExists(session.session.user.id, contestId);
 
       const isAnswerCorrect = selectedAnswer === currentQuestion.correct_answer;
@@ -98,16 +97,12 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       setHasAnswered(false);
       setIsCorrect(null);
     } else {
-      // Show completion message
       toast({
         title: "Félicitations ! 🎉",
         description: "Vous avez terminé le questionnaire. Redirection en cours...",
       });
       
-      // Disable the button to prevent multiple clicks
       setIsSubmitting(true);
-      
-      // Redirect to contests list immediately
       navigate('/contests');
     }
   };
@@ -125,6 +120,13 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   }
 
   const progress = calculateProgress();
+
+  const getPartialQuestion = (text: string) => {
+    if (!text) return "";
+    const words = text.split(" ");
+    const partialLength = Math.min(5, words.length);
+    return words.slice(0, partialLength).join(" ") + "...";
+  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto animate-fadeIn">
@@ -146,25 +148,32 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <p className="text-lg font-medium">{currentQuestion?.question_text}</p>
+          <p className="text-lg font-medium">
+            {hasClickedLink 
+              ? currentQuestion?.question_text
+              : getPartialQuestion(currentQuestion?.question_text || "")}
+          </p>
           
           {currentQuestion?.article_url && (
             <ArticleLink
               url={currentQuestion.article_url}
               onArticleRead={() => setHasClickedLink(true)}
+              isRead={hasClickedLink}
             />
           )}
           
-          <AnswerOptions
-            options={currentQuestion?.options || []}
-            selectedAnswer={selectedAnswer}
-            correctAnswer={hasAnswered ? currentQuestion?.correct_answer : undefined}
-            hasAnswered={hasAnswered}
-            isDisabled={currentQuestion?.article_url && !hasClickedLink}
-            onAnswerSelect={setSelectedAnswer}
-          />
+          {(hasClickedLink || !currentQuestion?.article_url) && (
+            <AnswerOptions
+              options={currentQuestion?.options || []}
+              selectedAnswer={selectedAnswer}
+              correctAnswer={hasAnswered ? currentQuestion?.correct_answer : undefined}
+              hasAnswered={hasAnswered}
+              isDisabled={currentQuestion?.article_url && !hasClickedLink}
+              onAnswerSelect={setSelectedAnswer}
+            />
+          )}
 
-          {!hasAnswered ? (
+          {!hasAnswered && (hasClickedLink || !currentQuestion?.article_url) && (
             <Button
               onClick={handleSubmitAnswer}
               disabled={!selectedAnswer || (currentQuestion?.article_url && !hasClickedLink) || isSubmitting}
@@ -172,7 +181,9 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
             >
               {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
             </Button>
-          ) : (
+          )}
+
+          {hasAnswered && (
             <Button
               onClick={handleNextQuestion}
               className="w-full"

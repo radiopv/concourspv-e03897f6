@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 interface ArticleLinkProps {
   url: string;
   onArticleRead: () => void;
+  isRead: boolean;
 }
 
-const ArticleLink = ({ url, onArticleRead }: ArticleLinkProps) => {
+const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
   const [hasClicked, setHasClicked] = useState(false);
   const [readingTimer, setReadingTimer] = useState<number>(0);
   const READING_TIME = 5; // 5 seconds minimum reading time
@@ -16,7 +17,7 @@ const ArticleLink = ({ url, onArticleRead }: ArticleLinkProps) => {
   useEffect(() => {
     setHasClicked(false);
     setReadingTimer(0);
-  }, [url]); // Reset when URL changes (new question)
+  }, [url]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -44,7 +45,7 @@ const ArticleLink = ({ url, onArticleRead }: ArticleLinkProps) => {
       variant="outline"
       className={cn(
         "w-full flex items-center justify-center gap-2",
-        hasClicked && "bg-green-50"
+        isRead && "bg-green-50"
       )}
       onClick={handleClick}
       disabled={hasClicked && readingTimer < READING_TIME}
@@ -53,9 +54,8 @@ const ArticleLink = ({ url, onArticleRead }: ArticleLinkProps) => {
       {hasClicked 
         ? readingTimer < READING_TIME 
           ? `Veuillez patienter ${READING_TIME - readingTimer} secondes...`
-          : "Article consulté"
-        : "Lire l'article pour débloquer la question"
-      }
+          : "Article consulté ✓"
+        : "Lire l'article pour afficher la question complète"}
     </Button>
   );
 };
