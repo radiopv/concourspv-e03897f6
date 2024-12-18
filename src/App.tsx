@@ -23,6 +23,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     storage: window.localStorage,
   },
+  headers: {
+    apikey: supabaseAnonKey,
+  },
 });
 
 const queryClient = new QueryClient({
@@ -71,7 +74,16 @@ function App() {
 
 // Route protégée standard
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const session = supabase.auth.getSession();
+  const [session, setSession] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(!!data.session);
+    };
+    checkSession();
+  }, []);
+
   if (!session) {
     return <Navigate to="/login" replace />;
   }
