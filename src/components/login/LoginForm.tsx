@@ -51,9 +51,9 @@ export const LoginForm = () => {
       if (data?.user) {
         toast({
           title: "Connexion réussie",
-          description: "Bienvenue sur notre plateforme !",
+          description: "Bienvenue sur votre espace membre !",
         });
-        navigate("/contests");
+        navigate("/dashboard");
       }
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);

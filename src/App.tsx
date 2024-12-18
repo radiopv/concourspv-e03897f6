@@ -10,6 +10,7 @@ import Register from "@/pages/Register";
 import ContestsList from "@/pages/ContestsList";
 import Contest from "@/pages/Contest";
 import Admin from "@/pages/Admin";
+import Dashboard from "@/pages/Dashboard";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const supabaseUrl = "https://fgnrvnyzyiaqtzsyegzn.supabase.co";
@@ -50,6 +51,11 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
               <Route path="/contests" element={
                 <ProtectedRoute>
                   <ContestsList />
