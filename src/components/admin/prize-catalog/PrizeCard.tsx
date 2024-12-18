@@ -1,20 +1,38 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash, Link as LinkIcon } from 'lucide-react';
+import { Edit, Trash2, Link as LinkIcon } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import PrizeEditForm from './PrizeEditForm';
 
 interface PrizeCardProps {
   prize: any;
-  onEdit: (prize: any, data: any) => void;
+  onEdit: (prize: any) => void;
   onDelete: (id: string) => void;
+  editForm: any;
+  onFormChange: (field: string, value: string) => void;
+  onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onCancelEdit: () => void;
+  onSaveEdit: () => void;
+  uploading: boolean;
+  isEditing: boolean;
 }
 
-const PrizeCard = ({ prize, onEdit, onDelete }: PrizeCardProps) => {
+const PrizeCard = ({
+  prize,
+  onEdit,
+  onDelete,
+  editForm,
+  onFormChange,
+  onImageUpload,
+  onCancelEdit,
+  onSaveEdit,
+  uploading,
+  isEditing
+}: PrizeCardProps) => {
   return (
     <Card className="hover:shadow-lg transition-shadow">
-      <Collapsible>
+      <Collapsible open={isEditing}>
         <CardContent className="pt-6">
           {prize.image_url && (
             <div className="aspect-square relative mb-4">
@@ -28,6 +46,7 @@ const PrizeCard = ({ prize, onEdit, onDelete }: PrizeCardProps) => {
                   <Button
                     variant="secondary"
                     size="icon"
+                    onClick={() => onEdit(prize)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -37,7 +56,7 @@ const PrizeCard = ({ prize, onEdit, onDelete }: PrizeCardProps) => {
                   size="icon"
                   onClick={() => onDelete(prize.id)}
                 >
-                  <Trash className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -65,8 +84,12 @@ const PrizeCard = ({ prize, onEdit, onDelete }: PrizeCardProps) => {
         <CollapsibleContent>
           <CardContent className="pt-0">
             <PrizeEditForm
-              prize={prize}
-              onSubmit={(data) => onEdit(prize, data)}
+              formData={editForm}
+              onFormChange={onFormChange}
+              onImageUpload={onImageUpload}
+              onCancelEdit={onCancelEdit}
+              onSaveEdit={onSaveEdit}
+              uploading={uploading}
             />
           </CardContent>
         </CollapsibleContent>

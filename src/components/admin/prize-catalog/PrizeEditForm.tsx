@@ -3,77 +3,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from 'react';
-import { supabase } from "../../../App";
-import { useToast } from "@/components/ui/use-toast";
+import { Check, X } from 'lucide-react';
 
 interface PrizeEditFormProps {
-  prize: any;
-  onSubmit: (data: any) => void;
+  formData: {
+    name: string;
+    description: string;
+    value: string;
+    image_url: string;
+    shop_url: string;
+  };
+  onFormChange: (field: string, value: string) => void;
+  onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onCancelEdit: () => void;
+  onSaveEdit: () => void;
+  uploading: boolean;
 }
 
-const PrizeEditForm = ({ prize, onSubmit }: PrizeEditFormProps) => {
-  const { toast } = useToast();
-  const [uploading, setUploading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: prize.name,
-    description: prize.description || '',
-    value: prize.value || '',
-    image_url: prize.image_url || '',
-    shop_url: prize.shop_url || '',
-  });
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('prizes')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('prizes')
-        .getPublicUrl(filePath);
-
-      setFormData({ ...formData, image_url: publicUrl });
-      
-      toast({
-        title: "Succès",
-        description: "L'image a été téléchargée",
-      });
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de télécharger l'image",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
+const PrizeEditForm = ({
+  formData,
+  onFormChange,
+  onImageUpload,
+  onCancelEdit,
+  onSaveEdit,
+  uploading
+}: PrizeEditFormProps) => {
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form className="space-y-4">
       <div>
         <Label htmlFor="name">Nom du prix</Label>
         <Input
           id="name"
           value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          onChange={(e) => onFormChange('name', e.target.value)}
           required
         />
       </div>
@@ -83,7 +45,7 @@ const PrizeEditForm = ({ prize, onSubmit }: PrizeEditFormProps) => {
         <Textarea
           id="description"
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) => onFormChange('description', e.target.value)}
         />
       </div>
 
@@ -94,7 +56,7 @@ const PrizeEditForm = ({ prize, onSubmit }: PrizeEditFormProps) => {
           type="number"
           step="0.01"
           value={formData.value}
-          onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })}
+          onChange={(e) => onFormChange('value', e.target.value)}
         />
       </div>
 
@@ -104,7 +66,7 @@ const PrizeEditForm = ({ prize, onSubmit }: PrizeEditFormProps) => {
           id="shop_url"
           type="url"
           value={formData.shop_url}
-          onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
+          onChange={(e) => onFormChange('shop_url', e.target.value)}
           placeholder="https://..."
         />
       </div>
@@ -115,7 +77,7 @@ const PrizeEditForm = ({ prize, onSubmit }: PrizeEditFormProps) => {
           id="image"
           type="file"
           accept="image/*"
-          onChange={handleImageUpload}
+          onChange={onImageUpload}
           disabled={uploading}
         />
         {formData.image_url && (
@@ -129,9 +91,23 @@ const PrizeEditForm = ({ prize, onSubmit }: PrizeEditFormProps) => {
         )}
       </div>
 
-      <Button type="submit" className="w-full">
-        Mettre à jour
-      </Button>
+      <div className="flex justify-end space-x-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancelEdit}
+        >
+          <X className="w-4 h-4 mr-2" />
+          Annuler
+        </Button>
+        <Button
+          type="button"
+          onClick={onSaveEdit}
+        >
+          <Check className="w-4 h-4 mr-2" />
+          Enregistrer
+        </Button>
+      </div>
     </form>
   );
 };
