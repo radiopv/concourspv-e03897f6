@@ -11,6 +11,7 @@ import AdminAuth from "../components/admin/AdminAuth";
 import AdminContestManager from "../components/admin/AdminContestManager";
 import ContestList from "../components/admin/ContestList";
 import ContentValidator from "../components/admin/ContentValidator";
+import PrizeCatalogManager from "../components/admin/PrizeCatalogManager";
 import { useToast } from "@/components/ui/use-toast";
 
 const Admin = () => {
@@ -84,6 +85,7 @@ const Admin = () => {
         <div className="space-y-8">
           <AdminContestManager />
           <ContentValidator />
+          <PrizeCatalogManager />
           <ContestList 
             contests={contests || []} 
             onSelectContest={setSelectedContest} 
