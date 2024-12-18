@@ -1,5 +1,6 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface ContestStatusBadgeProps {
   status: string;
@@ -11,12 +12,14 @@ const ContestStatusBadge = ({ status }: ContestStatusBadgeProps) => {
       case 'draft':
         return {
           label: 'Brouillon',
-          variant: 'secondary' as const
+          variant: 'secondary' as const,
+          className: 'bg-gray-200 text-gray-700'
         };
       case 'active':
         return {
           label: 'Actif',
-          variant: 'success' as const
+          variant: 'default' as const,
+          className: 'bg-green-500 hover:bg-green-600'
         };
       case 'archived':
         return {
@@ -34,7 +37,12 @@ const ContestStatusBadge = ({ status }: ContestStatusBadgeProps) => {
   const config = getStatusConfig(status);
 
   return (
-    <Badge variant={config.variant}>{config.label}</Badge>
+    <Badge 
+      variant={config.variant}
+      className={cn(config.className)}
+    >
+      {config.label}
+    </Badge>
   );
 };
 
