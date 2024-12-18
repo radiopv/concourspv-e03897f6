@@ -5,8 +5,8 @@ export const useContestQueries = () => {
   const { data: contestsWithCounts, isLoading } = useQuery({
     queryKey: ['admin-contests-with-counts'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.session?.access_token) {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session?.access_token) {
         throw new Error("Not authenticated");
       }
 
