@@ -59,6 +59,47 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
   const currentQuestion = questions?.[currentQuestionIndex];
 
+  const ensureParticipantExists = async (userId: string) => {
+    // First check if participant already exists
+    const { data: existingParticipant } = await supabase
+      .from('participants')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('contest_id', contestId)
+      .single();
+
+    if (existingParticipant) {
+      return existingParticipant.id;
+    }
+
+    // If not, create new participant
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, email')
+      .eq('id', userId)
+      .single();
+
+    if (!userProfile) {
+      throw new Error("User profile not found");
+    }
+
+    const { data: newParticipant, error: participantError } = await supabase
+      .from('participants')
+      .insert([{
+        user_id: userId,
+        contest_id: contestId,
+        first_name: userProfile.first_name,
+        last_name: userProfile.last_name,
+        email: userProfile.email,
+        status: 'active'
+      }])
+      .select('id')
+      .single();
+
+    if (participantError) throw participantError;
+    return newParticipant.id;
+  };
+
   const handleSubmitAnswer = async () => {
     if (!selectedAnswer || !currentQuestion) return;
 
@@ -74,6 +115,9 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         return;
       }
 
+      // Ensure participant exists and get participant ID
+      const participantId = await ensureParticipantExists(session.session.user.id);
+
       const isAnswerCorrect = selectedAnswer === currentQuestion.correct_answer;
       setIsCorrect(isAnswerCorrect);
       setHasAnswered(true);
@@ -81,7 +125,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       const { error } = await supabase
         .from('participant_answers')
         .insert([{
-          participant_id: session.session.user.id,
+          participant_id: participantId,
           question_id: currentQuestion.id,
           answer: selectedAnswer
         }]);
