@@ -7,10 +7,12 @@ import { Trophy, Users, Timer, CheckCircle } from "lucide-react";
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useState, useEffect } from "react";
+import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 
 const Contest = () => {
   const { id } = useParams();
   const [timeLeft, setTimeLeft] = useState<string>("");
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
 
   const { data: contest, isLoading: contestLoading } = useQuery({
     queryKey: ['contest', id],
@@ -94,6 +96,10 @@ const Contest = () => {
         </Card>
       </div>
     );
+  }
+
+  if (showQuestionnaire) {
+    return <QuestionnaireComponent contestId={id || ''} />;
   }
 
   const successPercentage = contest.participants_count > 0 && stats
@@ -186,6 +192,7 @@ const Contest = () => {
           <div className="text-center">
             <Button
               size="lg"
+              onClick={() => setShowQuestionnaire(true)}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-lg px-8 py-6 h-auto animate-pulse"
             >
               Participer maintenant
