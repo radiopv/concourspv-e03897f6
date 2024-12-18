@@ -1,154 +1,82 @@
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React from 'react';
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Percent, ExternalLink, Gift } from "lucide-react";
-import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../App";
-import ContestStats from "./ContestStats";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Edit, Trash2 } from "lucide-react";
+import { PrizeEditForm } from "./prize/PrizeEditForm";
 
 interface ContestCardProps {
-  contest: {
-    id: string;
-    title: string;
-    description?: string;
-    is_new: boolean;
-    has_big_prizes: boolean;
-    participants?: { count: number };
-  };
-  onSelect: (id: string) => void;
-  index: number;
+  contest: any;
+  onEdit: (contest: any) => void;
+  onDelete: (id: string) => void;
+  editForm: any;
+  onFormChange: (field: string, value: string) => void;
+  onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onCancelEdit: () => void;
+  onSaveEdit: () => void;
+  uploading: boolean;
 }
 
-const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
-  const { data: prizes } = useQuery({
-    queryKey: ['contest-prizes', contest.id],
-    queryFn: async () => {
-      const { data: prizesData } = await supabase
-        .from('prizes')
-        .select(`
-          catalog_item_id,
-          prize_catalog (
-            name,
-            image_url,
-            shop_url
-          )
-        `)
-        .eq('contest_id', contest.id);
-      return prizesData || [];
-    },
-  });
-
-  const calculateWinningChance = (participants: number, totalPrizes: number = prizes?.length || 1) => {
-    if (participants === 0) return 100;
-    return Math.round((totalPrizes / participants) * 100);
-  };
-
+const ContestCard = ({
+  contest,
+  onEdit,
+  onDelete,
+  editForm,
+  onFormChange,
+  onImageUpload,
+  onCancelEdit,
+  onSaveEdit,
+  uploading,
+}: ContestCardProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="h-full"
-    >
-      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card float">
-        <CardHeader>
-          <div className="flex justify-between items-start mb-2">
-            <CardTitle className="text-xl font-bold">{contest.title}</CardTitle>
-            {contest.is_new && (
-              <Badge variant="secondary" className="bg-blue-500 text-white">
-                Nouveau
-              </Badge>
-            )}
-          </div>
-          {contest.has_big_prizes && (
-            <Badge variant="secondary" className="bg-amber-500 text-white flex items-center gap-1 w-fit">
-              <Trophy className="w-4 h-4" />
-              Gros lots à gagner
-            </Badge>
-          )}
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          {contest.description && (
-            <p className="text-gray-600 mb-6">
-              {contest.description}
-            </p>
-          )}
-          
-          <ContestStats contestId={contest.id} />
-          
-          {prizes && prizes.length > 0 && (
-            <div className="mb-6 space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Gift className="w-5 h-5 text-purple-500" />
-                Prix à gagner
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {prizes.map((prize: any, idx: number) => (
-                  prize.prize_catalog && (
-                    <div key={idx} className="relative group overflow-hidden rounded-lg border border-gray-200">
-                      {prize.prize_catalog.image_url && (
-                        <div className="aspect-video relative">
-                          <img
-                            src={prize.prize_catalog.image_url}
-                            alt={prize.prize_catalog.name}
-                            className="w-full h-full object-cover transform transition-transform group-hover:scale-105"
-                          />
-                          {prize.prize_catalog.shop_url && (
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <a
-                                href={prize.prize_catalog.shop_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-white bg-purple-600 px-4 py-2 rounded-full hover:bg-purple-700 transition-colors flex items-center gap-2"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                                Voir sur la boutique
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      <div className="p-3 bg-white/80">
-                        <p className="font-medium text-purple-700">{prize.prize_catalog.name}</p>
-                      </div>
-                    </div>
-                  )
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-6">
-            <div className="bg-white/50 p-4 rounded-lg">
-              <p className="font-medium flex items-center gap-1 mb-1">
-                <Users className="w-4 h-4 text-indigo-600" />
-                Participants
-              </p>
-              <p className="text-2xl font-bold text-indigo-600">
-                {contest.participants?.count || 0}
-              </p>
-            </div>
-            <div className="bg-white/50 p-4 rounded-lg">
-              <p className="font-medium flex items-center gap-1 mb-1">
-                <Percent className="w-4 h-4 text-green-600" />
-                Chances
-              </p>
-              <p className="text-2xl font-bold text-green-600">
-                {calculateWinningChance(contest.participants?.count || 0)}%
-              </p>
+    <Card>
+      <CardContent className="pt-6">
+        {contest.image_url && (
+          <div className="aspect-square relative mb-4">
+            <img
+              src={contest.image_url}
+              alt={contest.name}
+              className="object-cover rounded-lg w-full h-full"
+            />
+            <div className="absolute top-2 right-2 space-x-2">
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => onEdit(contest)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => onDelete(contest.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-
-          <Button 
-            onClick={() => onSelect(contest.id)}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
-          >
-            Participer
-          </Button>
+        )}
+        <h3 className="font-semibold mb-2">{contest.name}</h3>
+        {contest.description && (
+          <p className="text-sm text-gray-500">{contest.description}</p>
+        )}
+      </CardContent>
+      <CollapsibleContent>
+        <CardContent className="pt-0">
+          <PrizeEditForm
+            editForm={editForm}
+            onFormChange={onFormChange}
+            onImageUpload={onImageUpload}
+            onCancel={onCancelEdit}
+            onSave={onSaveEdit}
+            uploading={uploading}
+          />
         </CardContent>
-      </Card>
-    </motion.div>
+      </CollapsibleContent>
+    </Card>
   );
 };
 

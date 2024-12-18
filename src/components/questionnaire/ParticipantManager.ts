@@ -49,22 +49,3 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     throw error;
   }
 };
-
-export const getParticipantStats = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('participants')
-    .select(`
-      contest_id,
-      status,
-      attempts,
-      score,
-      completed_at,
-      contests (
-        title
-      )
-    `)
-    .eq('id', userId);
-
-  if (error) throw error;
-  return data;
-};

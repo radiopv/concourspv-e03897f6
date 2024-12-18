@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 
 export const useQuestions = (contestId: string) => {
   return useQuery({
@@ -7,12 +7,14 @@ export const useQuestions = (contestId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question_text, options, correct_answer, article_url, order_number')
-        .eq('contest_id', contestId)
-        .order('order_number');
-      
-      if (error) throw error;
+        .select('*')
+        .eq('contest_id', contestId);
+
+      if (error) {
+        throw new Error('Error fetching questions: ' + error.message);
+      }
+
       return data;
-    }
+    },
   });
 };
