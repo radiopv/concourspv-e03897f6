@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
@@ -28,7 +28,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('*')
+        .select('id, question_text, options, correct_answer, article_url, order_number')
         .eq('contest_id', contestId)
         .order('order_number');
       
@@ -41,7 +41,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
   const handleLinkClick = () => {
     setHasClickedLink(true);
-    // Ouvrir le lien dans un nouvel onglet
     if (currentQuestion?.article_url) {
       window.open(currentQuestion.article_url, '_blank');
     }
@@ -68,14 +67,12 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
       const { error } = await supabase
         .from('participant_answers')
-        .insert([
-          {
-            participant_id: session.session.user.id,
-            question_id: currentQuestion.id,
-            answer: selectedAnswer,
-            is_correct: isAnswerCorrect
-          }
-        ]);
+        .insert([{
+          participant_id: session.session.user.id,
+          question_id: currentQuestion.id,
+          answer: selectedAnswer,
+          is_correct: isAnswerCorrect
+        }]);
 
       if (error) throw error;
 
@@ -176,7 +173,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
                 key={index} 
                 className={cn(
                   "flex items-center space-x-2 p-3 rounded-lg border transition-all",
-                  !hasClickedLink && "opacity-50 cursor-not-allowed",
+                  currentQuestion.article_url && !hasClickedLink && "opacity-50 cursor-not-allowed",
                   hasAnswered && option === currentQuestion.correct_answer && "border-green-500 bg-green-50",
                   hasAnswered && option === selectedAnswer && option !== currentQuestion.correct_answer && "border-red-500 bg-red-50"
                 )}
@@ -184,13 +181,13 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
                 <RadioGroupItem 
                   value={option} 
                   id={`option-${index}`}
-                  disabled={!hasClickedLink || hasAnswered}
+                  disabled={(currentQuestion.article_url && !hasClickedLink) || hasAnswered}
                 />
                 <Label 
                   htmlFor={`option-${index}`}
                   className={cn(
                     "flex-1 cursor-pointer",
-                    !hasClickedLink && "cursor-not-allowed"
+                    currentQuestion.article_url && !hasClickedLink && "cursor-not-allowed"
                   )}
                 >
                   {option}
@@ -208,7 +205,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           {!hasAnswered ? (
             <Button
               onClick={handleSubmitAnswer}
-              disabled={!selectedAnswer || !hasClickedLink || isSubmitting}
+              disabled={!selectedAnswer || (currentQuestion?.article_url && !hasClickedLink) || isSubmitting}
               className="w-full"
             >
               {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
