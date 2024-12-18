@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Percent, ExternalLink, Gift, HelpCircle } from "lucide-react";
+import { Trophy, Gift, HelpCircle, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
@@ -49,7 +49,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         .eq('contest_id', contest.id);
       
       return (data || []).map(item => ({
-        prize_catalog: item.prize_catalog[0]
+        prize_catalog: item.prize_catalog
       })) as Prize[];
     },
   });
@@ -102,38 +102,40 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {prizesData?.map((prize, idx) => (
-                <div key={idx} className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white/50 backdrop-blur-sm">
-                  <div className="aspect-video relative">
-                    {prize.prize_catalog.image_url ? (
-                      <img
-                        src={prize.prize_catalog.image_url}
-                        alt={prize.prize_catalog.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        <Gift className="w-12 h-12 text-gray-400" />
-                      </div>
-                    )}
-                    {prize.prize_catalog.shop_url && (
-                      <a
-                        href={prize.prize_catalog.shop_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                      >
-                        <span className="text-white bg-purple-600 px-4 py-2 rounded-full hover:bg-purple-700 transition-colors flex items-center gap-2">
-                          <ExternalLink className="w-4 h-4" />
-                          Voir le prix
-                        </span>
-                      </a>
-                    )}
+                prize.prize_catalog && (
+                  <div key={idx} className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white/50 backdrop-blur-sm">
+                    <div className="aspect-video relative">
+                      {prize.prize_catalog.image_url ? (
+                        <img
+                          src={prize.prize_catalog.image_url}
+                          alt={prize.prize_catalog.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                          <Gift className="w-12 h-12 text-gray-400" />
+                        </div>
+                      )}
+                      {prize.prize_catalog.shop_url && (
+                        <a
+                          href={prize.prize_catalog.shop_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                        >
+                          <span className="text-white bg-purple-600 px-4 py-2 rounded-full hover:bg-purple-700 transition-colors flex items-center gap-2">
+                            <ExternalLink className="w-4 h-4" />
+                            Voir le prix
+                          </span>
+                        </a>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="font-medium text-purple-700">{prize.prize_catalog.name}</p>
+                      <p className="text-sm text-gray-500">{prize.prize_catalog.value}€</p>
+                    </div>
                   </div>
-                  <div className="p-3">
-                    <p className="font-medium text-purple-700">{prize.prize_catalog.name}</p>
-                    <p className="text-sm text-gray-500">{prize.prize_catalog.value}€</p>
-                  </div>
-                </div>
+                )
               ))}
             </div>
           </div>
