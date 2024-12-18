@@ -11,6 +11,7 @@ import AnswerOptions from './questionnaire/AnswerOptions';
 import { useQuestions } from './questionnaire/useQuestions';
 import { ensureParticipantExists } from './questionnaire/ParticipantManager';
 import { getRandomMessage } from './questionnaire/messages';
+import { saveQuestionnaireCompletion } from './questionnaire/QuestionnaireService';
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -89,7 +90,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     }
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (currentQuestionIndex < (questions?.length || 0) - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer("");
@@ -97,13 +98,29 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       setHasAnswered(false);
       setIsCorrect(null);
     } else {
-      toast({
-        title: "Félicitations ! 🎉",
-        description: "Vous avez terminé le questionnaire. Redirection en cours...",
-      });
-      
       setIsSubmitting(true);
-      navigate('/contests');
+      try {
+        // Sauvegarder la complétion du questionnaire
+        await saveQuestionnaireCompletion(contestId);
+        
+        toast({
+          title: "Félicitations ! 🎉",
+          description: "Questionnaire terminé avec succès !",
+        });
+
+        // Attendre un court instant pour que le toast soit visible
+        setTimeout(() => {
+          navigate('/contests');
+        }, 1500);
+      } catch (error) {
+        console.error('Error completing questionnaire:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la finalisation du questionnaire",
+        });
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -205,5 +222,3 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     </Card>
   );
 };
-
-export default QuestionnaireComponent;
