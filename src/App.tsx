@@ -127,7 +127,7 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
             className="w-full px-4 py-2 border rounded-md"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                authenticateAdmin(e.currentTarget.value);
+                authenticateAdmin((e.target as HTMLInputElement).value);
               }
             }}
           />
