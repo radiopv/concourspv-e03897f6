@@ -15,11 +15,11 @@ const WinnerDisplay = ({ contestId }: WinnerDisplayProps) => {
         .from('participants')
         .select('*')
         .eq('contest_id', contestId)
-        .eq('status', 'winner')
-        .single();
+        .eq('status', 'winner');
       
       if (error) throw error;
-      return data;
+      // Return the first winner or null if none exists
+      return data && data.length > 0 ? data[0] : null;
     }
   });
 
