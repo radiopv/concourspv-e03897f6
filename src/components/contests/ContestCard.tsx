@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Percent } from "lucide-react";
+import { Trophy, Users, Percent, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ContestCardProps {
@@ -69,8 +69,9 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                     href={contest.shop_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-white bg-amber-500 px-4 py-2 rounded-full hover:bg-amber-600 transition-colors"
+                    className="text-white bg-amber-500 px-4 py-2 rounded-full hover:bg-amber-600 transition-colors flex items-center gap-2"
                   >
+                    <ExternalLink className="w-4 h-4" />
                     Voir le prix sur la boutique
                   </a>
                 </div>
