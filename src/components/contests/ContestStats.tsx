@@ -11,10 +11,12 @@ interface Participant {
   score: number | null;
 }
 
+interface PrizeCatalogItem {
+  value: number;
+}
+
 interface PrizeData {
-  prize_catalog: {
-    value: number;
-  } | null;
+  prize_catalog: PrizeCatalogItem | null;
 }
 
 const ContestStats = ({ contestId }: ContestStatsProps) => {

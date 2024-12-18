@@ -21,13 +21,15 @@ interface ContestCardProps {
   index: number;
 }
 
+interface PrizeCatalogItem {
+  name: string;
+  image_url?: string;
+  shop_url?: string;
+  value: number;
+}
+
 interface Prize {
-  prize_catalog: {
-    name: string;
-    image_url?: string;
-    shop_url?: string;
-    value: number;
-  } | null;
+  prize_catalog: PrizeCatalogItem | null;
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
