@@ -20,22 +20,42 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
     correct_answer: "",
   });
 
-  const { data: questions, refetch } = useQuery({
+  const { data: questions, refetch, isError } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session?.session?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
       const { data, error } = await supabase
         .from('questions')
         .select('*')
         .eq('contest_id', contestId)
         .order('order_number');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching questions:", error);
+        throw error;
+      }
       return data;
     }
   });
 
   const handleAddQuestion = async () => {
     try {
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session?.session?.access_token) {
+        toast({
+          title: "Error",
+          description: "You must be authenticated to add questions",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('questions')
         .insert([
@@ -49,11 +69,14 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
           }
         ]);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error adding question:", error);
+        throw error;
+      }
 
       toast({
-        title: "Succès",
-        description: "Question ajoutée avec succès",
+        title: "Success",
+        description: "Question added successfully",
       });
 
       setNewQuestion({
@@ -66,18 +89,26 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
       refetch();
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter la question",
+        title: "Error",
+        description: "Failed to add question. Please ensure you're logged in.",
         variant: "destructive",
       });
     }
   };
 
+  if (isError) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-red-500">Error loading questions. Please ensure you're logged in.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Ajouter une question</CardTitle>
+          <CardTitle>Add Question</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -114,7 +145,7 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
             </div>
 
             <div>
-              <Label htmlFor="correct">Réponse correcte</Label>
+              <Label htmlFor="correct">Correct Answer</Label>
               <Input
                 id="correct"
                 value={newQuestion.correct_answer}
@@ -125,7 +156,7 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
               />
             </div>
 
-            <Button onClick={handleAddQuestion}>Ajouter la question</Button>
+            <Button onClick={handleAddQuestion}>Add Question</Button>
           </div>
         </CardContent>
       </Card>
