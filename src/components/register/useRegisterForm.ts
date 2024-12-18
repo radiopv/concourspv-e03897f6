@@ -30,29 +30,30 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Vérifier si l'utilisateur existe déjà dans auth
-      const { data: { user: existingUser }, error: authCheckError } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+      // 1. Vérifier si l'email existe déjà
+      const { data: existingUsers } = await supabase
+        .from('members')
+        .select('email')
+        .eq('email', values.email)
+        .single();
 
-      if (existingUser) {
+      if (existingUsers) {
         toast({
-          title: "Compte existant",
-          description: "Un compte existe déjà avec cet email. Vous allez être redirigé vers la page de connexion.",
+          title: "Email déjà utilisé",
+          description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
+          variant: "destructive",
         });
         navigate("/login", { 
           state: { 
             email: values.email,
             message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
-          },
-          replace: true
+          }
         });
         return;
       }
 
-      // Si l'utilisateur n'existe pas, procéder à l'inscription
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // 2. Créer le compte d'authentification
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -65,20 +66,23 @@ export const useRegisterForm = () => {
 
       if (signUpError) throw signUpError;
 
-      if (!signUpData.user) {
+      if (!authData.user) {
         throw new Error("Erreur lors de la création du compte");
       }
 
-      // Création du profil dans la table members
+      // 3. Créer le profil dans la table members
       const { error: profileError } = await supabase
         .from('members')
         .insert([
           {
-            id: signUpData.user.id,
+            id: authData.user.id,
             first_name: values.firstName,
             last_name: values.lastName,
             email: values.email,
             phone_number: values.phoneNumber || null,
+            total_points: 0,
+            contests_participated: 0,
+            contests_won: 0,
             notifications_enabled: true,
             share_scores: true,
           }
