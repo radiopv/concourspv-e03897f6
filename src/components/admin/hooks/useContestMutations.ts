@@ -91,7 +91,14 @@ export const useContestMutations = () => {
   });
 
   const statusUpdateMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { is_new?: boolean; has_big_prizes?: boolean } }) => {
+    mutationFn: async ({ id, updates }: { 
+      id: string; 
+      updates: { 
+        is_new?: boolean; 
+        has_big_prizes?: boolean;
+        status?: 'draft' | 'active' | 'archived';
+      } 
+    }) => {
       const { error } = await supabase
         .from('contests')
         .update(updates)

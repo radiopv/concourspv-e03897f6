@@ -45,7 +45,7 @@ const AdminContestManager = () => {
           description: newContest.description || null,
           start_date: newContest.start_date,
           end_date: newContest.end_date,
-          status: 'active'
+          status: 'draft'
         }])
         .select();
 
