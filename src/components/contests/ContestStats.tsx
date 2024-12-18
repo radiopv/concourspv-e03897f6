@@ -7,6 +7,18 @@ interface ContestStatsProps {
   contestId: string;
 }
 
+interface Participant {
+  score: number | null;
+}
+
+interface PrizeCatalog {
+  value: number;
+}
+
+interface Prize {
+  prize_catalog: PrizeCatalog | null;
+}
+
 const ContestStats = ({ contestId }: ContestStatsProps) => {
   const { data: stats } = useQuery({
     queryKey: ['contest-stats', contestId],
@@ -28,25 +40,26 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
         .eq('contest_id', contestId);
 
       // Calculer la valeur totale des prix
-      const totalPrizeValue = prizesData?.reduce((total, prize) => {
+      const totalPrizeValue = (prizesData as Prize[] || []).reduce((total, prize) => {
         return total + (prize.prize_catalog?.value || 0);
-      }, 0) || 0;
+      }, 0);
 
       // Calculer le score moyen
-      const averageScore = participantsData?.length 
-        ? participantsData.reduce((sum, p) => sum + (p.score || 0), 0) / participantsData.length 
+      const participants = participantsData as Participant[] || [];
+      const averageScore = participants.length 
+        ? participants.reduce((sum, p) => sum + (p.score || 0), 0) / participants.length 
         : 0;
 
       // Calculer le nombre de participants qualifiés (score >= 70%)
-      const qualifiedCount = participantsData?.filter(p => (p.score || 0) >= 70).length || 0;
+      const qualifiedCount = participants.filter(p => (p.score || 0) >= 70).length;
 
       return {
-        participantsCount: participantsData?.length || 0,
+        participantsCount: participants.length,
         averageScore: Math.round(averageScore),
         qualifiedCount,
         totalPrizeValue: Math.round(totalPrizeValue),
-        qualificationRate: participantsData?.length 
-          ? Math.round((qualifiedCount / participantsData.length) * 100) 
+        qualificationRate: participants.length 
+          ? Math.round((qualifiedCount / participants.length) * 100) 
           : 0
       };
     }
