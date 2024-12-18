@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import ContestCard from "@/components/contests/ContestCard";
+import GlobalContestStats from "@/components/contests/GlobalContestStats";
 import { useContests } from "@/hooks/useContests";
 
 const ContestsList = () => {
@@ -60,9 +61,11 @@ const ContestsList = () => {
               Nos Concours
             </h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
             Découvrez nos concours exceptionnels et leurs lots incroyables à gagner !
           </p>
+          
+          <GlobalContestStats />
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

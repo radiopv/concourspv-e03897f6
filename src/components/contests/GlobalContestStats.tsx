@@ -3,60 +3,48 @@ import { Trophy, Users, Target, Euro, Award, Percent } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
 
-interface ContestStatsProps {
-  contestId: string;
-}
-
-interface Participant {
-  score: number | null;
-}
-
-interface PrizeCatalogItem {
-  value: number;
-}
-
-interface Prize {
-  prize_catalog: PrizeCatalogItem[];
-}
-
-const ContestStats = ({ contestId }: ContestStatsProps) => {
+const GlobalContestStats = () => {
   const { data: stats } = useQuery({
-    queryKey: ['contest-stats', contestId],
+    queryKey: ['global-contest-stats'],
     queryFn: async () => {
-      const { data: participantsData } = await supabase
-        .from('participants')
-        .select('score')
-        .eq('contest_id', contestId);
+      // Récupérer tous les concours
+      const { data: contests } = await supabase
+        .from('contests')
+        .select('id')
+        .eq('status', 'active');
 
-      const { data: prizesData } = await supabase
+      // Récupérer tous les participants
+      const { data: participants } = await supabase
+        .from('participants')
+        .select('score');
+
+      // Récupérer tous les prix
+      const { data: prizes } = await supabase
         .from('prizes')
         .select(`
           prize_catalog (
             value
           )
-        `)
-        .eq('contest_id', contestId);
+        `);
 
-      const participants = participantsData as Participant[] || [];
-      const prizes = prizesData as Prize[] || [];
-
-      const totalPrizeValue = prizes.reduce((total, prize) => {
-        return total + (prize.prize_catalog[0]?.value || 0);
-      }, 0);
-
-      const averageScore = participants.length 
+      const totalContests = contests?.length || 0;
+      const totalParticipants = participants?.length || 0;
+      const averageScore = participants?.length 
         ? participants.reduce((sum, p) => sum + (p.score || 0), 0) / participants.length 
         : 0;
-
-      const qualifiedCount = participants.filter(p => (p.score || 0) >= 70).length;
+      const qualifiedParticipants = participants?.filter(p => (p.score || 0) >= 70).length || 0;
+      const totalPrizeValue = prizes?.reduce((sum, prize) => {
+        return sum + (prize.prize_catalog?.[0]?.value || 0);
+      }, 0) || 0;
 
       return {
-        participantsCount: participants.length,
+        totalContests,
+        totalParticipants,
         averageScore: Math.round(averageScore),
-        qualifiedCount,
+        qualifiedParticipants,
         totalPrizeValue: Math.round(totalPrizeValue),
-        qualificationRate: participants.length 
-          ? Math.round((qualifiedCount / participants.length) * 100) 
+        qualificationRate: totalParticipants 
+          ? Math.round((qualifiedParticipants / totalParticipants) * 100)
           : 0
       };
     }
@@ -66,25 +54,29 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-      <Card className="bg-gradient-to-br from-purple-50 to-indigo-50">
+      <Card className="bg-gradient-to-br from-amber-50 to-yellow-50">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Valeur des Prix</CardTitle>
-          <Euro className="w-4 h-4 text-purple-600" />
+          <CardTitle className="text-sm font-medium">Valeur Totale des Prix</CardTitle>
+          <Euro className="w-4 h-4 text-amber-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-purple-700">{stats.totalPrizeValue}€</div>
-          <p className="text-xs text-purple-600 mt-1">Valeur totale des lots à gagner</p>
+          <div className="text-2xl font-bold text-amber-700">{stats.totalPrizeValue}€</div>
+          <p className="text-xs text-amber-600 mt-1">
+            Répartis sur {stats.totalContests} concours actifs
+          </p>
         </CardContent>
       </Card>
 
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Score Moyen</CardTitle>
+          <CardTitle className="text-sm font-medium">Score Moyen Global</CardTitle>
           <Target className="w-4 h-4 text-blue-600" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-blue-700">{stats.averageScore}%</div>
-          <p className="text-xs text-blue-600 mt-1">Score moyen des participants</p>
+          <p className="text-xs text-blue-600 mt-1">
+            Sur {stats.totalParticipants} participants
+          </p>
         </CardContent>
       </Card>
 
@@ -96,7 +88,7 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
         <CardContent>
           <div className="text-2xl font-bold text-green-700">{stats.qualificationRate}%</div>
           <p className="text-xs text-green-600 mt-1">
-            {stats.qualifiedCount} participants qualifiés
+            {stats.qualifiedParticipants} participants qualifiés
           </p>
         </CardContent>
       </Card>
@@ -104,4 +96,4 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
   );
 };
 
-export default ContestStats;
+export default GlobalContestStats;
