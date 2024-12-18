@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../../App";
+import { supabase } from "@/lib/supabase";
 import { PrizeCard } from "./PrizeCard";
 import { Collapsible } from "@/components/ui/collapsible";
 

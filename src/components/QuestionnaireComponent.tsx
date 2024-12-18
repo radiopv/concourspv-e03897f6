@@ -1,134 +1,112 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../App";
-import { useQuestions } from './questionnaire/useQuestions';
-import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
-import { calculateFinalScore, completeQuestionnaire } from './questionnaire/QuestionnaireManager';
-import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
-import QuestionDisplay from './questionnaire/QuestionDisplay';
-import { useAttempts } from './questionnaire/hooks/useAttempts';
-import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
+import { supabase } from "@/lib/supabase";
+import { useNavigate } from "react-router-dom";
+import { ensureParticipantExists } from './ParticipantManager';
 
-interface QuestionnaireComponentProps {
-  contestId: string;
-}
-
-const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
+const QuestionnaireComponent = ({ contestId }: { contestId: string }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const state = useQuestionnaireState();
-  const { data: questions } = useQuestions(contestId);
-  const { handleSubmitAnswer } = useAnswerSubmission(contestId);
-  const currentQuestion = questions?.[state.currentQuestionIndex];
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useAttempts(contestId);
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('contest_id', contestId);
 
-  const handleNextQuestion = async () => {
-    if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
-      state.setCurrentQuestionIndex(prev => prev + 1);
-      state.setSelectedAnswer("");
-      state.setHasClickedLink(false);
-      state.setHasAnswered(false);
-      state.setIsCorrect(null);
-    } else {
-      state.setIsSubmitting(true);
-      try {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user?.id) {
-          throw new Error("User not authenticated");
-        }
-
-        const finalScore = await calculateFinalScore(session.session.user.id);
-        await completeQuestionnaire(session.session.user.id, finalScore);
-
-        const { data: participant } = await supabase
-          .from('participants')
-          .select('attempts')
-          .eq('contest_id', contestId)
-          .eq('id', session.session.user.id)
-          .maybeSingle();
-
-        const newAttempts = (participant?.attempts || 0) + 1;
-
-        await supabase
-          .from('participants')
-          .update({ attempts: newAttempts })
-          .eq('contest_id', contestId)
-          .eq('id', session.session.user.id);
-
-        toast({
-          title: "Questionnaire terminé ! 🎉",
-          description: `Votre score final est de ${finalScore}%. ${
-            finalScore >= 70 
-              ? "Félicitations ! Vous êtes éligible pour le tirage au sort !" 
-              : "Continuez à participer pour améliorer vos chances !"
-          }`,
-          duration: 5000,
-        });
-
-        navigate(`/contests/${contestId}/stats`, { 
-          state: { 
-            finalScore: finalScore
-          }
-        });
-
-      } catch (error) {
-        console.error('Error completing questionnaire:', error);
+      if (error) {
+        console.error('Error fetching questions:', error);
         toast({
           title: "Erreur",
-          description: "Une erreur est survenue lors de la finalisation du questionnaire",
+          description: "Impossible de charger les questions.",
           variant: "destructive",
         });
-      } finally {
-        state.setIsSubmitting(false);
+      } else {
+        setQuestions(data);
       }
+    };
+
+    fetchQuestions();
+  }, [contestId, toast]);
+
+  const handleSubmitAnswer = async () => {
+    if (!selectedAnswer) return;
+
+    setIsSubmitting(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté pour participer",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const participantId = await ensureParticipantExists(session.session.user.id, contestId);
+
+      const { error } = await supabase
+        .from('participant_answers')
+        .insert([{
+          participant_id: participantId,
+          question_id: questions[currentQuestionIndex].id,
+          answer: selectedAnswer
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Réponse enregistrée",
+        description: "Votre réponse a été soumise avec succès.",
+      });
+
+      setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
+      setSelectedAnswer(null);
+    } catch (error) {
+      console.error('Error submitting answer:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la soumission de votre réponse",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  if (!questions || questions.length === 0) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-6">
-          <div className="text-center">
-            <p className="text-lg text-gray-600">Aucune question disponible.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="w-full max-w-2xl mx-auto animate-fadeIn">
-      <CardHeader>
-        <QuestionnaireProgress
-          currentQuestionIndex={state.currentQuestionIndex}
-          totalQuestions={questions.length}
-          score={state.score}
-          totalAnswered={state.totalAnswered}
-        />
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <QuestionDisplay
-          questionText={currentQuestion?.question_text || ""}
-          articleUrl={currentQuestion?.article_url}
-          options={currentQuestion?.options || []}
-          selectedAnswer={state.selectedAnswer}
-          correctAnswer={currentQuestion?.correct_answer}
-          hasClickedLink={state.hasClickedLink}
-          hasAnswered={state.hasAnswered}
-          isSubmitting={state.isSubmitting}
-          onArticleRead={() => state.setHasClickedLink(true)}
-          onAnswerSelect={state.setSelectedAnswer}
-          onSubmitAnswer={() => handleSubmitAnswer(currentQuestion)}
-          onNextQuestion={handleNextQuestion}
-          isLastQuestion={state.currentQuestionIndex === questions.length - 1}
-        />
-      </CardContent>
-    </Card>
+    <div>
+      {questions.length > 0 && currentQuestionIndex < questions.length ? (
+        <div>
+          <h2>{questions[currentQuestionIndex].question_text}</h2>
+          {questions[currentQuestionIndex].options.map((option: string, index: number) => (
+            <div key={index}>
+              <input
+                type="radio"
+                value={option}
+                checked={selectedAnswer === option}
+                onChange={() => setSelectedAnswer(option)}
+              />
+              {option}
+            </div>
+          ))}
+          <button onClick={handleSubmitAnswer} disabled={isSubmitting}>
+            {isSubmitting ? "Envoi..." : "Soumettre"}
+          </button>
+        </div>
+      ) : (
+        <div>
+          <h2>Merci d'avoir participé !</h2>
+          <button onClick={() => navigate('/contests')}>Retour aux concours</button>
+        </div>
+      )}
+    </div>
   );
 };
 

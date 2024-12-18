@@ -1,4 +1,4 @@
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
