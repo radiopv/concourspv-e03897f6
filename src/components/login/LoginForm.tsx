@@ -1,13 +1,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/App";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -16,15 +18,26 @@ const loginSchema = z.object({
 
 export const LoginForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const state = location.state as { email?: string; message?: string } | null;
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      email: state?.email || "",
       password: "",
     },
   });
+
+  useEffect(() => {
+    if (state?.message) {
+      toast({
+        title: "Information",
+        description: state.message,
+      });
+    }
+  }, [state?.message, toast]);
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
@@ -54,7 +67,6 @@ export const LoginForm = () => {
           description: "Bienvenue sur votre espace membre !",
         });
         
-        // Ajout d'un délai pour laisser le temps au toast de s'afficher
         setTimeout(() => {
           navigate("/dashboard");
         }, 1000);
@@ -103,6 +115,12 @@ export const LoginForm = () => {
 
   return (
     <Form {...form}>
+      {state?.message && (
+        <Alert className="mb-6">
+          <AlertDescription>{state.message}</AlertDescription>
+        </Alert>
+      )}
+      
       <form onSubmit={form.handleSubmit(handleLogin)} className="space-y-6">
         <FormField
           control={form.control}
