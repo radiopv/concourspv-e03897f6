@@ -51,19 +51,18 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       
       if (!data) return [];
 
-      return data
-        .filter((item): item is Prize => 
-          item.prize_catalog !== null && 
-          typeof item.prize_catalog === 'object' &&
-          'name' in item.prize_catalog &&
-          'value' in item.prize_catalog
-        );
+      return data.filter((item): item is Prize => 
+        item.prize_catalog !== null && 
+        typeof item.prize_catalog === 'object' &&
+        'name' in item.prize_catalog &&
+        'value' in item.prize_catalog
+      );
     },
   });
 
   const totalPrizeValue = prizesData?.reduce((total, prize) => {
     return total + (prize.prize_catalog.value || 0);
-  }, 0);
+  }, 0) || 0;
 
   return (
     <motion.div
