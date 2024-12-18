@@ -7,6 +7,7 @@ import { supabase } from "../App";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
+import { checkExistingParticipant, createParticipant } from "@/utils/participantUtils";
 
 interface Contest {
   id: string;
@@ -17,11 +18,17 @@ interface Contest {
   status: string;
 }
 
+interface UserInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 const Contest = () => {
   const { toast } = useToast();
   const [step, setStep] = useState<"list" | "info" | "questions">("list");
   const [selectedContest, setSelectedContest] = useState<string | null>(null);
-  const [userInfo, setUserInfo] = useState({
+  const [userInfo, setUserInfo] = useState<UserInfo>({
     firstName: "",
     lastName: "",
     email: "",
@@ -48,23 +55,10 @@ const Contest = () => {
   const handleSubmitInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    try {
-      // Check if user has already participated
-      const { data: existingParticipant, error: fetchError } = await supabase
-        .from('participants')
-        .select()
-        .eq('email', userInfo.email)
-        .eq('contest_id', selectedContest)
-        .single();
+    if (!selectedContest) return;
 
-      if (fetchError && !fetchError.message.includes('Results contain 0 rows')) {
-        toast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la vérification. Veuillez réessayer.",
-          variant: "destructive",
-        });
-        return;
-      }
+    try {
+      const existingParticipant = await checkExistingParticipant(userInfo.email, selectedContest);
 
       if (existingParticipant) {
         toast({
@@ -75,33 +69,18 @@ const Contest = () => {
         return;
       }
 
-      // Create new participant
-      const { error: insertError } = await supabase
-        .from('participants')
-        .insert([
-          {
-            first_name: userInfo.firstName,
-            last_name: userInfo.lastName,
-            email: userInfo.email,
-            contest_id: selectedContest,
-            status: 'pending'
-          }
-        ]);
-
-      if (insertError) {
-        toast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer.",
-          variant: "destructive",
-        });
-        return;
-      }
+      await createParticipant(
+        userInfo.firstName,
+        userInfo.lastName,
+        userInfo.email,
+        selectedContest
+      );
 
       setStep("questions");
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Une erreur inattendue est survenue. Veuillez réessayer.",
+        description: "Une erreur est survenue. Veuillez réessayer.",
         variant: "destructive",
       });
     }
