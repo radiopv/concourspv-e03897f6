@@ -116,7 +116,7 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
         setIsAdmin(adminData?.role === 'admin');
 
-        if (!adminData?.role === 'admin') {
+        if (adminData?.role !== 'admin') {
           toast({
             title: "Accès refusé",
             description: "Vous n'avez pas les droits d'administrateur nécessaires.",
