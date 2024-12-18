@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/App";
-import { Loader2, Trophy, Target, Star } from "lucide-react";
+import { Loader2, Trophy, Target, Star, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -21,34 +23,56 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+  });
 
-  const { data: userProfile, isLoading, error } = useQuery({
+  const { data: userProfile, isLoading, error, refetch } = useQuery({
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // Essayer de récupérer le profil existant
-      const { data: existingProfile, error: fetchError } = await supabase
+      // Récupérer les statistiques de participation
+      const { data: participationStats } = await supabase
+        .from('participants')
+        .select('score, status')
+        .eq('id', user.id);
+
+      // Calculer les statistiques
+      const stats = participationStats?.reduce((acc, curr) => ({
+        contests_participated: acc.contests_participated + 1,
+        total_points: acc.total_points + (curr.score || 0),
+        contests_won: acc.contests_won + (curr.status === 'winner' ? 1 : 0),
+      }), {
+        contests_participated: 0,
+        total_points: 0,
+        contests_won: 0,
+      });
+
+      // Récupérer ou créer le profil
+      const { data: existingProfile } = await supabase
         .from("members")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      // Si le profil existe, le retourner
       if (existingProfile) {
-        return existingProfile as UserProfile;
+        return {
+          ...existingProfile,
+          ...stats
+        };
       }
 
-      // Si pas de profil, en créer un nouveau
+      // Créer un nouveau profil avec les statistiques
       const { data: userData } = await supabase.auth.getUser();
       const newProfile = {
         id: user.id,
         email: userData.user?.email || "",
         first_name: userData.user?.user_metadata?.first_name || "",
         last_name: userData.user?.user_metadata?.last_name || "",
-        total_points: 0,
-        contests_participated: 0,
-        contests_won: 0,
+        ...stats,
         notifications_enabled: true,
         share_scores: true,
       };
@@ -69,10 +93,47 @@ const Dashboard = () => {
         throw createError;
       }
 
-      return createdProfile as UserProfile;
+      return createdProfile;
     },
     retry: 1,
   });
+
+  useEffect(() => {
+    if (userProfile) {
+      setFormData({
+        first_name: userProfile.first_name || "",
+        last_name: userProfile.last_name || "",
+      });
+    }
+  }, [userProfile]);
+
+  const handleSaveProfile = async () => {
+    try {
+      const { error } = await supabase
+        .from("members")
+        .update({
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+        })
+        .eq("id", user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profil mis à jour",
+        description: "Vos informations ont été enregistrées avec succès.",
+      });
+      
+      setIsEditing(false);
+      refetch();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de mettre à jour votre profil.",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -88,10 +149,7 @@ const Dashboard = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600">Une erreur est survenue</h1>
           <p className="text-gray-600 mt-2">Impossible de charger votre profil</p>
-          <Button 
-            onClick={() => window.location.reload()} 
-            className="mt-4"
-          >
+          <Button onClick={() => window.location.reload()} className="mt-4">
             Réessayer
           </Button>
         </div>
@@ -133,7 +191,7 @@ const Dashboard = () => {
             <CardDescription>Points accumulés</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{userProfile?.total_points || 0}</p>
+            <p className="text-3xl font-bold">{Math.round(userProfile?.total_points || 0)}</p>
           </CardContent>
         </Card>
 
@@ -151,20 +209,71 @@ const Dashboard = () => {
         </Card>
       </div>
 
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-xl">Mon profil</CardTitle>
+          <CardDescription>Gérez vos informations personnelles</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">Prénom</Label>
+                <Input
+                  id="firstName"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
+                  disabled={!isEditing}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Nom</Label>
+                <Input
+                  id="lastName"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                value={userProfile?.email || ""}
+                disabled
+                className="bg-gray-50"
+              />
+            </div>
+            <div className="flex justify-end gap-4">
+              {!isEditing ? (
+                <Button onClick={() => setIsEditing(true)}>
+                  Modifier le profil
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={() => setIsEditing(false)}>
+                    Annuler
+                  </Button>
+                  <Button onClick={handleSaveProfile} className="gap-2">
+                    <Save className="h-4 w-4" />
+                    Enregistrer
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" 
-              onClick={() => navigate("/contests")}>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-shadow" 
+          onClick={() => navigate("/contests")}
+        >
           <CardHeader>
             <CardTitle className="text-xl">Voir les concours</CardTitle>
             <CardDescription>Participez aux concours actifs</CardDescription>
-          </CardHeader>
-        </Card>
-
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigate("/profile")}>
-          <CardHeader>
-            <CardTitle className="text-xl">Mon profil</CardTitle>
-            <CardDescription>Gérez vos informations personnelles</CardDescription>
           </CardHeader>
         </Card>
       </div>
