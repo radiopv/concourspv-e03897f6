@@ -70,7 +70,7 @@ const ContestCard = ({
           <ContestCardPrize
             prizeImageUrl={contest.prize_image_url}
             shopUrl={contest.shop_url}
-            onEdit={() => onEdit(contest.id)}
+            contestId={contest.id}
           />
           
           <ContestCardStats
