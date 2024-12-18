@@ -35,6 +35,20 @@ const DrawManager = ({ contestId }: DrawManagerProps) => {
     }
   });
 
+  // Vérifier si c'est l'heure du tirage
+  useEffect(() => {
+    const checkDrawTime = async () => {
+      if (contest?.draw_date && new Date(contest.draw_date) <= new Date() && !winner) {
+        await performDraw();
+      }
+    };
+
+    const interval = setInterval(checkDrawTime, 60000); // Vérifier toutes les minutes
+    checkDrawTime();
+
+    return () => clearInterval(interval);
+  }, [contest?.draw_date, winner]);
+
   const updateDrawDateMutation = useMutation({
     mutationFn: async (newDate: Date) => {
       const { error } = await supabase
@@ -78,16 +92,22 @@ const DrawManager = ({ contestId }: DrawManagerProps) => {
       setWinner(randomWinner);
 
       // Mettre à jour le statut du gagnant
-      await supabase
+      const { error: updateError } = await supabase
         .from('participants')
         .update({ status: 'winner' })
         .eq('id', randomWinner.id);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ['contest-draw'] });
+      queryClient.invalidateQueries({ queryKey: ['participants'] });
 
       toast({
         title: "Tirage effectué !",
         description: `Le gagnant est ${randomWinner.first_name} ${randomWinner.last_name}`,
       });
     } catch (error) {
+      console.error('Error performing draw:', error);
       toast({
         title: "Erreur",
         description: "Impossible d'effectuer le tirage",

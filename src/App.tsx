@@ -1,143 +1,75 @@
-import React, { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import Layout from "@/components/Layout";
-import Index from "@/pages/Index";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import ContestsList from "@/pages/ContestsList";
-import Contest from "@/pages/Contest";
-import Admin from "@/pages/Admin";
-import Dashboard from "@/pages/Dashboard";
-import ContestStatsPage from "@/pages/ContestStats";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
+import { createClient } from '@supabase/supabase-js';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import Layout from './components/Layout';
+import Admin from './pages/Admin';
+import AdminParticipants from './pages/AdminParticipants';
+import AdminPrizes from './pages/AdminPrizes';
+import Contest from './pages/Contest';
+import ContestStats from './pages/ContestStats';
+import ContestsList from './pages/ContestsList';
+import Dashboard from './pages/Dashboard';
+import Index from './pages/Index';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import { AuthProvider } from './contexts/AuthContext';
+import { Toaster } from './components/ui/toaster';
 
-const supabaseUrl = "https://fgnrvnyzyiaqtzsyegzn.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbnJ2bnl6eWlhcXR6c3llZ3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwMjAxMTUsImV4cCI6MjA0ODU5NjExNX0.Mr0AIJs9f9OEEjYUXuHISVfOBNgqfwBy8w5DhKqxo90";
+const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
+const queryClient = new QueryClient();
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    storage: window.localStorage,
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Layout><Index /></Layout>
   },
-});
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5,
-    },
+  {
+    path: '/login',
+    element: <Login />
   },
-});
+  {
+    path: '/register',
+    element: <Register />
+  },
+  {
+    path: '/dashboard',
+    element: <Layout><Dashboard /></Layout>
+  },
+  {
+    path: '/contests',
+    element: <Layout><ContestsList /></Layout>
+  },
+  {
+    path: '/contest/:id',
+    element: <Layout><Contest /></Layout>
+  },
+  {
+    path: '/contest/:id/stats',
+    element: <Layout><ContestStats /></Layout>
+  },
+  {
+    path: '/admin',
+    element: <Layout><Admin /></Layout>
+  },
+  {
+    path: '/admin/participants',
+    element: <Layout><AdminParticipants /></Layout>
+  },
+  {
+    path: '/admin/prizes',
+    element: <Layout><AdminPrizes /></Layout>
+  }
+]);
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-              <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/contests" element={<ProtectedRoute><ContestsList /></ProtectedRoute>} />
-              <Route path="/contests/:id" element={<ProtectedRoute><Contest /></ProtectedRoute>} />
-              <Route path="/contests/:id/stats" element={<ProtectedRoute><ContestStatsPage /></ProtectedRoute>} />
-              <Route path="/admin" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
-              <Route path="/admin/*" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
-            </Routes>
-          </Layout>
-          <Toaster />
-        </BrowserRouter>
+        <RouterProvider router={router} />
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );
 }
-
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session } = useAuth();
-  
-  if (session) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return <>{children}</>;
-};
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, loading } = useAuth();
-
-  if (loading) {
-    return <div>Chargement...</div>;
-  }
-
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const adminPassword = localStorage.getItem('adminPassword');
-    if (adminPassword === 'Lechef200!!') {
-      setIsAuthenticated(true);
-    }
-  }, []);
-
-  const authenticateAdmin = (password: string) => {
-    if (password === 'Lechef200!!') {
-      localStorage.setItem('adminPassword', password);
-      setIsAuthenticated(true);
-      toast({
-        title: "Accès autorisé",
-        description: "Bienvenue dans l'espace administrateur",
-      });
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Accès refusé",
-        description: "Mot de passe incorrect",
-      });
-    }
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-        <div className="w-full max-w-md space-y-4 bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold text-center text-gray-900">Accès Administrateur</h2>
-          <input
-            type="password"
-            placeholder="Mot de passe administrateur"
-            className="w-full px-4 py-2 border rounded-md"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                authenticateAdmin((e.target as HTMLInputElement).value);
-              }
-            }}
-          />
-          <p className="text-sm text-gray-500 text-center">
-            Entrez le mot de passe administrateur et appuyez sur Entrée
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-};
 
 export default App;
