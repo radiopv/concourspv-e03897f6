@@ -11,16 +11,17 @@ import Contest from "@/pages/Contest";
 import Admin from "@/pages/Admin";
 import { AuthProvider } from "@/contexts/AuthContext";
 
+// Configuration Supabase avec les bonnes clés
 const supabaseUrl = "https://fgnrvnyzyiaqtzsyegzn.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbnJ2bnl6eWlhcXR6c3llZ3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI5MjIyNTgsImV4cCI6MjAxODQ5ODI1OH0.qDw_7IgyDaWqzWdC_SQZTjRGJJTXF7Hg5ByEUXkOeAM";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbnJ2bnl6eWlhcXR6c3llZ3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI5MjIyNTgsImV4cCI6MjAxODQ5ODI1OH0.qDw_7IgyDaWqzWdC_SQZTjRGJJTXF7Hg5ByEUXkOeAM";
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: window.localStorage
-  }
+    storage: window.localStorage,
+  },
 });
 
 const queryClient = new QueryClient({
@@ -28,9 +29,9 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5
-    }
-  }
+      staleTime: 1000 * 60 * 5,
+    },
+  },
 });
 
 function App() {
@@ -54,9 +55,9 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/admin/*" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <Admin />
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
             </Routes>
           </Layout>
@@ -67,11 +68,39 @@ function App() {
   );
 }
 
+// Route protégée standard
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const session = supabase.auth.getSession();
   if (!session) {
     return <Navigate to="/login" replace />;
   }
+  return <>{children}</>;
+};
+
+// Route protégée spécifique pour l'admin
+const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email === "renaudcanuel@me.com") {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdminStatus();
+  }, []);
+
+  if (isAdmin === null) {
+    return <div>Vérification des droits d'accès...</div>;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/login" replace />;
+  }
+
   return <>{children}</>;
 };
 
