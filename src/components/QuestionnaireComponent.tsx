@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../App";
 import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import ArticleLink from './questionnaire/ArticleLink';
 import AnswerOptions from './questionnaire/AnswerOptions';
 import { useQuestions } from './questionnaire/useQuestions';
@@ -17,6 +18,7 @@ interface QuestionnaireComponentProps {
 
 const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
@@ -27,6 +29,11 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
   const { data: questions } = useQuestions(contestId);
   const currentQuestion = questions?.[currentQuestionIndex];
+
+  const calculateProgress = () => {
+    if (!questions || questions.length === 0) return 0;
+    return Math.round(((currentQuestionIndex + 1) / questions.length) * 100);
+  };
 
   const handleSubmitAnswer = async () => {
     if (!selectedAnswer || !currentQuestion) return;
@@ -91,10 +98,15 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       setHasAnswered(false);
       setIsCorrect(null);
     } else {
+      // Questionnaire completed
       toast({
-        title: "Félicitations !",
-        description: "Vous avez terminé le questionnaire",
+        title: "Félicitations ! 🎉",
+        description: "Vous avez terminé le questionnaire. Vous allez être redirigé vers la liste des concours.",
       });
+      // Redirect to contests list after a short delay
+      setTimeout(() => {
+        navigate('/contests');
+      }, 2000);
     }
   };
 
@@ -110,6 +122,8 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     );
   }
 
+  const progress = calculateProgress();
+
   return (
     <Card className="w-full max-w-2xl mx-auto animate-fadeIn">
       <CardHeader>
@@ -118,13 +132,13 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
             Question {currentQuestionIndex + 1} sur {questions.length}
           </CardTitle>
           <span className="text-sm text-muted-foreground">
-            {Math.round((currentQuestionIndex / questions.length) * 100)}% complété
+            {progress}% complété
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div 
             className="bg-primary h-2.5 rounded-full transition-all duration-300"
-            style={{ width: `${(currentQuestionIndex / questions.length) * 100}%` }}
+            style={{ width: `${progress}%` }}
           />
         </div>
       </CardHeader>
