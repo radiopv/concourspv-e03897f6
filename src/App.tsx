@@ -12,6 +12,7 @@ import Contest from "@/pages/Contest";
 import Admin from "@/pages/Admin";
 import Dashboard from "@/pages/Dashboard";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 
 const supabaseUrl = "https://fgnrvnyzyiaqtzsyegzn.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbnJ2bnl6eWlhcXR6c3llZ3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwMjAxMTUsImV4cCI6MjA0ODU5NjExNX0.Mr0AIJs9f9OEEjYUXuHISVfOBNgqfwBy8w5DhKqxo90";
@@ -85,6 +86,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -92,23 +94,45 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         setIsAdmin(false);
         return;
       }
-      
-      if (session.user.email === "renaudcanuel@me.com") {
-        setIsAdmin(true);
-      } else {
+
+      try {
+        const { data: adminData, error } = await supabase
+          .from('members')
+          .select('role')
+          .eq('email', session.user.email)
+          .single();
+
+        if (error) {
+          console.error('Erreur lors de la vérification du rôle:', error);
+          setIsAdmin(false);
+          return;
+        }
+
+        const isUserAdmin = adminData?.role === 'admin' || session.user.email === "renaudcanuel@me.com";
+        setIsAdmin(isUserAdmin);
+
+        if (!isUserAdmin) {
+          toast({
+            title: "Accès refusé",
+            description: "Vous n'avez pas les droits d'administrateur nécessaires.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification des droits admin:', error);
         setIsAdmin(false);
       }
     };
     
     checkAdminStatus();
-  }, [session]);
+  }, [session, toast]);
 
   if (loading || isAdmin === null) {
     return <div>Vérification des droits d'accès...</div>;
   }
 
   if (!session || !isAdmin) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
