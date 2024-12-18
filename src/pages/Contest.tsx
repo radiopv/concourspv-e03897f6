@@ -1,24 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "../App";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
 
-interface UserInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
+interface Contest {
+  id: string;
+  title: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  _count?: {
+    participants: number;
+  }
 }
 
 const Contest = () => {
   const { toast } = useToast();
-  const [step, setStep] = useState<"info" | "questions">("info");
-  const [userInfo, setUserInfo] = useState<UserInfo>({
+  const [step, setStep] = useState<"list" | "info" | "questions">("list");
+  const [selectedContest, setSelectedContest] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState({
     firstName: "",
     lastName: "",
     email: "",
   });
+
+  const { data: contests, isLoading } = useQuery({
+    queryKey: ['contests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contests')
+        .select(`
+          *,
+          participants (count)
+        `)
+        .eq('status', 'active');
+      
+      if (error) throw error;
+      return data as Contest[];
+    }
+  });
+
+  const handleContestSelect = (contestId: string) => {
+    setSelectedContest(contestId);
+    setStep("info");
+  };
 
   const handleSubmitInfo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +59,7 @@ const Contest = () => {
         .from('participants')
         .select()
         .eq('email', userInfo.email)
+        .eq('contest_id', selectedContest)
         .single();
 
       if (fetchError && !fetchError.message.includes('Results contain 0 rows')) {
@@ -57,6 +88,7 @@ const Contest = () => {
             first_name: userInfo.firstName,
             last_name: userInfo.lastName,
             email: userInfo.email,
+            contest_id: selectedContest,
             status: 'en_cours'
           }
         ]);
@@ -80,16 +112,49 @@ const Contest = () => {
     }
   };
 
+  if (isLoading) {
+    return <div>Chargement des concours...</div>;
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8 animate-fadeIn">
         <h1 className="text-4xl font-bold mb-2">Concours</h1>
         <p className="text-gray-600">
-          Participez à notre concours et tentez de gagner des prix exceptionnels
+          Participez à nos concours et tentez de gagner des prix exceptionnels
         </p>
       </div>
 
-      {step === "info" ? (
+      {step === "list" && (
+        <div className="grid gap-6">
+          {contests?.map((contest) => (
+            <Card key={contest.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle>{contest.title}</CardTitle>
+                <CardDescription>{contest.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center">
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-500">
+                      Du {new Date(contest.start_date).toLocaleDateString()} au{" "}
+                      {new Date(contest.end_date).toLocaleDateString()}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {contest._count?.participants || 0} participants
+                    </p>
+                  </div>
+                  <Button onClick={() => handleContestSelect(contest.id)}>
+                    Participer
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {step === "info" && (
         <form onSubmit={handleSubmitInfo} className="space-y-6 animate-fadeIn">
           <div className="glass-card p-8 rounded-lg space-y-6">
             <div className="space-y-2">
@@ -134,12 +199,11 @@ const Contest = () => {
             </Button>
           </div>
         </form>
-      ) : (
+      )}
+
+      {step === "questions" && (
         <div className="glass-card p-8 rounded-lg animate-fadeIn">
-          <h2 className="text-2xl font-semibold mb-4">Questionnaire</h2>
-          <p className="text-gray-600">
-            Cette partie sera implémentée dans la prochaine étape
-          </p>
+          <QuestionnaireComponent contestId={selectedContest!} />
         </div>
       )}
     </div>

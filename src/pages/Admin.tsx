@@ -1,38 +1,102 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../App";
+import QuestionsManager from "../components/admin/QuestionsManager";
+import ParticipantsList from "../components/admin/ParticipantsList";
+import DrawManager from "../components/admin/DrawManager";
 
 const Admin = () => {
+  const [selectedContest, setSelectedContest] = useState<string | null>(null);
+
+  const { data: contests, isLoading } = useQuery({
+    queryKey: ['admin-contests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contests')
+        .select(`
+          *,
+          participants (count)
+        `);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  if (isLoading) {
+    return <div>Chargement...</div>;
+  }
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="text-center mb-8 animate-fadeIn">
         <h1 className="text-4xl font-bold mb-2">Administration</h1>
-        <p className="text-gray-600">Gérez votre concours</p>
+        <p className="text-gray-600">Gérez vos concours</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="glass-card p-6 rounded-lg">
-          <h2 className="text-xl font-semibold mb-4">Questions</h2>
-          <p className="text-gray-600 mb-4">
-            Gérez les questions du concours
-          </p>
-          <Button className="w-full">Gérer les questions</Button>
+      {!selectedContest ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {contests?.map((contest) => (
+            <Card 
+              key={contest.id} 
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => setSelectedContest(contest.id)}
+            >
+              <CardHeader>
+                <CardTitle>{contest.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-500">
+                  {contest._count?.participants || 0} participants
+                </p>
+                <p className="text-sm text-gray-500">
+                  Statut: {contest.status}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle>Nouveau concours</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full">Créer un concours</Button>
+            </CardContent>
+          </Card>
         </div>
+      ) : (
+        <div className="space-y-6">
+          <Button 
+            variant="outline" 
+            onClick={() => setSelectedContest(null)}
+          >
+            Retour à la liste
+          </Button>
 
-        <div className="glass-card p-6 rounded-lg">
-          <h2 className="text-xl font-semibold mb-4">Participants</h2>
-          <p className="text-gray-600 mb-4">
-            Consultez la liste des participants
-          </p>
-          <Button className="w-full">Voir les participants</Button>
-        </div>
+          <Tabs defaultValue="questions">
+            <TabsList>
+              <TabsTrigger value="questions">Questions</TabsTrigger>
+              <TabsTrigger value="participants">Participants</TabsTrigger>
+              <TabsTrigger value="draw">Tirage au sort</TabsTrigger>
+            </TabsList>
 
-        <div className="glass-card p-6 rounded-lg">
-          <h2 className="text-xl font-semibold mb-4">Tirage au sort</h2>
-          <p className="text-gray-600 mb-4">
-            Effectuez le tirage au sort
-          </p>
-          <Button className="w-full">Configurer le tirage</Button>
+            <TabsContent value="questions">
+              <QuestionsManager contestId={selectedContest} />
+            </TabsContent>
+
+            <TabsContent value="participants">
+              <ParticipantsList contestId={selectedContest} />
+            </TabsContent>
+
+            <TabsContent value="draw">
+              <DrawManager contestId={selectedContest} />
+            </TabsContent>
+          </Tabs>
         </div>
-      </div>
+      )}
     </div>
   );
 };
