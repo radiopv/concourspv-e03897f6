@@ -1,40 +1,28 @@
 import { supabase } from "../../App";
 
-export const completeQuestionnaire = async (userId: string, contestId: string, finalScore: number) => {
+export const calculateFinalScore = async (participationId: string) => {
+  const { data: answers, error } = await supabase
+    .from('participant_answers')
+    .select('*')
+    .eq('participant_id', participationId);
+
+  if (error) throw error;
+
+  const totalQuestions = answers?.length || 0;
+  const correctAnswers = answers?.filter(a => a.is_correct)?.length || 0;
+  
+  return totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+};
+
+export const completeQuestionnaire = async (participationId: string, finalScore: number) => {
   const { error } = await supabase
     .from('participants')
-    .update({ 
+    .update({
       status: 'completed',
       score: finalScore,
       completed_at: new Date().toISOString()
     })
-    .eq('contest_id', contestId)
-    .eq('id', userId);
+    .eq('participation_id', participationId);
 
-  if (error) {
-    console.error('Error completing questionnaire:', error);
-    throw error;
-  }
-
-  return finalScore;
-};
-
-export const calculateFinalScore = async (userId: string) => {
-  const { data: answers, error } = await supabase
-    .from('participant_answers')
-    .select('*, questions!inner(*)')
-    .eq('participant_id', userId);
-
-  if (error) {
-    console.error('Error fetching answers:', error);
-    return 0;
-  }
-
-  if (!answers || answers.length === 0) return 0;
-
-  const correctAnswers = answers.filter(
-    answer => answer.answer === answer.questions.correct_answer
-  ).length;
-
-  return Math.round((correctAnswers / answers.length) * 100);
+  if (error) throw error;
 };

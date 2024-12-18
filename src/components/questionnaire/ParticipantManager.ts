@@ -1,41 +1,70 @@
 import { supabase } from "../../App";
 
 export const ensureParticipantExists = async (userId: string, contestId: string) => {
-  // First check if participant already exists
-  const { data: existingParticipant, error: fetchError } = await supabase
-    .from('participants')
-    .select('id')
-    .eq('id', userId)
-    .eq('contest_id', contestId)
-    .maybeSingle();
+  try {
+    // Check if user already participates in this contest
+    const { data: existingParticipant, error: fetchError } = await supabase
+      .from('participants')
+      .select('participation_id, attempts')
+      .eq('id', userId)
+      .eq('contest_id', contestId)
+      .maybeSingle();
 
-  if (existingParticipant) {
-    return existingParticipant.id;
+    if (fetchError) {
+      console.error('Error checking participant:', fetchError);
+      throw fetchError;
+    }
+
+    if (existingParticipant) {
+      return existingParticipant.participation_id;
+    }
+
+    // Get user's email from auth session
+    const { data: { session } } = await supabase.auth.getSession();
+    const userEmail = session?.user?.email || 'anonymous@user.com';
+
+    // Create new participation entry
+    const { data: newParticipant, error: insertError } = await supabase
+      .from('participants')
+      .insert([{
+        id: userId,
+        contest_id: contestId,
+        status: 'pending',
+        first_name: userEmail.split('@')[0],
+        last_name: 'Participant',
+        email: userEmail,
+        attempts: 0
+      }])
+      .select('participation_id')
+      .single();
+
+    if (insertError) {
+      console.error('Error creating participant:', insertError);
+      throw insertError;
+    }
+
+    return newParticipant.participation_id;
+  } catch (error) {
+    console.error('Error in ensureParticipantExists:', error);
+    throw error;
   }
+};
 
-  // Get user's email from auth session
-  const { data: { session } } = await supabase.auth.getSession();
-  const userEmail = session?.user?.email || 'anonymous@user.com';
-
-  // If not, create new participant with required fields
-  const { data: newParticipant, error: participantError } = await supabase
+export const getParticipantStats = async (userId: string) => {
+  const { data, error } = await supabase
     .from('participants')
-    .insert([{
-      id: userId,
-      contest_id: contestId,
-      status: 'pending', // Changed from 'active' to 'pending' to match the check constraint
-      first_name: userEmail.split('@')[0],
-      last_name: 'Participant',
-      email: userEmail,
-      attempts: 0
-    }])
-    .select('id')
-    .single();
+    .select(`
+      contest_id,
+      status,
+      attempts,
+      score,
+      completed_at,
+      contests (
+        title
+      )
+    `)
+    .eq('id', userId);
 
-  if (participantError) {
-    console.error('Error creating participant:', participantError);
-    throw participantError;
-  }
-
-  return newParticipant.id;
+  if (error) throw error;
+  return data;
 };
