@@ -26,7 +26,8 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
       status: 'pending', // Changed from 'active' to 'pending' to match the check constraint
       first_name: userEmail.split('@')[0],
       last_name: 'Participant',
-      email: userEmail
+      email: userEmail,
+      attempts: 0
     }])
     .select('id')
     .single();
