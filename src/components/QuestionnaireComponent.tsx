@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -24,9 +24,31 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const [hasClickedLink, setHasClickedLink] = useState(false);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [score, setScore] = useState(0);
+  const [totalAnswered, setTotalAnswered] = useState(0);
 
   const { data: questions } = useQuestions(contestId);
   const currentQuestion = questions?.[currentQuestionIndex];
+
+  const calculateFinalScore = async (userId: string) => {
+    const { data: answers, error } = await supabase
+      .from('participant_answers')
+      .select('*, questions!inner(*)')
+      .eq('participant_id', userId);
+
+    if (error) {
+      console.error('Error fetching answers:', error);
+      return 0;
+    }
+
+    if (!answers || answers.length === 0) return 0;
+
+    const correctAnswers = answers.filter(
+      answer => answer.answer === answer.questions.correct_answer
+    ).length;
+
+    return Math.round((correctAnswers / answers.length) * 100);
+  };
 
   const handleSubmitAnswer = async () => {
     if (!selectedAnswer || !currentQuestion) return;
@@ -48,6 +70,10 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       const isAnswerCorrect = selectedAnswer === currentQuestion.correct_answer;
       setIsCorrect(isAnswerCorrect);
       setHasAnswered(true);
+      setTotalAnswered(prev => prev + 1);
+      if (isAnswerCorrect) {
+        setScore(prev => prev + 1);
+      }
 
       const { error } = await supabase
         .from('participant_answers')
@@ -87,13 +113,32 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user?.id) return false;
 
+      const finalScore = await calculateFinalScore(session.session.user.id);
+      console.log('Final score calculated:', finalScore);
+
       const { error } = await supabase
         .from('participants')
-        .update({ status: 'completed' })
+        .update({ 
+          status: 'completed',
+          score: finalScore,
+          completed_at: new Date().toISOString()
+        })
         .eq('contest_id', contestId)
         .eq('id', session.session.user.id);
 
       if (error) throw error;
+
+      // Afficher le score final
+      toast({
+        title: "Questionnaire terminé ! 🎉",
+        description: `Votre score final est de ${finalScore}%. ${
+          finalScore >= 70 
+            ? "Félicitations ! Vous êtes éligible pour le tirage au sort !" 
+            : "Continuez à participer pour améliorer vos chances !"
+        }`,
+        duration: 5000,
+      });
+
       return true;
     } catch (error) {
       console.error('Error completing questionnaire:', error);
@@ -112,14 +157,15 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       setIsSubmitting(true);
       const success = await completeQuestionnaire();
       if (success) {
-        toast({
-          title: "Félicitations ! 🎉",
-          description: "Vous avez terminé le questionnaire avec succès !",
-        });
-        // Redirection après un court délai
+        // Redirection après un délai pour laisser le temps de voir le toast
         setTimeout(() => {
-          navigate('/contests');
-        }, 2000);
+          navigate('/contests', { 
+            state: { 
+              completedContestId: contestId,
+              showResults: true
+            }
+          });
+        }, 3000);
       } else {
         setIsSubmitting(false);
         toast({
@@ -149,6 +195,8 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         <QuestionnaireProgress
           currentQuestionIndex={currentQuestionIndex}
           totalQuestions={questions.length}
+          score={score}
+          totalAnswered={totalAnswered}
         />
       </CardHeader>
       <CardContent className="space-y-6">
