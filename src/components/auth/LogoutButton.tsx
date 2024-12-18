@@ -1,28 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "../../App";
-import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export const LogoutButton = () => {
-  const { toast } = useToast();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
 
+  if (!user) return null;
+
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Déconnexion réussie",
-        description: "À bientôt !",
-      });
-      navigate('/login');
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de se déconnecter. Veuillez réessayer.",
-      });
-    }
+    await signOut();
+    navigate('/login');
   };
 
   return (

@@ -34,10 +34,16 @@ export const LoginForm = () => {
       });
 
       if (error) {
+        let errorMessage = "Email ou mot de passe incorrect.";
+        
+        if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Veuillez vérifier votre email pour activer votre compte.";
+        }
+
         toast({
           variant: "destructive",
           title: "Erreur de connexion",
-          description: "Email ou mot de passe incorrect.",
+          description: errorMessage,
         });
         return;
       }
