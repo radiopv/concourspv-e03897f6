@@ -4,16 +4,38 @@ import { supabase } from "../../../App";
 import { useQueryClient } from "@tanstack/react-query";
 import PrizeCatalogSelector from './prize/PrizeCatalogSelector';
 import PrizeDisplay from './prize/PrizeDisplay';
+import { useQuery } from "@tanstack/react-query";
 
 interface ContestCardPrizeProps {
-  prizeImageUrl?: string;
-  shopUrl?: string;
   contestId: string;
 }
 
-const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPrizeProps) => {
+const ContestCardPrize = ({ contestId }: ContestCardPrizeProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Requête pour obtenir le prix associé au concours
+  const { data: contestPrize, isLoading } = useQuery({
+    queryKey: ['contest-prize', contestId],
+    queryFn: async () => {
+      console.log('Fetching prize for contest:', contestId);
+      const { data, error } = await supabase
+        .from('prizes')
+        .select(`
+          *,
+          catalog_item:prize_catalog(*)
+        `)
+        .eq('contest_id', contestId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching prize:', error);
+        throw error;
+      }
+      console.log('Contest prize data:', data);
+      return data;
+    }
+  });
 
   const handlePrizeSelect = async (catalogItemId: string) => {
     try {
@@ -39,7 +61,7 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
         result = await supabase
           .from('prizes')
           .update({ catalog_item_id: catalogItemId })
-          .eq('id', existingPrizes[0].id);
+          .eq('contest_id', contestId);
           
         console.log('Update result:', result);
       } else {
@@ -59,9 +81,9 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
       }
 
       // Invalider les requêtes pour forcer un rafraîchissement
+      queryClient.invalidateQueries({ queryKey: ['contest-prize', contestId] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
       
       toast({
         title: "Succès",
@@ -91,9 +113,9 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
       if (error) throw error;
 
       // Invalider les requêtes pour forcer un rafraîchissement
+      queryClient.invalidateQueries({ queryKey: ['contest-prize', contestId] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
       
       toast({
         title: "Succès",
@@ -109,11 +131,15 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
     }
   };
 
+  if (isLoading) {
+    return <div>Chargement du prix...</div>;
+  }
+
   return (
     <div className="space-y-4">
       <PrizeDisplay
-        imageUrl={prizeImageUrl}
-        shopUrl={shopUrl}
+        imageUrl={contestPrize?.catalog_item?.image_url}
+        shopUrl={contestPrize?.catalog_item?.shop_url}
         onRemove={handlePrizeRemove}
       />
       <PrizeCatalogSelector onSelectPrize={handlePrizeSelect} />

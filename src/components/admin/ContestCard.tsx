@@ -20,8 +20,6 @@ interface ContestCardProps {
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
-    shop_url?: string;
-    prize_image_url?: string;
     participants?: { count: number };
     questions?: { count: number };
   };
@@ -91,8 +89,6 @@ const ContestCard = ({
           />
           
           <ContestCardPrize
-            prizeImageUrl={contest.prize_image_url}
-            shopUrl={contest.shop_url}
             contestId={contest.id}
           />
           
