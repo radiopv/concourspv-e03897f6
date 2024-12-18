@@ -4,6 +4,7 @@ import ContestCardHeader from './contest-card/ContestCardHeader';
 import ContestCardStats from './contest-card/ContestCardStats';
 import ContestCardToggles from './contest-card/ContestCardToggles';
 import ContestCardBadges from './contest-card/ContestCardBadges';
+import ContestCardPrize from './contest-card/ContestCardPrize';
 
 interface ContestCardProps {
   contest: {
@@ -16,6 +17,8 @@ interface ContestCardProps {
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
+    shop_url?: string;
+    prize_image_url?: string;
     participants?: { count: number };
     questions?: { count: number };
   };
@@ -62,6 +65,12 @@ const ContestCard = ({
             isNew={contest.is_new}
             isExpiringSoon={isExpiringSoon}
             hasBigPrizes={contest.has_big_prizes}
+          />
+          
+          <ContestCardPrize
+            prizeImageUrl={contest.prize_image_url}
+            shopUrl={contest.shop_url}
+            onEdit={() => onEdit(contest.id)}
           />
           
           <ContestCardStats

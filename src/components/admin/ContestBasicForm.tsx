@@ -14,6 +14,8 @@ interface ContestBasicFormProps {
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
+    shop_url?: string;
+    prize_image_url?: string;
   };
   setFormData: (data: any) => void;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -43,9 +45,20 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
       </div>
 
       <div>
-        <Label htmlFor="image">Image du concours</Label>
+        <Label htmlFor="shop_url">Lien vers la boutique</Label>
         <Input
-          id="image"
+          id="shop_url"
+          type="url"
+          value={formData.shop_url}
+          onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
+          placeholder="https://..."
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="prize_image">Image du prix</Label>
+        <Input
+          id="prize_image"
           type="file"
           accept="image/*"
           onChange={handleImageUpload}
