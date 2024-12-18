@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/App";
 import { Loader2, Trophy, Target, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserProfile {
   first_name: string;
@@ -19,27 +20,49 @@ interface UserProfile {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [userId, setUserId] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const getUserId = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        setUserId(session.user.id);
-      }
-    };
-    getUserId();
-  }, []);
-
-  const { data: userProfile, isLoading } = useQuery({
-    queryKey: ["userProfile", userId],
+  const { data: userProfile, isLoading, error } = useQuery({
+    queryKey: ["userProfile", user?.id],
     queryFn: async () => {
-      if (!userId) return null;
+      if (!user?.id) return null;
+
+      // First, try to fetch the member profile
       const { data, error } = await supabase
         .from("members")
         .select("*")
-        .eq("id", userId)
+        .eq("id", user.id)
         .single();
+
+      // If no profile exists, create one
+      if (error && error.code === "PGRST116") {
+        const newProfile = {
+          id: user.id,
+          email: user.email,
+          first_name: "",
+          last_name: "",
+          total_points: 0,
+          contests_participated: 0,
+          contests_won: 0
+        };
+
+        const { data: createdProfile, error: createError } = await supabase
+          .from("members")
+          .insert([newProfile])
+          .select()
+          .single();
+
+        if (createError) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de créer votre profil",
+          });
+          throw createError;
+        }
+
+        return createdProfile as UserProfile;
+      }
 
       if (error) {
         toast({
@@ -49,9 +72,10 @@ const Dashboard = () => {
         });
         throw error;
       }
+
       return data as UserProfile;
     },
-    enabled: !!userId,
+    enabled: !!user?.id,
   });
 
   if (isLoading) {
@@ -62,11 +86,27 @@ const Dashboard = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600">Une erreur est survenue</h1>
+          <Button 
+            onClick={() => navigate("/profile")} 
+            className="mt-4"
+          >
+            Configurer mon profil
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">
-          Bienvenue, {userProfile?.first_name} !
+          Bienvenue{userProfile?.first_name ? `, ${userProfile.first_name}` : ""} !
         </h1>
         <p className="text-gray-600 mt-2">
           Voici un aperçu de votre activité sur la plateforme
