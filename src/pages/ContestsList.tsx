@@ -9,15 +9,23 @@ import { Trophy, Calendar, Users, Percent } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 const ContestsList = () => {
   const navigate = useNavigate();
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const { data: contests, isLoading } = useQuery({
     queryKey: ['active-contests'],
     queryFn: async () => {
       console.log("Fetching contests...");
+      
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -29,12 +37,18 @@ const ContestsList = () => {
       
       if (error) {
         console.error('Error fetching contests:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les concours. Veuillez réessayer.",
+        });
         throw error;
       }
       
       console.log('Fetched contests:', data);
       return data || [];
     },
+    retry: 1,
     refetchInterval: 5000
   });
 
