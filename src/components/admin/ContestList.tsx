@@ -28,6 +28,48 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const { data: contestsWithCounts } = useQuery({
+    queryKey: ['admin-contests-with-counts'],
+    queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      // Récupérer les concours avec le nombre de participants et de questions
+      const { data: contests, error: contestsError } = await supabase
+        .from('contests')
+        .select(`
+          *,
+          participants:participants(count),
+          questions:questions(count)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (contestsError) throw contestsError;
+
+      // Pour chaque concours, récupérer le nombre exact de questions
+      const contestsWithQuestionCounts = await Promise.all(contests.map(async (contest) => {
+        const { count: questionsCount, error: questionsError } = await supabase
+          .from('questions')
+          .select('*', { count: 'exact', head: true })
+          .eq('contest_id', contest.id);
+
+        if (questionsError) throw questionsError;
+
+        return {
+          ...contest,
+          questions: { count: questionsCount }
+        };
+      }));
+
+      return contestsWithQuestionCounts;
+    },
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000 // Rafraîchir toutes les 5 secondes
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -40,6 +82,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
       toast({
         title: "Succès",
         description: "Le concours a été supprimé",
@@ -67,6 +110,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
       toast({
         title: "Succès",
         description: "Le concours a été archivé",
@@ -94,6 +138,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
       toast({
         title: "Succès",
         description: "Le statut en vedette a été mis à jour",
@@ -121,6 +166,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
       toast({
         title: "Succès",
         description: "Le statut du concours a été mis à jour",
@@ -138,7 +184,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {contests.map((contest) => (
+      {(contestsWithCounts || contests).map((contest) => (
         <ContestCard
           key={contest.id}
           contest={contest}
@@ -160,6 +206,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
                 setEditingContestId(null);
                 queryClient.invalidateQueries({ queryKey: ['contests'] });
                 queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+                queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
               }}
             />
           </DialogContent>
