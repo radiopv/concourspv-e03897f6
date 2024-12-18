@@ -7,6 +7,8 @@ import { createClient } from '@supabase/supabase-js';
 import Contest from "./pages/Contest";
 import Admin from "./pages/Admin";
 import Layout from "./components/Layout";
+import Index from "./pages/Index";
+import ContestsList from "./pages/ContestsList";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +24,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/" element={<Contest />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/contests" element={<ContestsList />} />
+            <Route path="/contest/:id" element={<Contest />} />
             <Route path="/admin" element={<Admin />} />
           </Route>
         </Routes>
