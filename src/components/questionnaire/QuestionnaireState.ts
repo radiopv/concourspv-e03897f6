@@ -18,7 +18,7 @@ interface QuestionnaireState {
   setHasAnswered: (answered: boolean) => void;
   setIsCorrect: (correct: boolean | null) => void;
   setIsSubmitting: (submitting: boolean) => void;
-  setParticipationId: (id: string) => void;
+  setParticipationId: (id: string | null) => void;
 }
 
 export const useQuestionnaireState = create<QuestionnaireState>((set) => ({
@@ -39,5 +39,5 @@ export const useQuestionnaireState = create<QuestionnaireState>((set) => ({
   setHasAnswered: (answered) => set({ hasAnswered: answered }),
   setIsCorrect: (correct) => set({ isCorrect: correct }),
   setIsSubmitting: (submitting) => set({ isSubmitting: submitting }),
-  setParticipationId: (id) => set({ participationId: id }),
+  setParticipationId: (id) => set({ participationId: id })
 }));
