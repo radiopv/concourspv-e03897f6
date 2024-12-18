@@ -12,7 +12,7 @@ export const usePrizeMutations = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['prize-catalog']);
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
       toast({
         title: "Succès",
         description: "Le prix a été ajouté au catalogue.",
@@ -33,7 +33,7 @@ export const usePrizeMutations = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['prize-catalog']);
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
       toast({
         title: "Succès",
         description: "Le prix a été mis à jour.",
@@ -54,7 +54,7 @@ export const usePrizeMutations = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['prize-catalog']);
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
       toast({
         title: "Succès",
         description: "Le prix a été supprimé.",

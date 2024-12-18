@@ -9,7 +9,7 @@ const useRegisterForm = () => {
 
   const handleRegister = async () => {
     try {
-      const { user, error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -21,7 +21,7 @@ const useRegisterForm = () => {
         description: "Inscription réussie !",
       });
 
-      return user;
+      return data;
     } catch (error) {
       console.error("Error during registration:", error);
       toast({

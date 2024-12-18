@@ -11,7 +11,7 @@ import { useContests } from "@/hooks/useContests";
 const ContestsList = () => {
   const navigate = useNavigate();
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
-  const { data: contests, isLoading } = useContests();
+  const { contests, isLoading } = useContests();
 
   if (selectedContestId) {
     return <QuestionnaireComponent contestId={selectedContestId} />;
@@ -66,12 +66,18 @@ const ContestsList = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contests.map((contest, index) => (
+          {contests.map((contest: any) => (
             <ContestCard
               key={contest.id}
               contest={contest}
-              onSelect={setSelectedContestId}
-              index={index}
+              onEdit={() => {}}
+              onDelete={() => {}}
+              editForm={{}}
+              onFormChange={() => {}}
+              onImageUpload={() => {}}
+              onCancelEdit={() => {}}
+              onSaveEdit={() => {}}
+              uploading={false}
             />
           ))}
         </div>
