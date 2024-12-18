@@ -1,11 +1,11 @@
 -- Add new columns for contest features
 ALTER TABLE contests
-ADD COLUMN is_featured BOOLEAN DEFAULT false,
-ADD COLUMN is_new BOOLEAN DEFAULT false,
-ADD COLUMN has_big_prizes BOOLEAN DEFAULT false;
+ADD COLUMN IF NOT EXISTS is_featured boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS is_new boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS has_big_prizes boolean DEFAULT false;
 
--- Update the contests policy to allow updating these new fields
-CREATE POLICY "Enable update for authenticated users only" ON "public"."contests"
+-- Create policy to allow admins to update these fields
+CREATE POLICY "Enable update for admins on contests features" ON contests
 FOR UPDATE
-USING (auth.role() = 'authenticated')
-WITH CHECK (auth.role() = 'authenticated');
+USING (auth.jwt() ->> 'email' = 'renaudcanuel@me.com')
+WITH CHECK (auth.jwt() ->> 'email' = 'renaudcanuel@me.com');
