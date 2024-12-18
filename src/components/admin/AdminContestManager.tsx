@@ -43,7 +43,7 @@ const AdminContestManager = () => {
         .from('contests')
         .insert([{
           title: newContest.title,
-          description: newContest.description || null, // Make description optional
+          description: newContest.description || null,
           start_date: newContest.start_date,
           end_date: newContest.end_date,
           status: 'active'
@@ -86,11 +86,29 @@ const AdminContestManager = () => {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
+        // First, check if the file is empty
+        if (jsonData.length === 0) {
+          throw new Error("Le fichier est vide");
+        }
+
+        // Check if all required columns exist in the first row
+        const firstRow = jsonData[0] as Record<string, unknown>;
+        const requiredColumns = ['title', 'start_date', 'end_date'];
+        const missingColumns = requiredColumns.filter(col => !(col in firstRow));
+
+        if (missingColumns.length > 0) {
+          throw new Error(`Colonnes manquantes dans le fichier : ${missingColumns.join(', ')}`);
+        }
+
         // Validate and transform the data
-        const contestData = jsonData.map((row: any) => {
-          if (!row.title || !row.start_date || !row.end_date) {
-            throw new Error("Les colonnes 'title', 'start_date' et 'end_date' sont obligatoires dans le fichier");
+        const contestData = jsonData.map((row: any, index: number) => {
+          // Check for empty required fields
+          for (const col of requiredColumns) {
+            if (!row[col]) {
+              throw new Error(`La ligne ${index + 1} a une valeur manquante pour la colonne '${col}'`);
+            }
           }
+
           return {
             title: row.title,
             description: row.description || null,
@@ -108,8 +126,11 @@ const AdminContestManager = () => {
 
         toast({
           title: "Succès",
-          description: "Les concours ont été importés avec succès",
+          description: `${contestData.length} concours ont été importés avec succès`,
         });
+
+        // Reset the file input
+        event.target.value = '';
       };
       reader.readAsArrayBuffer(file);
     } catch (error) {
@@ -119,6 +140,10 @@ const AdminContestManager = () => {
         description: error instanceof Error ? error.message : "Erreur lors de l'importation des concours",
         variant: "destructive",
       });
+      // Reset the file input on error
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
 
