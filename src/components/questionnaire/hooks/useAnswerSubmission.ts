@@ -49,11 +49,11 @@ export const useAnswerSubmission = (contestId: string) => {
       queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
       queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
 
-      const message = getRandomMessage(isAnswerCorrect);
+      const message = getRandomMessage();
       toast({
-        title: isAnswerCorrect ? "Bonne réponse ! 🎉" : "Mauvaise réponse",
+        title: "Réponse enregistrée",
         description: message,
-        variant: isAnswerCorrect ? "default" : "destructive",
+        variant: "default",
       });
 
     } catch (error) {
