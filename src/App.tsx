@@ -12,7 +12,6 @@ import Contest from "@/pages/Contest";
 import Admin from "@/pages/Admin";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-// Configuration Supabase avec les bonnes clés
 const supabaseUrl = "https://fgnrvnyzyiaqtzsyegzn.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbnJ2bnl6eWlhcXR6c3llZ3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI5MjIyNTgsImV4cCI6MjAxODQ5ODI1OH0.qDw_7IgyDaWqzWdC_SQZTjRGJJTXF7Hg5ByEUXkOeAM";
 
@@ -23,8 +22,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     storage: window.localStorage,
   },
-  headers: {
-    apikey: supabaseAnonKey,
+  global: {
+    headers: {
+      Authorization: `Bearer ${supabaseAnonKey}`,
+    },
   },
 });
 
@@ -72,7 +73,6 @@ function App() {
   );
 }
 
-// Route protégée standard
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<boolean>(false);
 
@@ -90,7 +90,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Route protégée spécifique pour l'admin
 const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
