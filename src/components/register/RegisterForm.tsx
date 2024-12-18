@@ -48,7 +48,17 @@ export const RegisterForm = () => {
         password: values.password,
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message === "User already registered") {
+          toast({
+            variant: "destructive",
+            title: "Erreur d'inscription",
+            description: "Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse email.",
+          });
+          return;
+        }
+        throw authError;
+      }
 
       if (authData.user) {
         const { error: profileError } = await supabase
