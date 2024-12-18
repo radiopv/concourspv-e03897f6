@@ -41,10 +41,8 @@ const ContestStatsPage = () => {
         .select(`
           id,
           score,
-          profile:members!inner (
-            full_name,
-            avatar_url
-          )
+          first_name,
+          last_name
         `)
         .eq('contest_id', id)
         .order('score', { ascending: false })

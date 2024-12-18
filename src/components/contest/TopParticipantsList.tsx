@@ -1,15 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Medal } from "lucide-react";
 
-interface Profile {
-  full_name: string;
-  avatar_url: string | null;
-}
-
 interface TopParticipant {
   id: string;
   score: number;
-  profile: Profile[];
+  first_name: string;
+  last_name: string;
 }
 
 interface TopParticipantsListProps {
@@ -43,7 +39,7 @@ const TopParticipantsList = ({ participants }: TopParticipantsListProps) => {
                   {index + 1}
                 </div>
                 <span className="font-medium">
-                  {participant.profile[0]?.full_name || 'Participant anonyme'}
+                  {`${participant.first_name} ${participant.last_name}` || 'Participant anonyme'}
                 </span>
               </div>
               <span className="text-lg font-bold text-indigo-600">
