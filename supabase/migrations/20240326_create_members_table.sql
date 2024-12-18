@@ -31,23 +31,42 @@ create policy "Users can update own profile"
     on members for update
     using (auth.uid() = id);
 
--- Create storage bucket for avatars
-insert into storage.buckets (id, name, public)
-values ('avatars', 'avatars', true);
+-- Create storage bucket for avatars if it doesn't exist
+create bucket if not exists avatars;
 
--- Enable public access to avatars
+-- Set bucket to public
+update storage.buckets
+set public = true
+where id = 'avatars';
+
+-- Drop existing policies if they exist
+drop policy if exists "Avatar images are publicly accessible" on storage.objects;
+drop policy if exists "Users can upload their own avatar" on storage.objects;
+drop policy if exists "Users can update their own avatar" on storage.objects;
+drop policy if exists "Users can delete their own avatar" on storage.objects;
+
+-- Create new storage policies
 create policy "Avatar images are publicly accessible"
     on storage.objects for select
     using ( bucket_id = 'avatars' );
 
 create policy "Users can upload their own avatar"
     on storage.objects for insert
-    with check ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
+    with check (
+        bucket_id = 'avatars' 
+        AND auth.role() = 'authenticated'
+    );
 
 create policy "Users can update their own avatar"
     on storage.objects for update
-    using ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
+    using (
+        bucket_id = 'avatars'
+        AND auth.role() = 'authenticated'
+    );
 
 create policy "Users can delete their own avatar"
     on storage.objects for delete
-    using ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
+    using (
+        bucket_id = 'avatars'
+        AND auth.role() = 'authenticated'
+    );

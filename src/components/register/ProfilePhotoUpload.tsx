@@ -4,33 +4,59 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
 import { supabase } from "@/App";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const ProfilePhotoUpload = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      // Check if user is authenticated
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Vous devez être connecté pour télécharger une photo.",
+        });
+        return;
+      }
 
-      const { error: uploadError } = await supabase.storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+
+      const { error: uploadError, data } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
       setAvatarUrl(publicUrl);
+
+      // Update the member's avatar_url
+      const { error: updateError } = await supabase
+        .from('members')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error("Update error:", updateError);
+        throw updateError;
+      }
       
       toast({
         title: "Photo de profil mise à jour",
