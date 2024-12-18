@@ -31,13 +31,17 @@ export const useRegisterForm = () => {
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
       // 1. Vérifier si l'email existe déjà
-      const { data: existingUsers } = await supabase
+      const { data: existingUsers, error: emailCheckError } = await supabase
         .from('members')
         .select('email')
-        .eq('email', values.email)
-        .single();
+        .eq('email', values.email);
 
-      if (existingUsers) {
+      if (emailCheckError) {
+        console.error("Erreur lors de la vérification de l'email:", emailCheckError);
+        throw emailCheckError;
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
         toast({
           title: "Email déjà utilisé",
           description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
