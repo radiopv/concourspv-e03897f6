@@ -10,12 +10,19 @@ import ContestsList from "@/pages/ContestsList";
 import Contest from "@/pages/Contest";
 import Admin from "@/pages/Admin";
 
-// Initialisation de Supabase
+// Initialize Supabase with the correct API key
 const supabaseUrl = "https://fgnrvnyzyiaqtzsyegzn.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbnJ2bnl6eWlhcXR6c3llZ3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI5MjIyNTgsImV4cCI6MjAxODQ5ODI1OH0.qDw_7IgyDaWqzWdC_SQZTjRGJJTXF7Hg5ByEUXkOeAM";
-export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Initialisation de React Query
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
+
+// Initialize React Query
 const queryClient = new QueryClient();
 
 function App() {
