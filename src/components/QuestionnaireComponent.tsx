@@ -83,8 +83,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         .insert([{
           participant_id: session.session.user.id,
           question_id: currentQuestion.id,
-          answer: selectedAnswer,
-          is_correct: isAnswerCorrect
+          answer: selectedAnswer
         }]);
 
       if (error) throw error;
