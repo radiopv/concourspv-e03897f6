@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import {
   Table,
@@ -9,12 +9,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ParticipantsListProps {
   contestId: string;
 }
 
 const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data: participants, isLoading } = useQuery({
     queryKey: ['participants', contestId],
     queryFn: async () => {
@@ -31,6 +36,31 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
       
       if (error) throw error;
       return data;
+    }
+  });
+
+  const deleteParticipantMutation = useMutation({
+    mutationFn: async (participantId: string) => {
+      const { error } = await supabase
+        .from('participants')
+        .delete()
+        .eq('id', participantId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
+      toast({
+        title: "Succès",
+        description: "Le participant a été supprimé",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le participant",
+        variant: "destructive",
+      });
     }
   });
 
@@ -75,6 +105,7 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
             <TableHead>Email</TableHead>
             <TableHead>Score</TableHead>
             <TableHead>Statut</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -85,6 +116,15 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
               <TableCell>{participant.email}</TableCell>
               <TableCell>{participant.score || "N/A"}</TableCell>
               <TableCell>{participant.status}</TableCell>
+              <TableCell>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteParticipantMutation.mutate(participant.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

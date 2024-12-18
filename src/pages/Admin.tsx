@@ -7,6 +7,7 @@ import { supabase } from "../App";
 import QuestionsManager from "../components/admin/QuestionsManager";
 import ParticipantsList from "../components/admin/ParticipantsList";
 import DrawManager from "../components/admin/DrawManager";
+import ContestPrizeManager from "../components/admin/ContestPrizeManager";
 import AdminAuth from "../components/admin/AdminAuth";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -80,7 +81,7 @@ const Admin = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-500">
-                  {contest._count?.participants || 0} participants
+                  {contest.participants_count || 0} participants
                 </p>
                 <p className="text-sm text-gray-500">
                   Statut: {contest.status}
@@ -110,6 +111,7 @@ const Admin = () => {
             <TabsList>
               <TabsTrigger value="questions">Questions</TabsTrigger>
               <TabsTrigger value="participants">Participants</TabsTrigger>
+              <TabsTrigger value="prizes">Prix</TabsTrigger>
               <TabsTrigger value="draw">Tirage au sort</TabsTrigger>
             </TabsList>
 
@@ -119,6 +121,10 @@ const Admin = () => {
 
             <TabsContent value="participants">
               <ParticipantsList contestId={selectedContest} />
+            </TabsContent>
+
+            <TabsContent value="prizes">
+              <ContestPrizeManager contestId={selectedContest} />
             </TabsContent>
 
             <TabsContent value="draw">
