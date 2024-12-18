@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
+import { ensureParticipantExists } from './ParticipantManager';
 
 const QuestionnaireComponent = ({ contestId }: { contestId: string }) => {
   const navigate = useNavigate();
