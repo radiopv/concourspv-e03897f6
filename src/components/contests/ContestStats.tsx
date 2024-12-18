@@ -7,12 +7,14 @@ interface ContestStatsProps {
   contestId: string;
 }
 
-interface PrizeCatalog {
+interface PrizeCatalogItem {
   value: number;
 }
 
 interface Prize {
-  prize_catalog: PrizeCatalog;
+  prize_catalog: {
+    value: number;
+  };
 }
 
 interface ParticipantScore {
