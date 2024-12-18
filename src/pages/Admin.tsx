@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
-import { plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import QuestionsManager from "../components/admin/QuestionsManager";
 import ParticipantsList from "../components/admin/ParticipantsList";
 import DrawManager from "../components/admin/DrawManager";
@@ -91,7 +91,7 @@ const Admin = () => {
             <div className="flex items-center justify-between mb-4">
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
-                  <plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                   Créer un nouveau concours
                 </Button>
               </CollapsibleTrigger>
