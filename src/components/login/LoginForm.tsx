@@ -66,7 +66,6 @@ export const LoginForm = () => {
           description: "Bienvenue sur votre espace membre !",
         });
         
-        // Utilisation de navigate sans setTimeout pour une redirection immédiate
         navigate("/dashboard", { replace: true });
       }
     } catch (error) {

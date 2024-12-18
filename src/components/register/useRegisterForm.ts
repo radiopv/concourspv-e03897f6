@@ -30,36 +30,29 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Première étape : vérifier si l'utilisateur existe dans la table members
-      const { data: existingMembers, error: membersError } = await supabase
-        .from('members')
-        .select('id')
-        .eq('email', values.email);
+      // Vérifier si l'utilisateur existe déjà dans auth
+      const { data: { user: existingUser }, error: authCheckError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
 
-      if (membersError) {
-        console.error("Erreur lors de la vérification dans members:", membersError);
-        throw membersError;
-      }
-
-      if (existingMembers && existingMembers.length > 0) {
+      if (existingUser) {
         toast({
           title: "Compte existant",
           description: "Un compte existe déjà avec cet email. Vous allez être redirigé vers la page de connexion.",
         });
-        
-        setTimeout(() => {
-          navigate("/login", { 
-            state: { 
-              email: values.email,
-              message: "Utilisez le formulaire ci-dessous pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
-            }
-          });
-        }, 2000);
+        navigate("/login", { 
+          state: { 
+            email: values.email,
+            message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
+          },
+          replace: true
+        });
         return;
       }
 
-      // Si l'utilisateur n'existe pas, on procède à l'inscription
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      // Si l'utilisateur n'existe pas, procéder à l'inscription
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -72,7 +65,7 @@ export const useRegisterForm = () => {
 
       if (signUpError) throw signUpError;
 
-      if (!authData.user) {
+      if (!signUpData.user) {
         throw new Error("Erreur lors de la création du compte");
       }
 
@@ -81,7 +74,7 @@ export const useRegisterForm = () => {
         .from('members')
         .insert([
           {
-            id: authData.user.id,
+            id: signUpData.user.id,
             first_name: values.firstName,
             last_name: values.lastName,
             email: values.email,
@@ -101,21 +94,20 @@ export const useRegisterForm = () => {
         description: "Un email de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception.",
       });
 
-      setTimeout(() => {
-        navigate("/login", { 
-          state: { 
-            email: values.email,
-            message: "Veuillez vérifier votre email pour confirmer votre compte avant de vous connecter."
-          }
-        });
-      }, 2000);
+      navigate("/login", { 
+        state: { 
+          email: values.email,
+          message: "Veuillez vérifier votre email pour confirmer votre compte avant de vous connecter."
+        },
+        replace: true
+      });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de l'inscription:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
+        description: error.message || "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
       });
     }
   };
