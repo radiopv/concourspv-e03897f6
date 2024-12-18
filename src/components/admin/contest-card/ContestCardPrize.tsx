@@ -17,14 +17,31 @@ const ContestCardPrize = ({ prizeImageUrl, shopUrl, contestId }: ContestCardPriz
 
   const handlePrizeSelect = async (catalogItemId: string) => {
     try {
-      const { error } = await supabase
+      // Vérifier si un prix existe déjà pour ce concours
+      const { data: existingPrizes } = await supabase
         .from('prizes')
-        .insert([{
-          contest_id: contestId,
-          catalog_item_id: catalogItemId
-        }]);
+        .select('id')
+        .eq('contest_id', contestId);
 
-      if (error) throw error;
+      if (existingPrizes && existingPrizes.length > 0) {
+        // Si un prix existe, on le met à jour
+        const { error: updateError } = await supabase
+          .from('prizes')
+          .update({ catalog_item_id: catalogItemId })
+          .eq('contest_id', contestId);
+
+        if (updateError) throw updateError;
+      } else {
+        // Si aucun prix n'existe, on en crée un nouveau
+        const { error: insertError } = await supabase
+          .from('prizes')
+          .insert([{
+            contest_id: contestId,
+            catalog_item_id: catalogItemId
+          }]);
+
+        if (insertError) throw insertError;
+      }
 
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
