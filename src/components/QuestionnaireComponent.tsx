@@ -165,16 +165,12 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           duration: 5000,
         });
 
-        // Redirection après 3 secondes
-        setTimeout(() => {
-          navigate('/contests', { 
-            state: { 
-              completedContestId: contestId,
-              showResults: true,
-              finalScore: finalScore
-            }
-          });
-        }, 3000);
+        // Redirection vers la page de statistiques
+        navigate(`/contests/${contestId}/stats`, { 
+          state: { 
+            finalScore: finalScore
+          }
+        });
 
       } catch (error) {
         console.error('Error completing questionnaire:', error);
