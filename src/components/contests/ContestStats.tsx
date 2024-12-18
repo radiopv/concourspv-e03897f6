@@ -1,24 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Users, Target, DollarSign, Award, Percent } from "lucide-react";
+import { Users, Target } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
 
 interface ContestStatsProps {
   contestId: string;
-}
-
-interface PrizeCatalogItem {
-  value: number;
-}
-
-interface Prize {
-  prize_catalog: {
-    value: number;
-  };
-}
-
-interface ParticipantScore {
-  score: number | null;
 }
 
 const ContestStats = ({ contestId }: ContestStatsProps) => {
@@ -31,40 +17,14 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
         .select('score')
         .eq('contest_id', contestId);
 
-      // Récupérer les prix du concours
-      const { data: prizesData } = await supabase
-        .from('prizes')
-        .select(`
-          prize_catalog (
-            value
-          )
-        `)
-        .eq('contest_id', contestId);
-
-      // Calculer la valeur totale des prix
-      const totalPrizeValue = (prizesData || []).reduce((total, prize) => {
-        if (prize.prize_catalog && typeof prize.prize_catalog.value === 'number') {
-          return total + prize.prize_catalog.value;
-        }
-        return total;
-      }, 0);
-
       // Calculer le score moyen
       const averageScore = participantsData?.length 
         ? participantsData.reduce((sum, p) => sum + (p.score || 0), 0) / participantsData.length 
         : 0;
 
-      // Calculer le nombre de participants qualifiés (score >= 70%)
-      const qualifiedCount = participantsData?.filter(p => (p.score || 0) >= 70).length || 0;
-
       return {
         participantsCount: participantsData?.length || 0,
         averageScore: Math.round(averageScore),
-        qualifiedCount,
-        totalPrizeValue: Math.round(totalPrizeValue),
-        qualificationRate: participantsData?.length 
-          ? Math.round((qualifiedCount / participantsData.length) * 100) 
-          : 0
       };
     }
   });
@@ -72,39 +32,26 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
   if (!stats) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-      <Card className="bg-gradient-to-br from-purple-50 to-indigo-50">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Valeur des Prix</CardTitle>
-          <DollarSign className="w-4 h-4 text-purple-600" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-purple-700">{stats.totalPrizeValue}€</div>
-          <p className="text-xs text-purple-600 mt-1">Valeur totale des lots à gagner</p>
-        </CardContent>
-      </Card>
-
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Score Moyen</CardTitle>
-          <Target className="w-4 h-4 text-blue-600" />
+          <CardTitle className="text-sm font-medium">Participants</CardTitle>
+          <Users className="w-4 h-4 text-blue-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-700">{stats.averageScore}%</div>
-          <p className="text-xs text-blue-600 mt-1">Score moyen des participants</p>
+          <div className="text-2xl font-bold text-blue-700">{stats.participantsCount}</div>
+          <p className="text-xs text-blue-600 mt-1">Nombre total de participants</p>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-green-50 to-emerald-50">
+      <Card className="bg-gradient-to-br from-purple-50 to-indigo-50">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Taux de Qualification</CardTitle>
-          <Award className="w-4 h-4 text-green-600" />
+          <CardTitle className="text-sm font-medium">Score Moyen</CardTitle>
+          <Target className="w-4 h-4 text-purple-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-700">{stats.qualificationRate}%</div>
-          <p className="text-xs text-green-600 mt-1">
-            {stats.qualifiedCount} participants qualifiés
-          </p>
+          <div className="text-2xl font-bold text-purple-700">{stats.averageScore}%</div>
+          <p className="text-xs text-purple-600 mt-1">Score moyen des participants</p>
         </CardContent>
       </Card>
     </div>
