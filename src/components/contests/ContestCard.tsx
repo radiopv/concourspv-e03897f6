@@ -5,6 +5,7 @@ import { Trophy, Users, Percent, ExternalLink, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
+import ContestStats from "./ContestStats";
 
 interface ContestCardProps {
   contest: {
@@ -74,6 +75,8 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             </p>
           )}
           
+          <ContestStats contestId={contest.id} />
+          
           {prizes && prizes.length > 0 && (
             <div className="mb-6 space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -81,7 +84,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                 Prix à gagner
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {prizes.map((prize, idx) => (
+                {prizes.map((prize: any, idx: number) => (
                   prize.prize_catalog && (
                     <div key={idx} className="relative group overflow-hidden rounded-lg border border-gray-200">
                       {prize.prize_catalog.image_url && (
