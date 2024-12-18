@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/App";
-import { Loader2, Trophy, Target, Star, Settings } from "lucide-react";
+import { Loader2, Trophy, Target, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -27,16 +27,19 @@ const Dashboard = () => {
     queryFn: async () => {
       if (!user?.id) return null;
 
+      // Essayer de récupérer le profil existant
       const { data: existingProfile, error: fetchError } = await supabase
         .from("members")
         .select("*")
         .eq("id", user.id)
         .single();
 
+      // Si le profil existe, le retourner
       if (existingProfile) {
         return existingProfile as UserProfile;
       }
 
+      // Si pas de profil, en créer un nouveau
       const { data: userData } = await supabase.auth.getUser();
       const newProfile = {
         id: user.id,
@@ -96,29 +99,15 @@ const Dashboard = () => {
     );
   }
 
-  const isAdmin = user?.email === "renaudcanuel@me.com";
-
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">
-            Bienvenue{userProfile?.first_name ? `, ${userProfile.first_name}` : ""} !
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Voici un aperçu de votre activité sur la plateforme
-          </p>
-        </div>
-        {isAdmin && (
-          <Button
-            onClick={() => navigate("/admin")}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Settings className="w-4 h-4" />
-            Administration
-          </Button>
-        )}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">
+          Bienvenue{userProfile?.first_name ? `, ${userProfile.first_name}` : ""} !
+        </h1>
+        <p className="text-gray-600 mt-2">
+          Voici un aperçu de votre activité sur la plateforme
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

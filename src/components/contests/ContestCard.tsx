@@ -1,8 +1,7 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Gift, HelpCircle, ExternalLink } from "lucide-react";
+import { Trophy, Users, Percent, ExternalLink, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
@@ -16,53 +15,34 @@ interface ContestCardProps {
     is_new: boolean;
     has_big_prizes: boolean;
     participants?: { count: number };
-    questions?: { count: number };
   };
   onSelect: (id: string) => void;
   index: number;
 }
 
-interface PrizeCatalogItem {
-  name: string;
-  image_url?: string;
-  shop_url?: string;
-  value: number;
-}
-
-interface Prize {
-  prize_catalog: PrizeCatalogItem;
-}
-
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
-  const { data: prizesData } = useQuery({
+  const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: prizesData } = await supabase
         .from('prizes')
         .select(`
+          catalog_item_id,
           prize_catalog (
             name,
             image_url,
-            shop_url,
-            value
+            shop_url
           )
         `)
         .eq('contest_id', contest.id);
-      
-      if (!data) return [];
-
-      return data.filter((item): item is Prize => 
-        item.prize_catalog !== null && 
-        typeof item.prize_catalog === 'object' &&
-        'name' in item.prize_catalog &&
-        'value' in item.prize_catalog
-      );
+      return prizesData || [];
     },
   });
 
-  const totalPrizeValue = prizesData?.reduce((total, prize) => {
-    return total + (prize.prize_catalog.value || 0);
-  }, 0) || 0;
+  const calculateWinningChance = (participants: number, totalPrizes: number = prizes?.length || 1) => {
+    if (participants === 0) return 100;
+    return Math.round((totalPrizes / participants) * 100);
+  };
 
   return (
     <motion.div
@@ -71,7 +51,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="h-full"
     >
-      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card">
+      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card float">
         <CardHeader>
           <div className="flex justify-between items-start mb-2">
             <CardTitle className="text-xl font-bold">{contest.title}</CardTitle>
@@ -81,18 +61,12 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
               </Badge>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {contest.has_big_prizes && (
-              <Badge variant="secondary" className="bg-amber-500 text-white flex items-center gap-1">
-                <Trophy className="w-4 h-4" />
-                Gros lots à gagner
-              </Badge>
-            )}
-            <Badge variant="outline" className="flex items-center gap-1">
-              <HelpCircle className="w-4 h-4" />
-              {contest.questions?.count || 0} questions
+          {contest.has_big_prizes && (
+            <Badge variant="secondary" className="bg-amber-500 text-white flex items-center gap-1 w-fit">
+              <Trophy className="w-4 h-4" />
+              Gros lots à gagner
             </Badge>
-          </div>
+          )}
         </CardHeader>
         <CardContent className="flex-1 flex flex-col">
           {contest.description && (
@@ -101,54 +75,74 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             </p>
           )}
           
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-              <Gift className="w-5 h-5 text-purple-500" />
-              Prix à gagner ({totalPrizeValue}€)
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {prizesData?.map((prize, idx) => (
-                <div key={idx} className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white/50 backdrop-blur-sm">
-                  <div className="aspect-video relative">
-                    {prize.prize_catalog.image_url ? (
-                      <img
-                        src={prize.prize_catalog.image_url}
-                        alt={prize.prize_catalog.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        <Gift className="w-12 h-12 text-gray-400" />
+          <ContestStats contestId={contest.id} />
+          
+          {prizes && prizes.length > 0 && (
+            <div className="mb-6 space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Gift className="w-5 h-5 text-purple-500" />
+                Prix à gagner
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {prizes.map((prize: any, idx: number) => (
+                  prize.prize_catalog && (
+                    <div key={idx} className="relative group overflow-hidden rounded-lg border border-gray-200">
+                      {prize.prize_catalog.image_url && (
+                        <div className="aspect-video relative">
+                          <img
+                            src={prize.prize_catalog.image_url}
+                            alt={prize.prize_catalog.name}
+                            className="w-full h-full object-cover transform transition-transform group-hover:scale-105"
+                          />
+                          {prize.prize_catalog.shop_url && (
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <a
+                                href={prize.prize_catalog.shop_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-white bg-purple-600 px-4 py-2 rounded-full hover:bg-purple-700 transition-colors flex items-center gap-2"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                                Voir sur la boutique
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="p-3 bg-white/80">
+                        <p className="font-medium text-purple-700">{prize.prize_catalog.name}</p>
                       </div>
-                    )}
-                    {prize.prize_catalog.shop_url && (
-                      <a
-                        href={prize.prize_catalog.shop_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                      >
-                        <span className="text-white bg-purple-600 px-4 py-2 rounded-full hover:bg-purple-700 transition-colors flex items-center gap-2">
-                          <ExternalLink className="w-4 h-4" />
-                          Voir le prix
-                        </span>
-                      </a>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <p className="font-medium text-purple-700">{prize.prize_catalog.name}</p>
-                    <p className="text-sm text-gray-500">{prize.prize_catalog.value}€</p>
-                  </div>
-                </div>
-              ))}
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-6">
+            <div className="bg-white/50 p-4 rounded-lg">
+              <p className="font-medium flex items-center gap-1 mb-1">
+                <Users className="w-4 h-4 text-indigo-600" />
+                Participants
+              </p>
+              <p className="text-2xl font-bold text-indigo-600">
+                {contest.participants?.count || 0}
+              </p>
+            </div>
+            <div className="bg-white/50 p-4 rounded-lg">
+              <p className="font-medium flex items-center gap-1 mb-1">
+                <Percent className="w-4 h-4 text-green-600" />
+                Chances
+              </p>
+              <p className="text-2xl font-bold text-green-600">
+                {calculateWinningChance(contest.participants?.count || 0)}%
+              </p>
             </div>
           </div>
 
-          <ContestStats contestId={contest.id} />
-
           <Button 
             onClick={() => onSelect(contest.id)}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 mt-auto"
+            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
           >
             Participer
           </Button>
