@@ -19,17 +19,23 @@ const ContestStatsPage = () => {
   const { data: contest } = useQuery({
     queryKey: ['contest', id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: contestData, error: contestError } = await supabase
         .from('contests')
-        .select(`
-          *,
-          participants (count)
-        `)
+        .select('*')
         .eq('id', id)
         .single();
       
-      if (error) throw error;
-      return data;
+      if (contestError) throw contestError;
+
+      const { count: participantsCount } = await supabase
+        .from('participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('contest_id', id);
+
+      return {
+        ...contestData,
+        participants_count: participantsCount || 0
+      };
     }
   });
 
@@ -56,25 +62,23 @@ const ContestStatsPage = () => {
   const { data: stats } = useQuery({
     queryKey: ['contest-stats', id],
     queryFn: async () => {
-      const { data: qualifiedParticipants, error: qualifiedError } = await supabase
+      const { count: qualifiedCount } = await supabase
         .from('participants')
-        .select('id')
+        .select('*', { count: 'exact', head: true })
         .eq('contest_id', id)
         .gte('score', 70);
 
-      if (qualifiedError) throw qualifiedError;
-
-      const { data: avgScore, error: avgError } = await supabase
+      const { data: scores } = await supabase
         .from('participants')
         .select('score')
         .eq('contest_id', id);
 
-      if (avgError) throw avgError;
-
-      const average = avgScore.reduce((acc, curr) => acc + (curr.score || 0), 0) / avgScore.length;
+      const average = scores && scores.length > 0
+        ? scores.reduce((acc, curr) => acc + (curr.score || 0), 0) / scores.length
+        : 0;
 
       return {
-        qualifiedCount: qualifiedParticipants.length,
+        qualifiedCount: qualifiedCount || 0,
         averageScore: Math.round(average)
       };
     }
@@ -112,7 +116,7 @@ const ContestStatsPage = () => {
           )}
 
           <ContestStats
-            participantsCount={contest.participants_count || 0}
+            participantsCount={contest.participants_count}
             successPercentage={Math.round((stats.qualifiedCount / (contest.participants_count || 1)) * 100)}
             timeLeft=""
             endDate={contest.end_date}
@@ -125,7 +129,7 @@ const ContestStatsPage = () => {
           <ContestGeneralStats
             averageScore={stats.averageScore}
             qualifiedCount={stats.qualifiedCount}
-            totalParticipants={contest.participants_count || 0}
+            totalParticipants={contest.participants_count}
           />
         </div>
       </div>

@@ -22,36 +22,37 @@ export const useContests = () => {
         return [];
       }
 
-      const { data: contests, error } = await supabase
+      // Récupérer d'abord les concours
+      const { data: contests, error: contestsError } = await supabase
         .from('contests')
-        .select(`
-          *,
-          participants:participants(count),
-          questions:questions(count)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching contests:', error);
-        if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-          toast({
-            variant: "destructive",
-            title: "Session expirée",
-            description: "Votre session a expiré. Veuillez vous reconnecter.",
-          });
-          navigate('/login');
-          return [];
-        }
-        
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les concours. Veuillez réessayer.",
-        });
-        throw error;
+      if (contestsError) {
+        console.error('Error fetching contests:', contestsError);
+        throw contestsError;
       }
 
-      return contests || [];
+      // Pour chaque concours, compter les participants
+      const contestsWithCounts = await Promise.all(contests.map(async (contest) => {
+        const { count: participantsCount } = await supabase
+          .from('participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('contest_id', contest.id);
+
+        const { count: questionsCount } = await supabase
+          .from('questions')
+          .select('*', { count: 'exact', head: true })
+          .eq('contest_id', contest.id);
+
+        return {
+          ...contest,
+          participants: { count: participantsCount || 0 },
+          questions: { count: questionsCount || 0 }
+        };
+      }));
+
+      return contestsWithCounts || [];
     },
     retry: 1,
     refetchOnWindowFocus: false,
