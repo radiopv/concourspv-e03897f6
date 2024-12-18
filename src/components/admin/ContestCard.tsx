@@ -41,6 +41,7 @@ interface ContestCardProps {
   onFeatureToggle: (id: string, featured: boolean) => void;
   onStatusUpdate: (id: string, updates: { is_new?: boolean; has_big_prizes?: boolean }) => void;
   onSelect: (id: string) => void;
+  onEdit: (id: string) => void; // Add this line
 }
 
 const ContestCard = ({ 
@@ -50,6 +51,7 @@ const ContestCard = ({
   onFeatureToggle,
   onStatusUpdate,
   onSelect,
+  onEdit, // Add this line
 }: ContestCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(contest.title);
@@ -133,7 +135,7 @@ const ContestCard = ({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setIsEditing(true)}
+                onClick={() => onEdit(contest.id)} // Add this button
                 className="hover:bg-primary hover:text-white transition-colors"
               >
                 <Edit2 className="h-4 w-4" />

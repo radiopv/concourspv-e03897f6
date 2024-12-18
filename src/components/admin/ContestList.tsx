@@ -1,45 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ContestCard from './ContestCard';
+import EditContestForm from './EditContestForm';
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../App";
 import { useQueryClient } from "@tanstack/react-query";
-
-interface Contest {
-  id: string;
-  title: string;
-  description?: string;
-  status: string;
-  start_date: string;
-  end_date: string;
-  is_featured: boolean;
-  is_new: boolean;
-  has_big_prizes: boolean;
-  participants?: { count: number };
-  questions?: { count: number };
-}
+import { supabase } from "../../App";
 
 interface ContestListProps {
-  contests: Contest[];
+  contests: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+    is_featured: boolean;
+    is_new: boolean;
+    has_big_prizes: boolean;
+    participants?: { count: number };
+    questions?: { count: number };
+  }>;
   onSelectContest: (id: string) => void;
 }
 
 const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
+  const [editingContestId, setEditingContestId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleDelete = async (contestId: string) => {
+  const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
         .from('contests')
         .delete()
-        .eq('id', contestId);
-      
+        .eq('id', id);
+
       if (error) throw error;
 
-      // Invalider toutes les requêtes liées aux concours
       queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
-      
       toast({
         title: "Succès",
         description: "Le concours a été supprimé",
@@ -48,25 +46,22 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
       console.error('Error deleting contest:', error);
       toast({
         title: "Erreur",
-        description: "Erreur lors de la suppression du concours",
+        description: "Impossible de supprimer le concours",
         variant: "destructive",
       });
     }
   };
 
-  const handleArchive = async (contestId: string) => {
+  const handleArchive = async (id: string) => {
     try {
       const { error } = await supabase
         .from('contests')
         .update({ status: 'archived' })
-        .eq('id', contestId);
-      
+        .eq('id', id);
+
       if (error) throw error;
 
-      // Invalider toutes les requêtes liées aux concours
       queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
-      
       toast({
         title: "Succès",
         description: "Le concours a été archivé",
@@ -75,52 +70,46 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
       console.error('Error archiving contest:', error);
       toast({
         title: "Erreur",
-        description: "Erreur lors de l'archivage du concours",
+        description: "Impossible d'archiver le concours",
         variant: "destructive",
       });
     }
   };
 
-  const handleFeatureToggle = async (contestId: string, featured: boolean) => {
+  const handleFeatureToggle = async (id: string, featured: boolean) => {
     try {
       const { error } = await supabase
         .from('contests')
         .update({ is_featured: featured })
-        .eq('id', contestId);
-      
+        .eq('id', id);
+
       if (error) throw error;
 
-      // Invalider toutes les requêtes liées aux concours
       queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
-      
       toast({
         title: "Succès",
-        description: featured ? "Le concours sera affiché sur la page d'accueil" : "Le concours ne sera plus affiché sur la page d'accueil",
+        description: featured ? "Le concours est maintenant en vedette" : "Le concours n'est plus en vedette",
       });
     } catch (error) {
-      console.error('Error updating contest featured status:', error);
+      console.error('Error updating contest feature status:', error);
       toast({
         title: "Erreur",
-        description: "Erreur lors de la mise à jour du statut du concours",
+        description: "Impossible de mettre à jour le statut en vedette",
         variant: "destructive",
       });
     }
   };
 
-  const handleStatusUpdate = async (contestId: string, updates: { is_new?: boolean; has_big_prizes?: boolean }) => {
+  const handleStatusUpdate = async (id: string, updates: { is_new?: boolean; has_big_prizes?: boolean }) => {
     try {
       const { error } = await supabase
         .from('contests')
         .update(updates)
-        .eq('id', contestId);
-      
+        .eq('id', id);
+
       if (error) throw error;
 
-      // Invalider toutes les requêtes liées aux concours
       queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
-      
       toast({
         title: "Succès",
         description: "Le statut du concours a été mis à jour",
@@ -129,15 +118,15 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
       console.error('Error updating contest status:', error);
       toast({
         title: "Erreur",
-        description: "Erreur lors de la mise à jour du statut du concours",
+        description: "Impossible de mettre à jour le statut",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-      {contests?.map((contest) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {contests.map((contest) => (
         <ContestCard
           key={contest.id}
           contest={contest}
@@ -146,8 +135,20 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
           onFeatureToggle={handleFeatureToggle}
           onStatusUpdate={handleStatusUpdate}
           onSelect={onSelectContest}
+          onEdit={() => setEditingContestId(contest.id)}
         />
       ))}
+
+      {editingContestId && (
+        <Dialog open={true} onOpenChange={() => setEditingContestId(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <EditContestForm
+              contestId={editingContestId}
+              onClose={() => setEditingContestId(null)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
