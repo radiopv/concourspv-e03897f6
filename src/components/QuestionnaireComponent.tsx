@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../App";
-import { ExternalLink, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
+import ArticleLink from './questionnaire/ArticleLink';
+import AnswerOptions from './questionnaire/AnswerOptions';
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -38,13 +37,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   });
 
   const currentQuestion = questions?.[currentQuestionIndex];
-
-  const handleLinkClick = () => {
-    setHasClickedLink(true);
-    if (currentQuestion?.article_url) {
-      window.open(currentQuestion.article_url, '_blank');
-    }
-  };
 
   const handleSubmitAnswer = async () => {
     if (!selectedAnswer || !currentQuestion) return;
@@ -150,57 +142,20 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           <p className="text-lg font-medium">{currentQuestion?.question_text}</p>
           
           {currentQuestion?.article_url && (
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full flex items-center justify-center gap-2",
-                hasClickedLink && "bg-green-50"
-              )}
-              onClick={handleLinkClick}
-            >
-              <ExternalLink className="w-4 h-4" />
-              {hasClickedLink ? "Article consulté" : "Lire l'article pour débloquer la question"}
-            </Button>
+            <ArticleLink
+              url={currentQuestion.article_url}
+              onArticleRead={() => setHasClickedLink(true)}
+            />
           )}
           
-          <RadioGroup
-            value={selectedAnswer}
-            onValueChange={setSelectedAnswer}
-            className="space-y-3"
-          >
-            {currentQuestion?.options?.map((option: string, index: number) => (
-              <div 
-                key={index} 
-                className={cn(
-                  "flex items-center space-x-2 p-3 rounded-lg border transition-all",
-                  currentQuestion.article_url && !hasClickedLink && "opacity-50 cursor-not-allowed",
-                  hasAnswered && option === currentQuestion.correct_answer && "border-green-500 bg-green-50",
-                  hasAnswered && option === selectedAnswer && option !== currentQuestion.correct_answer && "border-red-500 bg-red-50"
-                )}
-              >
-                <RadioGroupItem 
-                  value={option} 
-                  id={`option-${index}`}
-                  disabled={(currentQuestion.article_url && !hasClickedLink) || hasAnswered}
-                />
-                <Label 
-                  htmlFor={`option-${index}`}
-                  className={cn(
-                    "flex-1 cursor-pointer",
-                    currentQuestion.article_url && !hasClickedLink && "cursor-not-allowed"
-                  )}
-                >
-                  {option}
-                </Label>
-                {hasAnswered && option === currentQuestion.correct_answer && (
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
-                )}
-                {hasAnswered && option === selectedAnswer && option !== currentQuestion.correct_answer && (
-                  <XCircle className="w-5 h-5 text-red-500" />
-                )}
-              </div>
-            ))}
-          </RadioGroup>
+          <AnswerOptions
+            options={currentQuestion?.options || []}
+            selectedAnswer={selectedAnswer}
+            correctAnswer={hasAnswered ? currentQuestion?.correct_answer : undefined}
+            hasAnswered={hasAnswered}
+            isDisabled={currentQuestion?.article_url && !hasClickedLink}
+            onAnswerSelect={setSelectedAnswer}
+          />
 
           {!hasAnswered ? (
             <Button
