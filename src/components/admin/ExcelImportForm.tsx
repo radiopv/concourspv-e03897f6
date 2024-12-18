@@ -5,15 +5,19 @@ import { useToast } from "@/components/ui/use-toast";
 import * as XLSX from 'xlsx';
 import { supabase } from "../../App";
 import { validateAndParseQuestions } from "../../utils/excelImport";
+import { useQueryClient } from "@tanstack/react-query";
 
-const ExcelImportForm = () => {
+const ExcelImportForm = ({ contestId }: { contestId?: string }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !contestId) return;
 
     try {
+      setIsImporting(true);
       const reader = new FileReader();
       reader.onload = async (e) => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
@@ -23,23 +27,9 @@ const ExcelImportForm = () => {
         
         const questions = validateAndParseQuestions(worksheet);
 
-        // Créer un nouveau concours avec les questions
-        const { data: contest, error: contestError } = await supabase
-          .from('contests')
-          .insert([{
-            title: file.name.replace(/\.[^/.]+$/, ""),
-            description: `Concours importé le ${new Date().toLocaleDateString()}`,
-            start_date: new Date().toISOString(),
-            end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            status: 'draft'
-          }])
-          .select();
-
-        if (contestError) throw contestError;
-
-        // Ajouter les questions au concours avec l'URL de l'article
+        // Ajouter les questions au concours existant avec l'URL de l'article
         const questionsData = questions.map((q, index) => ({
-          contest_id: contest[0].id,
+          contest_id: contestId,
           question_text: q.question_text,
           options: q.options,
           correct_answer: q.correct_answer,
@@ -54,12 +44,17 @@ const ExcelImportForm = () => {
 
         if (questionsError) throw questionsError;
 
+        await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+        await queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
+
         toast({
           title: "Succès",
-          description: `${questions.length} questions ont été importées avec succès. Le concours est en mode brouillon.`,
+          description: `${questions.length} questions ont été importées avec succès.`,
         });
 
-        event.target.value = '';
+        if (event.target) {
+          event.target.value = '';
+        }
       };
       reader.readAsArrayBuffer(file);
     } catch (error) {
@@ -72,6 +67,8 @@ const ExcelImportForm = () => {
       if (event.target) {
         event.target.value = '';
       }
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -86,6 +83,7 @@ const ExcelImportForm = () => {
         type="file"
         accept=".xlsx,.xls"
         onChange={handleFileUpload}
+        disabled={isImporting || !contestId}
         className="mt-2"
       />
     </div>

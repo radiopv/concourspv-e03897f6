@@ -16,6 +16,7 @@ const AdminContestManager = () => {
     start_date: "",
     end_date: "",
   });
+  const [createdContestId, setCreatedContestId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +67,8 @@ const AdminContestManager = () => {
         throw new Error('No contest was created');
       }
 
-      // Invalidate queries to refresh the contests list
+      setCreatedContestId(contest.id);
+
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['admin-contests'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] }),
@@ -147,7 +149,7 @@ const AdminContestManager = () => {
           {isSubmitting ? 'Création en cours...' : 'Créer le concours'}
         </Button>
         
-        <ExcelImportForm />
+        <ExcelImportForm contestId={createdContestId || undefined} />
       </CardContent>
     </Card>
   );
