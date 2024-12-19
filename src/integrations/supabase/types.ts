@@ -96,6 +96,36 @@ export type Database = {
           },
         ]
       }
+      featured_winners: {
+        Row: {
+          created_at: string
+          description: string | null
+          first_name: string
+          id: string
+          is_active: boolean | null
+          last_name: string
+          photo_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          first_name: string
+          id?: string
+          is_active?: boolean | null
+          last_name: string
+          photo_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          first_name?: string
+          id?: string
+          is_active?: boolean | null
+          last_name?: string
+          photo_url?: string | null
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           avatar_url: string | null

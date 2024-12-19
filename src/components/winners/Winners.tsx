@@ -1,23 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import WinnersList from "./WinnersList";
+import WinnerClaimDialog from "./WinnerClaimDialog";
+import { useState } from "react";
 
 const Winners = () => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const { data: winners, isLoading } = useQuery({
-    queryKey: ['winners'],
+    queryKey: ['featured-winners'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('participants')
-        .select('*, contests(title)')
-        .eq('status', 'winner')
+        .from('featured_winners')
+        .select('*')
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
-
+      
       if (error) throw error;
       return data;
-    },
+    }
   });
 
   if (isLoading) {
@@ -25,23 +26,18 @@ const Winners = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {winners?.map((winner) => (
-        <Card key={winner.id}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              {winner.first_name} {winner.last_name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600">Concours: {winner.contests?.title}</p>
-            <p className="text-sm text-gray-600">
-              Date: {format(new Date(winner.created_at), 'dd MMMM yyyy', { locale: fr })}
-            </p>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Nos Gagnants</h2>
+        <button
+          onClick={() => setIsDialogOpen(true)}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+        >
+          Ajouter un gagnant
+        </button>
+      </div>
+      <WinnersList winners={winners || []} />
+      <WinnerClaimDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
     </div>
   );
 };
