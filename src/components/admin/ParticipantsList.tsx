@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ParticipantsListProps {
@@ -67,11 +67,18 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
   const exportToCSV = () => {
     if (!participants) return;
 
-    const headers = ["Prénom", "Nom", "Email", "Score", "Statut"];
+    const headers = ["Prénom", "Nom", "Email", "Score", "Statut", "Date de participation"];
     const csvContent = [
       headers.join(","),
       ...participants.map(p => 
-        [p.first_name, p.last_name, p.email, p.score || "N/A", p.status].join(",")
+        [
+          p.first_name, 
+          p.last_name, 
+          p.email, 
+          p.score || "N/A", 
+          p.status || "En attente",
+          p.completed_at ? new Date(p.completed_at).toLocaleDateString('fr-FR') : "N/A"
+        ].join(",")
       )
     ].join("\n");
 
@@ -91,8 +98,10 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={exportToCSV}>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Liste des participants</h2>
+        <Button onClick={exportToCSV} className="flex items-center gap-2">
+          <Download className="w-4 h-4" />
           Exporter en CSV
         </Button>
       </div>
@@ -105,6 +114,7 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
             <TableHead>Email</TableHead>
             <TableHead>Score</TableHead>
             <TableHead>Statut</TableHead>
+            <TableHead>Date de participation</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -114,8 +124,22 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
               <TableCell>{participant.first_name}</TableCell>
               <TableCell>{participant.last_name}</TableCell>
               <TableCell>{participant.email}</TableCell>
-              <TableCell>{participant.score || "N/A"}</TableCell>
-              <TableCell>{participant.status}</TableCell>
+              <TableCell>{participant.score || "N/A"}%</TableCell>
+              <TableCell>
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  participant.status === 'winner' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {participant.status === 'winner' ? 'Gagnant' : 'Participant'}
+                </span>
+              </TableCell>
+              <TableCell>
+                {participant.completed_at 
+                  ? new Date(participant.completed_at).toLocaleDateString('fr-FR')
+                  : "N/A"
+                }
+              </TableCell>
               <TableCell>
                 <Button
                   variant="destructive"

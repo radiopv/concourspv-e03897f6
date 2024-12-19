@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
-import { Plus } from "lucide-react";
+import { Plus, Users, Award, Shuffle } from "lucide-react";
 import QuestionsManager from "../components/admin/QuestionsManager";
 import ContestParticipants from "../components/admin/contest-card/ContestParticipants";
 import DrawManager from "../components/admin/DrawManager";
@@ -15,7 +15,14 @@ import ContestList from "../components/admin/ContestList";
 import ContentValidator from "../components/admin/ContentValidator";
 import PrizeCatalogManager from "../components/admin/PrizeCatalogManager";
 import { useToast } from "@/components/ui/use-toast";
-import ContestDraw from "../components/admin/contest-card/ContestDraw";
+import ParticipantsList from "../components/admin/ParticipantsList";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const Admin = () => {
   const [selectedContest, setSelectedContest] = useState<string | null>(null);
@@ -88,6 +95,71 @@ const Admin = () => {
 
       {!selectedContest ? (
         <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-500" />
+                  Participants
+                </CardTitle>
+                <CardDescription>
+                  Gérez les participants aux concours
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => setSelectedContest(contests?.[0]?.id)}
+                >
+                  Voir les participants
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shuffle className="w-5 h-5 text-purple-500" />
+                  Tirages
+                </CardTitle>
+                <CardDescription>
+                  Effectuez les tirages au sort
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => setSelectedContest(contests?.[0]?.id)}
+                >
+                  Gérer les tirages
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-500" />
+                  Gagnants
+                </CardTitle>
+                <CardDescription>
+                  Consultez les gagnants des concours
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => setSelectedContest(contests?.[0]?.id)}
+                >
+                  Voir les gagnants
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
           <Collapsible open={isNewContestOpen} onOpenChange={setIsNewContestOpen}>
             <div className="flex items-center justify-between mb-4">
               <CollapsibleTrigger asChild>
@@ -102,21 +174,6 @@ const Admin = () => {
             </CollapsibleContent>
           </Collapsible>
 
-          <Collapsible open={isValidatorOpen} onOpenChange={setIsValidatorOpen}>
-            <div className="flex items-center justify-between mb-4">
-              <CollapsibleTrigger asChild>
-                <Button variant="outline">
-                  Validation du contenu
-                </Button>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent className="space-y-2">
-              <ContentValidator />
-            </CollapsibleContent>
-          </Collapsible>
-
-          <PrizeCatalogManager />
-          
           <ContestList 
             contests={contests || []} 
             onSelectContest={setSelectedContest} 
@@ -131,20 +188,20 @@ const Admin = () => {
             Retour à la liste
           </Button>
 
-          <Tabs defaultValue="questions">
+          <Tabs defaultValue="participants">
             <TabsList>
-              <TabsTrigger value="questions">Questions</TabsTrigger>
               <TabsTrigger value="participants">Participants</TabsTrigger>
+              <TabsTrigger value="questions">Questions</TabsTrigger>
               <TabsTrigger value="prizes">Prix</TabsTrigger>
               <TabsTrigger value="draw">Tirage au sort</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="questions">
-              <QuestionsManager contestId={selectedContest} />
+            <TabsContent value="participants">
+              <ParticipantsList contestId={selectedContest} />
             </TabsContent>
 
-            <TabsContent value="participants">
-              <ContestParticipants contestId={selectedContest} />
+            <TabsContent value="questions">
+              <QuestionsManager contestId={selectedContest} />
             </TabsContent>
 
             <TabsContent value="prizes">
@@ -152,10 +209,7 @@ const Admin = () => {
             </TabsContent>
 
             <TabsContent value="draw">
-              <ContestDraw 
-                contestId={selectedContest} 
-                drawDate={contests?.find(c => c.id === selectedContest)?.draw_date || ''} 
-              />
+              <DrawManager contestId={selectedContest} />
             </TabsContent>
           </Tabs>
         </div>
