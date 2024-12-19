@@ -1,31 +1,19 @@
-import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
-import Layout from "./components/Layout";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Admin from "./pages/Admin";
-import Dashboard from "./pages/Dashboard";
-import ContestsList from "./pages/ContestsList";
-import Contest from "./pages/Contest";
-import Winners from "./pages/Winners";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Index from './pages/Index';
+import RandomDraw from './pages/RandomDraw';
 
-function App() {
+const App = () => {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Layout><Outlet /></Layout>}>
-          <Route index element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/admin/*" element={<Admin />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/contests" element={<ContestsList />} />
-          <Route path="/contest/:id" element={<Contest />} />
-          <Route path="/winners" element={<Winners />} />
-        </Route>
-      </Routes>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/tirage" element={<RandomDraw />} />
+        </Routes>
+      </Layout>
     </Router>
   );
-}
+};
 
 export default App;
