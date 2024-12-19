@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../App";
+import { supabase } from "@/lib/supabase";
 import { useQuestions } from './questionnaire/useQuestions';
 import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
 import { calculateFinalScore, completeQuestionnaire } from './questionnaire/QuestionnaireManager';
