@@ -32,7 +32,7 @@ export const PrizeCatalogManager = () => {
     try {
       setUploading(true);
       const file = event.target.files?.[0];
-      if (!file) return;
+      if (!file) return null;
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
@@ -47,6 +47,11 @@ export const PrizeCatalogManager = () => {
       const { data: { publicUrl } } = supabase.storage
         .from('prizes')
         .getPublicUrl(filePath);
+
+      toast({
+        title: "Succès",
+        description: "L'image a été téléchargée",
+      });
 
       return publicUrl;
     } catch (error) {
@@ -73,7 +78,7 @@ export const PrizeCatalogManager = () => {
   };
 
   if (isLoading) {
-    return <div>Chargement du catalogue...</div>;
+    return <div className="p-6">Chargement du catalogue...</div>;
   }
 
   return (

@@ -12,7 +12,7 @@ import { PrizeForm } from './PrizeForm';
 
 interface AddPrizeDialogProps {
   onSave: (formData: any) => void;
-  onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => Promise<string | null>;
   uploading: boolean;
 }
 
@@ -53,6 +53,13 @@ export const AddPrizeDialog = ({ onSave, onImageUpload, uploading }: AddPrizeDia
     });
   };
 
+  const handleImageUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const url = await onImageUpload(event);
+    if (url) {
+      handleFormChange('image_url', url);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -68,7 +75,7 @@ export const AddPrizeDialog = ({ onSave, onImageUpload, uploading }: AddPrizeDia
         <PrizeForm
           formData={formData}
           onFormChange={handleFormChange}
-          onImageUpload={onImageUpload}
+          onImageUpload={handleImageUploadChange}
           onCancel={handleCancel}
           onSave={handleSave}
           uploading={uploading}

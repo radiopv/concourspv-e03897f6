@@ -11,7 +11,7 @@ interface PrizeGridProps {
 export const PrizeGrid = ({ prizes, onEdit, onDelete }: PrizeGridProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {prizes?.map((prize) => (
+      {prizes.map((prize) => (
         <Card key={prize.id} className="hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             {prize.image_url && (
