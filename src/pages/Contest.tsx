@@ -3,15 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import ContestDetails from "@/components/contests/ContestDetails";
 import ContestStats from "@/components/contests/ContestStats";
-import ParticipantsList from "@/components/admin/ParticipantsList";
-import DrawManager from "@/components/admin/DrawManager";
-import WinnerClaimDialog from "@/components/winners/WinnerClaimDialog";
-import { useState } from "react";
+import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import Layout from "@/components/Layout";
 
 const Contest = () => {
   const { id } = useParams<{ id: string }>();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const { data: contest, isLoading, error } = useQuery({
     queryKey: ['contest', id],
@@ -68,16 +64,11 @@ const Contest = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-10 space-y-8">
         <h1 className="text-3xl font-bold mb-6">{contest.title}</h1>
         <ContestDetails contest={contest} />
+        <QuestionnaireComponent contestId={contest.id} />
         <ContestStats contestId={contest.id} />
-        <ParticipantsList contestId={contest.id} />
-        <DrawManager contestId={contest.id} />
-        <WinnerClaimDialog 
-          open={isDialogOpen} 
-          onOpenChange={setIsDialogOpen}
-        />
       </div>
     </Layout>
   );
