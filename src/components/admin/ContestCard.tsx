@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import ContestCardHeader from './contest-card/ContestCardHeader';
 import ContestCardStats from './contest-card/ContestCardStats';
 import ContestCardToggles from './contest-card/ContestCardToggles';
@@ -9,6 +8,7 @@ import ContestCardPrize from './contest-card/ContestCardPrize';
 import ContestStatusBadge from './contest-card/ContestStatusBadge';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Trophy, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
@@ -47,7 +47,6 @@ const ContestCard = ({
   onSelect,
   onEdit,
 }: ContestCardProps) => {
-  const { toast } = useToast();
   const endDate = new Date(contest.end_date);
   const drawDate = contest.draw_date ? new Date(contest.draw_date) : null;
   const isExpiringSoon = endDate.getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000;
@@ -56,30 +55,16 @@ const ContestCard = ({
   const { data: winners } = useQuery({
     queryKey: ['contest-winners', contest.id],
     queryFn: async () => {
-      const { data: session } = await supabase.auth.getSession();
-      
-      if (!session.session) {
-        throw new Error('Not authenticated');
-      }
-
       const { data, error } = await supabase
         .from('participants')
         .select('*')
         .eq('contest_id', contest.id)
         .eq('status', 'winner');
       
-      if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les gagnants",
-          variant: "destructive",
-        });
-        throw error;
-      }
+      if (error) throw error;
       return data;
     },
-    enabled: !!contest.id,
-    retry: 1,
+    enabled: !!contest.id
   });
 
   const handleStatusToggle = (checked: boolean) => {
