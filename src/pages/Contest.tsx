@@ -49,9 +49,11 @@ const Contest = () => {
     },
     enabled: !!id,
     retry: false,
-    onError: (error) => {
-      console.error('Error in contest query:', error);
-      navigate('/contests');
+    meta: {
+      onError: () => {
+        console.error('Error in contest query');
+        navigate('/contests');
+      }
     }
   });
 
