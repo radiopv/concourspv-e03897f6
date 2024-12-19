@@ -31,38 +31,45 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
 
         console.log('Données Excel brutes:', jsonData);
 
-        // Trouver les noms de colonnes dans le fichier
+        // Trouver les colonnes appropriées
         const firstRow = jsonData[0] || {};
         const columns = Object.keys(firstRow);
         console.log('Colonnes trouvées:', columns);
 
+        // Traiter les données pour extraire nom et prénom
         const participants = jsonData.map(row => {
-          // Chercher la colonne qui contient le nom
-          const nomColumn = columns.find(col => 
-            col.toLowerCase().includes('nom') || 
+          let fullName = '';
+          let email = '';
+
+          // Chercher la colonne qui contient le nom complet
+          const nameColumn = columns.find(col => 
+            col.toLowerCase() === 'name' || 
+            col.toLowerCase() === 'nom' ||
             col.toLowerCase().includes('name') ||
-            col.toLowerCase() === 'nom'
+            col.toLowerCase().includes('nom')
           );
 
-          // Chercher la colonne qui contient le prénom
-          const prenomColumn = columns.find(col => 
-            col.toLowerCase().includes('prenom') || 
-            col.toLowerCase().includes('prénom') ||
-            col.toLowerCase().includes('firstname') ||
-            col.toLowerCase() === 'prenom'
+          // Chercher la colonne qui contient l'email
+          const emailColumn = columns.find(col => 
+            col.toLowerCase() === 'email' ||
+            col.toLowerCase().includes('email') ||
+            col.toLowerCase().includes('courriel')
           );
 
-          if (!nomColumn || !prenomColumn) {
-            console.log('Colonnes non trouvées pour la ligne:', row);
-            return null;
+          if (nameColumn) {
+            fullName = row[nameColumn]?.toString().trim() || '';
           }
 
-          const nom = row[nomColumn]?.toString().trim() || '';
-          const prenom = row[prenomColumn]?.toString().trim() || '';
+          if (emailColumn) {
+            email = row[emailColumn]?.toString().trim() || '';
+          }
 
-          console.log('Traitement ligne:', { nom, prenom });
+          if (!fullName) return null;
 
-          if (!nom && !prenom) return null;
+          // Séparer le nom complet en prénom et nom
+          const nameParts = fullName.split(' ');
+          const prenom = nameParts[0] || '';
+          const nom = nameParts.slice(1).join(' ') || '';
 
           return {
             nom,
@@ -88,7 +95,7 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
         if (uniqueParticipants.length === 0) {
           toast({
             title: "Erreur",
-            description: "Aucun participant trouvé dans le fichier. Vérifiez les noms des colonnes (nom/prénom).",
+            description: "Aucun participant trouvé dans le fichier. Vérifiez le format du fichier.",
             variant: "destructive",
           });
           return;
