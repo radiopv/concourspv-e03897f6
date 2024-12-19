@@ -51,8 +51,20 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
     }
 
     try {
-      console.log("Adding questions to contest:", selectedContestId);
-      console.log("Selected questions:", selectedQuestions);
+      console.log("Début de l'ajout des questions au concours:", selectedContestId);
+      console.log("Questions sélectionnées:", selectedQuestions);
+
+      // Vérifier que le concours existe
+      const { data: contestCheck, error: contestError } = await supabase
+        .from('contests')
+        .select('id')
+        .eq('id', selectedContestId)
+        .single();
+
+      if (contestError || !contestCheck) {
+        console.error("Erreur lors de la vérification du concours:", contestError);
+        throw new Error("Le concours sélectionné n'existe pas");
+      }
 
       // Récupérer le dernier numéro d'ordre
       const { data: existingQuestions, error: orderError } = await supabase
@@ -62,9 +74,13 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
         .order('order_number', { ascending: false })
         .limit(1);
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error("Erreur lors de la récupération du dernier numéro d'ordre:", orderError);
+        throw orderError;
+      }
 
       const startOrderNumber = (existingQuestions?.[0]?.order_number || 0) + 1;
+      console.log("Numéro d'ordre de départ:", startOrderNumber);
 
       // Préparer les questions à insérer
       const selectedQuestionsData = questions
@@ -79,7 +95,7 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
           type: 'multiple_choice'
         }));
 
-      console.log("Questions to insert:", selectedQuestionsData);
+      console.log("Questions préparées pour l'insertion:", selectedQuestionsData);
 
       // Insérer les questions
       const { error: insertError } = await supabase
@@ -87,9 +103,11 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
         .insert(selectedQuestionsData);
 
       if (insertError) {
-        console.error("Error inserting questions:", insertError);
+        console.error("Erreur lors de l'insertion des questions:", insertError);
         throw insertError;
       }
+
+      console.log("Questions insérées avec succès");
 
       // Mettre à jour le statut des questions dans la banque
       const { error: updateError } = await supabase
@@ -98,11 +116,13 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
         .in('id', selectedQuestions);
 
       if (updateError) {
-        console.error("Error updating question status:", updateError);
+        console.error("Erreur lors de la mise à jour du statut des questions:", updateError);
         throw updateError;
       }
 
-      // Invalider les requêtes pour rafraîchir les données
+      console.log("Statut des questions mis à jour avec succès");
+
+      // Rafraîchir les données
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['question-bank'] }),
         queryClient.invalidateQueries({ queryKey: ['questions', selectedContestId] })
@@ -115,7 +135,7 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
 
       setSelectedQuestions([]);
     } catch (error) {
-      console.error('Error adding questions to contest:', error);
+      console.error('Erreur complète:', error);
       toast({
         title: "Erreur",
         description: "Erreur lors de l'ajout des questions au concours",
