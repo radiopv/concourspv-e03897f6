@@ -14,12 +14,11 @@ import { createClient } from '@supabase/supabase-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster";
 
-// Vérification de la présence des variables d'environnement
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Les variables d\'environnement Supabase sont manquantes. Veuillez configurer VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY');
+  throw new Error('Les variables d\'environnement Supabase sont manquantes.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
@@ -35,11 +34,14 @@ function App() {
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="admin/*" element={<Admin />} />
-            <Route path="contest/:id" element={<Contest />} />
+            <Route path="admin" element={<Admin />}>
+              <Route path="question-bank" element={<QuestionBank />} />
+              <Route path="contests/:id" element={<Contest />} />
+              <Route path="contests/:id/stats" element={<ContestStats />} />
+            </Route>
             <Route path="contests" element={<ContestsList />} />
+            <Route path="contest/:id" element={<Contest />} />
             <Route path="contest/:id/stats" element={<ContestStats />} />
-            <Route path="question-bank" element={<QuestionBank />} />
             <Route path="winners" element={<Winners />} />
           </Route>
         </Routes>
