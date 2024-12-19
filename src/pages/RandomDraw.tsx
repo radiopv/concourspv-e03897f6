@@ -4,15 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { Pencil, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Participant {
   nom: string;
   prenom: string;
+  id: string;
 }
 
 const RandomDraw = () => {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [winner, setWinner] = useState<Participant | null>(null);
+  const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null);
   const { toast } = useToast();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,7 +36,8 @@ const RandomDraw = () => {
         const uniqueParticipants = Array.from(new Set(
           jsonData.map(row => JSON.stringify({
             nom: row.nom || row.Nom || row.NOM,
-            prenom: row.prenom || row.Prenom || row.PRENOM
+            prenom: row.prenom || row.Prenom || row.PRENOM,
+            id: crypto.randomUUID()
           }))
         )).map(str => JSON.parse(str));
 
@@ -72,6 +77,25 @@ const RandomDraw = () => {
     });
   };
 
+  const handleDelete = (id: string) => {
+    setParticipants(prev => prev.filter(p => p.id !== id));
+    toast({
+      title: "Participant supprimé",
+      description: "Le participant a été retiré de la liste",
+    });
+  };
+
+  const handleEdit = (participant: Participant) => {
+    setParticipants(prev => 
+      prev.map(p => p.id === participant.id ? participant : p)
+    );
+    setEditingParticipant(null);
+    toast({
+      title: "Participant modifié",
+      description: "Les informations ont été mises à jour",
+    });
+  };
+
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Tirage au Sort</h1>
@@ -100,10 +124,69 @@ const RandomDraw = () => {
           <CardTitle>Liste des Participants</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-h-60 overflow-y-auto">
-            {participants.map((participant, index) => (
-              <div key={index} className="py-2 border-b last:border-0">
-                {participant.prenom} {participant.nom}
+          <div className="max-h-60 overflow-y-auto space-y-2">
+            {participants.map((participant) => (
+              <div key={participant.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
+                <span>{participant.prenom} {participant.nom}</span>
+                <div className="flex gap-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => setEditingParticipant(participant)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Modifier le participant</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Prénom"
+                            defaultValue={participant.prenom}
+                            onChange={(e) => {
+                              if (editingParticipant) {
+                                setEditingParticipant({
+                                  ...editingParticipant,
+                                  prenom: e.target.value
+                                });
+                              }
+                            }}
+                          />
+                          <Input
+                            placeholder="Nom"
+                            defaultValue={participant.nom}
+                            onChange={(e) => {
+                              if (editingParticipant) {
+                                setEditingParticipant({
+                                  ...editingParticipant,
+                                  nom: e.target.value
+                                });
+                              }
+                            }}
+                          />
+                        </div>
+                        <Button 
+                          className="w-full"
+                          onClick={() => editingParticipant && handleEdit(editingParticipant)}
+                        >
+                          Sauvegarder
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleDelete(participant.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
