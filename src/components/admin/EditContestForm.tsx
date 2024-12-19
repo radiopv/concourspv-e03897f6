@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -32,15 +32,35 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
   });
 
   const [formData, setFormData] = useState({
-    title: contest?.title || '',
-    description: contest?.description || '',
-    start_date: contest?.start_date || '',
-    end_date: contest?.end_date || '',
-    is_featured: contest?.is_featured || false,
-    is_new: contest?.is_new || false,
-    has_big_prizes: contest?.has_big_prizes || false,
-    shop_url: contest?.shop_url || '',
+    title: '',
+    description: '',
+    start_date: '',
+    end_date: '',
+    draw_date: '',
+    is_featured: false,
+    is_new: false,
+    has_big_prizes: false,
+    shop_url: '',
+    prize_image_url: '',
   });
+
+  // Update form data when contest data is loaded
+  useEffect(() => {
+    if (contest) {
+      setFormData({
+        title: contest.title || '',
+        description: contest.description || '',
+        start_date: contest.start_date || '',
+        end_date: contest.end_date || '',
+        draw_date: contest.draw_date || '',
+        is_featured: contest.is_featured || false,
+        is_new: contest.is_new || false,
+        has_big_prizes: contest.has_big_prizes || false,
+        shop_url: contest.shop_url || '',
+        prize_image_url: contest.prize_image_url || '',
+      });
+    }
+  }, [contest]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -52,7 +72,6 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // Utiliser le bucket "prizes" au lieu de "contests"
       const { error: uploadError } = await supabase.storage
         .from('prizes')
         .upload(filePath, file);
@@ -70,6 +89,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
 
       if (updateError) throw updateError;
 
+      setFormData(prev => ({ ...prev, prize_image_url: publicUrl }));
       queryClient.invalidateQueries({ queryKey: ['contest', contestId] });
       toast({
         title: "Succès",
@@ -97,6 +117,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
           description: formData.description,
           start_date: formData.start_date,
           end_date: formData.end_date,
+          draw_date: formData.draw_date,
           is_featured: formData.is_featured,
           is_new: formData.is_new,
           has_big_prizes: formData.has_big_prizes,

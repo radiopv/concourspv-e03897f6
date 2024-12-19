@@ -11,6 +11,7 @@ interface ContestBasicFormProps {
     description: string;
     start_date: string;
     end_date: string;
+    draw_date: string;
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
@@ -64,6 +65,13 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
           onChange={handleImageUpload}
           disabled={uploading}
         />
+        {formData.prize_image_url && (
+          <img 
+            src={formData.prize_image_url} 
+            alt="Prix du concours" 
+            className="mt-2 max-w-xs rounded-lg"
+          />
+        )}
       </div>
 
       <div>
@@ -84,6 +92,17 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
           type="date"
           value={formData.end_date}
           onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="draw_date">Date du tirage</Label>
+        <Input
+          id="draw_date"
+          type="date"
+          value={formData.draw_date}
+          onChange={(e) => setFormData({ ...formData, draw_date: e.target.value })}
           required
         />
       </div>
