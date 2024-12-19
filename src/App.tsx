@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -13,7 +13,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route element={<Layout />}>
+        <Route path="/" element={<Layout><Outlet /></Layout>}>
           <Route index element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
