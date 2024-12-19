@@ -1,32 +1,68 @@
 import { Link } from "react-router-dom";
-import { Trophy } from "lucide-react";
+import { Trophy, Menu, X } from "lucide-react";
+import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const UserNavBar = () => {
+  const isMobile = useIsMobile();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const NavLinks = () => (
+    <>
+      <Link
+        to="/"
+        className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
+        onClick={() => setIsOpen(false)}
+      >
+        Accueil
+      </Link>
+      <Link
+        to="/contests"
+        className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+        onClick={() => setIsOpen(false)}
+      >
+        Concours
+      </Link>
+      <Link
+        to="/winners"
+        className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+        onClick={() => setIsOpen(false)}
+      >
+        <Trophy className="w-4 h-4 mr-2" />
+        Gagnants
+      </Link>
+    </>
+  );
+
   return (
     <nav className="bg-white border-b">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between h-16">
-          <div className="flex space-x-8">
-            <Link
-              to="/"
-              className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
-            >
-              Accueil
-            </Link>
-            <Link
-              to="/contests"
-              className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
-            >
-              Concours
-            </Link>
-            <Link
-              to="/winners"
-              className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
-            >
-              <Trophy className="w-4 h-4 mr-2" />
-              Gagnants
-            </Link>
-          </div>
+        <div className="flex justify-between h-16 items-center">
+          {isMobile ? (
+            <>
+              <Link to="/" className="text-xl font-bold">
+                Concours
+              </Link>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[80vw] sm:w-[385px]">
+                  <div className="flex flex-col space-y-4 mt-8">
+                    <NavLinks />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </>
+          ) : (
+            <div className="flex space-x-8">
+              <NavLinks />
+            </div>
+          )}
         </div>
       </div>
     </nav>
