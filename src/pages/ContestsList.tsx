@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from "react-router-dom";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ const ContestsList = () => {
   const { data: contests, isLoading } = useContests();
 
   const handleContestSelect = (id: string) => {
-    navigate(`/contest/${id}`);
+    navigate(`/contests/${id}`);
   };
 
   if (isLoading) {

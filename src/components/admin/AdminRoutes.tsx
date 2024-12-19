@@ -13,7 +13,7 @@ const AdminRoutes = () => {
   const params = useParams();
 
   const handleSelectContest = (id: string) => {
-    navigate(`/admin/contests/${id}`);
+    navigate(`/contests/${id}`);
   };
 
   return (

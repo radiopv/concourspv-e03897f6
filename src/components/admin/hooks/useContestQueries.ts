@@ -5,24 +5,32 @@ export const useContestQueries = () => {
   const { data: contestsWithCounts, isLoading } = useQuery({
     queryKey: ['admin-contests-with-counts'],
     queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session?.access_token) {
-        throw new Error("Not authenticated");
-      }
-
+      console.log("Fetching contests with counts...");
+      
       const { data: contests, error: contestsError } = await supabase
         .from('contests')
-        .select('*')
+        .select(`
+          *,
+          participants (count),
+          prizes (
+            prize_catalog (
+              name,
+              image_url,
+              value,
+              shop_url
+            )
+          )
+        `)
         .order('created_at', { ascending: false });
       
-      if (contestsError) throw contestsError;
+      if (contestsError) {
+        console.error("Error fetching contests:", contestsError);
+        throw contestsError;
+      }
+
+      console.log("Fetched contests:", contests);
 
       const contestsWithQuestionCounts = await Promise.all(contests.map(async (contest) => {
-        const { count: participantsCount } = await supabase
-          .from('participants')
-          .select('*', { count: 'exact', head: true })
-          .eq('contest_id', contest.id);
-
         const { count: questionsCount } = await supabase
           .from('questions')
           .select('*', { count: 'exact', head: true })
@@ -30,11 +38,11 @@ export const useContestQueries = () => {
 
         return {
           ...contest,
-          participants: { count: participantsCount || 0 },
           questions: { count: questionsCount || 0 }
         };
       }));
 
+      console.log("Processed contests with counts:", contestsWithQuestionCounts);
       return contestsWithQuestionCounts;
     },
     refetchOnWindowFocus: true,
