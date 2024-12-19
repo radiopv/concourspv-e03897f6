@@ -4,8 +4,8 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { PrizeGrid } from "./PrizeGrid";
-import { AddPrizeDialog } from "./AddPrizeDialog";
+import { PrizeGrid } from "./prize-catalog/PrizeGrid";
+import { AddPrizeDialog } from "./prize-catalog/AddPrizeDialog";
 
 export const PrizeCatalogManager = () => {
   const { toast } = useToast();

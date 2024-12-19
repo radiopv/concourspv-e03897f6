@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { PrizeForm } from './PrizeForm';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 
 interface AddPrizeDialogProps {
