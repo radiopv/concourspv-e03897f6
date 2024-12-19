@@ -21,6 +21,11 @@ const ContestsList = () => {
           key={contest.id}
           contest={contest}
           onSelect={setSelectedContest}
+          onDelete={() => {}}
+          onArchive={() => {}}
+          onFeatureToggle={() => {}}
+          onStatusUpdate={() => {}}
+          onEdit={() => {}}
         />
       ))}
     </div>

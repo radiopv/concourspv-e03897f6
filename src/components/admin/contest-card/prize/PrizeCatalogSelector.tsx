@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 
 const PrizeCatalogSelector = ({ onSelectPrize }: { onSelectPrize: (id: string) => void }) => {

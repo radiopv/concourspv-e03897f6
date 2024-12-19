@@ -5,7 +5,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/lib/supabase";
+
+// Export the functions needed by QuestionnaireComponent
+export const calculateFinalScore = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('participant_answers')
+    .select('*')
+    .eq('participant_id', userId);
+  
+  if (error) throw error;
+  
+  const totalQuestions = data.length;
+  const correctAnswers = data.filter(answer => answer.is_correct).length;
+  
+  return Math.round((correctAnswers / totalQuestions) * 100);
+};
+
+export const completeQuestionnaire = async (userId: string, finalScore: number) => {
+  const { error } = await supabase
+    .from('participants')
+    .update({
+      status: 'completed',
+      score: finalScore,
+      completed_at: new Date().toISOString()
+    })
+    .eq('id', userId);
+
+  if (error) throw error;
+};
 
 interface QuestionsManagerProps {
   contestId: string;
@@ -187,3 +215,4 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
 };
 
 export default QuestionsManager;
+
