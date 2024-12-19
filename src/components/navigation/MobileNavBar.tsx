@@ -1,0 +1,42 @@
+import { Home, Trophy, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+
+const MobileNavBar = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.email === "renaudcanuel@me.com";
+
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 px-4 z-50">
+      <div className="flex justify-around items-center">
+        <Link 
+          to="/" 
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
+        >
+          <Home className="h-6 w-6" />
+          <span className="text-xs mt-1">Accueil</span>
+        </Link>
+        
+        <Link 
+          to="/contests" 
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
+        >
+          <Trophy className="h-6 w-6" />
+          <span className="text-xs mt-1">Concours</span>
+        </Link>
+
+        {isAdmin && (
+          <Link 
+            to="/admin" 
+            className="flex flex-col items-center text-gray-600 hover:text-gray-900"
+          >
+            <Settings className="h-6 w-6" />
+            <span className="text-xs mt-1">Admin</span>
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MobileNavBar;
