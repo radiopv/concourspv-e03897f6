@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Outlet } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import AdminDashboard from "@/components/admin/AdminDashboard";
 import { supabase } from "@/lib/supabase";
 
 const Admin = () => {
@@ -25,7 +24,11 @@ const Admin = () => {
     checkAuth();
   }, [navigate, toast]);
 
-  return <AdminDashboard />;
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <Outlet />
+    </div>
+  );
 };
 
 export default Admin;

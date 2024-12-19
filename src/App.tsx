@@ -10,7 +10,11 @@ import ContestsList from './pages/ContestsList';
 import Winners from './pages/Winners';
 import ContestStats from './pages/ContestStats';
 import Admin from './pages/Admin';
-import AdminRoutes from './components/admin/AdminRoutes';
+import AdminDashboard from './components/admin/AdminDashboard';
+import ContestList from './components/admin/contest-list/ContestListGrid';
+import QuestionBank from './pages/QuestionBank';
+import { PrizeCatalogManager } from './components/admin/prize-catalog/PrizeCatalogManager';
+import ContentValidator from './components/admin/ContentValidator';
 
 const App = () => {
   return (
@@ -28,8 +32,13 @@ const App = () => {
           <Route path="/contest-stats/:id" element={<ContestStats contestId="" />} />
           
           {/* Routes d'administration */}
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/*" element={<AdminRoutes />} />
+          <Route path="/admin" element={<Admin />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="contests" element={<ContestList onSelect={() => {}} />} />
+            <Route path="question-bank" element={<QuestionBank />} />
+            <Route path="prize-catalog" element={<PrizeCatalogManager />} />
+            <Route path="content-validator" element={<ContentValidator />} />
+          </Route>
         </Routes>
       </Layout>
     </Router>
