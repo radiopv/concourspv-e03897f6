@@ -1,23 +1,30 @@
 import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { PrizeForm } from './PrizeForm';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AddPrizeDialogProps {
-  onSave: (formData: any) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => Promise<string | null>;
   uploading: boolean;
 }
 
-export const AddPrizeDialog = ({ onSave, onImageUpload, uploading }: AddPrizeDialogProps) => {
-  const [open, setOpen] = useState(false);
+export const AddPrizeDialog = ({ 
+  open, 
+  onOpenChange,
+  onImageUpload,
+  uploading 
+}: AddPrizeDialogProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -26,31 +33,43 @@ export const AddPrizeDialog = ({ onSave, onImageUpload, uploading }: AddPrizeDia
     shop_url: '',
   });
 
+  const addPrize = useMutation({
+    mutationFn: async (data: any) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .insert([data]);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      onOpenChange(false);
+      setFormData({
+        name: '',
+        description: '',
+        value: '',
+        image_url: '',
+        shop_url: '',
+      });
+      toast({
+        title: "Succès",
+        description: "Le prix a été ajouté au catalogue",
+      });
+    },
+    meta: {
+      onError: (error: Error) => {
+        console.error("Add prize error:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible d'ajouter le prix",
+          variant: "destructive",
+        });
+      }
+    }
+  });
+
   const handleFormChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = () => {
-    onSave(formData);
-    setOpen(false);
-    setFormData({
-      name: '',
-      description: '',
-      value: '',
-      image_url: '',
-      shop_url: '',
-    });
-  };
-
-  const handleCancel = () => {
-    setOpen(false);
-    setFormData({
-      name: '',
-      description: '',
-      value: '',
-      image_url: '',
-      shop_url: '',
-    });
   };
 
   const handleImageUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,13 +80,7 @@ export const AddPrizeDialog = ({ onSave, onImageUpload, uploading }: AddPrizeDia
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full">
-          <Plus className="w-4 h-4 mr-2" />
-          Ajouter un prix au catalogue
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Ajouter un prix au catalogue</DialogTitle>
@@ -76,8 +89,8 @@ export const AddPrizeDialog = ({ onSave, onImageUpload, uploading }: AddPrizeDia
           formData={formData}
           onFormChange={handleFormChange}
           onImageUpload={handleImageUploadChange}
-          onCancel={handleCancel}
-          onSave={handleSave}
+          onCancel={() => onOpenChange(false)}
+          onSave={() => addPrize.mutate(formData)}
           uploading={uploading}
         />
       </DialogContent>

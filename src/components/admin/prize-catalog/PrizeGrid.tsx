@@ -1,14 +1,46 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash, Link as LinkIcon } from 'lucide-react';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PrizeGridProps {
   prizes: any[];
-  onEdit: (prize: any) => void;
-  onDelete: (id: string) => void;
 }
 
-export const PrizeGrid = ({ prizes, onEdit, onDelete }: PrizeGridProps) => {
+export const PrizeGrid = ({ prizes }: PrizeGridProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const deletePrize = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été supprimé du catalogue",
+      });
+    },
+    meta: {
+      onError: (error: Error) => {
+        console.error("Delete prize error:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de supprimer le prix",
+          variant: "destructive",
+        });
+      }
+    }
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {prizes.map((prize) => (
@@ -25,14 +57,19 @@ export const PrizeGrid = ({ prizes, onEdit, onDelete }: PrizeGridProps) => {
                   <Button
                     variant="secondary"
                     size="icon"
-                    onClick={() => onEdit(prize)}
+                    onClick={() => {
+                      toast({
+                        title: "Info",
+                        description: "La modification sera disponible prochainement",
+                      });
+                    }}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="destructive"
                     size="icon"
-                    onClick={() => onDelete(prize.id)}
+                    onClick={() => deletePrize.mutate(prize.id)}
                   >
                     <Trash className="h-4 w-4" />
                   </Button>

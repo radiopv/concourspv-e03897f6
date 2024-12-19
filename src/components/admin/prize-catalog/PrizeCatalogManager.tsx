@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { PrizeGrid } from "./PrizeGrid";
 import { AddPrizeDialog } from "./AddPrizeDialog";
-import { usePrizeMutations } from "@/hooks/usePrizeMutations";
 
 export const PrizeCatalogManager = () => {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
@@ -23,7 +25,6 @@ export const PrizeCatalogManager = () => {
         console.error("Error fetching prize catalog:", error);
         throw error;
       }
-      console.log("Prize catalog data:", data);
       return data;
     }
   });
@@ -67,33 +68,28 @@ export const PrizeCatalogManager = () => {
     }
   };
 
-  const { addPrizeToCatalog, updatePrize, deletePrize } = usePrizeMutations();
-
-  const handleSave = async (formData: any) => {
-    if (formData.id) {
-      updatePrize.mutate({ prizeId: formData.id, data: formData });
-    } else {
-      addPrizeToCatalog.mutate(formData);
-    }
-  };
-
   if (isLoading) {
     return <div className="p-6">Chargement du catalogue...</div>;
   }
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold mb-6">Catalogue des Prix</h1>
-      <AddPrizeDialog
-        onSave={handleSave}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Catalogue des Prix</h1>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Ajouter un prix
+        </Button>
+      </div>
+
+      <AddPrizeDialog 
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
         onImageUpload={handleImageUpload}
         uploading={uploading}
       />
-      <PrizeGrid
-        prizes={prizes || []}
-        onEdit={(prize) => handleSave({ ...prize, id: prize.id })}
-        onDelete={(id) => deletePrize.mutate(id)}
-      />
+
+      <PrizeGrid prizes={prizes || []} />
     </div>
   );
 };

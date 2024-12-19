@@ -28,7 +28,10 @@ export const PrizeForm = ({
   uploading,
 }: PrizeFormProps) => {
   return (
-    <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+    <form className="space-y-4" onSubmit={(e) => {
+      e.preventDefault();
+      onSave();
+    }}>
       <div>
         <Label htmlFor="name">Nom du prix</Label>
         <Input
@@ -103,8 +106,7 @@ export const PrizeForm = ({
           Annuler
         </Button>
         <Button
-          type="button"
-          onClick={onSave}
+          type="submit"
         >
           <Check className="w-4 h-4 mr-2" />
           Enregistrer
