@@ -34,14 +34,18 @@ const PrizeCatalogManager = () => {
         </CardHeader>
         <CardContent>
           <Button onClick={() => setIsDialogOpen(true)}>Add Prize</Button>
-          <PrizeList prizes={prizes} />
+          <PrizeList contestId="catalog" />
         </CardContent>
       </Card>
 
-      <PrizeCatalogDialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
+      <PrizeCatalogDialog 
+        onSelectPrize={(id) => {
+          // Handle prize selection
+          setIsDialogOpen(false);
+        }} 
+      />
     </div>
   );
 };
 
 export default PrizeCatalogManager;
-
