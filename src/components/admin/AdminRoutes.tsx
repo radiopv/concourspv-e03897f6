@@ -3,14 +3,16 @@ import AdminDashboard from "./AdminDashboard";
 import QuestionBank from "@/pages/QuestionBank";
 import Contest from "@/pages/Contest";
 import ContestStats from "@/pages/ContestStats";
+import PrizeCatalogManager from "./prize-catalog/PrizeCatalogManager";
 
 const AdminRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<AdminDashboard />} />
+      <Route index element={<AdminDashboard />} />
       <Route path="question-bank" element={<QuestionBank />} />
       <Route path="contests/:id" element={<Contest />} />
       <Route path="contests/:id/stats" element={<ContestStats />} />
+      <Route path="prize-catalog" element={<PrizeCatalogManager />} />
     </Routes>
   );
 };
