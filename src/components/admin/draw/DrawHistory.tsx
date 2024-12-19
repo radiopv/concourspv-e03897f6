@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { History } from "lucide-react";
-import { supabase } from "../../../App";
+import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 

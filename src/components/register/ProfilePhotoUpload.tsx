@@ -24,6 +24,11 @@ const ProfilePhotoUpload = () => {
     const filePath = `profile_photos/${fileName}`;
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const { error: uploadError } = await supabase.storage
         .from('profile_photos')
         .upload(filePath, file);
@@ -36,9 +41,9 @@ const ProfilePhotoUpload = () => {
 
       // Update user profile with the new photo URL
       const { error: updateError } = await supabase
-        .from('users')
-        .update({ profile_photo: publicUrl })
-        .eq('id', supabase.auth.user()?.id);
+        .from('members')
+        .update({ avatar_url: publicUrl })
+        .eq('id', sessionData.session.user.id);
 
       if (updateError) throw updateError;
 

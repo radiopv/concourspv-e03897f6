@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Gift, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 import { Link } from "react-router-dom";
 
 interface Prize {
