@@ -7,9 +7,10 @@ interface ContestCardProps {
     description: string;
   };
   onSelect: (contestId: string) => void;
+  index: number; // Added this line to fix the TypeScript error
 }
 
-const ContestCard = ({ contest, onSelect }: ContestCardProps) => {
+const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const navigate = useNavigate();
   
   const handleParticipate = (e: React.MouseEvent) => {
