@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { CustomBadge } from "@/components/ui/custom-badge";
 
 interface ParticipantsListProps {
   contestId: string;
@@ -126,9 +126,9 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">{title}</h3>
-        <Badge variant={title.includes("Éligibles") ? "success" : "secondary"}>
+        <CustomBadge variant={title.includes("Éligibles") ? "success" : "secondary"}>
           {participants.length} participants
-        </Badge>
+        </CustomBadge>
       </div>
 
       <Table>
@@ -150,14 +150,14 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
               <TableCell>{participant.last_name}</TableCell>
               <TableCell>{participant.email}</TableCell>
               <TableCell>
-                <Badge variant={participant.score >= 70 ? "success" : "destructive"}>
+                <CustomBadge variant={participant.score >= 70 ? "success" : "destructive"}>
                   {participant.score}%
-                </Badge>
+                </CustomBadge>
               </TableCell>
               <TableCell>
-                <Badge variant={participant.status === 'winner' ? "success" : "secondary"}>
+                <CustomBadge variant={participant.status === 'winner' ? "success" : "secondary"}>
                   {participant.status === 'winner' ? 'Gagnant' : 'Participant'}
-                </Badge>
+                </CustomBadge>
               </TableCell>
               <TableCell>
                 {participant.completed_at 
