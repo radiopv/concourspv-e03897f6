@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, useParams } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import QuestionBank from "@/pages/QuestionBank";
 import Contest from "@/pages/Contest";
@@ -9,6 +9,7 @@ import { PrizeCatalogManager } from "./prize-catalog/PrizeCatalogManager";
 
 const AdminRoutes = () => {
   const navigate = useNavigate();
+  const params = useParams();
 
   const handleSelectContest = (id: string) => {
     navigate(`/admin/contests/${id}`);
@@ -20,7 +21,7 @@ const AdminRoutes = () => {
       <Route path="/question-bank" element={<QuestionBank />} />
       <Route path="/contests" element={<ContestList onSelectContest={handleSelectContest} />} />
       <Route path="/contests/:id" element={<Contest />} />
-      <Route path="/contests/:id/stats" element={<ContestStats contestId={useParams().id || ''} />} />
+      <Route path="/contests/:id/stats" element={<ContestStats contestId={params.id || ''} />} />
       <Route path="/prize-catalog" element={<PrizeCatalogManager />} />
       <Route path="/content-validator" element={<ContentValidator />} />
     </Routes>
