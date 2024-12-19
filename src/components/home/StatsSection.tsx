@@ -1,21 +1,23 @@
-import { motion } from "framer-motion";
-import { Trophy, Gift, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { Trophy, Gift, Users } from "lucide-react";
 
 const StatsSection = () => {
   const { data: stats } = useQuery({
     queryKey: ['home-stats'],
     queryFn: async () => {
+      // Récupérer le nombre total de participants
       const { count: participantsCount } = await supabase
         .from('participants')
         .select('*', { count: 'exact', head: true });
 
+      // Récupérer le nombre total de prix disponibles
       const { count: prizesCount } = await supabase
         .from('prize_catalog')
         .select('*', { count: 'exact', head: true })
         .eq('is_active', true);
 
+      // Récupérer le nombre de gagnants (participants avec un score > 0)
       const { count: winnersCount } = await supabase
         .from('participants')
         .select('*', { count: 'exact', head: true })
@@ -26,51 +28,48 @@ const StatsSection = () => {
         prizes: prizesCount || 0,
         winners: winnersCount || 0
       };
-    }
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 300000, // 5 minutes
   });
 
+  const statItems = [
+    {
+      icon: Users,
+      label: "Participants",
+      value: stats?.participants || 0,
+    },
+    {
+      icon: Trophy,
+      label: "Gagnants",
+      value: stats?.winners || 0,
+    },
+    {
+      icon: Gift,
+      label: "Prix disponibles",
+      value: stats?.prizes || 0,
+    },
+  ];
+
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-16 bg-gradient-to-b from-purple-50 to-white">
       <div className="container mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-12">
+          Nos chiffres clés
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="bg-white p-8 rounded-xl shadow-lg text-center"
-          >
-            <Users className="w-12 h-12 mx-auto text-indigo-600 mb-4" />
-            <h3 className="text-4xl font-bold text-gray-900 mb-2">
-              {stats?.participants.toLocaleString()}
-            </h3>
-            <p className="text-gray-600">Participants actifs</p>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white p-8 rounded-xl shadow-lg text-center"
-          >
-            <Gift className="w-12 h-12 mx-auto text-purple-600 mb-4" />
-            <h3 className="text-4xl font-bold text-gray-900 mb-2">
-              {stats?.prizes.toLocaleString()}+
-            </h3>
-            <p className="text-gray-600">Cadeaux à gagner</p>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="bg-white p-8 rounded-xl shadow-lg text-center"
-          >
-            <Trophy className="w-12 h-12 mx-auto text-amber-500 mb-4" />
-            <h3 className="text-4xl font-bold text-gray-900 mb-2">
-              {stats?.winners.toLocaleString()}
-            </h3>
-            <p className="text-gray-600">Gagnants heureux</p>
-          </motion.div>
+          {statItems.map((item, index) => (
+            <div
+              key={index}
+              className="flex flex-col items-center p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+            >
+              <item.icon className="w-12 h-12 text-purple-600 mb-4" />
+              <span className="text-4xl font-bold text-gray-900 mb-2">
+                {item.value}
+              </span>
+              <span className="text-gray-600">{item.label}</span>
+            </div>
+          ))}
         </div>
       </div>
     </section>
