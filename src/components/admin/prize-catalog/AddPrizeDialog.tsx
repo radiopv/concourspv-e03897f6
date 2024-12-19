@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { PrizeForm } from './PrizeForm';
+import { PrizeForm } from '../prize/PrizeForm';
 
 interface AddPrizeDialogProps {
   onSave: (formData: any) => void;
