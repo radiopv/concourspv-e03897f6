@@ -18,13 +18,13 @@ export const validateAndParseQuestions = (worksheet: XLSX.WorkSheet): QuestionIm
   
   // Define all possible variations of column names
   const columnMappings = {
-    'Question': ['Question', 'question', 'QUESTION', 'question_text', 'Question Text'],
-    'Choix A': ['Choix A', 'choix a', 'CHOIX A', 'Option A', 'Option 1', 'Réponse A', 'A'],
-    'Choix B': ['Choix B', 'choix b', 'CHOIX B', 'Option B', 'Option 2', 'Réponse B', 'B'],
-    'Choix C': ['Choix C', 'choix c', 'CHOIX C', 'Option C', 'Option 3', 'Réponse C', 'C'],
-    'Choix D': ['Choix D', 'choix d', 'CHOIX D', 'Option D', 'Option 4', 'Réponse D', 'D'],
-    'Réponse correcte': ['Réponse correcte', 'reponse correcte', 'Bonne réponse', 'Réponse', 'REPONSE CORRECTE', 'Correct Answer', 'Answer'],
-    'Lien Article': ['Lien Article', 'lien article', 'URL', 'Article URL', 'LIEN ARTICLE', 'Source']
+    'Question': ['Question', 'question', 'QUESTION', 'question_text', 'Question Text', 'QuestionText'],
+    'Choix A': ['Choix A', 'choix a', 'CHOIX A', 'Option A', 'Option 1', 'Réponse A', 'A', 'choixa', 'CHOIXA', 'optiona', 'option1', 'reponsea'],
+    'Choix B': ['Choix B', 'choix b', 'CHOIX B', 'Option B', 'Option 2', 'Réponse B', 'B', 'choixb', 'CHOIXB', 'optionb', 'option2', 'reponseb'],
+    'Choix C': ['Choix C', 'choix c', 'CHOIX C', 'Option C', 'Option 3', 'Réponse C', 'C', 'choixc', 'CHOIXC', 'optionc', 'option3', 'reponsec'],
+    'Choix D': ['Choix D', 'choix d', 'CHOIX D', 'Option D', 'Option 4', 'Réponse D', 'D', 'choixd', 'CHOIXD', 'optiond', 'option4', 'reponded'],
+    'Réponse correcte': ['Réponse correcte', 'reponse correcte', 'Bonne réponse', 'Réponse', 'REPONSE CORRECTE', 'Correct Answer', 'Answer', 'reponsecorrecte', 'bonnereponse', 'correctanswer'],
+    'Lien Article': ['Lien Article', 'lien article', 'URL', 'Article URL', 'LIEN ARTICLE', 'Source', 'lienarticle', 'articleurl']
   };
 
   // Find actual column names in the file
@@ -33,7 +33,7 @@ export const validateAndParseQuestions = (worksheet: XLSX.WorkSheet): QuestionIm
   for (const [requiredColumn, variations] of Object.entries(columnMappings)) {
     const foundColumn = Object.keys(firstRow).find(key => 
       variations.some(variation => 
-        key.toLowerCase().trim() === variation.toLowerCase().trim()
+        key.toLowerCase().trim().replace(/[\s-_]/g, '') === variation.toLowerCase().trim().replace(/[\s-_]/g, '')
       )
     );
     
