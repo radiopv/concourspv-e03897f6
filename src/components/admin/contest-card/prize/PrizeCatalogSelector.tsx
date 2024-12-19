@@ -1,56 +1,59 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
-const PrizeCatalogSelector = ({ onSelectPrize }: { onSelectPrize: (id: string) => void }) => {
+interface PrizeCatalogSelectorProps {
+  contestId: string;
+  onSelect: (prizeId: string) => void;
+}
+
+const PrizeCatalogSelector = ({ contestId, onSelect }: PrizeCatalogSelectorProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('prize_catalog')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger le catalogue de prix.",
-          variant: "destructive",
-        });
-        throw error;
-      }
-      return data;
+      if (error) throw error;
+      return data || [];
     }
   });
 
-  const handleSelect = (id: string) => {
-    onSelectPrize(id);
-    setOpen(false);
+  const handleSelect = (prizeId: string) => {
+    onSelect(prizeId);
+    setIsOpen(false);
   };
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Sélectionner un prix</Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Button onClick={() => setIsOpen(true)}>
+        Select from Catalog
+      </Button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Sélectionner un prix</DialogTitle>
+            <DialogTitle>Select Prize</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            {isLoading ? (
-              <div>Chargement des prix...</div>
-            ) : (
-              prizes?.map((prize) => (
-                <div key={prize.id} className="flex justify-between items-center">
-                  <span>{prize.name}</span>
-                  <Button onClick={() => handleSelect(prize.id)}>Sélectionner</Button>
-                </div>
-              ))
-            )}
+          <div className="grid gap-4">
+            {prizes?.map((prize) => (
+              <Button
+                key={prize.id}
+                variant="outline"
+                onClick={() => handleSelect(prize.id)}
+                className="w-full justify-start"
+              >
+                {prize.name}
+              </Button>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
@@ -59,4 +62,3 @@ const PrizeCatalogSelector = ({ onSelectPrize }: { onSelectPrize: (id: string) =
 };
 
 export default PrizeCatalogSelector;
-

@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PrizeCatalogDialog } from "../prize/PrizeCatalogDialog";
-import PrizeList from "../prize/PrizeList";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import PrizeCatalogDialog from "@/components/admin/prize/PrizeCatalogDialog";
+import PrizeList from "@/components/admin/prize/PrizeList";
 
 const PrizeCatalogManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
@@ -16,11 +18,29 @@ const PrizeCatalogManager = () => {
         .from('prize_catalog')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
+
+  const handlePrizeSelect = async (prizeId: string) => {
+    try {
+      // Handle prize selection logic here
+      setIsDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Prize selected successfully",
+      });
+    } catch (error) {
+      console.error('Error selecting prize:', error);
+      toast({
+        title: "Error",
+        description: "Failed to select prize",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -30,19 +50,18 @@ const PrizeCatalogManager = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Manage Prize Catalog</CardTitle>
+          <CardTitle>Prize Catalog</CardTitle>
         </CardHeader>
         <CardContent>
           <Button onClick={() => setIsDialogOpen(true)}>Add Prize</Button>
-          <PrizeList contestId="catalog" />
+          <PrizeList prizes={prizes} onSelect={handlePrizeSelect} />
         </CardContent>
       </Card>
 
       <PrizeCatalogDialog 
-        onSelectPrize={(id) => {
-          // Handle prize selection
-          setIsDialogOpen(false);
-        }} 
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSelectPrize={handlePrizeSelect}
       />
     </div>
   );
