@@ -11,7 +11,7 @@ import ContestPrizes from "@/components/contest/ContestPrizes";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 
 const Contest = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
@@ -19,24 +19,47 @@ const Contest = () => {
   const { data: contest, isLoading: contestLoading } = useQuery({
     queryKey: ['contest', id],
     queryFn: async () => {
+      if (!id) throw new Error('Contest ID is required');
+
       const { data, error } = await supabase
         .from('contests')
         .select(`
           *,
-          prizes (*),
+          prizes (
+            id,
+            catalog_item:prize_catalog (
+              name,
+              description,
+              image_url,
+              value,
+              shop_url
+            )
+          ),
           participants (count)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching contest:', error);
+        throw error;
+      }
+      if (!data) throw new Error('Contest not found');
       return data;
+    },
+    enabled: !!id,
+    retry: false,
+    onError: (error) => {
+      console.error('Error in contest query:', error);
+      navigate('/contests');
     }
   });
 
   const { data: stats } = useQuery({
     queryKey: ['contest-stats', id],
     queryFn: async () => {
+      if (!id) throw new Error('Contest ID is required');
+
       const { data, error } = await supabase
         .from('participants')
         .select('score')
@@ -45,10 +68,10 @@ const Contest = () => {
       
       if (error) throw error;
       return {
-        successCount: data.length
+        successCount: data?.length || 0
       };
     },
-    enabled: !!contest?.participants_count
+    enabled: !!id && !!contest?.participants_count
   });
 
   useEffect(() => {
@@ -94,6 +117,12 @@ const Contest = () => {
             <p className="text-gray-600">
               Le concours que vous recherchez n'existe pas ou n'est plus disponible.
             </p>
+            <Button
+              onClick={() => navigate('/contests')}
+              className="mt-6"
+            >
+              Voir les concours disponibles
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -129,10 +158,10 @@ const Contest = () => {
           <div className="text-center">
             <Button
               size="lg"
-              onClick={() => navigate('/contests')}
+              onClick={() => setShowQuestionnaire(true)}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-lg px-8 py-6 h-auto animate-pulse"
             >
-              Voir les concours disponibles
+              Participer maintenant
             </Button>
           </div>
         </div>
