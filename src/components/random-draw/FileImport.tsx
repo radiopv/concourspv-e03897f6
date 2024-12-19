@@ -29,17 +29,43 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-        // Map column names to standardized format
-        const participants = jsonData.map(row => ({
-          nom: row.nom || row.Nom || row.NOM || '',
-          prenom: row.prenom || row.Prenom || row.PRENOM || '',
-          id: crypto.randomUUID()
-        }));
+        console.log('Raw Excel Data:', jsonData); // Debug log
 
-        // Remove duplicates
+        // Map column names to standardized format with more variations
+        const participants = jsonData.map(row => {
+          // Get the first non-empty value from possible column names
+          const nom = row.nom || row.Nom || row.NOM || row.name || row.Name || row.NAME || '';
+          const prenom = row.prenom || row.Prenom || row.PRENOM || row.firstname || row.Firstname || row.FirstName || '';
+          
+          console.log('Mapping row:', row, 'to:', { nom, prenom }); // Debug log
+
+          return {
+            nom: nom.toString().trim(),
+            prenom: prenom.toString().trim(),
+            id: crypto.randomUUID()
+          };
+        }).filter(p => p.nom || p.prenom); // Filter out empty entries
+
+        // Remove duplicates based on both nom and prenom
         const uniqueParticipants = Array.from(
-          new Map(participants.map(item => [item.nom + item.prenom, item])).values()
+          new Map(
+            participants.map(item => [
+              `${item.nom.toLowerCase()}-${item.prenom.toLowerCase()}`,
+              item
+            ])
+          ).values()
         );
+
+        console.log('Unique Participants:', uniqueParticipants); // Debug log
+
+        if (uniqueParticipants.length === 0) {
+          toast({
+            title: "Erreur",
+            description: "Aucun participant trouvé dans le fichier. Vérifiez les noms des colonnes (nom/prenom).",
+            variant: "destructive",
+          });
+          return;
+        }
 
         onParticipantsImported(uniqueParticipants);
         toast({
@@ -50,7 +76,7 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
         console.error('Error parsing Excel file:', error);
         toast({
           title: "Erreur",
-          description: "Impossible de lire le fichier Excel",
+          description: "Impossible de lire le fichier Excel. Vérifiez le format du fichier.",
           variant: "destructive",
         });
       }
