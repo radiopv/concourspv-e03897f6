@@ -20,7 +20,7 @@ const AdminRoutes = () => {
       <Route path="/question-bank" element={<QuestionBank />} />
       <Route path="/contests" element={<ContestList onSelectContest={handleSelectContest} />} />
       <Route path="/contests/:id" element={<Contest />} />
-      <Route path="/contests/:id/stats" element={<ContestStats contestId={id} />} />
+      <Route path="/contests/:id/stats" element={<ContestStats contestId={useParams().id || ''} />} />
       <Route path="/prize-catalog" element={<PrizeCatalogManager />} />
       <Route path="/content-validator" element={<ContentValidator />} />
     </Routes>

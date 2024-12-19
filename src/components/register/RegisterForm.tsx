@@ -20,7 +20,7 @@ const RegisterForm = () => {
           {...register("username", { required: "Username is required" })}
           className={`mt-1 block w-full border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring focus:ring-opacity-50`}
         />
-        {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
+        {errors.username && <p className="text-red-500 text-sm">{errors.username.message?.toString()}</p>}
       </div>
 
       <div>
@@ -31,7 +31,7 @@ const RegisterForm = () => {
           {...register("email", { required: "Email is required" })}
           className={`mt-1 block w-full border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring focus:ring-opacity-50`}
         />
-        {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+        {errors.email && <p className="text-red-500 text-sm">{errors.email.message?.toString()}</p>}
       </div>
 
       <div>
@@ -42,7 +42,7 @@ const RegisterForm = () => {
           {...register("password", { required: "Password is required" })}
           className={`mt-1 block w-full border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring focus:ring-opacity-50`}
         />
-        {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
+        {errors.password && <p className="text-red-500 text-sm">{errors.password.message?.toString()}</p>}
       </div>
 
       <ProfilePhotoUpload />

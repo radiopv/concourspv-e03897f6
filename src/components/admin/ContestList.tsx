@@ -7,23 +7,7 @@ import ContestListGrid from './contest-list/ContestListGrid';
 import { useContestQueries } from './hooks/useContestQueries';
 import { useContestMutations } from './hooks/useContestMutations';
 
-type ContestStatus = 'draft' | 'active' | 'archived';
-
 interface ContestListProps {
-  contests?: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    status: ContestStatus;
-    start_date: string;
-    end_date: string;
-    draw_date: string;
-    is_featured: boolean;
-    is_new: boolean;
-    has_big_prizes: boolean;
-    participants?: { count: number };
-    questions?: { count: number };
-  }>;
   onSelectContest: (id: string) => void;
 }
 
@@ -53,10 +37,6 @@ const ContestList = ({ onSelectContest }: ContestListProps) => {
       
       <ContestListGrid
         contests={contestsWithCounts || []}
-        onDelete={(id) => deleteMutation.mutate(id)}
-        onArchive={(id) => archiveMutation.mutate(id)}
-        onFeatureToggle={(id, featured) => featureToggleMutation.mutate({ id, featured })}
-        onStatusUpdate={(id, updates) => statusUpdateMutation.mutate({ id, updates })}
         onSelect={onSelectContest}
         onEdit={setEditingContestId}
       />
