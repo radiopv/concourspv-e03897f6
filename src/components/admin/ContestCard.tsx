@@ -129,6 +129,7 @@ const ContestCard = ({
             hasBigPrizes={contest.has_big_prizes}
           />
 
+          {/* Affichage de l'image principale du concours */}
           {contest.prize_image_url && (
             <div className="relative group">
               <img 

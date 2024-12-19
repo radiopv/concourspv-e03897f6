@@ -15,6 +15,8 @@ interface ContestCardProps {
     is_new: boolean;
     has_big_prizes: boolean;
     participants?: { count: number };
+    prize_image_url?: string;
+    shop_url?: string;
   };
   onSelect: (id: string) => void;
   index: number;
@@ -31,7 +33,8 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           prize_catalog (
             name,
             image_url,
-            shop_url
+            shop_url,
+            value
           )
         `)
         .eq('contest_id', contest.id);
@@ -65,7 +68,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="h-full"
     >
-      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card float">
+      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card">
         <CardHeader>
           <div className="flex justify-between items-start mb-2">
             <CardTitle className="text-xl font-bold">{contest.title}</CardTitle>
@@ -91,6 +94,31 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           
           <ContestStats contestId={contest.id} />
           
+          {/* Affichage de l'image principale du concours si disponible */}
+          {contest.prize_image_url && (
+            <div className="relative group mb-6">
+              <img
+                src={contest.prize_image_url}
+                alt="Prix principal"
+                className="w-full h-48 object-cover rounded-lg"
+              />
+              {contest.shop_url && (
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <a
+                    href={contest.shop_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white bg-purple-600 px-4 py-2 rounded-full hover:bg-purple-700 transition-colors flex items-center gap-2"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Voir sur la boutique
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Affichage des prix du catalogue */}
           {prizes && prizes.length > 0 && (
             <div className="mb-6 space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -125,6 +153,9 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                       )}
                       <div className="p-3 bg-white/80">
                         <p className="font-medium text-purple-700">{prize.prize_catalog.name}</p>
+                        {prize.prize_catalog.value && (
+                          <p className="text-sm text-gray-600">Valeur : {prize.prize_catalog.value}€</p>
+                        )}
                       </div>
                     </div>
                   )
