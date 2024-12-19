@@ -29,20 +29,20 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          <Route path="/" element={<Layout><Outlet /></Layout>}>
-            <Route index element={<Index />} />
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="admin/*" element={<Admin />} />
-            <Route path="contests" element={<ContestsList />} />
-            <Route path="contest/:id" element={<Contest />} />
-            <Route path="contest/:id/stats" element={<ContestStats />} />
-            <Route path="winners" element={<Winners />} />
+          <Route element={<Layout><Outlet /></Layout>}>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/contests" element={<ContestsList />} />
+            <Route path="/contest/:id" element={<Contest />} />
+            <Route path="/contest/:id/stats" element={<ContestStats />} />
+            <Route path="/winners" element={<Winners />} />
+            <Route path="/admin/*" element={<Admin />} />
           </Route>
         </Routes>
+        <Toaster />
       </Router>
-      <Toaster />
     </QueryClientProvider>
   );
 }
