@@ -1,78 +1,50 @@
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useState } from 'react';
+import { Camera } from 'lucide-react';
 
 const ProfilePhotoUpload = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const { toast } = useToast();
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!file) return;
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `profile_photos/${fileName}`;
-
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session?.user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      const { error: uploadError } = await supabase.storage
-        .from('profile_photos')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile_photos')
-        .getPublicUrl(filePath);
-
-      // Update user profile with the new photo URL
-      const { error: updateError } = await supabase
-        .from('members')
-        .update({ avatar_url: publicUrl })
-        .eq('id', sessionData.session.user.id);
-
-      if (updateError) throw updateError;
-
-      toast({
-        title: "Succès",
-        description: "Votre photo de profil a été mise à jour.",
-      });
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors du téléchargement de la photo.",
-        variant: "destructive",
-      });
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <Label htmlFor="file-upload">Télécharger une photo de profil</Label>
-      <Input
-        id="file-upload"
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-      />
-      <Button onClick={handleUpload} disabled={!file}>
-        Télécharger
-      </Button>
+    <div className="mt-4">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Photo de profil
+      </label>
+      <div className="mt-1 flex items-center justify-center">
+        <div className="relative">
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt="Aperçu"
+              className="h-32 w-32 rounded-full object-cover"
+            />
+          ) : (
+            <div className="h-32 w-32 rounded-full bg-gray-100 flex items-center justify-center">
+              <Camera className="h-8 w-8 text-gray-400" />
+            </div>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            aria-label="Télécharger une photo de profil"
+          />
+        </div>
+      </div>
+      <p className="mt-2 text-sm text-gray-500 text-center">
+        Cliquez pour télécharger une photo
+      </p>
     </div>
   );
 };

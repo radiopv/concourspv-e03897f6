@@ -1,6 +1,8 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import ProfilePhotoUpload from "./ProfilePhotoUpload";
+import { useRegisterForm } from "./useRegisterForm";
+import { Button } from "@/components/ui/button";
 
 interface RegisterFormProps {
   prefilledData?: {
@@ -10,30 +12,34 @@ interface RegisterFormProps {
 }
 
 const RegisterForm = ({ prefilledData }: RegisterFormProps) => {
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: {
-      username: prefilledData?.name || '',
-      email: prefilledData?.email || '',
-      password: '',
-    }
-  });
-
-  const onSubmit = (data: any) => {
-    console.log(data);
-    // Handle registration logic here
-  };
+  const { form, handleRegistration } = useRegisterForm();
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={form.handleSubmit(handleRegistration)} className="space-y-4">
       <div>
-        <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
+        <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">Prénom</label>
         <input
-          id="username"
+          id="firstName"
           type="text"
-          {...register("username", { required: "Username is required" })}
-          className={`mt-1 block w-full border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring focus:ring-opacity-50`}
+          {...form.register("firstName")}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-opacity-50"
         />
-        {errors.username && <p className="text-red-500 text-sm">{errors.username.message?.toString()}</p>}
+        {form.formState.errors.firstName && (
+          <p className="text-red-500 text-sm">{form.formState.errors.firstName.message?.toString()}</p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">Nom</label>
+        <input
+          id="lastName"
+          type="text"
+          {...form.register("lastName")}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-opacity-50"
+        />
+        {form.formState.errors.lastName && (
+          <p className="text-red-500 text-sm">{form.formState.errors.lastName.message?.toString()}</p>
+        )}
       </div>
 
       <div>
@@ -41,26 +47,46 @@ const RegisterForm = ({ prefilledData }: RegisterFormProps) => {
         <input
           id="email"
           type="email"
-          {...register("email", { required: "Email is required" })}
-          className={`mt-1 block w-full border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring focus:ring-opacity-50`}
+          defaultValue={prefilledData?.email}
+          {...form.register("email")}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-opacity-50"
         />
-        {errors.email && <p className="text-red-500 text-sm">{errors.email.message?.toString()}</p>}
+        {form.formState.errors.email && (
+          <p className="text-red-500 text-sm">{form.formState.errors.email.message?.toString()}</p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+        <label htmlFor="password" className="block text-sm font-medium text-gray-700">Mot de passe</label>
         <input
           id="password"
           type="password"
-          {...register("password", { required: "Password is required" })}
-          className={`mt-1 block w-full border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring focus:ring-opacity-50`}
+          {...form.register("password")}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-opacity-50"
         />
-        {errors.password && <p className="text-red-500 text-sm">{errors.password.message?.toString()}</p>}
+        {form.formState.errors.password && (
+          <p className="text-red-500 text-sm">{form.formState.errors.password.message?.toString()}</p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">Numéro de téléphone (optionnel)</label>
+        <input
+          id="phoneNumber"
+          type="tel"
+          {...form.register("phoneNumber")}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-opacity-50"
+        />
+        {form.formState.errors.phoneNumber && (
+          <p className="text-red-500 text-sm">{form.formState.errors.phoneNumber.message?.toString()}</p>
+        )}
       </div>
 
       <ProfilePhotoUpload />
 
-      <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">Register</button>
+      <Button type="submit" className="w-full">
+        S'inscrire
+      </Button>
     </form>
   );
 };
