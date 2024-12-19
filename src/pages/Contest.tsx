@@ -6,9 +6,11 @@ import ContestStats from "@/components/contests/ContestStats";
 import ParticipantsList from "@/components/admin/ParticipantsList";
 import DrawManager from "@/components/admin/DrawManager";
 import WinnerClaimDialog from "@/components/winners/WinnerClaimDialog";
+import { useState } from "react";
 
 const Contest = () => {
   const { id } = useParams<{ id: string }>();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const { data: contest, isLoading, error } = useQuery({
     queryKey: ['contest', id],
@@ -34,7 +36,10 @@ const Contest = () => {
       <ContestStats contestId={contest.id} />
       <ParticipantsList contestId={contest.id} />
       <DrawManager contestId={contest.id} />
-      <WinnerClaimDialog winner={contest.winner} open={!!contest.winner} onClose={() => {}} />
+      <WinnerClaimDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen}
+      />
     </div>
   );
 };
