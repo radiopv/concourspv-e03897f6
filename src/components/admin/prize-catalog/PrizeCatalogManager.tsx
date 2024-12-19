@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { PrizeGrid } from "./PrizeGrid";
 import { AddPrizeDialog } from "./AddPrizeDialog";
 
@@ -25,6 +25,7 @@ export const PrizeCatalogManager = () => {
         console.error("Error fetching prize catalog:", error);
         throw error;
       }
+      console.log("Prize catalog data:", data);
       return data;
     }
   });
