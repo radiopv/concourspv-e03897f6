@@ -99,16 +99,11 @@ export const useRegisterForm = () => {
 
       toast({
         title: "Inscription réussie !",
-        description: "Un email de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception.",
+        description: "Bienvenue sur notre plateforme.",
       });
 
-      navigate("/login", { 
-        state: { 
-          email: values.email,
-          message: "Veuillez vérifier votre email pour confirmer votre compte avant de vous connecter."
-        },
-        replace: true
-      });
+      // Redirection directe vers le profil
+      navigate("/dashboard");
 
     } catch (error: any) {
       console.error("Erreur lors de l'inscription:", error);
