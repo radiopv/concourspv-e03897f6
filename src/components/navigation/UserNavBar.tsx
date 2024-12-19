@@ -1,16 +1,13 @@
 import { Link } from "react-router-dom";
-import { Trophy, Menu, Settings } from "lucide-react";
+import { Trophy, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/contexts/AuthContext";
 
 const UserNavBar = () => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useAuth();
-  const isAdmin = user?.email === "renaudcanuel@me.com";
 
   const NavLinks = () => (
     <>
@@ -36,16 +33,6 @@ const UserNavBar = () => {
         <Trophy className="w-4 h-4 mr-2" />
         Gagnants
       </Link>
-      {isAdmin && (
-        <Link
-          to="/admin"
-          className="inline-flex items-center px-1 pt-1 text-sm font-medium bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200"
-          onClick={() => setIsOpen(false)}
-        >
-          <Settings className="w-4 h-4 mr-2" />
-          Administration
-        </Link>
-      )}
     </>
   );
 
@@ -58,7 +45,7 @@ const UserNavBar = () => {
               <Link to="/" className="text-xl font-bold">
                 Concours
               </Link>
-              <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
                     <Menu className="h-6 w-6" />

@@ -1,124 +1,122 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "../../App";
 
 interface WinnerClaimDialogProps {
+  winner: any;
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
 }
 
-const WinnerClaimDialog = ({ open, onOpenChange }: WinnerClaimDialogProps) => {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [description, setDescription] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
+const WinnerClaimDialog = ({ winner, open, onClose }: WinnerClaimDialogProps) => {
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
+  const claimMutation = useMutation({
+    mutationFn: async () => {
       const { error } = await supabase
-        .from('featured_winners')
-        .insert([
-          {
-            first_name: firstName,
-            last_name: lastName,
-            description,
-            photo_url: photoUrl,
-          },
-        ]);
+        .from('participants')
+        .update({
+          prize_claimed: true,
+          prize_claimed_at: new Date().toISOString(),
+          shipping_address: address,
+          phone_number: phone,
+          claim_notes: notes
+        })
+        .eq('id', winner?.id);
 
       if (error) throw error;
-
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['winners'] });
       toast({
-        title: "Succès!",
-        description: "Le gagnant a été ajouté avec succès.",
+        title: "Prix réclamé avec succès",
+        description: "Nous vous contacterons bientôt pour la livraison.",
       });
-
-      // Reset form
-      setFirstName("");
-      setLastName("");
-      setDescription("");
-      setPhotoUrl("");
-      
-      // Close dialog
-      onOpenChange(false);
-      
-      // Refresh winners list
-      queryClient.invalidateQueries({ queryKey: ['featured-winners'] });
-    } catch (error) {
+      onClose();
+    },
+    onError: () => {
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'ajout du gagnant.",
+        description: "Impossible de réclamer le prix. Veuillez réessayer.",
         variant: "destructive",
       });
     }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address || !phone) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires.",
+        variant: "destructive",
+      });
+      return;
+    }
+    claimMutation.mutate();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Ajouter un gagnant</DialogTitle>
+          <DialogTitle>Réclamer votre prix</DialogTitle>
+          <DialogDescription>
+            Remplissez ce formulaire pour réclamer votre prix. Nous vous contacterons pour organiser la livraison.
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Prénom</label>
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="w-full p-2 border rounded"
+
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="address">Adresse de livraison *</Label>
+            <Textarea
+              id="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Entrez votre adresse complète"
               required
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Nom</label>
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="w-full p-2 border rounded"
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Numéro de téléphone *</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Votre numéro de téléphone"
               required
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-2 border rounded"
-              rows={3}
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes supplémentaires</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Instructions particulières pour la livraison"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">URL de la photo</label>
-            <input
-              type="url"
-              value={photoUrl}
-              onChange={(e) => setPhotoUrl(e.target.value)}
-              className="w-full p-2 border rounded"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="px-4 py-2 border rounded"
-            >
+
+          <div className="flex justify-end gap-4 mt-6">
+            <Button type="button" variant="outline" onClick={onClose}>
               Annuler
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-            >
-              Ajouter
-            </button>
+            </Button>
+            <Button type="submit" disabled={claimMutation.isPending}>
+              {claimMutation.isPending ? "Envoi..." : "Réclamer le prix"}
+            </Button>
           </div>
         </form>
       </DialogContent>

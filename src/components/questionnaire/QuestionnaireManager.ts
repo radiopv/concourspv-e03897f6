@@ -1,5 +1,5 @@
-// ... keep existing code (imports above)
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../App";
+
 export const calculateFinalScore = async (participantId: string) => {
   try {
     // Récupérer toutes les réponses du participant

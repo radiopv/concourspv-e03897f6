@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../App";
 
 export const checkExistingParticipant = async (email: string, contestId: string) => {
   const { data, error } = await supabase

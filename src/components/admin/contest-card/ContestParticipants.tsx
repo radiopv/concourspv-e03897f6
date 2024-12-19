@@ -1,56 +1,77 @@
+import React from 'react';
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "../../../App";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface ContestParticipantsProps {
   contestId: string;
 }
 
 const ContestParticipants = ({ contestId }: ContestParticipantsProps) => {
-  const { toast } = useToast();
-
-  const { data: participants, isLoading, error } = useQuery({
-    queryKey: ['participants', contestId],
+  const { data: participants, isLoading } = useQuery({
+    queryKey: ['contest-participants', contestId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('participants')
         .select('*')
-        .eq('contest_id', contestId);
-
-      if (error) {
-        console.error('Error fetching participants:', error);
-        throw error;
-      }
+        .eq('contest_id', contestId)
+        .order('score', { ascending: false });
+      
+      if (error) throw error;
       return data;
     }
   });
 
-  if (isLoading) return <div>Loading participants...</div>;
-  if (error) {
-    toast({
-      title: "Error",
-      description: "Failed to load participants.",
-      variant: "destructive",
-    });
-    return null;
+  if (isLoading) {
+    return <div>Chargement des participants...</div>;
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Participants</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ul>
-          {participants?.map(participant => (
-            <li key={participant.id}>
-              {participant.first_name} {participant.last_name} - {participant.email}
-            </li>
+    <div className="space-y-4">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nom</TableHead>
+            <TableHead>Prénom</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Score</TableHead>
+            <TableHead>Date de participation</TableHead>
+            <TableHead>Statut</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {participants?.map((participant) => (
+            <TableRow key={participant.id}>
+              <TableCell>{participant.last_name}</TableCell>
+              <TableCell>{participant.first_name}</TableCell>
+              <TableCell>{participant.email}</TableCell>
+              <TableCell>{participant.score}%</TableCell>
+              <TableCell>
+                {participant.completed_at && format(new Date(participant.completed_at), 'dd MMMM yyyy', { locale: fr })}
+              </TableCell>
+              <TableCell>
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  participant.status === 'winner' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {participant.status === 'winner' ? 'Gagnant' : 'Participant'}
+                </span>
+              </TableCell>
+            </TableRow>
           ))}
-        </ul>
-      </CardContent>
-    </Card>
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 

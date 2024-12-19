@@ -1,36 +1,46 @@
-import { useEffect } from "react";
-import { useNavigate, Outlet } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
-import AdminNavigation from "@/components/admin/AdminNavigation";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "../App";
+import AdminAuth from "../components/admin/AdminAuth";
+import { useToast } from "@/hooks/use-toast";
+import AdminRoutes from "@/components/admin/AdminRoutes";
 
 const Admin = () => {
-  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session || session.user.email !== "renaudcanuel@me.com") {
-        toast({
-          title: "Accès refusé",
-          description: "Vous devez être administrateur pour accéder à cette page",
-          variant: "destructive"
-        });
-        navigate('/login');
+      if (session?.user?.email === "renaudcanuel@me.com") {
+        setIsAuthenticated(true);
       }
     };
-
     checkAuth();
-  }, [navigate, toast]);
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    toast({
+      title: "Déconnexion",
+      description: "Vous avez été déconnecté",
+    });
+  };
+
+  if (!isAuthenticated) {
+    return <AdminAuth onAuthenticated={() => setIsAuthenticated(true)} />;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminNavigation />
-      <div className="container mx-auto px-4 py-8">
-        <Outlet />
+    <div>
+      <div className="flex justify-between items-center p-4 border-b">
+        <h1 className="text-2xl font-bold">Administration</h1>
+        <Button variant="outline" onClick={handleLogout}>
+          Déconnexion
+        </Button>
       </div>
+      <AdminRoutes />
     </div>
   );
 };

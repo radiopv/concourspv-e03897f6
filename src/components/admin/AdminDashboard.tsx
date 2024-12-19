@@ -1,22 +1,34 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Pencil, ListPlus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../../App";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
+import AdminContestManager from "./AdminContestManager";
+import ContestList from "./ContestList";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Award, Shuffle, Database } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
-  
+  const [selectedContest, setSelectedContest] = useState<string | null>(null);
+  const [isNewContestOpen, setIsNewContestOpen] = useState(false);
+  const { toast } = useToast();
+
   const { data: contests, isLoading } = useQuery({
     queryKey: ['admin-contests'],
     queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
       const { data, error } = await supabase
         .from('contests')
         .select(`
           *,
-          questions:questions(count),
-          participants:participants(count)
+          participants:participants(count),
+          questions:questions(count)
         `)
         .order('created_at', { ascending: false });
       
@@ -26,55 +38,117 @@ const AdminDashboard = () => {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <div>Chargement...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Tableau de bord de l'administrateur</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            {contests?.map((contest) => (
-              <Card key={contest.id} className="p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold">{contest.title}</h3>
-                    <p className="text-sm text-gray-500">
-                      Questions: {contest.questions?.count || 0} | 
-                      Participants: {contest.participants?.count || 0}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/contests/${contest.id}/questions`)}
-                    >
-                      <ListPlus className="h-4 w-4 mr-2" />
-                      Questions
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/contests/${contest.id}`)}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Gérer
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
+    <div className="max-w-6xl mx-auto p-4">
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-500" />
+                Participants
+              </CardTitle>
+              <CardDescription>
+                Gérez les participants aux concours
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                className="w-full"
+                variant="outline"
+                onClick={() => setSelectedContest(contests?.[0]?.id)}
+              >
+                Voir les participants
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shuffle className="w-5 h-5 text-purple-500" />
+                Tirages
+              </CardTitle>
+              <CardDescription>
+                Effectuez les tirages au sort
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                className="w-full"
+                variant="outline"
+                onClick={() => setSelectedContest(contests?.[0]?.id)}
+              >
+                Gérer les tirages
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-500" />
+                Gagnants
+              </CardTitle>
+              <CardDescription>
+                Consultez les gagnants des concours
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                className="w-full"
+                variant="outline"
+                onClick={() => setSelectedContest(contests?.[0]?.id)}
+              >
+                Voir les gagnants
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="w-5 h-5 text-green-500" />
+                Banque de Questions
+              </CardTitle>
+              <CardDescription>
+                Gérez votre banque de questions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/admin/question-bank">
+                <Button 
+                  className="w-full"
+                  variant="outline"
+                >
+                  Accéder à la banque
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Collapsible open={isNewContestOpen} onOpenChange={setIsNewContestOpen}>
+          <div className="flex items-center justify-between mb-4">
+            <CollapsibleTrigger asChild>
+              <Button variant="outline">
+                Créer un nouveau concours
+              </Button>
+            </CollapsibleTrigger>
           </div>
-        </CardContent>
-      </Card>
+          <CollapsibleContent className="space-y-2">
+            <AdminContestManager />
+          </CollapsibleContent>
+        </Collapsible>
+
+        <ContestList 
+          contests={contests || []} 
+          onSelectContest={setSelectedContest} 
+        />
+      </div>
     </div>
   );
 };

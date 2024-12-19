@@ -18,29 +18,26 @@ export const validateAndParseQuestions = (worksheet: XLSX.WorkSheet): QuestionIm
   
   // Définir les variations possibles des noms de colonnes
   const columnMappings = {
-    'Question': ['Question', 'question', 'QUESTION', 'question_text', 'Question Text'],
-    'Option A': ['Option A', 'Choix A', 'choix a', 'CHOIX A', 'optionA', 'option_a'],
-    'Option B': ['Option B', 'Choix B', 'choix b', 'CHOIX B', 'optionB', 'option_b'],
-    'Option C': ['Option C', 'Choix C', 'choix c', 'CHOIX C', 'optionC', 'option_c'],
-    'Option D': ['Option D', 'Choix D', 'choix d', 'CHOIX D', 'optionD', 'option_d'],
-    'Réponse': ['Réponse', 'Réponse correcte', 'reponse', 'REPONSE', 'Bonne réponse', 'correct_answer'],
-    'Article': ['Article', 'Lien Article', 'article_url', 'URL', 'lien']
+    'Question': ['Question', 'question', 'QUESTION'],
+    'Choix A': ['Choix A', 'choix a', 'CHOIX A', 'Option A'],
+    'Choix B': ['Choix B', 'choix b', 'CHOIX B', 'Option B'],
+    'Choix C': ['Choix C', 'choix c', 'CHOIX C', 'Option C'],
+    'Choix D': ['Choix D', 'choix d', 'CHOIX D', 'Option D'],
+    'Réponse correcte': ['Réponse correcte', 'reponse correcte', 'Bonne réponse', 'Réponse', 'REPONSE CORRECTE'],
+    'Lien Article': ['Lien Article', 'lien article', 'URL', 'Article URL', 'LIEN ARTICLE']
   };
 
-  // Trouver les noms réels des colonnes dans le fichier
-  const getColumnName = (variations: string[]): string | undefined => {
-    return Object.keys(firstRow).find(key =>
-      variations.some(variation => 
-        key.toLowerCase().trim() === variation.toLowerCase().trim()
-      )
-    );
-  };
-
-  // Vérifier les colonnes requises
+  // Vérifier chaque colonne requise
   const missingColumns = [];
   for (const [requiredColumn, variations] of Object.entries(columnMappings)) {
-    if (!getColumnName(variations) && requiredColumn !== 'Article') {
-      missingColumns.push(requiredColumn);
+    if (!variations.some(variation => 
+      Object.keys(firstRow).some(key => 
+        key.toLowerCase().trim() === variation.toLowerCase().trim()
+      )
+    )) {
+      if (requiredColumn !== 'Lien Article') { // Le lien d'article est optionnel
+        missingColumns.push(requiredColumn);
+      }
     }
   }
 
@@ -48,26 +45,35 @@ export const validateAndParseQuestions = (worksheet: XLSX.WorkSheet): QuestionIm
     throw new Error(`Colonnes manquantes dans le fichier : ${missingColumns.join(', ')}`);
   }
 
-  // Mapper les données
+  // Trouver les noms réels des colonnes dans le fichier
+  const getColumnName = (variations: string[]): string => {
+    const columnName = Object.keys(firstRow).find(key =>
+      variations.some(variation => 
+        key.toLowerCase().trim() === variation.toLowerCase().trim()
+      )
+    );
+    return columnName || variations[0];
+  };
+
   return jsonData.map((row: any) => {
-    const questionColumn = getColumnName(columnMappings['Question']) || 'Question';
-    const optionAColumn = getColumnName(columnMappings['Option A']) || 'Option A';
-    const optionBColumn = getColumnName(columnMappings['Option B']) || 'Option B';
-    const optionCColumn = getColumnName(columnMappings['Option C']) || 'Option C';
-    const optionDColumn = getColumnName(columnMappings['Option D']) || 'Option D';
-    const reponseColumn = getColumnName(columnMappings['Réponse']) || 'Réponse';
-    const articleColumn = getColumnName(columnMappings['Article']);
+    const questionColumn = getColumnName(columnMappings['Question']);
+    const choixAColumn = getColumnName(columnMappings['Choix A']);
+    const choixBColumn = getColumnName(columnMappings['Choix B']);
+    const choixCColumn = getColumnName(columnMappings['Choix C']);
+    const choixDColumn = getColumnName(columnMappings['Choix D']);
+    const reponseColumn = getColumnName(columnMappings['Réponse correcte']);
+    const lienColumn = getColumnName(columnMappings['Lien Article']);
 
     return {
       question_text: row[questionColumn],
       options: [
-        row[optionAColumn],
-        row[optionBColumn],
-        row[optionCColumn],
-        row[optionDColumn]
+        row[choixAColumn],
+        row[choixBColumn],
+        row[choixCColumn],
+        row[choixDColumn]
       ],
       correct_answer: row[reponseColumn],
-      article_url: articleColumn ? row[articleColumn] : null
+      article_url: row[lienColumn] || null
     };
   });
 };

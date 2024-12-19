@@ -1,97 +1,143 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import ContestDetails from "@/components/contests/ContestDetails";
-import ContestStats from "@/components/contests/ContestStats";
+import { supabase } from "../App";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
+import { useState, useEffect } from "react";
+import ContestHeader from "@/components/contest/ContestHeader";
+import ContestStats from "@/components/contest/ContestStats";
+import ContestPrizes from "@/components/contest/ContestPrizes";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
-import Layout from "@/components/Layout";
 
 const Contest = () => {
-  const { id } = useParams<{ id: string }>();
-  
-  const { data: contest, isLoading, error } = useQuery({
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [timeLeft, setTimeLeft] = useState<string>("");
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+
+  const { data: contest, isLoading: contestLoading } = useQuery({
     queryKey: ['contest', id],
     queryFn: async () => {
-      if (!id) {
-        console.error('No contest ID provided');
-        return null;
-      }
-      
-      console.log('Fetching contest with ID:', id);
       const { data, error } = await supabase
         .from('contests')
         .select(`
           *,
-          prizes (
-            prize_catalog (
-              name,
-              image_url,
-              value,
-              shop_url
-            )
-          )
+          prizes (*),
+          participants (count)
         `)
         .eq('id', id)
-        .maybeSingle();
+        .single();
       
-      if (error) {
-        console.error('Error fetching contest:', error);
-        throw error;
-      }
-      
-      if (!data) {
-        throw new Error('Contest not found');
-      }
-      
-      console.log('Fetched contest data:', data);
+      if (error) throw error;
       return data;
-    },
-    retry: false,
-    staleTime: 30000,
+    }
   });
 
-  if (isLoading) {
+  const { data: stats } = useQuery({
+    queryKey: ['contest-stats', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('participants')
+        .select('score')
+        .eq('contest_id', id)
+        .gte('score', 70);
+      
+      if (error) throw error;
+      return {
+        successCount: data.length
+      };
+    },
+    enabled: !!contest?.participants_count
+  });
+
+  useEffect(() => {
+    if (!contest?.end_date) return;
+
+    const updateTimeLeft = () => {
+      const now = new Date();
+      const endDate = new Date(contest.end_date);
+      
+      if (now >= endDate) {
+        setTimeLeft("Concours terminé");
+        return;
+      }
+
+      const days = differenceInDays(endDate, now);
+      const hours = differenceInHours(endDate, now) % 24;
+      const minutes = differenceInMinutes(endDate, now) % 60;
+
+      setTimeLeft(`${days}j ${hours}h ${minutes}m`);
+    };
+
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 60000);
+    return () => clearInterval(interval);
+  }, [contest?.end_date]);
+
+  if (contestLoading) {
     return (
-      <Layout>
-        <div className="container mx-auto py-10">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-48 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </Layout>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
     );
   }
 
-  if (error || !contest) {
-    console.error('Contest error:', error);
+  if (!contest) {
     return (
-      <Layout>
-        <div className="container mx-auto py-10">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold">Concours non trouvé</h2>
-            <p className="text-gray-600 mt-2">
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center">
+        <Card className="max-w-lg w-full mx-4">
+          <CardContent className="text-center py-12">
+            <h2 className="text-2xl font-semibold mb-4">
+              Concours non trouvé
+            </h2>
+            <p className="text-gray-600">
               Le concours que vous recherchez n'existe pas ou n'est plus disponible.
             </p>
-          </div>
-        </div>
-      </Layout>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
+  if (showQuestionnaire) {
+    return <QuestionnaireComponent contestId={id || ''} />;
+  }
+
+  const successPercentage = contest.participants_count > 0 && stats
+    ? Math.round((stats.successCount / contest.participants_count) * 100)
+    : 0;
+
   return (
-    <Layout>
-      <div className="container mx-auto py-10 space-y-8">
-        <h1 className="text-3xl font-bold mb-6">{contest.title}</h1>
-        <ContestDetails contest={contest} />
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-6">Participer au concours</h2>
-          <QuestionnaireComponent contestId={contest.id} />
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
+      <div className="container mx-auto px-4">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <ContestHeader 
+            title={contest.title}
+            description={contest.description}
+          />
+
+          <ContestStats
+            participantsCount={contest.participants_count || 0}
+            successPercentage={successPercentage}
+            timeLeft={timeLeft}
+            endDate={contest.end_date}
+          />
+
+          <ContestPrizes prizes={contest.prizes || []} />
+
+          <div className="text-center">
+            <Button
+              size="lg"
+              onClick={() => navigate('/contests')}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-lg px-8 py-6 h-auto animate-pulse"
+            >
+              Voir les concours disponibles
+            </Button>
+          </div>
         </div>
-        <ContestStats contestId={contest.id} />
       </div>
-    </Layout>
+    </div>
   );
 };
 

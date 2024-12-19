@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../App";
 import { Plus } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import QuestionAccordion from './questions/QuestionAccordion';
@@ -18,7 +18,6 @@ interface Question {
   options: string[];
   correct_answer: string;
   article_url?: string;
-  type: string;
 }
 
 const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
@@ -26,23 +25,18 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const queryClient = useQueryClient();
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
 
-  const { data: questions, isLoading, error } = useQuery({
+  const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
-      if (!contestId) {
-        throw new Error('Contest ID is required');
-      }
-
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question_text, options, correct_answer, article_url, order_number, type')
+        .select('id, question_text, options, correct_answer, article_url, order_number')
         .eq('contest_id', contestId)
         .order('order_number');
       
       if (error) throw error;
       return data as Question[];
-    },
-    enabled: !!contestId,
+    }
   });
 
   const handleDelete = async (questionId: string) => {
@@ -78,8 +72,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           question_text: "Nouvelle question",
           options: ["Option 1", "Option 2", "Option 3", "Option 4"],
           correct_answer: "Option 1",
-          order_number: (questions?.length || 0) + 1,
-          type: 'multiple_choice'
+          order_number: (questions?.length || 0) + 1
         }]);
 
       if (error) throw error;
@@ -101,16 +94,8 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     }
   };
 
-  if (!contestId) {
-    return <div>ID du concours manquant</div>;
-  }
-
   if (isLoading) {
     return <div>Chargement des questions...</div>;
-  }
-
-  if (error) {
-    return <div>Erreur lors du chargement des questions</div>;
   }
 
   return (

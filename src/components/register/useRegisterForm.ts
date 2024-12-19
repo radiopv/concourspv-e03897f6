@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/App";
 
 const formSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
@@ -99,11 +99,16 @@ export const useRegisterForm = () => {
 
       toast({
         title: "Inscription réussie !",
-        description: "Bienvenue sur notre plateforme.",
+        description: "Un email de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception.",
       });
 
-      // Redirection directe vers le profil
-      navigate("/dashboard");
+      navigate("/login", { 
+        state: { 
+          email: values.email,
+          message: "Veuillez vérifier votre email pour confirmer votre compte avant de vous connecter."
+        },
+        replace: true
+      });
 
     } catch (error: any) {
       console.error("Erreur lors de l'inscription:", error);

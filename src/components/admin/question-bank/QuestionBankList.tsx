@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../../App";
 import { useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
@@ -51,6 +51,7 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
     }
 
     try {
+      // Récupérer le nombre actuel de questions pour le concours
       const { data: existingQuestions } = await supabase
         .from('questions')
         .select('order_number')
@@ -69,7 +70,7 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
           correct_answer: q.correct_answer,
           article_url: q.article_url,
           order_number: startOrderNumber + index,
-          type: 'multiple_choice' // Ajout explicite du type
+          type: 'multiple_choice'
         }));
 
       const { error: questionsError } = await supabase

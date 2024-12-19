@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../App";
 import { PrizeList } from "./prize/PrizeList";
 import { PrizeCatalogDialog } from "./prize/PrizeCatalogDialog";
 import { Card, CardContent } from "@/components/ui/card";
@@ -133,13 +133,23 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
                 <span className="text-sm font-medium">
                   {prize.catalog_item?.value ? `${prize.catalog_item.value}€` : 'Prix non défini'}
                 </span>
-                <button
-                  onClick={() => deletePrizeMutation.mutate(prize.id)}
-                  className="mt-4 w-full px-4 py-2 text-sm text-red-600 hover:text-red-800 border border-red-600 hover:border-red-800 rounded-md transition-colors"
-                >
-                  Retirer ce prix
-                </button>
+                {prize.catalog_item?.shop_url && (
+                  <a
+                    href={prize.catalog_item.shop_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
               </div>
+              <button
+                onClick={() => deletePrizeMutation.mutate(prize.id)}
+                className="mt-4 w-full px-4 py-2 text-sm text-red-600 hover:text-red-800 border border-red-600 hover:border-red-800 rounded-md transition-colors"
+              >
+                Retirer ce prix
+              </button>
             </CardContent>
           </Card>
         ))}

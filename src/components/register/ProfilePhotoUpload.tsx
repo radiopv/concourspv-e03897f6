@@ -1,52 +1,108 @@
-import React, { useState } from 'react';
-import { Camera } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Camera } from "lucide-react";
+import { supabase } from "@/App";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
-const ProfilePhotoUpload = () => {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+export const ProfilePhotoUpload = () => {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      // Check if user is authenticated
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Vous devez être connecté pour télécharger une photo.",
+        });
+        return;
+      }
+
+      // Convert file to webp if it's an image
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Le fichier doit être une image');
+      }
+
+      const fileExt = 'webp';
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      setAvatarUrl(publicUrl);
+
+      // Update the member's avatar_url
+      const { error: updateError } = await supabase
+        .from('members')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error("Update error:", updateError);
+        throw updateError;
+      }
+      
+      toast({
+        title: "Photo de profil mise à jour",
+        description: "Votre photo de profil a été téléchargée avec succès.",
+      });
+    } catch (error) {
+      console.error("Erreur lors du téléchargement:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de télécharger la photo. Veuillez réessayer.",
+      });
     }
   };
 
   return (
-    <div className="mt-4">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Photo de profil
-      </label>
-      <div className="mt-1 flex items-center justify-center">
-        <div className="relative">
-          {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt="Aperçu"
-              className="h-32 w-32 rounded-full object-cover"
-            />
-          ) : (
-            <div className="h-32 w-32 rounded-full bg-gray-100 flex items-center justify-center">
-              <Camera className="h-8 w-8 text-gray-400" />
-            </div>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            aria-label="Télécharger une photo de profil"
-          />
-        </div>
+    <div className="flex flex-col items-center space-y-4">
+      <Avatar className="w-24 h-24">
+        <AvatarImage src={avatarUrl || ""} />
+        <AvatarFallback>
+          <Camera className="w-8 h-8 text-muted-foreground" />
+        </AvatarFallback>
+      </Avatar>
+      
+      <div className="flex items-center">
+        <input
+          type="file"
+          id="avatar"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileUpload}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => document.getElementById("avatar")?.click()}
+        >
+          <Camera className="w-4 h-4 mr-2" />
+          Ajouter une photo
+        </Button>
       </div>
-      <p className="mt-2 text-sm text-gray-500 text-center">
-        Cliquez pour télécharger une photo
-      </p>
     </div>
   );
 };
-
-export default ProfilePhotoUpload;
