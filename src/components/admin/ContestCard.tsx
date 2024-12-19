@@ -8,6 +8,12 @@ import ContestCardPrize from './contest-card/ContestCardPrize';
 import ContestStatusBadge from './contest-card/ContestStatusBadge';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Trophy, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../../App";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface ContestCardProps {
   contest: {
@@ -17,6 +23,7 @@ interface ContestCardProps {
     status: string;
     start_date: string;
     end_date: string;
+    draw_date: string;
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
@@ -41,7 +48,24 @@ const ContestCard = ({
   onEdit,
 }: ContestCardProps) => {
   const endDate = new Date(contest.end_date);
+  const drawDate = contest.draw_date ? new Date(contest.draw_date) : null;
   const isExpiringSoon = endDate.getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000;
+  const canDraw = drawDate && new Date() >= drawDate;
+
+  const { data: winners } = useQuery({
+    queryKey: ['contest-winners', contest.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('contest_id', contest.id)
+        .eq('status', 'winner');
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contest.id
+  });
 
   const handleStatusToggle = (checked: boolean) => {
     onStatusUpdate(contest.id, { status: checked ? 'active' : 'draft' });
@@ -97,6 +121,31 @@ const ContestCard = ({
             questionsCount={contest.questions?.count || 0}
             endDate={contest.end_date}
           />
+
+          {drawDate && (
+            <div className="pt-2 border-t">
+              <p className="text-sm text-gray-600 mb-2">
+                Date du tirage : {format(drawDate, 'dd MMMM yyyy', { locale: fr })}
+              </p>
+              {winners && winners.length > 0 && (
+                <div className="bg-amber-50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="w-5 h-5 text-amber-600" />
+                    <h4 className="font-semibold text-amber-900">Gagnants</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {winners.map((winner) => (
+                      <div key={winner.id} className="flex items-center gap-2 text-sm">
+                        <Users className="w-4 h-4 text-amber-600" />
+                        <span>{winner.first_name} {winner.last_name}</span>
+                        <span className="text-amber-600">({winner.score}%)</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2 pt-4 border-t">
             <ContestCardToggles

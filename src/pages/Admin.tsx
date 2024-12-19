@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
 import { Plus } from "lucide-react";
 import QuestionsManager from "../components/admin/QuestionsManager";
-import ParticipantsList from "../components/admin/ParticipantsList";
+import ContestParticipants from "../components/admin/contest-card/ContestParticipants";
 import DrawManager from "../components/admin/DrawManager";
 import ContestPrizeManager from "../components/admin/ContestPrizeManager";
 import AdminAuth from "../components/admin/AdminAuth";
@@ -15,6 +15,7 @@ import ContestList from "../components/admin/ContestList";
 import ContentValidator from "../components/admin/ContentValidator";
 import PrizeCatalogManager from "../components/admin/PrizeCatalogManager";
 import { useToast } from "@/components/ui/use-toast";
+import ContestDraw from "../components/admin/contest-card/ContestDraw";
 
 const Admin = () => {
   const [selectedContest, setSelectedContest] = useState<string | null>(null);
@@ -143,7 +144,7 @@ const Admin = () => {
             </TabsContent>
 
             <TabsContent value="participants">
-              <ParticipantsList contestId={selectedContest} />
+              <ContestParticipants contestId={selectedContest} />
             </TabsContent>
 
             <TabsContent value="prizes">
@@ -151,7 +152,10 @@ const Admin = () => {
             </TabsContent>
 
             <TabsContent value="draw">
-              <DrawManager contestId={selectedContest} />
+              <ContestDraw 
+                contestId={selectedContest} 
+                drawDate={contests?.find(c => c.id === selectedContest)?.draw_date || ''} 
+              />
             </TabsContent>
           </Tabs>
         </div>
