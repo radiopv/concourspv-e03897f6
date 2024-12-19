@@ -5,6 +5,7 @@ import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import NotFound from "@/pages/NotFound";
+import Contest from "@/pages/Contest";
 
 const App = () => {
   return (
@@ -13,6 +14,7 @@ const App = () => {
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/contests/:id" element={<Contest />} />
         
         {/* Routes d'administration */}
         <Route path="/admin/*" element={<Admin />}>

@@ -41,7 +41,7 @@ const ActiveContestsSection = () => {
   });
 
   const handleContestClick = (id: string) => {
-    navigate(`/admin/contests/${id}`);
+    navigate(`/contests/${id}`);  // Mise à jour du chemin pour la route publique
   };
 
   const container = {
