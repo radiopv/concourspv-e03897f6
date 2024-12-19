@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import PrizeCatalogDialog from "./prize/PrizeCatalogDialog";
+import { PrizeCatalogDialog } from "./prize/PrizeCatalogDialog";
+import { ExternalLink } from "lucide-react";
 import PrizeList from "./prize/PrizeList";
+import { useToast } from "@/hooks/use-toast";
 
 const PrizeCatalogManager = () => {
   const { toast } = useToast();
@@ -141,3 +143,4 @@ const PrizeCatalogManager = () => {
 };
 
 export default PrizeCatalogManager;
+
