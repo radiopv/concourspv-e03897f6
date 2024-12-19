@@ -5,7 +5,6 @@ import WhyParticipateSection from "@/components/home/WhyParticipateSection";
 import CTASection from "@/components/home/CTASection";
 import Footer from "@/components/home/Footer";
 import ActiveContestsSection from "@/components/home/ActiveContestsSection";
-import StatsAndWinnersSection from "@/components/home/StatsAndWinnersSection";
 
 const Index = () => {
   return (
@@ -14,7 +13,6 @@ const Index = () => {
       <StatsSection />
       <ActiveContestsSection />
       <PrizesSection />
-      <StatsAndWinnersSection />
       <WhyParticipateSection />
       <CTASection />
       <Footer />

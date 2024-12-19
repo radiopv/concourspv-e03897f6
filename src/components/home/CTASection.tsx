@@ -25,10 +25,10 @@ const CTASection = () => {
           <Button 
             onClick={() => navigate("/contests")}
             size="lg"
-            className="bg-white text-indigo-600 hover:bg-white/90"
+            className="bg-white text-indigo-600 hover:bg-white/90 group"
           >
             Voir les concours
-            <ArrowRight className="ml-2" />
+            <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
           </Button>
         </motion.div>
       </div>

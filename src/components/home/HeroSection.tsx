@@ -38,7 +38,6 @@ const HeroSection = () => {
       description: "Redirection vers le formulaire complet...",
     });
 
-    // Pass the form data through navigation state
     navigate("/register", { 
       state: { 
         name: formData.name,

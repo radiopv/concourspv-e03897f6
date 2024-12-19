@@ -7,18 +7,15 @@ const StatsSection = () => {
   const { data: stats } = useQuery({
     queryKey: ['home-stats'],
     queryFn: async () => {
-      // Récupérer le nombre total de participants
       const { count: participantsCount } = await supabase
         .from('participants')
         .select('*', { count: 'exact', head: true });
 
-      // Récupérer le nombre total de prix disponibles
       const { count: prizesCount } = await supabase
         .from('prize_catalog')
         .select('*', { count: 'exact', head: true })
         .eq('is_active', true);
 
-      // Récupérer le nombre de gagnants (participants avec un score > 0)
       const { count: winnersCount } = await supabase
         .from('participants')
         .select('*', { count: 'exact', head: true })
@@ -29,9 +26,7 @@ const StatsSection = () => {
         prizes: prizesCount || 0,
         winners: winnersCount || 0
       };
-    },
-    refetchOnWindowFocus: false,
-    staleTime: 300000, // 5 minutes
+    }
   });
 
   return (
