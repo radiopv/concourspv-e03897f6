@@ -62,12 +62,14 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
 
           console.log('Traitement ligne:', { nom, prenom });
 
+          if (!nom && !prenom) return null;
+
           return {
             nom,
             prenom,
             id: crypto.randomUUID()
           };
-        }).filter((p): p is Participant => p !== null && (p.nom !== '' || p.prenom !== ''));
+        }).filter((p): p is NonNullable<typeof p> => p !== null);
 
         console.log('Participants avant dédoublonnage:', participants.length);
 
