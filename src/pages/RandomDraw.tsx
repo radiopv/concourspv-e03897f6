@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { FileImport } from '@/components/random-draw/FileImport';
 import { ParticipantsList } from '@/components/random-draw/ParticipantsList';
-import { WheelAnimation } from '@/components/random-draw/WheelAnimation';
+import { DrawSection } from '@/components/random-draw/DrawSection';
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import WinnerClaimDialog from '@/components/winners/WinnerClaimDialog';
 
 interface Participant {
   nom: string;
@@ -16,8 +13,6 @@ interface Participant {
 const RandomDraw = () => {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [winner, setWinner] = useState<Participant | null>(null);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [isWinnerDialogOpen, setIsWinnerDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleParticipantsImported = (newParticipants: Participant[]) => {
@@ -38,13 +33,6 @@ const RandomDraw = () => {
     });
   };
 
-  const handleWinnerSelected = (selectedWinner: Participant) => {
-    setWinner(selectedWinner);
-    setTimeout(() => {
-      setIsWinnerDialogOpen(true);
-    }, 1500); // Délai pour laisser l'animation de confetti se terminer
-  };
-
   const performDraw = () => {
     if (participants.length === 0) {
       toast({
@@ -55,56 +43,32 @@ const RandomDraw = () => {
       return;
     }
 
-    setIsSpinning(true);
+    const randomIndex = Math.floor(Math.random() * participants.length);
+    const selectedWinner = participants[randomIndex];
+    setWinner(selectedWinner);
+    toast({
+      title: "Tirage effectué !",
+      description: `Le gagnant est ${selectedWinner.prenom} ${selectedWinner.nom}`,
+    });
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-8">Tirage au Sort</h1>
-        
-        <div className="space-y-8">
-          <Card className="p-6">
-            <FileImport onParticipantsImported={handleParticipantsImported} />
-          </Card>
-
-          {participants.length > 0 && (
-            <Card className="p-6">
-              <div className="mb-8">
-                <WheelAnimation 
-                  participants={participants}
-                  onWinnerSelected={handleWinnerSelected}
-                  isSpinning={isSpinning}
-                />
-              </div>
-              
-              <div className="text-center">
-                <Button 
-                  onClick={performDraw}
-                  disabled={isSpinning || participants.length === 0}
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg"
-                >
-                  {isSpinning ? "Tirage en cours..." : "Lancer le tirage"}
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          <Card className="p-6">
-            <ParticipantsList 
-              participants={participants}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          </Card>
-        </div>
-
-        <WinnerClaimDialog 
-          open={isWinnerDialogOpen}
-          onOpenChange={setIsWinnerDialogOpen}
-        />
-      </div>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">Tirage au Sort</h1>
+      
+      <FileImport onParticipantsImported={handleParticipantsImported} />
+      
+      <ParticipantsList 
+        participants={participants}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
+      
+      <DrawSection 
+        participants={participants}
+        winner={winner}
+        onDraw={performDraw}
+      />
     </div>
   );
 };
