@@ -51,7 +51,6 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
     }
 
     try {
-      // Récupérer le nombre actuel de questions pour le concours
       const { data: existingQuestions } = await supabase
         .from('questions')
         .select('order_number')
@@ -70,7 +69,7 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
           correct_answer: q.correct_answer,
           article_url: q.article_url,
           order_number: startOrderNumber + index,
-          type: 'multiple_choice'
+          type: 'multiple_choice' // Ajout explicite du type
         }));
 
       const { error: questionsError } = await supabase

@@ -7,7 +7,7 @@ export const useQuestions = (contestId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question_text, options, correct_answer, article_url, order_number')
+        .select('id, question_text, options, correct_answer, article_url, order_number, type')
         .eq('contest_id', contestId)
         .order('order_number');
       
