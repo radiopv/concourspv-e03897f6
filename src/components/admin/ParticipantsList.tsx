@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash2, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface ParticipantsListProps {
   contestId: string;
@@ -29,13 +31,33 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
           *,
           participant_answers (
             question_id,
-            answer
+            answer,
+            questions (
+              correct_answer
+            )
           )
         `)
         .eq('contest_id', contestId);
       
       if (error) throw error;
-      return data;
+
+      // Calculate scores for each participant
+      return data.map(participant => {
+        if (!participant.participant_answers) {
+          return { ...participant, score: 0 };
+        }
+
+        const totalQuestions = participant.participant_answers.length;
+        const correctAnswers = participant.participant_answers.filter(answer => 
+          answer.answer === answer.questions?.correct_answer
+        ).length;
+
+        const score = totalQuestions > 0 
+          ? Math.round((correctAnswers / totalQuestions) * 100) 
+          : 0;
+
+        return { ...participant, score };
+      });
     }
   });
 
@@ -67,7 +89,7 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
   const exportToCSV = () => {
     if (!participants) return;
 
-    const headers = ["Prénom", "Nom", "Email", "Score", "Statut", "Date de participation"];
+    const headers = ["Prénom", "Nom", "Email", "Score", "Statut", "Éligible", "Date de participation"];
     const csvContent = [
       headers.join(","),
       ...participants.map(p => 
@@ -75,8 +97,9 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
           p.first_name, 
           p.last_name, 
           p.email, 
-          p.score || "N/A", 
+          `${p.score}%`, 
           p.status || "En attente",
+          p.score >= 70 ? "Oui" : "Non",
           p.completed_at ? new Date(p.completed_at).toLocaleDateString('fr-FR') : "N/A"
         ].join(",")
       )
@@ -96,14 +119,16 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
     return <div>Chargement des participants...</div>;
   }
 
-  return (
+  const eligibleParticipants = participants?.filter(p => p.score >= 70) || [];
+  const ineligibleParticipants = participants?.filter(p => p.score < 70) || [];
+
+  const ParticipantsTable = ({ participants, title }: { participants: any[], title: string }) => (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Liste des participants</h2>
-        <Button onClick={exportToCSV} className="flex items-center gap-2">
-          <Download className="w-4 h-4" />
-          Exporter en CSV
-        </Button>
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <Badge variant={title.includes("Éligibles") ? "success" : "secondary"}>
+          {participants.length} participants
+        </Badge>
       </div>
 
       <Table>
@@ -119,20 +144,20 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {participants?.map((participant) => (
+          {participants.map((participant) => (
             <TableRow key={participant.id}>
               <TableCell>{participant.first_name}</TableCell>
               <TableCell>{participant.last_name}</TableCell>
               <TableCell>{participant.email}</TableCell>
-              <TableCell>{participant.score || "N/A"}%</TableCell>
               <TableCell>
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  participant.status === 'winner' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
+                <Badge variant={participant.score >= 70 ? "success" : "destructive"}>
+                  {participant.score}%
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant={participant.status === 'winner' ? "success" : "secondary"}>
                   {participant.status === 'winner' ? 'Gagnant' : 'Participant'}
-                </span>
+                </Badge>
               </TableCell>
               <TableCell>
                 {participant.completed_at 
@@ -153,6 +178,43 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
           ))}
         </TableBody>
       </Table>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Liste des participants</h2>
+        <Button onClick={exportToCSV} className="flex items-center gap-2">
+          <Download className="w-4 h-4" />
+          Exporter en CSV
+        </Button>
+      </div>
+
+      <Tabs defaultValue="eligible" className="w-full">
+        <TabsList>
+          <TabsTrigger value="eligible">
+            Participants Éligibles ({eligibleParticipants.length})
+          </TabsTrigger>
+          <TabsTrigger value="ineligible">
+            Participants Non Éligibles ({ineligibleParticipants.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="eligible">
+          <ParticipantsTable 
+            participants={eligibleParticipants} 
+            title="Participants Éligibles (Score ≥ 70%)" 
+          />
+        </TabsContent>
+
+        <TabsContent value="ineligible">
+          <ParticipantsTable 
+            participants={ineligibleParticipants} 
+            title="Participants Non Éligibles (Score < 70%)" 
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
