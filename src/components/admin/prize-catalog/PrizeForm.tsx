@@ -35,6 +35,7 @@ export const PrizeForm = ({
           id="name"
           value={formData.name}
           onChange={(e) => onFormChange("name", e.target.value)}
+          placeholder="iPhone 15, PS5, etc."
           required
         />
       </div>
@@ -45,6 +46,7 @@ export const PrizeForm = ({
           id="description"
           value={formData.description}
           onChange={(e) => onFormChange("description", e.target.value)}
+          placeholder="Décrivez le prix en quelques mots..."
         />
       </div>
 
@@ -56,6 +58,7 @@ export const PrizeForm = ({
           step="0.01"
           value={formData.value}
           onChange={(e) => onFormChange("value", e.target.value)}
+          placeholder="299.99"
         />
       </div>
 
@@ -66,6 +69,7 @@ export const PrizeForm = ({
           type="url"
           value={formData.shop_url}
           onChange={(e) => onFormChange("shop_url", e.target.value)}
+          placeholder="https://..."
         />
       </div>
 
