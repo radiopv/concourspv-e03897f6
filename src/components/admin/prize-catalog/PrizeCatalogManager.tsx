@@ -1,31 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../../App";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2, Plus, Link as LinkIcon } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { PrizeForm } from "./PrizeForm";
+import { PrizeGrid } from "./PrizeGrid";
+import { AddPrizeDialog } from "./AddPrizeDialog";
 import { usePrizeMutations } from "@/hooks/usePrizeMutations";
 
 export const PrizeCatalogManager = () => {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
-  const [editingPrize, setEditingPrize] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    value: '',
-    image_url: '',
-    shop_url: '',
-  });
 
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
@@ -65,12 +48,7 @@ export const PrizeCatalogManager = () => {
         .from('prizes')
         .getPublicUrl(filePath);
 
-      setFormData({ ...formData, image_url: publicUrl });
-      
-      toast({
-        title: "Succès",
-        description: "L'image a été téléchargée",
-      });
+      return publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
@@ -78,6 +56,7 @@ export const PrizeCatalogManager = () => {
         description: "Impossible de télécharger l'image",
         variant: "destructive",
       });
+      return null;
     } finally {
       setUploading(false);
     }
@@ -85,40 +64,12 @@ export const PrizeCatalogManager = () => {
 
   const { addPrizeToCatalog, updatePrize, deletePrize } = usePrizeMutations();
 
-  const handleEdit = (prize: any) => {
-    setEditingPrize(prize.id);
-    setFormData({
-      name: prize.name,
-      description: prize.description || '',
-      value: prize.value?.toString() || '',
-      image_url: prize.image_url || '',
-      shop_url: prize.shop_url || '',
-    });
-  };
-
-  const handleSave = () => {
-    const data = {
-      name: formData.name,
-      description: formData.description,
-      value: formData.value ? parseFloat(formData.value) : null,
-      image_url: formData.image_url,
-      shop_url: formData.shop_url,
-    };
-
-    if (editingPrize) {
-      updatePrize.mutate({ prizeId: editingPrize, data });
-      setEditingPrize(null);
+  const handleSave = async (formData: any) => {
+    if (formData.id) {
+      updatePrize.mutate({ prizeId: formData.id, data: formData });
     } else {
-      addPrizeToCatalog.mutate(data);
+      addPrizeToCatalog.mutate(formData);
     }
-    
-    setFormData({
-      name: '',
-      description: '',
-      value: '',
-      image_url: '',
-      shop_url: '',
-    });
   };
 
   if (isLoading) {
@@ -127,91 +78,16 @@ export const PrizeCatalogManager = () => {
 
   return (
     <div className="space-y-6">
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter un prix au catalogue
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingPrize ? 'Modifier le prix' : 'Ajouter un prix au catalogue'}
-            </DialogTitle>
-          </DialogHeader>
-          <PrizeForm
-            formData={formData}
-            onFormChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
-            onImageUpload={handleImageUpload}
-            onCancel={() => {
-              setFormData({
-                name: '',
-                description: '',
-                value: '',
-                image_url: '',
-                shop_url: '',
-              });
-              setEditingPrize(null);
-            }}
-            onSave={handleSave}
-            uploading={uploading}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {prizes?.map((prize) => (
-          <Card key={prize.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="pt-6">
-              {prize.image_url && (
-                <div className="aspect-square relative mb-4">
-                  <img
-                    src={prize.image_url}
-                    alt={prize.name}
-                    className="object-cover rounded-lg w-full h-full"
-                  />
-                  <div className="absolute top-2 right-2 space-x-2">
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      onClick={() => handleEdit(prize)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => deletePrize.mutate(prize.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-              <h3 className="font-semibold mb-2">{prize.name}</h3>
-              {prize.description && (
-                <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
-              )}
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">
-                  {prize.value ? `${prize.value}€` : 'Prix non défini'}
-                </span>
-                {prize.shop_url && (
-                  <a
-                    href={prize.shop_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    <LinkIcon className="h-4 w-4" />
-                  </a>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <AddPrizeDialog
+        onSave={handleSave}
+        onImageUpload={handleImageUpload}
+        uploading={uploading}
+      />
+      <PrizeGrid
+        prizes={prizes || []}
+        onEdit={(prize) => handleSave({ ...prize, id: prize.id })}
+        onDelete={(id) => deletePrize.mutate(id)}
+      />
     </div>
   );
 };
