@@ -11,6 +11,7 @@ interface QuestionFormProps {
     options: string[];
     correct_answer: string;
     article_url?: string;
+    type: string;
   };
   onSave: (question: any) => void;
   onCancel: () => void;
@@ -22,6 +23,7 @@ const QuestionForm = ({ question, onSave, onCancel }: QuestionFormProps) => {
     options: [...question.options],
     correct_answer: question.correct_answer,
     article_url: question.article_url || '',
+    type: question.type || 'multiple_choice',
   });
 
   return (
