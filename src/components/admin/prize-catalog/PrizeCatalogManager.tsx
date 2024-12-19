@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../../App";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PrizeGrid } from "./PrizeGrid";
 import { AddPrizeDialog } from "./AddPrizeDialog";
@@ -77,7 +77,8 @@ export const PrizeCatalogManager = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
+      <h1 className="text-2xl font-bold mb-6">Catalogue des Prix</h1>
       <AddPrizeDialog
         onSave={handleSave}
         onImageUpload={handleImageUpload}

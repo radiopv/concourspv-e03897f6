@@ -3,10 +3,10 @@ import AdminDashboard from "./AdminDashboard";
 import QuestionBank from "@/pages/QuestionBank";
 import Contest from "@/pages/Contest";
 import ContestStats from "@/pages/ContestStats";
-import PrizeCatalogManager from "./prize-catalog/PrizeCatalogManager";
 import ContestList from "./ContestList";
 import { useNavigate } from "react-router-dom";
 import ContentValidator from "./ContentValidator";
+import { PrizeCatalogManager } from "./prize-catalog/PrizeCatalogManager";
 
 const AdminRoutes = () => {
   const navigate = useNavigate();

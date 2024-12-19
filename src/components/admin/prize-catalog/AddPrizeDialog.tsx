@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import {
@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { PrizeForm } from '../prize/PrizeForm';
+import { PrizeForm } from './PrizeForm';
 
 interface AddPrizeDialogProps {
   onSave: (formData: any) => void;
