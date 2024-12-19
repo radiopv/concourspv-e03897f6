@@ -1,16 +1,16 @@
-import { Link } from "react-router-dom";
+import { RegisterForm } from "@/components/register/RegisterForm";
+import Layout from "@/components/Layout";
 
 const Signup = () => {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Inscription</h1>
-      <p className="mb-4">
-        Déjà un compte ? {" "}
-        <Link to="/login" className="text-primary hover:underline">
-          Se connecter
-        </Link>
-      </p>
-    </div>
+    <Layout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-md mx-auto">
+          <h1 className="text-2xl font-bold text-center mb-8">Inscription</h1>
+          <RegisterForm />
+        </div>
+      </div>
+    </Layout>
   );
 };
 
