@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Trophy, Users, Timer, ArrowRight } from "lucide-react";
+import { Trophy, Users, Timer, ArrowRight, Gift, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,9 @@ const ActiveContestsSection = () => {
           prizes (
             prize_catalog (
               name,
-              image_url
+              image_url,
+              value,
+              shop_url
             )
           )
         `)
@@ -93,31 +95,53 @@ const ActiveContestsSection = () => {
 
               return (
                 <motion.div key={contest.id} variants={item}>
-                  <Card className="group hover:shadow-lg transition-shadow overflow-hidden">
-                    {mainPrize?.image_url && (
+                  <Card className="group hover:shadow-lg transition-shadow overflow-hidden h-full flex flex-col">
+                    {(mainPrize?.image_url || contest.prize_image_url) && (
                       <div className="relative h-48 overflow-hidden">
                         <img
-                          src={mainPrize.image_url}
-                          alt={mainPrize.name}
+                          src={mainPrize?.image_url || contest.prize_image_url}
+                          alt={mainPrize?.name || contest.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
-                        {mainPrize.name && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                            <p className="text-white font-medium">{mainPrize.name}</p>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent">
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <p className="text-white font-medium">{mainPrize?.name}</p>
+                            {mainPrize?.value && (
+                              <p className="text-white/90 text-sm">Valeur : {mainPrize.value}€</p>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     )}
-                    <CardContent className="p-6 space-y-4">
-                      <CardTitle>{contest.title}</CardTitle>
+                    <CardContent className="flex-1 p-6 space-y-4">
+                      <div>
+                        <CardTitle className="mb-2">{contest.title}</CardTitle>
+                        {contest.description && (
+                          <p className="text-gray-600 text-sm">{contest.description}</p>
+                        )}
+                      </div>
                       
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
+                      <div className="flex flex-wrap gap-2">
+                        {contest.is_new && (
+                          <Badge variant="secondary" className="bg-blue-500 text-white">
+                            Nouveau
+                          </Badge>
+                        )}
+                        {contest.has_big_prizes && (
+                          <Badge variant="secondary" className="bg-amber-500 text-white flex items-center gap-1">
+                            <Trophy className="w-4 h-4" />
+                            Gros lots
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-indigo-600" />
                           <span>{contest.participants?.[0]?.count || 0} participants</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Timer className="w-4 h-4" />
+                        <div className="flex items-center gap-2">
+                          <Timer className="w-4 h-4 text-green-600" />
                           <span>
                             {daysLeft > 0 
                               ? `${daysLeft} jours restants`
@@ -127,26 +151,25 @@ const ActiveContestsSection = () => {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        {contest.is_new && (
-                          <Badge variant="secondary" className="bg-blue-500 text-white">
-                            Nouveau
-                          </Badge>
+                      <div className="flex flex-col gap-3 mt-4">
+                        {mainPrize?.shop_url && (
+                          <Button 
+                            variant="outline"
+                            className="w-full group"
+                            onClick={() => window.open(mainPrize.shop_url, '_blank')}
+                          >
+                            Voir le prix
+                            <ExternalLink className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                          </Button>
                         )}
-                        {contest.has_big_prizes && (
-                          <Badge variant="secondary" className="bg-amber-500 text-white">
-                            Gros lots
-                          </Badge>
-                        )}
+                        <Button 
+                          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white group"
+                          onClick={() => window.location.href = `/contests/${contest.id}`}
+                        >
+                          Participer maintenant
+                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
                       </div>
-
-                      <Button 
-                        className="w-full group" 
-                        onClick={() => window.location.href = `/contests/${contest.id}`}
-                      >
-                        Participer
-                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Button>
                     </CardContent>
                   </Card>
                 </motion.div>
