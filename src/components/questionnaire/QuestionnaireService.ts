@@ -1,8 +1,8 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../App";
 
 export const saveQuestionnaireCompletion = async (contestId: string) => {
-  const { data } = await supabase.auth.getSession();
-  if (!data?.session?.user?.id) {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session?.session?.user?.id) {
     throw new Error("User not authenticated");
   }
 
@@ -11,7 +11,7 @@ export const saveQuestionnaireCompletion = async (contestId: string) => {
     .from('participants')
     .update({ status: 'completed' })
     .eq('contest_id', contestId)
-    .eq('id', data.session.user.id);
+    .eq('id', session.session.user.id);
 
   if (error) {
     throw error;

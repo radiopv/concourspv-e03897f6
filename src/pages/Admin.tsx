@@ -1,106 +1,161 @@
-import { useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ParticipantsList from "@/components/admin/ParticipantsList";
-import ContestPrizeManager from "@/components/admin/ContestPrizeManager";
-import DrawManager from "@/components/admin/DrawManager";
-import QuestionsManager from "@/components/admin/QuestionsManager";
-import { useParams, useNavigate } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "../App";
+import { Plus } from "lucide-react";
+import QuestionsManager from "../components/admin/QuestionsManager";
+import ParticipantsList from "../components/admin/ParticipantsList";
+import DrawManager from "../components/admin/DrawManager";
+import ContestPrizeManager from "../components/admin/ContestPrizeManager";
+import AdminAuth from "../components/admin/AdminAuth";
+import AdminContestManager from "../components/admin/AdminContestManager";
+import ContestList from "../components/admin/ContestList";
+import ContentValidator from "../components/admin/ContentValidator";
+import PrizeCatalogManager from "../components/admin/PrizeCatalogManager";
+import { useToast } from "@/components/ui/use-toast";
 
 const Admin = () => {
-  const { contestId } = useParams();
+  const [selectedContest, setSelectedContest] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isNewContestOpen, setIsNewContestOpen] = useState(false);
+  const [isValidatorOpen, setIsValidatorOpen] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
-  const { data: contest, isLoading, isError, error } = useQuery({
-    queryKey: ['contest', contestId],
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email === "renaudcanuel@me.com") {
+        setIsAuthenticated(true);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const { data: contests, isLoading } = useQuery({
+    queryKey: ['admin-contests'],
     queryFn: async () => {
-      if (!contestId) {
-        throw new Error("Contest ID is required");
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        throw new Error("Not authenticated");
       }
 
       const { data, error } = await supabase
         .from('contests')
-        .select('*')
-        .eq('id', contestId)
-        .maybeSingle();
+        .select(`
+          *,
+          participants:participants(count),
+          questions:questions(count)
+        `)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
-      if (!data) throw new Error("Contest not found");
-      
       return data;
     },
-    enabled: !!contestId
+    enabled: isAuthenticated,
   });
 
-  useEffect(() => {
-    if (isError) {
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de charger le concours.",
-        variant: "destructive",
-      });
-      navigate('/admin/contests');
-    }
-  }, [isError, error, toast, navigate]);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    toast({
+      title: "Déconnexion",
+      description: "Vous avez été déconnecté",
+    });
+  };
 
-  if (!contestId) {
-    return (
-      <div className="p-4">
-        <Card>
-          <CardContent>
-            <p className="text-center text-red-500">ID du concours manquant</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  if (!isAuthenticated) {
+    return <AdminAuth onAuthenticated={() => setIsAuthenticated(true)} />;
   }
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-[200px]" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-4 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!contest) {
-    return (
-      <div className="p-4">
-        <Card>
-          <CardContent>
-            <p className="text-center text-red-500">Concours non trouvé</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <div>Chargement...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{contest.title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>{contest.description}</p>
-        </CardContent>
-      </Card>
+    <div className="max-w-6xl mx-auto p-4">
+      <div className="flex justify-between items-center mb-8">
+        <div className="text-center animate-fadeIn">
+          <h1 className="text-4xl font-bold mb-2">Administration</h1>
+          <p className="text-gray-600">Gérez vos concours</p>
+        </div>
+        <Button variant="outline" onClick={handleLogout}>
+          Déconnexion
+        </Button>
+      </div>
 
-      <ParticipantsList contestId={contestId} />
-      <ContestPrizeManager contestId={contestId} />
-      <DrawManager contestId={contestId} />
-      <QuestionsManager contestId={contestId} />
+      {!selectedContest ? (
+        <div className="space-y-8">
+          <Collapsible open={isNewContestOpen} onOpenChange={setIsNewContestOpen}>
+            <div className="flex items-center justify-between mb-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Créer un nouveau concours
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent className="space-y-2">
+              <AdminContestManager />
+            </CollapsibleContent>
+          </Collapsible>
+
+          <Collapsible open={isValidatorOpen} onOpenChange={setIsValidatorOpen}>
+            <div className="flex items-center justify-between mb-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline">
+                  Validation du contenu
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent className="space-y-2">
+              <ContentValidator />
+            </CollapsibleContent>
+          </Collapsible>
+
+          <PrizeCatalogManager />
+          
+          <ContestList 
+            contests={contests || []} 
+            onSelectContest={setSelectedContest} 
+          />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <Button 
+            variant="outline" 
+            onClick={() => setSelectedContest(null)}
+          >
+            Retour à la liste
+          </Button>
+
+          <Tabs defaultValue="questions">
+            <TabsList>
+              <TabsTrigger value="questions">Questions</TabsTrigger>
+              <TabsTrigger value="participants">Participants</TabsTrigger>
+              <TabsTrigger value="prizes">Prix</TabsTrigger>
+              <TabsTrigger value="draw">Tirage au sort</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="questions">
+              <QuestionsManager contestId={selectedContest} />
+            </TabsContent>
+
+            <TabsContent value="participants">
+              <ParticipantsList contestId={selectedContest} />
+            </TabsContent>
+
+            <TabsContent value="prizes">
+              <ContestPrizeManager contestId={selectedContest} />
+            </TabsContent>
+
+            <TabsContent value="draw">
+              <DrawManager contestId={selectedContest} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
     </div>
   );
 };

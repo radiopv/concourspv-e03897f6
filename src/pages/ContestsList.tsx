@@ -7,12 +7,11 @@ import { motion } from "framer-motion";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import ContestCard from "@/components/contests/ContestCard";
 import { useContests } from "@/hooks/useContests";
-import { Collapsible } from "@/components/ui/collapsible";
 
 const ContestsList = () => {
   const navigate = useNavigate();
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
-  const { contests, isLoading } = useContests();
+  const { data: contests, isLoading } = useContests();
 
   if (selectedContestId) {
     return <QuestionnaireComponent contestId={selectedContestId} />;
@@ -67,20 +66,13 @@ const ContestsList = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contests.map((contest: any) => (
-            <Collapsible key={contest.id}>
-              <ContestCard
-                contest={contest}
-                onEdit={() => {}}
-                onDelete={() => {}}
-                editForm={{}}
-                onFormChange={() => {}}
-                onImageUpload={() => {}}
-                onCancelEdit={() => {}}
-                onSaveEdit={() => {}}
-                uploading={false}
-              />
-            </Collapsible>
+          {contests.map((contest, index) => (
+            <ContestCard
+              key={contest.id}
+              contest={contest}
+              onSelect={setSelectedContestId}
+              index={index}
+            />
           ))}
         </div>
       </div>

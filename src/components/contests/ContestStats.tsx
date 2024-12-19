@@ -1,34 +1,59 @@
-import React from 'react';
-import { supabase } from "@/lib/supabase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Target } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../../App";
 
-const ContestStats = ({ contestId }: { contestId: string }) => {
-  const { data: stats, isLoading, error } = useQuery({
+interface ContestStatsProps {
+  contestId: string;
+}
+
+const ContestStats = ({ contestId }: ContestStatsProps) => {
+  const { data: stats } = useQuery({
     queryKey: ['contest-stats', contestId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contest_stats')
-        .select('*')
+      // Récupérer les statistiques de participation
+      const { data: participantsData } = await supabase
+        .from('participants')
+        .select('score')
         .eq('contest_id', contestId);
 
-      if (error) throw error;
-      return data;
+      // Calculer le score moyen
+      const averageScore = participantsData?.length 
+        ? participantsData.reduce((sum, p) => sum + (p.score || 0), 0) / participantsData.length 
+        : 0;
+
+      return {
+        participantsCount: participantsData?.length || 0,
+        averageScore: Math.round(averageScore),
+      };
     }
   });
 
-  if (isLoading) return <div>Loading stats...</div>;
-  if (error) return <div>Error loading stats: {error.message}</div>;
+  if (!stats) return null;
 
   return (
-    <div>
-      <h2>Contest Statistics</h2>
-      <ul>
-        {stats.map(stat => (
-          <li key={stat.id}>
-            {stat.participant_name}: {stat.score} points
-          </li>
-        ))}
-      </ul>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardTitle className="text-sm font-medium">Participants</CardTitle>
+          <Users className="w-4 h-4 text-blue-600" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-blue-700">{stats.participantsCount}</div>
+          <p className="text-xs text-blue-600 mt-1">Nombre total de participants</p>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-purple-50 to-indigo-50">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardTitle className="text-sm font-medium">Score Moyen</CardTitle>
+          <Target className="w-4 h-4 text-purple-600" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-purple-700">{stats.averageScore}%</div>
+          <p className="text-xs text-purple-600 mt-1">Score moyen des participants</p>
+        </CardContent>
+      </Card>
     </div>
   );
 };

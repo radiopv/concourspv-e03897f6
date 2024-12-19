@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../App";
 
 export const ensureParticipantExists = async (userId: string, contestId: string) => {
   try {
@@ -48,4 +48,23 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     console.error('Error in ensureParticipantExists:', error);
     throw error;
   }
+};
+
+export const getParticipantStats = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('participants')
+    .select(`
+      contest_id,
+      status,
+      attempts,
+      score,
+      completed_at,
+      contests (
+        title
+      )
+    `)
+    .eq('id', userId);
+
+  if (error) throw error;
+  return data;
 };
