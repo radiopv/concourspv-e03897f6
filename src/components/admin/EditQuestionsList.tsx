@@ -26,9 +26,13 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const queryClient = useQueryClient();
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
 
-  const { data: questions, isLoading } = useQuery({
+  const { data: questions, isLoading, error } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
+      if (!contestId) {
+        throw new Error('Contest ID is required');
+      }
+
       const { data, error } = await supabase
         .from('questions')
         .select('id, question_text, options, correct_answer, article_url, order_number, type')
@@ -37,7 +41,8 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
       
       if (error) throw error;
       return data as Question[];
-    }
+    },
+    enabled: !!contestId,
   });
 
   const handleDelete = async (questionId: string) => {
@@ -74,7 +79,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           options: ["Option 1", "Option 2", "Option 3", "Option 4"],
           correct_answer: "Option 1",
           order_number: (questions?.length || 0) + 1,
-          type: 'multiple_choice' // Added the required type field
+          type: 'multiple_choice'
         }]);
 
       if (error) throw error;
@@ -96,8 +101,16 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     }
   };
 
+  if (!contestId) {
+    return <div>ID du concours manquant</div>;
+  }
+
   if (isLoading) {
     return <div>Chargement des questions...</div>;
+  }
+
+  if (error) {
+    return <div>Erreur lors du chargement des questions</div>;
   }
 
   return (
