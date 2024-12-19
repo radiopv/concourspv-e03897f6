@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import PrizeCatalogDialog from "@/components/admin/prize/PrizeCatalogDialog";
+import { PrizeCatalogDialog } from "@/components/admin/prize/PrizeCatalogDialog";
 import PrizeList from "@/components/admin/prize/PrizeList";
 
 const PrizeCatalogManager = () => {
@@ -26,7 +26,6 @@ const PrizeCatalogManager = () => {
 
   const handlePrizeSelect = async (prizeId: string) => {
     try {
-      // Handle prize selection logic here
       setIsDialogOpen(false);
       toast({
         title: "Success",
@@ -54,15 +53,11 @@ const PrizeCatalogManager = () => {
         </CardHeader>
         <CardContent>
           <Button onClick={() => setIsDialogOpen(true)}>Add Prize</Button>
-          <PrizeList prizes={prizes} onSelect={handlePrizeSelect} />
+          <PrizeList contestId={prizes?.[0]?.contest_id || ''} />
         </CardContent>
       </Card>
 
-      <PrizeCatalogDialog 
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSelectPrize={handlePrizeSelect}
-      />
+      <PrizeCatalogDialog onSelectPrize={handlePrizeSelect} />
     </div>
   );
 };

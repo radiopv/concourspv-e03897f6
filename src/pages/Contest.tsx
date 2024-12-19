@@ -33,9 +33,16 @@ const Contest = () => {
 
   return (
     <div className="space-y-8">
-      <ContestHeader contest={contest} />
-      <ContestGeneralStats contestId={contest.id} />
-      <ContestPrizes contestId={contest.id} />
+      <ContestHeader 
+        title={contest.title || ''} 
+        description={contest.description || ''} 
+      />
+      <ContestGeneralStats 
+        averageScore={contest.average_score || 0}
+        qualifiedCount={contest.qualified_count || 0}
+        totalParticipants={contest.total_participants || 0}
+      />
+      <ContestPrizes prizes={contest.prizes || []} />
       <QuestionnaireComponent contestId={contest.id} />
     </div>
   );

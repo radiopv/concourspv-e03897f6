@@ -6,11 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 interface PrizeCatalogSelectorProps {
-  contestId: string;
-  onSelect: (prizeId: string) => void;
+  onSelectPrize: (catalogItemId: string) => Promise<void>;
 }
 
-const PrizeCatalogSelector = ({ contestId, onSelect }: PrizeCatalogSelectorProps) => {
+const PrizeCatalogSelector = ({ onSelectPrize }: PrizeCatalogSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
@@ -28,7 +27,7 @@ const PrizeCatalogSelector = ({ contestId, onSelect }: PrizeCatalogSelectorProps
   });
 
   const handleSelect = (prizeId: string) => {
-    onSelect(prizeId);
+    onSelectPrize(prizeId);
     setIsOpen(false);
   };
 
