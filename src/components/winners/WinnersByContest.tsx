@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Calendar, Gift } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface WinnersByContestProps {
   contestId: string;
