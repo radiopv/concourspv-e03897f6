@@ -39,9 +39,21 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     },
   });
 
-  const calculateWinningChance = (participants: number, totalPrizes: number = prizes?.length || 1) => {
-    if (participants === 0) return 100;
-    return Math.round((totalPrizes / participants) * 100);
+  const { data: eligibleParticipants } = useQuery({
+    queryKey: ['eligible-participants', contest.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('contest_id', contest.id)
+        .gte('score', 70);
+      return data?.count || 0;
+    }
+  });
+
+  const calculateWinningChance = (eligibleCount: number, totalPrizes: number = prizes?.length || 1) => {
+    if (eligibleCount === 0) return 100;
+    return Math.round((totalPrizes / eligibleCount) * 100);
   };
 
   return (
@@ -123,19 +135,19 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             <div className="bg-white/50 p-4 rounded-lg">
               <p className="font-medium flex items-center gap-1 mb-1">
                 <Users className="w-4 h-4 text-indigo-600" />
-                Participants
+                Participants éligibles
               </p>
               <p className="text-2xl font-bold text-indigo-600">
-                {contest.participants?.count || 0}
+                {eligibleParticipants || 0}
               </p>
             </div>
             <div className="bg-white/50 p-4 rounded-lg">
               <p className="font-medium flex items-center gap-1 mb-1">
                 <Percent className="w-4 h-4 text-green-600" />
-                Chances
+                Chances de gagner
               </p>
               <p className="text-2xl font-bold text-green-600">
-                {calculateWinningChance(contest.participants?.count || 0)}%
+                {calculateWinningChance(eligibleParticipants || 0)}%
               </p>
             </div>
           </div>
