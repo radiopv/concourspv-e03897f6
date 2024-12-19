@@ -42,12 +42,14 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const { data: eligibleParticipants } = useQuery({
     queryKey: ['eligible-participants', contest.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { count } = await supabase
         .from('participants')
         .select('*', { count: 'exact', head: true })
         .eq('contest_id', contest.id)
-        .gte('score', 70);
-      return data?.count || 0;
+        .gte('score', 70)
+        .throwOnError();
+      
+      return count || 0;
     }
   });
 
