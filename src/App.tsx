@@ -34,11 +34,7 @@ function App() {
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="admin" element={<Admin />}>
-              <Route path="question-bank" element={<QuestionBank />} />
-              <Route path="contests/:id" element={<Contest />} />
-              <Route path="contests/:id/stats" element={<ContestStats />} />
-            </Route>
+            <Route path="admin/*" element={<Admin />} />
             <Route path="contests" element={<ContestsList />} />
             <Route path="contest/:id" element={<Contest />} />
             <Route path="contest/:id/stats" element={<ContestStats />} />
