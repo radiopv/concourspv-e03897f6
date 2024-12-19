@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Trophy, Users, Percent, ExternalLink, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 import ContestStats from "./ContestStats";
 
 interface ContestCardProps {

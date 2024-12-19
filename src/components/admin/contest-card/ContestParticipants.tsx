@@ -22,12 +22,37 @@ const ContestParticipants = ({ contestId }: ContestParticipantsProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('participants')
-        .select('*')
-        .eq('contest_id', contestId)
-        .order('score', { ascending: false });
+        .select(`
+          *,
+          participant_answers (
+            question_id,
+            answer,
+            questions (
+              correct_answer
+            )
+          )
+        `)
+        .eq('contest_id', contestId);
       
       if (error) throw error;
-      return data;
+
+      // Calculate scores for each participant
+      return data.map(participant => {
+        if (!participant.participant_answers) {
+          return { ...participant, score: 0 };
+        }
+
+        const totalQuestions = participant.participant_answers.length;
+        const correctAnswers = participant.participant_answers.filter(answer => 
+          answer.answer === answer.questions?.correct_answer
+        ).length;
+
+        const score = totalQuestions > 0 
+          ? Math.round((correctAnswers / totalQuestions) * 100) 
+          : 0;
+
+        return { ...participant, score };
+      });
     }
   });
 
@@ -40,8 +65,8 @@ const ContestParticipants = ({ contestId }: ContestParticipantsProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nom</TableHead>
             <TableHead>Prénom</TableHead>
+            <TableHead>Nom</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Score</TableHead>
             <TableHead>Date de participation</TableHead>
@@ -51,18 +76,27 @@ const ContestParticipants = ({ contestId }: ContestParticipantsProps) => {
         <TableBody>
           {participants?.map((participant) => (
             <TableRow key={participant.id}>
-              <TableCell>{participant.last_name}</TableCell>
               <TableCell>{participant.first_name}</TableCell>
+              <TableCell>{participant.last_name}</TableCell>
               <TableCell>{participant.email}</TableCell>
-              <TableCell>{participant.score}%</TableCell>
               <TableCell>
-                {participant.completed_at && format(new Date(participant.completed_at), 'dd MMMM yyyy', { locale: fr })}
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  participant.score >= 70 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {participant.score}%
+                </span>
+              </TableCell>
+              <TableCell>
+                {participant.completed_at 
+                  ? format(new Date(participant.completed_at), 'dd MMMM yyyy', { locale: fr })
+                  : "N/A"
+                }
               </TableCell>
               <TableCell>
                 <span className={`px-2 py-1 rounded-full text-xs ${
-                  participant.status === 'winner' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
+                  participant.status === 'winner' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                 }`}>
                   {participant.status === 'winner' ? 'Gagnant' : 'Participant'}
                 </span>

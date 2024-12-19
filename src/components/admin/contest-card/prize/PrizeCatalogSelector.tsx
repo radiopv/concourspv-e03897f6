@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../../../App";
+import { supabase } from "../../../../lib/supabase";
 import {
   Dialog,
   DialogContent,

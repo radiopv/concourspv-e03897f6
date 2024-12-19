@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import AdminDashboard from "@/components/admin/AdminDashboard";
-import { supabase } from "../App";
+import { supabase } from "@/lib/supabase";
 
 const Admin = () => {
   const navigate = useNavigate();
