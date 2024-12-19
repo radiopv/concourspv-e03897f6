@@ -64,7 +64,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const handleParticipate = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onSelect(contest.id);
+    window.location.href = `/contests/${contest.id}`;
   };
 
   return (

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import ContestDetails from "@/components/contests/ContestDetails";
@@ -8,7 +8,6 @@ import Layout from "@/components/Layout";
 
 const Contest = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   
   const { data: contest, isLoading, error } = useQuery({
     queryKey: ['contest', id],
@@ -47,7 +46,7 @@ const Contest = () => {
       console.log('Fetched contest data:', data);
       return data;
     },
-    retry: 1,
+    retry: false,
     staleTime: 30000,
   });
 
@@ -65,24 +64,16 @@ const Contest = () => {
     );
   }
 
-  if (error) {
+  if (error || !contest) {
     console.error('Contest error:', error);
-    return (
-      <Layout>
-        <div className="container mx-auto py-10">
-          <div className="text-red-500">Error loading contest: {error.message}</div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!contest) {
     return (
       <Layout>
         <div className="container mx-auto py-10">
           <div className="text-center">
             <h2 className="text-2xl font-bold">Concours non trouvé</h2>
-            <p className="text-gray-600 mt-2">Le concours que vous recherchez n'existe pas ou n'est plus disponible.</p>
+            <p className="text-gray-600 mt-2">
+              Le concours que vous recherchez n'existe pas ou n'est plus disponible.
+            </p>
           </div>
         </div>
       </Layout>
