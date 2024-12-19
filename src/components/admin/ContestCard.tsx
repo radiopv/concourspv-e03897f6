@@ -9,7 +9,7 @@ import ContestCardPrize from './contest-card/ContestCardPrize';
 import ContestStatusBadge from './contest-card/ContestStatusBadge';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trophy, Users } from "lucide-react";
+import { Trophy, Users, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import { format } from "date-fns";
@@ -27,6 +27,8 @@ interface ContestCardProps {
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
+    shop_url?: string;
+    prize_image_url?: string;
     participants?: { count: number };
     questions?: { count: number };
   };
@@ -126,6 +128,29 @@ const ContestCard = ({
             isExpiringSoon={isExpiringSoon}
             hasBigPrizes={contest.has_big_prizes}
           />
+
+          {contest.prize_image_url && (
+            <div className="relative group">
+              <img 
+                src={contest.prize_image_url} 
+                alt="Prix à gagner"
+                className="w-full h-48 object-cover rounded-lg"
+              />
+              {contest.shop_url && (
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <a
+                    href={contest.shop_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Voir sur la boutique
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
           
           <ContestCardPrize
             contestId={contest.id}
