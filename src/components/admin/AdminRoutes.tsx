@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import QuestionBank from "@/pages/QuestionBank";
 import Contest from "@/pages/Contest";
