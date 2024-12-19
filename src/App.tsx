@@ -34,7 +34,9 @@ const App = () => {
           {/* Routes d'administration */}
           <Route path="/admin" element={<Admin />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="contests" element={<ContestList onSelectContest={() => {}} />} />
+            <Route path="contests" element={<ContestList onSelectContest={(id) => {
+              console.log('Selected contest:', id);
+            }} />} />
             <Route path="question-bank" element={<QuestionBank />} />
             <Route path="prize-catalog" element={<PrizeCatalogManager />} />
             <Route path="content-validator" element={<ContentValidator />} />
