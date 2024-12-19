@@ -3,7 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Link as LinkIcon } from 'lucide-react';
 
 interface PrizeGridProps {
-  prizes: any[];
+  prizes: Array<{
+    id: string;
+    name: string;
+    description?: string;
+    image_url?: string;
+    value?: number;
+    shop_url?: string;
+  }>;
   onEdit: (prize: any) => void;
   onDelete: (id: string) => void;
 }

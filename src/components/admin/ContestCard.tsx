@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Trophy, Users, Percent, ExternalLink, Gift } from "lucide-react";
 import { motion } from "framer-motion";
-import ContestStats from "./ContestStats";
+import ContestStats from "@/components/contests/ContestStats";
 
 interface ContestCardProps {
   contest: {
@@ -198,3 +199,4 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
 };
 
 export default ContestCard;
+
