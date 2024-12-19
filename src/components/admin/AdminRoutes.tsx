@@ -13,7 +13,7 @@ const AdminRoutes = () => {
   const params = useParams();
 
   const handleSelectContest = (id: string) => {
-    navigate(`/contest/${id}`);  // Updated path to match public route
+    navigate(`/admin/contests/${id}`);  // Correction du chemin
   };
 
   return (
@@ -21,7 +21,7 @@ const AdminRoutes = () => {
       <Route path="/" element={<AdminDashboard />} />
       <Route path="/question-bank" element={<QuestionBank />} />
       <Route path="/contests" element={<ContestList onSelectContest={handleSelectContest} />} />
-      <Route path="/contest/:id" element={<Contest />} />  {/* Updated path */}
+      <Route path="/contests/:id" element={<Contest />} />
       <Route path="/contests/:id/questions" element={<QuestionsManager contestId={params.id || ''} />} />
       <Route path="/contests/:id/stats" element={<ContestStats contestId={params.id || ''} />} />
       <Route path="/prize-catalog" element={<PrizeCatalogManager />} />

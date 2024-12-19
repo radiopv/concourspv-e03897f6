@@ -12,17 +12,37 @@ const Contest = () => {
   const { data: contest, isLoading, error } = useQuery({
     queryKey: ['contest', id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id) {
+        console.error('No contest ID provided');
+        return null;
+      }
       
+      console.log('Fetching contest with ID:', id);
       const { data, error } = await supabase
         .from('contests')
-        .select('*')
+        .select(`
+          *,
+          prizes (
+            prize_catalog (
+              name,
+              image_url,
+              value,
+              shop_url
+            )
+          )
+        `)
         .eq('id', id)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching contest:', error);
+        throw error;
+      }
+      
+      console.log('Fetched contest data:', data);
       return data;
-    }
+    },
+    enabled: !!id
   });
 
   if (isLoading) {
@@ -67,7 +87,10 @@ const Contest = () => {
       <div className="container mx-auto py-10 space-y-8">
         <h1 className="text-3xl font-bold mb-6">{contest.title}</h1>
         <ContestDetails contest={contest} />
-        <QuestionnaireComponent contestId={contest.id} />
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-2xl font-bold mb-6">Participer au concours</h2>
+          <QuestionnaireComponent contestId={contest.id} />
+        </div>
         <ContestStats contestId={contest.id} />
       </div>
     </Layout>
