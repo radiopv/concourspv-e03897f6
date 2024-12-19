@@ -39,7 +39,6 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
         // Traiter les données pour extraire nom et prénom
         const participants = jsonData.map(row => {
           let fullName = '';
-          let email = '';
 
           // Chercher la colonne qui contient le nom complet
           const nameColumn = columns.find(col => 
@@ -49,27 +48,25 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
             col.toLowerCase().includes('nom')
           );
 
-          // Chercher la colonne qui contient l'email
-          const emailColumn = columns.find(col => 
-            col.toLowerCase() === 'email' ||
-            col.toLowerCase().includes('email') ||
-            col.toLowerCase().includes('courriel')
-          );
-
           if (nameColumn) {
             fullName = row[nameColumn]?.toString().trim() || '';
-          }
-
-          if (emailColumn) {
-            email = row[emailColumn]?.toString().trim() || '';
           }
 
           if (!fullName) return null;
 
           // Séparer le nom complet en prénom et nom
           const nameParts = fullName.split(' ');
-          const prenom = nameParts[0] || '';
-          const nom = nameParts.slice(1).join(' ') || '';
+          let prenom = '';
+          let nom = '';
+
+          if (nameParts.length === 1) {
+            // Si un seul mot, on le considère comme prénom
+            prenom = nameParts[0];
+          } else {
+            // Le premier mot est le prénom, le reste est le nom
+            prenom = nameParts[0];
+            nom = nameParts.slice(1).join(' ');
+          }
 
           return {
             nom,
