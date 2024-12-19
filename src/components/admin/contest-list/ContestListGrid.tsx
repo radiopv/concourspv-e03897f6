@@ -34,6 +34,7 @@ const ContestListGrid = ({
           key={contest.id}
           contest={contest}
           onSelect={onSelect}
+          onEdit={onEdit}
           index={index}
         />
       ))}
