@@ -1,38 +1,37 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Pencil } from "lucide-react";
 
 const AdminDashboard = () => {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [contests, setContests] = useState([]);
-
-  const fetchContests = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('contests')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error("Error fetching contests:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de récupérer les concours.",
-        variant: "destructive",
-      });
-    } else {
-      setContests(data);
+  const navigate = useNavigate();
+  
+  const { data: contests, isLoading } = useQuery({
+    queryKey: ['admin-contests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contests')
+        .select(`
+          *,
+          questions:questions(count),
+          participants:participants(count)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
     }
-    setLoading(false);
-  };
+  });
 
-  useEffect(() => {
-    fetchContests();
-  }, []);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -41,20 +40,31 @@ const AdminDashboard = () => {
           <CardTitle>Tableau de bord de l'administrateur</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div>Chargement des concours...</div>
-          ) : (
-            <ul>
-              {contests.map((contest) => (
-                <li key={contest.id}>
-                  {contest.title} - {contest.start_date}
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="grid gap-4">
+            {contests?.map((contest) => (
+              <Card key={contest.id} className="p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold">{contest.title}</h3>
+                    <p className="text-sm text-gray-500">
+                      Questions: {contest.questions?.count || 0} | 
+                      Participants: {contest.participants?.count || 0}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/admin/contests/${contest.id}`)}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Gérer
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
         </CardContent>
       </Card>
-      <Button onClick={fetchContests}>Rafraîchir</Button>
     </div>
   );
 };
