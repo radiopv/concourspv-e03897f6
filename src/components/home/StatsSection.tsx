@@ -1,7 +1,39 @@
 import { motion } from "framer-motion";
 import { Trophy, Gift, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 const StatsSection = () => {
+  const { data: stats } = useQuery({
+    queryKey: ['home-stats'],
+    queryFn: async () => {
+      // Récupérer le nombre total de participants
+      const { count: participantsCount } = await supabase
+        .from('participants')
+        .select('*', { count: 'exact', head: true });
+
+      // Récupérer le nombre total de prix disponibles
+      const { count: prizesCount } = await supabase
+        .from('prize_catalog')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      // Récupérer le nombre de gagnants (participants avec un score > 0)
+      const { count: winnersCount } = await supabase
+        .from('participants')
+        .select('*', { count: 'exact', head: true })
+        .gt('score', 0);
+
+      return {
+        participants: participantsCount || 0,
+        prizes: prizesCount || 0,
+        winners: winnersCount || 0
+      };
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 300000, // 5 minutes
+  });
+
   return (
     <section className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -13,7 +45,9 @@ const StatsSection = () => {
             className="bg-white p-8 rounded-xl shadow-lg text-center"
           >
             <Users className="w-12 h-12 mx-auto text-indigo-600 mb-4" />
-            <h3 className="text-4xl font-bold text-gray-900 mb-2">1,234</h3>
+            <h3 className="text-4xl font-bold text-gray-900 mb-2">
+              {stats?.participants.toLocaleString()}
+            </h3>
             <p className="text-gray-600">Participants actifs</p>
           </motion.div>
 
@@ -24,7 +58,9 @@ const StatsSection = () => {
             className="bg-white p-8 rounded-xl shadow-lg text-center"
           >
             <Gift className="w-12 h-12 mx-auto text-purple-600 mb-4" />
-            <h3 className="text-4xl font-bold text-gray-900 mb-2">50+</h3>
+            <h3 className="text-4xl font-bold text-gray-900 mb-2">
+              {stats?.prizes.toLocaleString()}+
+            </h3>
             <p className="text-gray-600">Cadeaux à gagner</p>
           </motion.div>
 
@@ -35,7 +71,9 @@ const StatsSection = () => {
             className="bg-white p-8 rounded-xl shadow-lg text-center"
           >
             <Trophy className="w-12 h-12 mx-auto text-amber-500 mb-4" />
-            <h3 className="text-4xl font-bold text-gray-900 mb-2">789</h3>
+            <h3 className="text-4xl font-bold text-gray-900 mb-2">
+              {stats?.winners.toLocaleString()}
+            </h3>
             <p className="text-gray-600">Gagnants heureux</p>
           </motion.div>
         </div>
