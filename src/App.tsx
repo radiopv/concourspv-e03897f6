@@ -9,8 +9,8 @@ import ContestsList from "./pages/ContestsList";
 import Contest from "./pages/Contest";
 import ContestStats from "./pages/ContestStats";
 import Winners from "./pages/Winners";
-import AdminRoutes from "./admin/AdminRoutes";
-import { Toaster } from "@/components/ui/toast";
+import AdminRoutes from "./components/admin/AdminRoutes";
+import { Toaster } from "./components/ui/toaster";
 
 const queryClient = new QueryClient();
 

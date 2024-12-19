@@ -1,15 +1,11 @@
-import React from 'react';
+import { Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import UserNavBar from './navigation/UserNavBar';
 import MobileNavBar from './navigation/MobileNavBar';
 import { Toaster } from './ui/toaster';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout = ({ children }: LayoutProps) => {
+const Layout = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
@@ -17,7 +13,7 @@ const Layout = ({ children }: LayoutProps) => {
     <div className="min-h-screen bg-gray-50">
       {user && <UserNavBar />}
       <main className={`container mx-auto ${isMobile ? 'px-2 pb-20' : 'px-4'} py-8`}>
-        {children}
+        <Outlet />
       </main>
       {user && <MobileNavBar />}
       <Toaster />
