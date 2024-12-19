@@ -7,6 +7,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "../App";
 import QuestionBankImport from "../components/admin/question-bank/QuestionBankImport";
 import QuestionBankList from "../components/admin/question-bank/QuestionBankList";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 const QuestionBank = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,9 +33,18 @@ const QuestionBank = () => {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
+      <div className="flex items-center gap-4 mb-6">
+        <Link to="/admin">
+          <Button variant="outline" size="icon">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold">Banque de Questions</h1>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle>Banque de Questions</CardTitle>
+          <CardTitle>Importer des Questions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <QuestionBankImport />

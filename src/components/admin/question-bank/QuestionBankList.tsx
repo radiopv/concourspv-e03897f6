@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "../../../App";
 import { useQueryClient } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 
 interface Question {
   id: string;
@@ -24,6 +26,20 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [selectedContestId, setSelectedContestId] = useState<string>("");
 
+  const { data: contests } = useQuery({
+    queryKey: ['active-contests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contests')
+        .select('id, title')
+        .in('status', ['draft', 'active'])
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const handleAddToContest = async () => {
     if (!selectedContestId || selectedQuestions.length === 0) {
       toast({
@@ -35,6 +51,16 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
     }
 
     try {
+      // Récupérer le nombre actuel de questions pour le concours
+      const { data: existingQuestions } = await supabase
+        .from('questions')
+        .select('order_number')
+        .eq('contest_id', selectedContestId)
+        .order('order_number', { ascending: false })
+        .limit(1);
+
+      const startOrderNumber = (existingQuestions?.[0]?.order_number || 0) + 1;
+
       const selectedQuestionsData = questions
         .filter(q => selectedQuestions.includes(q.id))
         .map((q, index) => ({
@@ -43,7 +69,7 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
           options: q.options,
           correct_answer: q.correct_answer,
           article_url: q.article_url,
-          order_number: index + 1,
+          order_number: startOrderNumber + index,
           type: 'multiple_choice'
         }));
 
@@ -68,7 +94,7 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
 
       toast({
         title: "Succès",
-        description: "Questions ajoutées au concours avec succès",
+        description: `${selectedQuestions.length} questions ajoutées au concours`,
       });
 
       setSelectedQuestions([]);
@@ -84,6 +110,27 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
 
   return (
     <div className="space-y-4">
+      <div className="flex gap-4 items-center mb-6">
+        <Select value={selectedContestId} onValueChange={setSelectedContestId}>
+          <SelectTrigger className="w-[300px]">
+            <SelectValue placeholder="Sélectionner un concours" />
+          </SelectTrigger>
+          <SelectContent>
+            {contests?.map((contest) => (
+              <SelectItem key={contest.id} value={contest.id}>
+                {contest.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button 
+          onClick={handleAddToContest}
+          disabled={!selectedContestId || selectedQuestions.length === 0}
+        >
+          Ajouter au concours ({selectedQuestions.length} sélectionnée{selectedQuestions.length > 1 ? 's' : ''})
+        </Button>
+      </div>
+
       {questions.map((question) => (
         <Card key={question.id} className={`
           ${selectedQuestions.includes(question.id) ? 'border-primary' : ''}
