@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "../../App";
 import { format, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 const ActiveContestsSection = () => {
+  const navigate = useNavigate();
   const { data: contests, isLoading } = useQuery({
     queryKey: ['active-contests-home'],
     queryFn: async () => {
@@ -34,6 +36,10 @@ const ActiveContestsSection = () => {
       return data;
     }
   });
+
+  const handleContestClick = (id: string) => {
+    navigate(`/contest/${id}`);
+  };
 
   const container = {
     hidden: { opacity: 0 },
@@ -164,7 +170,7 @@ const ActiveContestsSection = () => {
                         )}
                         <Button 
                           className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white group"
-                          onClick={() => window.location.href = `/contests/${contest.id}`}
+                          onClick={() => handleContestClick(contest.id)}
                         >
                           Participer maintenant
                           <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -187,7 +193,7 @@ const ActiveContestsSection = () => {
           <Button 
             variant="outline" 
             size="lg"
-            onClick={() => window.location.href = '/contests'}
+            onClick={() => navigate('/contests')}
             className="group"
           >
             Voir tous les concours

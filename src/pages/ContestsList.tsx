@@ -13,9 +13,9 @@ const ContestsList = () => {
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
   const { data: contests, isLoading } = useContests();
 
-  if (selectedContestId) {
-    return <QuestionnaireComponent contestId={selectedContestId} />;
-  }
+  const handleContestSelect = (id: string) => {
+    navigate(`/contest/${id}`);
+  };
 
   if (isLoading) {
     return (
@@ -70,7 +70,7 @@ const ContestsList = () => {
             <ContestCard
               key={contest.id}
               contest={contest}
-              onSelect={setSelectedContestId}
+              onSelect={handleContestSelect}
               index={index}
             />
           ))}
