@@ -39,11 +39,11 @@ const UserNavBar = () => {
       {isAdmin && (
         <Link
           to="/admin"
-          className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+          className="inline-flex items-center px-1 pt-1 text-sm font-medium bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200"
           onClick={() => setIsOpen(false)}
         >
           <Settings className="w-4 h-4 mr-2" />
-          Admin
+          Administration
         </Link>
       )}
     </>

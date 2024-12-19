@@ -38,7 +38,9 @@ function App() {
             <Route path="/contest/:id" element={<Contest />} />
             <Route path="/contest/:id/stats" element={<ContestStats />} />
             <Route path="/winners" element={<Winners />} />
-            <Route path="/admin/*" element={<Admin />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/question-bank" element={<QuestionBank />} />
+            <Route path="/admin/contests" element={<ContestsList />} />
           </Route>
         </Routes>
         <Toaster />
