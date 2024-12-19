@@ -51,15 +51,22 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
     }
 
     try {
-      const { data: existingQuestions } = await supabase
+      console.log("Adding questions to contest:", selectedContestId);
+      console.log("Selected questions:", selectedQuestions);
+
+      // Récupérer le dernier numéro d'ordre
+      const { data: existingQuestions, error: orderError } = await supabase
         .from('questions')
         .select('order_number')
         .eq('contest_id', selectedContestId)
         .order('order_number', { ascending: false })
         .limit(1);
 
+      if (orderError) throw orderError;
+
       const startOrderNumber = (existingQuestions?.[0]?.order_number || 0) + 1;
 
+      // Préparer les questions à insérer
       const selectedQuestionsData = questions
         .filter(q => selectedQuestions.includes(q.id))
         .map((q, index) => ({
@@ -69,14 +76,20 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
           correct_answer: q.correct_answer,
           article_url: q.article_url,
           order_number: startOrderNumber + index,
-          type: 'multiple_choice' // Ajout explicite du type
+          type: 'multiple_choice'
         }));
 
-      const { error: questionsError } = await supabase
+      console.log("Questions to insert:", selectedQuestionsData);
+
+      // Insérer les questions
+      const { error: insertError } = await supabase
         .from('questions')
         .insert(selectedQuestionsData);
 
-      if (questionsError) throw questionsError;
+      if (insertError) {
+        console.error("Error inserting questions:", insertError);
+        throw insertError;
+      }
 
       // Mettre à jour le statut des questions dans la banque
       const { error: updateError } = await supabase
@@ -84,8 +97,12 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
         .update({ status: 'used' })
         .in('id', selectedQuestions);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating question status:", updateError);
+        throw updateError;
+      }
 
+      // Invalider les requêtes pour rafraîchir les données
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['question-bank'] }),
         queryClient.invalidateQueries({ queryKey: ['questions', selectedContestId] })
