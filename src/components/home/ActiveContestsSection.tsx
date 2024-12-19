@@ -14,6 +14,8 @@ const ActiveContestsSection = () => {
   const { data: contests, isLoading } = useQuery({
     queryKey: ['active-contests-home'],
     queryFn: async () => {
+      console.log("Fetching contests...");
+      
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -33,12 +35,13 @@ const ActiveContestsSection = () => {
         .limit(3);
 
       if (error) throw error;
+      console.log("Fetched contests:", contests);
       return data;
     }
   });
 
   const handleContestClick = (id: string) => {
-    navigate(`/contest/${id}`);
+    navigate(`/admin/contests/${id}`);
   };
 
   const container = {
