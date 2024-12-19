@@ -10,6 +10,7 @@ interface ContestListGridProps {
     status: string;
     start_date: string;
     end_date: string;
+    draw_date: string;
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
@@ -21,7 +22,7 @@ interface ContestListGridProps {
   onDelete: (id: string) => void;
   onArchive: (id: string) => void;
   onFeatureToggle: (id: string, featured: boolean) => void;
-  onStatusUpdate: (id: string, updates: { is_new?: boolean; has_big_prizes?: boolean }) => void;
+  onStatusUpdate: (id: string, updates: { is_new?: boolean; has_big_prizes?: boolean; status?: string }) => void;
   onSelect: (id: string) => void;
   onEdit: (id: string) => void;
 }
