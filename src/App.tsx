@@ -9,6 +9,8 @@ import Contest from './pages/Contest';
 import ContestsList from './pages/ContestsList';
 import Winners from './pages/Winners';
 import ContestStats from './pages/ContestStats';
+import Admin from './pages/Admin';
+import AdminRoutes from './components/admin/AdminRoutes';
 
 const App = () => {
   return (
@@ -23,7 +25,11 @@ const App = () => {
           <Route path="/contest/:id" element={<Contest />} />
           <Route path="/contests" element={<ContestsList />} />
           <Route path="/winners" element={<Winners />} />
-          <Route path="/contest-stats/:id" element={<ContestStats />} />
+          <Route path="/contest-stats/:id" element={<ContestStats contestId="" />} />
+          
+          {/* Routes d'administration */}
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/*" element={<AdminRoutes />} />
         </Routes>
       </Layout>
     </Router>
