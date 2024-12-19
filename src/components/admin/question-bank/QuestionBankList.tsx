@@ -1,11 +1,12 @@
-import { useState } from "react";
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../../App";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { Edit, Trash2 } from "lucide-react";
+import QuestionForm from '../QuestionForm';
 
 interface Question {
   id: string;
@@ -13,7 +14,6 @@ interface Question {
   options: string[];
   correct_answer: string;
   article_url?: string;
-  status: 'available' | 'used';
 }
 
 interface QuestionBankListProps {
@@ -21,87 +21,59 @@ interface QuestionBankListProps {
 }
 
 const QuestionBankList = ({ questions }: QuestionBankListProps) => {
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
-  const [selectedContestId, setSelectedContestId] = useState<string>("");
 
-  const { data: contests } = useQuery({
-    queryKey: ['active-contests'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contests')
-        .select('id, title')
-        .in('status', ['draft', 'active'])
-        .order('created_at', { ascending: false });
-      
+  const handleDelete = async (questionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('question_bank')
+        .delete()
+        .eq('id', questionId);
+
       if (error) throw error;
-      return data;
-    }
-  });
 
-  const handleAddToContest = async () => {
-    if (!selectedContestId || selectedQuestions.length === 0) {
+      queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      toast({
+        title: "Question supprimée",
+        description: "La question a été supprimée avec succès",
+      });
+    } catch (error) {
+      console.error('Error deleting question:', error);
       toast({
         title: "Erreur",
-        description: "Veuillez sélectionner un concours et au moins une question",
+        description: "Impossible de supprimer la question",
         variant: "destructive",
       });
-      return;
     }
+  };
 
+  const handleSave = async (updatedQuestion: any) => {
     try {
-      const { data: existingQuestions } = await supabase
-        .from('questions')
-        .select('order_number')
-        .eq('contest_id', selectedContestId)
-        .order('order_number', { ascending: false })
-        .limit(1);
-
-      const startOrderNumber = (existingQuestions?.[0]?.order_number || 0) + 1;
-
-      const selectedQuestionsData = questions
-        .filter(q => selectedQuestions.includes(q.id))
-        .map((q, index) => ({
-          contest_id: selectedContestId,
-          question_text: q.question_text,
-          options: q.options,
-          correct_answer: q.correct_answer,
-          article_url: q.article_url,
-          order_number: startOrderNumber + index,
-          type: 'multiple_choice' // Ajout explicite du type
-        }));
-
-      const { error: questionsError } = await supabase
-        .from('questions')
-        .insert(selectedQuestionsData);
-
-      if (questionsError) throw questionsError;
-
-      // Mettre à jour le statut des questions dans la banque
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from('question_bank')
-        .update({ status: 'used' })
-        .in('id', selectedQuestions);
+        .update({
+          question_text: updatedQuestion.question_text,
+          options: updatedQuestion.options,
+          correct_answer: updatedQuestion.correct_answer,
+          article_url: updatedQuestion.article_url,
+        })
+        .eq('id', editingQuestion?.id);
 
-      if (updateError) throw updateError;
+      if (error) throw error;
 
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['question-bank'] }),
-        queryClient.invalidateQueries({ queryKey: ['questions', selectedContestId] })
-      ]);
-
+      queryClient.invalidateQueries({ queryKey: ['question-bank'] });
       toast({
-        title: "Succès",
-        description: `${selectedQuestions.length} questions ajoutées au concours`,
+        title: "Question mise à jour",
+        description: "La question a été mise à jour avec succès",
       });
-
-      setSelectedQuestions([]);
+      setEditingQuestion(null);
     } catch (error) {
-      console.error('Error adding questions to contest:', error);
+      console.error('Error updating question:', error);
       toast({
         title: "Erreur",
-        description: "Erreur lors de l'ajout des questions au concours",
+        description: "Impossible de mettre à jour la question",
         variant: "destructive",
       });
     }
@@ -109,61 +81,68 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-4 items-center mb-6">
-        <Select value={selectedContestId} onValueChange={setSelectedContestId}>
-          <SelectTrigger className="w-[300px]">
-            <SelectValue placeholder="Sélectionner un concours" />
-          </SelectTrigger>
-          <SelectContent>
-            {contests?.map((contest) => (
-              <SelectItem key={contest.id} value={contest.id}>
-                {contest.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button 
-          onClick={handleAddToContest}
-          disabled={!selectedContestId || selectedQuestions.length === 0}
-        >
-          Ajouter au concours ({selectedQuestions.length} sélectionnée{selectedQuestions.length > 1 ? 's' : ''})
-        </Button>
-      </div>
-
       {questions.map((question) => (
-        <Card key={question.id} className={`
-          ${selectedQuestions.includes(question.id) ? 'border-primary' : ''}
-          ${question.status === 'used' ? 'opacity-50' : ''}
-        `}>
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
+        <Card key={question.id}>
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div className="space-y-4 flex-1">
                 <p className="font-medium">{question.question_text}</p>
-                <ul className="mt-2 space-y-1">
+                <ul className="list-disc list-inside space-y-2">
                   {question.options.map((option, index) => (
-                    <li key={index} className={option === question.correct_answer ? "text-green-600" : ""}>
+                    <li
+                      key={index}
+                      className={option === question.correct_answer ? "text-green-600" : ""}
+                    >
                       {option}
                     </li>
                   ))}
                 </ul>
+                {question.article_url && (
+                  <a
+                    href={question.article_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline text-sm"
+                  >
+                    Article lié
+                  </a>
+                )}
               </div>
-              <Button
-                variant="outline"
-                disabled={question.status === 'used'}
-                onClick={() => {
-                  if (selectedQuestions.includes(question.id)) {
-                    setSelectedQuestions(prev => prev.filter(id => id !== question.id));
-                  } else {
-                    setSelectedQuestions(prev => [...prev, question.id]);
-                  }
-                }}
-              >
-                {selectedQuestions.includes(question.id) ? 'Désélectionner' : 'Sélectionner'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setEditingQuestion(question)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleDelete(question.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
       ))}
+
+      {editingQuestion && (
+        <Dialog open={true} onOpenChange={() => setEditingQuestion(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifier la question</DialogTitle>
+            </DialogHeader>
+            <QuestionForm
+              question={editingQuestion}
+              onSave={handleSave}
+              onCancel={() => setEditingQuestion(null)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

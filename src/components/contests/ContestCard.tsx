@@ -1,168 +1,180 @@
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Trophy, Users, Percent, ExternalLink, Gift } from "lucide-react";
-import { motion } from "framer-motion";
+import React from 'react';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import ContestCardHeader from './contest-card/ContestCardHeader';
+import ContestCardStats from './contest-card/ContestCardStats';
+import ContestCardToggles from './contest-card/ContestCardToggles';
+import ContestCardBadges from './contest-card/ContestCardBadges';
+import ContestCardPrize from './contest-card/ContestCardPrize';
+import ContestStatusBadge from './contest-card/ContestStatusBadge';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Trophy, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../App";
-import ContestStats from "./ContestStats";
+import { supabase } from "../../lib/supabase";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface ContestCardProps {
   contest: {
     id: string;
     title: string;
     description?: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+    draw_date: string;
+    is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
     participants?: { count: number };
+    questions?: { count: number };
   };
+  onDelete: (id: string) => void;
+  onArchive: (id: string) => void;
+  onFeatureToggle: (id: string, featured: boolean) => void;
+  onStatusUpdate: (id: string, updates: { is_new?: boolean; has_big_prizes?: boolean; status?: string }) => void;
   onSelect: (id: string) => void;
-  index: number;
+  onEdit: (id: string) => void;
 }
 
-const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
-  const { data: prizes } = useQuery({
-    queryKey: ['contest-prizes', contest.id],
-    queryFn: async () => {
-      const { data: prizesData } = await supabase
-        .from('prizes')
-        .select(`
-          catalog_item_id,
-          prize_catalog (
-            name,
-            image_url,
-            shop_url
-          )
-        `)
-        .eq('contest_id', contest.id);
-      return prizesData || [];
-    },
-  });
+const ContestCard = ({ 
+  contest, 
+  onDelete, 
+  onArchive, 
+  onFeatureToggle,
+  onStatusUpdate,
+  onSelect,
+  onEdit,
+}: ContestCardProps) => {
+  const { toast } = useToast();
+  const endDate = new Date(contest.end_date);
+  const drawDate = contest.draw_date ? new Date(contest.draw_date) : null;
+  const isExpiringSoon = endDate.getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000;
+  const canDraw = drawDate && new Date() >= drawDate;
 
-  const { data: eligibleParticipants } = useQuery({
-    queryKey: ['eligible-participants', contest.id],
+  const { data: winners } = useQuery({
+    queryKey: ['contest-winners', contest.id],
     queryFn: async () => {
-      const { count } = await supabase
-        .from('participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('contest_id', contest.id)
-        .gte('score', 70)
-        .throwOnError();
+      const { data: session } = await supabase.auth.getSession();
       
-      return count || 0;
-    }
+      if (!session.session) {
+        throw new Error('Not authenticated');
+      }
+
+      const { data, error } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('contest_id', contest.id)
+        .eq('status', 'winner');
+      
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les gagnants",
+          variant: "destructive",
+        });
+        throw error;
+      }
+      return data;
+    },
+    enabled: !!contest.id,
+    retry: 1,
   });
 
-  const calculateWinningChance = (eligibleCount: number, totalPrizes: number = prizes?.length || 1) => {
-    if (eligibleCount === 0) return 100;
-    return Math.round((totalPrizes / eligibleCount) * 100);
+  const handleStatusToggle = (checked: boolean) => {
+    onStatusUpdate(contest.id, { status: checked ? 'active' : 'draft' });
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="h-full"
-    >
-      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card float">
-        <CardHeader>
-          <div className="flex justify-between items-start mb-2">
-            <CardTitle className="text-xl font-bold">{contest.title}</CardTitle>
-            {contest.is_new && (
-              <Badge variant="secondary" className="bg-blue-500 text-white">
-                Nouveau
-              </Badge>
+    <Card className={`hover:shadow-lg transition-shadow ${contest.status === 'archived' ? 'opacity-60' : ''}`}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <ContestCardHeader
+          title={contest.title}
+          onSelect={onSelect}
+          onEdit={onEdit}
+          onArchive={onArchive}
+          onDelete={onDelete}
+          contestId={contest.id}
+          status={contest.status}
+        />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <ContestStatusBadge status={contest.status} />
+            {contest.status !== 'archived' && (
+              <div className="flex items-center space-x-2">
+                <Label htmlFor={`status-${contest.id}`} className="text-sm">
+                  {contest.status === 'draft' ? 'Activer' : 'Désactiver'}
+                </Label>
+                <Switch
+                  id={`status-${contest.id}`}
+                  checked={contest.status === 'active'}
+                  onCheckedChange={handleStatusToggle}
+                />
+              </div>
             )}
           </div>
-          {contest.has_big_prizes && (
-            <Badge variant="secondary" className="bg-amber-500 text-white flex items-center gap-1 w-fit">
-              <Trophy className="w-4 h-4" />
-              Gros lots à gagner
-            </Badge>
-          )}
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
+
           {contest.description && (
-            <p className="text-gray-600 mb-6">
-              {contest.description}
-            </p>
+            <p className="text-gray-600 text-sm">{contest.description}</p>
           )}
           
-          <ContestStats contestId={contest.id} />
+          <ContestCardBadges
+            isNew={contest.is_new}
+            isExpiringSoon={isExpiringSoon}
+            hasBigPrizes={contest.has_big_prizes}
+          />
           
-          {prizes && prizes.length > 0 && (
-            <div className="mb-6 space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Gift className="w-5 h-5 text-purple-500" />
-                Prix à gagner
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {prizes.map((prize: any, idx: number) => (
-                  prize.prize_catalog && (
-                    <div key={idx} className="relative group overflow-hidden rounded-lg border border-gray-200">
-                      {prize.prize_catalog.image_url && (
-                        <div className="aspect-video relative">
-                          <img
-                            src={prize.prize_catalog.image_url}
-                            alt={prize.prize_catalog.name}
-                            className="w-full h-full object-cover transform transition-transform group-hover:scale-105"
-                          />
-                          {prize.prize_catalog.shop_url && (
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <a
-                                href={prize.prize_catalog.shop_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-white bg-purple-600 px-4 py-2 rounded-full hover:bg-purple-700 transition-colors flex items-center gap-2"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                                Voir sur la boutique
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      <div className="p-3 bg-white/80">
-                        <p className="font-medium text-purple-700">{prize.prize_catalog.name}</p>
+          <ContestCardPrize
+            contestId={contest.id}
+          />
+          
+          <ContestCardStats
+            participantsCount={contest.participants?.count || 0}
+            questionsCount={contest.questions?.count || 0}
+            endDate={contest.end_date}
+          />
+
+          {drawDate && (
+            <div className="pt-2 border-t">
+              <p className="text-sm text-gray-600 mb-2">
+                Date du tirage : {format(drawDate, 'dd MMMM yyyy', { locale: fr })}
+              </p>
+              {winners && winners.length > 0 && (
+                <div className="bg-amber-50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="w-5 h-5 text-amber-600" />
+                    <h4 className="font-semibold text-amber-900">Gagnants</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {winners.map((winner) => (
+                      <div key={winner.id} className="flex items-center gap-2 text-sm">
+                        <Users className="w-4 h-4 text-amber-600" />
+                        <span>{winner.first_name} {winner.last_name}</span>
+                        <span className="text-amber-600">({winner.score}%)</span>
                       </div>
-                    </div>
-                  )
-                ))}
-              </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-6">
-            <div className="bg-white/50 p-4 rounded-lg">
-              <p className="font-medium flex items-center gap-1 mb-1">
-                <Users className="w-4 h-4 text-indigo-600" />
-                Participants éligibles
-              </p>
-              <p className="text-2xl font-bold text-indigo-600">
-                {eligibleParticipants || 0}
-              </p>
-            </div>
-            <div className="bg-white/50 p-4 rounded-lg">
-              <p className="font-medium flex items-center gap-1 mb-1">
-                <Percent className="w-4 h-4 text-green-600" />
-                Chances de gagner
-              </p>
-              <p className="text-2xl font-bold text-green-600">
-                {calculateWinningChance(eligibleParticipants || 0)}%
-              </p>
-            </div>
+          <div className="space-y-2 pt-4 border-t">
+            <ContestCardToggles
+              contestId={contest.id}
+              isFeatured={contest.is_featured}
+              isNew={contest.is_new}
+              hasBigPrizes={contest.has_big_prizes}
+              onFeatureToggle={onFeatureToggle}
+              onStatusUpdate={onStatusUpdate}
+            />
           </div>
-
-          <Button 
-            onClick={() => onSelect(contest.id)}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
-          >
-            Participer
-          </Button>
-        </CardContent>
-      </Card>
-    </motion.div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

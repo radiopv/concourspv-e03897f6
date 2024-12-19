@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "../App";
+import { supabase } from "../lib/supabase";
 import QuestionBankImport from "../components/admin/question-bank/QuestionBankImport";
 import QuestionBankList from "../components/admin/question-bank/QuestionBankList";
 import { Link } from "react-router-dom";

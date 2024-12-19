@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 
 interface AdminAuthProps {
   onAuthenticated: () => void;

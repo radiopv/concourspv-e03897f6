@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "../App";
+import { supabase } from "@/lib/supabase";
 import AdminAuth from "../components/admin/AdminAuth";
 import { useToast } from "@/hooks/use-toast";
 import AdminRoutes from "@/components/admin/AdminRoutes";

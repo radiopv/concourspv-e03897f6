@@ -1,5 +1,5 @@
-import { supabase } from "../../App";
-
+// ... keep existing code (imports)
+import { supabase } from "@/lib/supabase";
 export const ensureParticipantExists = async (userId: string, contestId: string) => {
   try {
     // Check if user already participates in this contest

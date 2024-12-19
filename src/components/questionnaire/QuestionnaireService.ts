@@ -1,4 +1,4 @@
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 
 export const saveQuestionnaireCompletion = async (contestId: string) => {
   const { data: session } = await supabase.auth.getSession();

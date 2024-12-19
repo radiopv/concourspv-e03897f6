@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Trophy, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../App";
+import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
