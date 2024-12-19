@@ -8,14 +8,17 @@ import ContestListGrid from './contest-list/ContestListGrid';
 import { useContestQueries } from './hooks/useContestQueries';
 import { useContestMutations } from './hooks/useContestMutations';
 
+type ContestStatus = 'draft' | 'active' | 'archived';
+
 interface ContestListProps {
   contests: Array<{
     id: string;
     title: string;
     description?: string;
-    status: string;
+    status: ContestStatus;
     start_date: string;
     end_date: string;
+    draw_date: string;
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
