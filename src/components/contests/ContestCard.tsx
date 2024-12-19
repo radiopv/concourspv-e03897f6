@@ -61,6 +61,12 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     return Math.round((totalPrizes / eligibleCount) * 100);
   };
 
+  const handleParticipate = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect(contest.id);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -139,7 +145,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           </div>
 
           <Button 
-            onClick={() => onSelect(contest.id)}
+            onClick={handleParticipate}
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
           >
             Participer

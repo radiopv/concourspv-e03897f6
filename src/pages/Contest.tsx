@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import ContestDetails from "@/components/contests/ContestDetails";
@@ -8,6 +8,7 @@ import Layout from "@/components/Layout";
 
 const Contest = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   
   const { data: contest, isLoading, error } = useQuery({
     queryKey: ['contest', id],
@@ -39,10 +40,15 @@ const Contest = () => {
         throw error;
       }
       
+      if (!data) {
+        throw new Error('Contest not found');
+      }
+      
       console.log('Fetched contest data:', data);
       return data;
     },
-    enabled: !!id
+    retry: 1,
+    staleTime: 30000,
   });
 
   if (isLoading) {
@@ -60,6 +66,7 @@ const Contest = () => {
   }
 
   if (error) {
+    console.error('Contest error:', error);
     return (
       <Layout>
         <div className="container mx-auto py-10">
