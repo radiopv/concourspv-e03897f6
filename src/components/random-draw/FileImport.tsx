@@ -16,7 +16,7 @@ interface Participant {
 export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
   const { toast } = useToast();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -29,24 +29,49 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-        console.log('Raw Excel Data:', jsonData); // Debug log
+        console.log('Données Excel brutes:', jsonData);
 
-        // Map column names to standardized format with more variations
+        // Trouver les noms de colonnes dans le fichier
+        const firstRow = jsonData[0] || {};
+        const columns = Object.keys(firstRow);
+        console.log('Colonnes trouvées:', columns);
+
         const participants = jsonData.map(row => {
-          // Get the first non-empty value from possible column names
-          const nom = row.nom || row.Nom || row.NOM || row.name || row.Name || row.NAME || '';
-          const prenom = row.prenom || row.Prenom || row.PRENOM || row.firstname || row.Firstname || row.FirstName || '';
-          
-          console.log('Mapping row:', row, 'to:', { nom, prenom }); // Debug log
+          // Chercher la colonne qui contient le nom
+          const nomColumn = columns.find(col => 
+            col.toLowerCase().includes('nom') || 
+            col.toLowerCase().includes('name') ||
+            col.toLowerCase() === 'nom'
+          );
+
+          // Chercher la colonne qui contient le prénom
+          const prenomColumn = columns.find(col => 
+            col.toLowerCase().includes('prenom') || 
+            col.toLowerCase().includes('prénom') ||
+            col.toLowerCase().includes('firstname') ||
+            col.toLowerCase() === 'prenom'
+          );
+
+          if (!nomColumn || !prenomColumn) {
+            console.log('Colonnes non trouvées pour la ligne:', row);
+            return null;
+          }
+
+          const nom = row[nomColumn]?.toString().trim() || '';
+          const prenom = row[prenomColumn]?.toString().trim() || '';
+
+          console.log('Traitement ligne:', { nom, prenom });
 
           return {
-            nom: nom.toString().trim(),
-            prenom: prenom.toString().trim(),
+            nom,
+            prenom,
             id: crypto.randomUUID()
           };
-        }).filter(p => p.nom || p.prenom); // Filter out empty entries
+        }).filter((p): p is Participant => p !== null && (p.nom !== '' || p.prenom !== ''));
 
-        // Remove duplicates based on both nom and prenom
+        console.log('Participants avant dédoublonnage:', participants.length);
+
+        // Supprimer les doublons
         const uniqueParticipants = Array.from(
           new Map(
             participants.map(item => [
@@ -56,12 +81,12 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
           ).values()
         );
 
-        console.log('Unique Participants:', uniqueParticipants); // Debug log
+        console.log('Participants après dédoublonnage:', uniqueParticipants.length);
 
         if (uniqueParticipants.length === 0) {
           toast({
             title: "Erreur",
-            description: "Aucun participant trouvé dans le fichier. Vérifiez les noms des colonnes (nom/prenom).",
+            description: "Aucun participant trouvé dans le fichier. Vérifiez les noms des colonnes (nom/prénom).",
             variant: "destructive",
           });
           return;
@@ -72,8 +97,9 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
           title: "Fichier importé avec succès",
           description: `${uniqueParticipants.length} participants uniques chargés`,
         });
+
       } catch (error) {
-        console.error('Error parsing Excel file:', error);
+        console.error('Erreur lors de la lecture du fichier Excel:', error);
         toast({
           title: "Erreur",
           description: "Impossible de lire le fichier Excel. Vérifiez le format du fichier.",
@@ -81,6 +107,7 @@ export const FileImport = ({ onParticipantsImported }: FileImportProps) => {
         });
       }
     };
+
     reader.readAsArrayBuffer(file);
   };
 
