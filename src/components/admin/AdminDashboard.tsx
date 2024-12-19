@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import AdminContestManager from "./AdminContestManager";
 import ContestList from "./ContestList";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Award, Shuffle, Database, Gift } from "lucide-react";
+import { Users, Award, Shuffle, Database, Gift, Plus } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const AdminDashboard = () => {
@@ -44,7 +44,28 @@ const AdminDashboard = () => {
   return (
     <div className="max-w-6xl mx-auto p-4">
       <div className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="w-5 h-5 text-indigo-500" />
+                Création
+              </CardTitle>
+              <CardDescription>
+                Créer un nouveau concours
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                className="w-full"
+                variant="outline"
+                onClick={() => setIsNewContestOpen(!isNewContestOpen)}
+              >
+                Nouveau concours
+              </Button>
+            </CardContent>
+          </Card>
+
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -154,13 +175,6 @@ const AdminDashboard = () => {
         </div>
 
         <Collapsible open={isNewContestOpen} onOpenChange={setIsNewContestOpen}>
-          <div className="flex items-center justify-between mb-4">
-            <CollapsibleTrigger asChild>
-              <Button variant="outline">
-                Créer un nouveau concours
-              </Button>
-            </CollapsibleTrigger>
-          </div>
           <CollapsibleContent className="space-y-2">
             <AdminContestManager />
           </CollapsibleContent>
