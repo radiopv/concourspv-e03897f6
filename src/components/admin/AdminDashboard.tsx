@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Pencil } from "lucide-react";
+import { Pencil, ListPlus } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -51,14 +51,24 @@ const AdminDashboard = () => {
                       Participants: {contest.participants?.count || 0}
                     </p>
                   </div>
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate(`/admin/contests/${contest.id}`)}
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Gérer
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/admin/contests/${contest.id}/questions`)}
+                    >
+                      <ListPlus className="h-4 w-4 mr-2" />
+                      Questions
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/admin/contests/${contest.id}`)}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Gérer
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}

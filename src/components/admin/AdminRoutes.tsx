@@ -6,7 +6,7 @@ import ContestStats from "@/components/contests/ContestStats";
 import ContestList from "./ContestList";
 import ContentValidator from "./ContentValidator";
 import { PrizeCatalogManager } from "./prize-catalog/PrizeCatalogManager";
-import EditQuestionsList from "./EditQuestionsList";
+import QuestionsManager from "./QuestionsManager";
 
 const AdminRoutes = () => {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const AdminRoutes = () => {
       <Route path="/question-bank" element={<QuestionBank />} />
       <Route path="/contests" element={<ContestList onSelectContest={handleSelectContest} />} />
       <Route path="/contests/:id" element={<Contest />} />
-      <Route path="/contests/:id/questions" element={<EditQuestionsList contestId={params.id || ''} />} />
+      <Route path="/contests/:id/questions" element={<QuestionsManager contestId={params.id || ''} />} />
       <Route path="/contests/:id/stats" element={<ContestStats contestId={params.id || ''} />} />
       <Route path="/prize-catalog" element={<PrizeCatalogManager />} />
       <Route path="/content-validator" element={<ContentValidator />} />
