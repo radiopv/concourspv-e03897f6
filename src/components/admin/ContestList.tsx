@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import EditContestForm from './EditContestForm';
-import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import ContestListHeader from './contest-list/ContestListHeader';
 import ContestListGrid from './contest-list/ContestListGrid';
@@ -11,7 +10,7 @@ import { useContestMutations } from './hooks/useContestMutations';
 type ContestStatus = 'draft' | 'active' | 'archived';
 
 interface ContestListProps {
-  contests: Array<{
+  contests?: Array<{
     id: string;
     title: string;
     description?: string;
@@ -28,7 +27,7 @@ interface ContestListProps {
   onSelectContest: (id: string) => void;
 }
 
-const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
+const ContestList = ({ onSelectContest }: ContestListProps) => {
   const [editingContestId, setEditingContestId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   
@@ -53,7 +52,7 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
       <ContestListHeader />
       
       <ContestListGrid
-        contests={contestsWithCounts || contests}
+        contests={contestsWithCounts || []}
         onDelete={(id) => deleteMutation.mutate(id)}
         onArchive={(id) => archiveMutation.mutate(id)}
         onFeatureToggle={(id, featured) => featureToggleMutation.mutate({ id, featured })}
