@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { PrizeList } from "./prize/PrizeList";
+import PrizeList from "./prize/PrizeList";
 import { PrizeCatalogDialog } from "./prize/PrizeCatalogDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";

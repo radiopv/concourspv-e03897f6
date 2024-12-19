@@ -2,7 +2,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from "@/components/ui/card";
 import { Trophy } from "lucide-react";
-import { supabase } from "../App";
+import { supabase } from "@/lib/supabase";
 import ContestStats from '@/components/contest/ContestStats';
 import TopParticipantsList from '@/components/contest/TopParticipantsList';
 import ContestGeneralStats from '@/components/contest/ContestGeneralStats';

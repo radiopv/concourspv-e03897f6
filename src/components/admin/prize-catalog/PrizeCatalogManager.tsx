@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import PrizeCatalogDialog from "./prize/PrizeCatalogDialog";
-import PrizeList from "./prize/PrizeList";
+import { PrizeCatalogDialog } from "../prize/PrizeCatalogDialog";
+import PrizeList from "../prize/PrizeList";
+import { useToast } from "@/hooks/use-toast";
 
 const PrizeCatalogManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -43,3 +44,4 @@ const PrizeCatalogManager = () => {
 };
 
 export default PrizeCatalogManager;
+
