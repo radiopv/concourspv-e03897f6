@@ -3,18 +3,48 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 const HeroSection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: ""
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleQuickSignup = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.name || !formData.email) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs",
+        variant: "destructive"
+      });
+      return;
+    }
+
     toast({
       title: "Inscription en cours",
       description: "Redirection vers le formulaire complet...",
     });
-    navigate("/register");
+
+    // Pass the form data through navigation state
+    navigate("/register", { 
+      state: { 
+        name: formData.name,
+        email: formData.email 
+      }
+    });
   };
 
   return (
@@ -47,11 +77,17 @@ const HeroSection = () => {
           >
             <Input 
               type="text" 
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
               placeholder="Votre nom" 
               className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
             />
             <Input 
               type="email" 
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
               placeholder="Votre email" 
               className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
             />

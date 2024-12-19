@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
 import RegisterForm from "@/components/register/RegisterForm";
 import { Trophy, Bell, Share2, Camera } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 const Register = () => {
+  const location = useLocation();
+  const prefilledData = location.state || {};
+
   return (
     <div className="container max-w-4xl mx-auto px-4 py-8">
       <motion.div
@@ -73,7 +77,7 @@ const Register = () => {
         </div>
 
         <div className="bg-white p-8 rounded-lg shadow-lg">
-          <RegisterForm />
+          <RegisterForm prefilledData={prefilledData} />
         </div>
       </motion.div>
     </div>

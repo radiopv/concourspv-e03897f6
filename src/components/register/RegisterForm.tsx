@@ -2,8 +2,21 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import ProfilePhotoUpload from "./ProfilePhotoUpload";
 
-const RegisterForm = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+interface RegisterFormProps {
+  prefilledData?: {
+    name?: string;
+    email?: string;
+  };
+}
+
+const RegisterForm = ({ prefilledData }: RegisterFormProps) => {
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: {
+      username: prefilledData?.name || '',
+      email: prefilledData?.email || '',
+      password: '',
+    }
+  });
 
   const onSubmit = (data: any) => {
     console.log(data);
