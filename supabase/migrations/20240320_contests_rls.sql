@@ -7,12 +7,17 @@ on contests
 for all
 using (
   auth.jwt() ->> 'email' = 'renaudcanuel@me.com'
-)
-with check (
-  auth.jwt() ->> 'email' = 'renaudcanuel@me.com'
 );
 
--- Create policy for public to read active contests
+-- Create policy for authenticated users to view contests
+create policy "Authenticated users can view contests"
+on contests
+for select
+using (
+  auth.role() = 'authenticated'
+);
+
+-- Create policy for public to view active contests
 create policy "Public can view active contests"
 on contests
 for select
