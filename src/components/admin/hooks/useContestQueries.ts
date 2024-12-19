@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../../App";
 
 export const useContestQueries = () => {
   const { data: contestsWithCounts, isLoading } = useQuery({

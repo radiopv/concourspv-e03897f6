@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "../../../App";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";

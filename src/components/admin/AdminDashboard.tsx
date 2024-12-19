@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../App";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 import AdminContestManager from "./AdminContestManager";
 import ContestList from "./ContestList";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

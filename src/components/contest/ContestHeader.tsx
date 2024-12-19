@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+
 interface ContestHeaderProps {
   title: string;
   description: string;

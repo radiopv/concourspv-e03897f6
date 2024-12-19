@@ -1,5 +1,5 @@
-// ... keep existing code (imports)
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../../App";
+
 export const drawService = {
   async performDraw(contestId: string) {
     // Vérification anti-doublons

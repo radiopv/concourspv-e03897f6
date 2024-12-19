@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import RegisterForm from "@/components/register/RegisterForm";
+import { RegisterForm } from "@/components/register/RegisterForm";
 import { Trophy, Bell, Share2, Camera } from "lucide-react";
 
 const Register = () => {

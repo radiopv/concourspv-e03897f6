@@ -10,9 +10,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../../App";
 
-export interface PrizeCatalogDialogProps {
+interface PrizeCatalogDialogProps {
   onSelectPrize: (catalogItemId: string) => void;
 }
 

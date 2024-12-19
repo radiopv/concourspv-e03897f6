@@ -1,20 +1,29 @@
-import { useForm } from "react-hook-form";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import ProfilePhotoUpload from "./ProfilePhotoUpload";
+import { ProfilePhotoUpload } from "./ProfilePhotoUpload";
+import { NotificationPreferences } from "./NotificationPreferences";
+import { SharingPreferences } from "./SharingPreferences";
 import { RegisterFormFields } from "./RegisterFormFields";
 import { useRegisterForm } from "./useRegisterForm";
 
-const RegisterForm = () => {
-  const form = useForm();
-  const { handleRegister } = useRegisterForm();
+export const RegisterForm = () => {
+  const { form, handleRegistration } = useRegisterForm();
 
   return (
-    <form onSubmit={form.handleSubmit(handleRegister)} className="space-y-6">
-      <RegisterFormFields form={form} />
-      <ProfilePhotoUpload />
-      <Button type="submit">Register</Button>
-    </form>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleRegistration)} className="space-y-6">
+        <RegisterFormFields form={form} />
+        <ProfilePhotoUpload />
+        <NotificationPreferences />
+        <SharingPreferences />
+
+        <Button
+          type="submit"
+          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
+        >
+          S'inscrire
+        </Button>
+      </form>
+    </Form>
   );
 };
-
-export default RegisterForm;

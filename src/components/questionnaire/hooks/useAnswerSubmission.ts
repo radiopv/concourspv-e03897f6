@@ -1,6 +1,6 @@
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "../../../App";
 import { useQuestionnaireState } from '../QuestionnaireState';
 import { ensureParticipantExists } from '../ParticipantManager';
 import { getRandomMessage } from '../messages';

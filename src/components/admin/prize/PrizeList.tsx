@@ -1,62 +1,71 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { supabase } from "../../../App";
+import { PrizeCard } from "./PrizeCard";
+import { Collapsible } from "@/components/ui/collapsible";
 
-const PrizeList = ({ contestId }: { contestId: string }) => {
-  const { toast } = useToast();
+interface PrizeListProps {
+  contestId: string;
+  onEdit: (prize: any) => void;
+  onDelete: (id: string) => void;
+  editForm: any;
+  onFormChange: (field: string, value: string) => void;
+  onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onCancelEdit: () => void;
+  onSaveEdit: () => void;
+  uploading: boolean;
+}
 
-  const { data: prizes, isLoading, error } = useQuery({
+export const PrizeList = ({
+  contestId,
+  onEdit,
+  onDelete,
+  editForm,
+  onFormChange,
+  onImageUpload,
+  onCancelEdit,
+  onSaveEdit,
+  uploading,
+}: PrizeListProps) => {
+  const { data: contestPrizes, isLoading } = useQuery({
     queryKey: ['prizes', contestId],
     queryFn: async () => {
+      console.log('Fetching contest prizes...');
       const { data, error } = await supabase
         .from('prizes')
-        .select('*, catalog_item:prize_catalog(*)')
+        .select(`
+          *,
+          catalog_item:prize_catalog(*)
+        `)
         .eq('contest_id', contestId);
-
-      if (error) throw error;
+      
+      if (error) {
+        console.error('Error fetching contest prizes:', error);
+        throw error;
+      }
+      console.log('Contest prizes data:', data);
       return data;
     }
   });
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    toast({
-      title: "Error",
-      description: "Failed to load prizes.",
-      variant: "destructive",
-    });
-    return null;
-  }
+  if (isLoading) return <div>Chargement des prix...</div>;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Prizes</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {prizes?.map((prize) => (
-            <div key={prize.id} className="flex justify-between items-center">
-              <span>{prize.catalog_item?.name}</span>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  // Handle prize removal
-                }}
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {contestPrizes?.map((prize) => (
+        <Collapsible key={prize.id}>
+          <PrizeCard
+            prize={prize}
+            editForm={editForm}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onFormChange={onFormChange}
+            onImageUpload={onImageUpload}
+            onCancelEdit={onCancelEdit}
+            onSaveEdit={onSaveEdit}
+            uploading={uploading}
+          />
+        </Collapsible>
+      ))}
+    </div>
   );
 };
-
-export default PrizeList;
