@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,7 @@ import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
 import ParticipationStats from "./contest-card/ParticipationStats";
 import ContestWinner from "./contest-card/ContestWinner";
-
-interface Participant {
-  id: string;
-  first_name: string;
-  last_name: string;
-  score: number;
-  status: string;
-  updated_at: string;
-}
+import { Participant } from "@/types/contest";
 
 interface ContestCardProps {
   contest: {
