@@ -16,12 +16,21 @@ const Winners = () => {
       const { data: contestsData, error: contestsError } = await supabase
         .from('contests')
         .select(`
-          *,
-          participants!inner (
-            *,
+          id,
+          title,
+          description,
+          status,
+          participants (
+            id,
+            first_name,
+            last_name,
+            score,
+            status,
+            updated_at,
+            prize_claimed,
+            prize_claimed_at,
             participant_prizes (
               prize:prizes (
-                id,
                 catalog_item:prize_catalog (
                   id,
                   name,
@@ -32,8 +41,7 @@ const Winners = () => {
             )
           )
         `)
-        .eq('participants.status', 'WINNER')
-        .order('created_at', { ascending: false });
+        .eq('participants.status', 'WINNER');
 
       if (contestsError) {
         console.error('Error fetching contests:', contestsError);
@@ -51,7 +59,7 @@ const Winners = () => {
         }))
       }));
 
-      console.log('Transformed contests:', transformedContests);
+      console.log('Transformed contests with winners:', transformedContests);
       return transformedContests;
     }
   });
