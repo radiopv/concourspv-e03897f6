@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "../../App";
 import ExcelImportForm from "./ExcelImportForm";
 import { useQueryClient } from "@tanstack/react-query";
+import CreateTestContest from "./test/CreateTestContest";
 
 const AdminContestManager = () => {
   const [newContest, setNewContest] = useState({
@@ -148,6 +149,10 @@ const AdminContestManager = () => {
         >
           {isSubmitting ? 'Création en cours...' : 'Créer le concours'}
         </Button>
+        
+        <div className="pt-4 border-t">
+          <CreateTestContest />
+        </div>
         
         <ExcelImportForm contestId={createdContestId || undefined} />
       </CardContent>
