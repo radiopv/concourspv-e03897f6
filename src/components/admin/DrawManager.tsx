@@ -13,6 +13,15 @@ const DrawManager = ({ contestId }: DrawManagerProps) => {
   const { toast } = useToast();
   const [winner, setWinner] = useState<any>(null);
 
+  // Add early return if no contestId is provided
+  if (!contestId) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-gray-600">Aucun concours sélectionné</p>
+      </div>
+    );
+  }
+
   const { data: contest } = useQuery({
     queryKey: ['contest-draw', contestId],
     queryFn: async () => {
@@ -24,7 +33,8 @@ const DrawManager = ({ contestId }: DrawManagerProps) => {
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!contestId // Only run query if contestId exists
   });
 
   const performDraw = async () => {
