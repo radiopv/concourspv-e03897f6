@@ -35,7 +35,8 @@ export const ParticipantsTable = ({ participants, title, onDelete }: Participant
           id,
           contest_id,
           status,
-          prize (
+          prizes (
+            id,
             catalog_item (
               name,
               value
@@ -43,7 +44,10 @@ export const ParticipantsTable = ({ participants, title, onDelete }: Participant
           )
         `);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching participation history:', error);
+        throw error;
+      }
 
       // Organiser les données par participant
       const history = data.reduce((acc: any, curr: any) => {
@@ -54,8 +58,12 @@ export const ParticipantsTable = ({ participants, title, onDelete }: Participant
           };
         }
         acc[curr.id].totalContests++;
-        if (curr.status === 'WINNER' && curr.prize?.[0]?.catalog_item) {
-          acc[curr.id].wonPrizes.push(curr.prize[0].catalog_item);
+        if (curr.status === 'WINNER' && curr.prizes?.length > 0) {
+          curr.prizes.forEach((prize: any) => {
+            if (prize.catalog_item) {
+              acc[curr.id].wonPrizes.push(prize.catalog_item);
+            }
+          });
         }
         return acc;
       }, {});
