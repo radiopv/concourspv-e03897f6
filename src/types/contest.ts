@@ -12,8 +12,8 @@ export interface Participant {
         name: string;
         value: string;
         image_url: string;
-      }
-    }
+      };
+    };
   }>;
 }
 
@@ -24,7 +24,7 @@ export interface Contest {
   is_new: boolean;
   has_big_prizes: boolean;
   status: string;
-  participants: Participant[];
+  participants?: Participant[];
 }
 
 export interface ContestWithParticipantCount {

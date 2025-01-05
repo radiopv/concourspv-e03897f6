@@ -43,7 +43,7 @@ export const useContests = () => {
         throw error;
       }
 
-      console.log('Fetched contests:', data);
+      // Type assertion to ensure the data matches our Contest interface
       return data as Contest[];
     }
   });

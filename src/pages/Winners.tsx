@@ -10,7 +10,7 @@ import { Contest } from "@/types/contest";
 const Winners = () => {
   const [selectedWinner, setSelectedWinner] = useState<any>(null);
 
-  const { data: contests, isLoading } = useQuery({
+  const { data: contests, isLoading } = useQuery<Contest[]>({
     queryKey: ['contests-with-winners'],
     queryFn: async () => {
       console.log('Fetching contests with winners...');
@@ -20,6 +20,8 @@ const Winners = () => {
           id,
           title,
           description,
+          is_new,
+          has_big_prizes,
           status,
           participants!inner (
             id,
