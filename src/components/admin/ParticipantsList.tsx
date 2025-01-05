@@ -1,18 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash2, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CustomBadge } from "@/components/ui/custom-badge";
+import { ParticipantsTable } from "./participants/ParticipantsTable";
 
 interface ParticipantsListProps {
   contestId: string;
@@ -41,7 +33,6 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
       
       if (error) throw error;
 
-      // Calculate scores for each participant
       return data.map(participant => {
         if (!participant.participant_answers) {
           return { ...participant, score: 0 };
@@ -122,65 +113,6 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
   const eligibleParticipants = participants?.filter(p => p.score >= 70) || [];
   const ineligibleParticipants = participants?.filter(p => p.score < 70) || [];
 
-  const ParticipantsTable = ({ participants, title }: { participants: any[], title: string }) => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <CustomBadge variant={title.includes("Éligibles") ? "success" : "secondary"}>
-          {participants.length} participants
-        </CustomBadge>
-      </div>
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Prénom</TableHead>
-            <TableHead>Nom</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Score</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead>Date de participation</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {participants.map((participant) => (
-            <TableRow key={participant.id}>
-              <TableCell>{participant.first_name}</TableCell>
-              <TableCell>{participant.last_name}</TableCell>
-              <TableCell>{participant.email}</TableCell>
-              <TableCell>
-                <CustomBadge variant={participant.score >= 70 ? "success" : "destructive"}>
-                  {participant.score}%
-                </CustomBadge>
-              </TableCell>
-              <TableCell>
-                <CustomBadge variant={participant.status === 'winner' ? "success" : "secondary"}>
-                  {participant.status === 'winner' ? 'Gagnant' : 'Participant'}
-                </CustomBadge>
-              </TableCell>
-              <TableCell>
-                {participant.completed_at 
-                  ? new Date(participant.completed_at).toLocaleDateString('fr-FR')
-                  : "N/A"
-                }
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => deleteParticipantMutation.mutate(participant.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -204,14 +136,16 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
         <TabsContent value="eligible">
           <ParticipantsTable 
             participants={eligibleParticipants} 
-            title="Participants Éligibles (Score ≥ 70%)" 
+            title="Participants Éligibles (Score ≥ 70%)"
+            onDelete={(id) => deleteParticipantMutation.mutate(id)}
           />
         </TabsContent>
 
         <TabsContent value="ineligible">
           <ParticipantsTable 
             participants={ineligibleParticipants} 
-            title="Participants Non Éligibles (Score < 70%)" 
+            title="Participants Non Éligibles (Score < 70%)"
+            onDelete={(id) => deleteParticipantMutation.mutate(id)}
           />
         </TabsContent>
       </Tabs>
