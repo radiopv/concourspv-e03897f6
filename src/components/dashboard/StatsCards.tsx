@@ -4,13 +4,18 @@ import { Target, Star, Trophy } from "lucide-react";
 
 interface StatsCardsProps {
   stats: {
-    contests_participated: number;
-    total_points: number;
-    contests_won: number;
-  };
+    contests_participated?: number;
+    total_points?: number;
+    contests_won?: number;
+  } | null;
 }
 
 const StatsCards = ({ stats }: StatsCardsProps) => {
+  // Default values if stats is null or properties are undefined
+  const participations = stats?.contests_participated || 0;
+  const points = stats?.total_points || 0;
+  const wins = stats?.contests_won || 0;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <Card>
@@ -22,7 +27,7 @@ const StatsCards = ({ stats }: StatsCardsProps) => {
           <CardDescription>Total des concours participés</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold">{stats.contests_participated || 0}</p>
+          <p className="text-3xl font-bold">{participations}</p>
         </CardContent>
       </Card>
 
@@ -35,7 +40,7 @@ const StatsCards = ({ stats }: StatsCardsProps) => {
           <CardDescription>Points accumulés</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold">{Math.round(stats.total_points || 0)}</p>
+          <p className="text-3xl font-bold">{Math.round(points)}</p>
         </CardContent>
       </Card>
 
@@ -48,7 +53,7 @@ const StatsCards = ({ stats }: StatsCardsProps) => {
           <CardDescription>Concours gagnés</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold">{stats.contests_won || 0}</p>
+          <p className="text-3xl font-bold">{wins}</p>
         </CardContent>
       </Card>
     </div>
