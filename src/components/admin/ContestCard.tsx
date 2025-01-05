@@ -79,7 +79,7 @@ const ContestCard = ({
         .from('participants')
         .select('*')
         .eq('contest_id', contest.id)
-        .eq('status', 'WINNER');
+        .eq('status', 'winner');
       
       if (error) throw error;
       return data;
@@ -206,8 +206,8 @@ const ContestCard = ({
                       <TableCell>{participant.last_name}</TableCell>
                       <TableCell>{participant.score}%</TableCell>
                       <TableCell>
-                        <CustomBadge variant={participant.status === 'WINNER' ? "success" : "secondary"}>
-                          {participant.status === 'WINNER' ? 'Gagnant' : 'Participant'}
+                        <CustomBadge variant={participant.status === 'winner' ? "success" : "secondary"}>
+                          {participant.status === 'winner' ? 'Gagnant' : 'Participant'}
                         </CustomBadge>
                       </TableCell>
                       <TableCell>
