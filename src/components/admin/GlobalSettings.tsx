@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import { useToast } from "@/hooks/use-toast";
@@ -28,11 +28,6 @@ const GlobalSettings = () => {
           throw error;
         }
         
-        if (data) {
-          setDefaultAttempts(data.default_attempts);
-          setRequiredPercentage(data.required_percentage);
-        }
-        
         return data;
       } catch (err) {
         console.error('Settings fetch error:', err);
@@ -41,6 +36,15 @@ const GlobalSettings = () => {
     },
     retry: false
   });
+
+  // Update local state when settings are loaded
+  useEffect(() => {
+    if (settings) {
+      setDefaultAttempts(settings.default_attempts);
+      setRequiredPercentage(settings.required_percentage);
+      console.log('Settings loaded:', settings); // Debug log
+    }
+  }, [settings]);
 
   const updateSettings = useMutation({
     mutationFn: async () => {
