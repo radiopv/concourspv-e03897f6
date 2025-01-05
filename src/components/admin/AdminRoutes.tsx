@@ -3,8 +3,13 @@ import AdminDashboard from "./AdminDashboard";
 import AdminContestManager from "./AdminContestManager";
 import QuestionBank from "../../pages/QuestionBank";
 import PrizeCatalogManager from "./prize-catalog/PrizeCatalogManager";
+import ParticipantsList from "./ParticipantsList";
+import DrawManager from "./DrawManager";
+import { useParams } from "react-router-dom";
 
 const AdminRoutes = () => {
+  const { contestId } = useParams();
+
   return (
     <div className="container mx-auto p-4">
       <nav className="mb-8">
@@ -30,7 +35,7 @@ const AdminRoutes = () => {
               to="/admin/questions"
               className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
             >
-              Questions
+              Banque de questions
             </Link>
           </li>
           <li>
@@ -41,6 +46,26 @@ const AdminRoutes = () => {
               Catalogue des prix
             </Link>
           </li>
+          {contestId && (
+            <>
+              <li>
+                <Link
+                  to={`/admin/contests/${contestId}/participants`}
+                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+                >
+                  Participants
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to={`/admin/contests/${contestId}/draw`}
+                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+                >
+                  Tirage
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
       </nav>
 
@@ -49,6 +74,8 @@ const AdminRoutes = () => {
         <Route path="contests/*" element={<AdminContestManager />} />
         <Route path="questions" element={<QuestionBank />} />
         <Route path="prizes" element={<PrizeCatalogManager />} />
+        <Route path="contests/:contestId/participants" element={<ParticipantsList />} />
+        <Route path="contests/:contestId/draw" element={<DrawManager />} />
       </Routes>
     </div>
   );
