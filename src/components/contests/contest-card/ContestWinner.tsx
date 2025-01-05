@@ -8,7 +8,7 @@ interface ContestWinnerProps {
   winner: {
     first_name: string;
     last_name: string;
-    updated_at: string;
+    created_at: string;
   };
 }
 
@@ -30,7 +30,7 @@ const ContestWinner = ({ winner }: ContestWinnerProps) => {
                 {winner.first_name} {winner.last_name}
               </p>
               <p className="text-xs text-amber-700">
-                Le {format(new Date(winner.updated_at), 'dd MMMM yyyy', { locale: fr })}
+                Le {format(new Date(winner.created_at), 'dd MMMM yyyy', { locale: fr })}
               </p>
             </div>
           </div>

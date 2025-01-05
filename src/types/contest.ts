@@ -1,3 +1,16 @@
+export interface CatalogItem {
+  id: string;
+  name: string;
+  value: string;
+  image_url: string;
+}
+
+export interface ParticipantPrize {
+  prize: {
+    catalog_item: CatalogItem;
+  };
+}
+
 export interface Participant {
   id: string;
   first_name: string;
@@ -5,16 +18,7 @@ export interface Participant {
   score: number;
   status: string;
   created_at: string;
-  participant_prizes?: Array<{
-    prize: {
-      catalog_item: {
-        id: string;
-        name: string;
-        value: string;
-        image_url: string;
-      };
-    };
-  }>;
+  participant_prizes?: ParticipantPrize[];
 }
 
 export interface Contest {
