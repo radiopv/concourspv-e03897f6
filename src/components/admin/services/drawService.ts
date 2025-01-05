@@ -1,6 +1,6 @@
 import { supabase } from "../../../App";
 import { QueryClient } from "@tanstack/react-query";
-import { PARTICIPANT_STATUS } from "@/types/participant";
+import { PARTICIPANT_STATUS, isValidParticipantStatus } from "@/types/participant";
 
 export const drawService = {
   async endContestAndDraw(contestId: string, queryClient: QueryClient) {
@@ -55,10 +55,16 @@ export const drawService = {
       // Select random winner
       const winner = eligibleParticipants[Math.floor(Math.random() * eligibleParticipants.length)];
 
-      // Update winner status using the correct enum value
+      // Validate status before update
+      const newStatus = PARTICIPANT_STATUS.WINNER;
+      if (!isValidParticipantStatus(newStatus)) {
+        throw new Error(`Invalid participant status: ${newStatus}`);
+      }
+
+      // Update winner status
       const { error: winnerError } = await supabase
         .from('participants')
-        .update({ status: PARTICIPANT_STATUS.WINNER })
+        .update({ status: newStatus })
         .eq('id', winner.id);
 
       if (winnerError) throw winnerError;
