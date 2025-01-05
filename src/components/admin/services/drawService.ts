@@ -29,14 +29,18 @@ export const drawService = {
     console.log(`Using required percentage: ${requiredPercentage}%`);
 
     // Get eligible participants using the required percentage from settings
+    // Removed the .is('status', null) filter to include all participants with sufficient score
     const { data: eligibleParticipants, error: participantsError } = await supabase
       .from('participants')
       .select('*')
       .eq('contest_id', contestId)
       .gte('score', requiredPercentage)
-      .is('status', null);
+      .neq('status', 'WINNER'); // Exclude only previous winners
 
     if (participantsError) throw participantsError;
+    
+    console.log('Eligible participants:', eligibleParticipants);
+
     if (!eligibleParticipants?.length) {
       throw new Error(`Aucun participant n'a obtenu un score suffisant (minimum ${requiredPercentage}%)`);
     }
