@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+import { Settings, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const GlobalSettings = () => {
   const { toast } = useToast();
@@ -13,39 +14,32 @@ const GlobalSettings = () => {
   const [defaultAttempts, setDefaultAttempts] = useState<number>(3);
   const [requiredPercentage, setRequiredPercentage] = useState<number>(70);
 
-  const { data: settings, isLoading } = useQuery({
+  const { data: settings, isLoading, error } = useQuery({
     queryKey: ['global-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('*')
-        .single();
-      
-      if (error) {
-        // If no data exists, create initial settings
-        if (error.code === 'PGRST116') {
-          const { data: newData, error: insertError } = await supabase
-            .from('settings')
-            .insert([{
-              default_attempts: defaultAttempts,
-              required_percentage: requiredPercentage
-            }])
-            .select()
-            .single();
-          
-          if (insertError) throw insertError;
-          return newData;
+      try {
+        const { data, error } = await supabase
+          .from('settings')
+          .select('*')
+          .single();
+        
+        if (error) {
+          console.error('Settings fetch error:', error);
+          throw error;
         }
-        throw error;
+        
+        if (data) {
+          setDefaultAttempts(data.default_attempts);
+          setRequiredPercentage(data.required_percentage);
+        }
+        
+        return data;
+      } catch (err) {
+        console.error('Settings fetch error:', err);
+        throw err;
       }
-      
-      if (data) {
-        setDefaultAttempts(data.default_attempts);
-        setRequiredPercentage(data.required_percentage);
-      }
-      
-      return data;
-    }
+    },
+    retry: false
   });
 
   const updateSettings = useMutation({
@@ -85,6 +79,21 @@ const GlobalSettings = () => {
     e.preventDefault();
     updateSettings.mutate();
   };
+
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto p-4">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Erreur de configuration</AlertTitle>
+          <AlertDescription>
+            La table des paramètres n'existe pas encore dans la base de données. 
+            Veuillez exécuter le script de migration pour créer la table des paramètres.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <div>Chargement...</div>;
