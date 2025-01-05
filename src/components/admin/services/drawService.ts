@@ -29,13 +29,12 @@ export const drawService = {
     console.log(`Using required percentage: ${requiredPercentage}%`);
 
     // Get eligible participants using the required percentage from settings
-    // Removed the .is('status', null) filter to include all participants with sufficient score
     const { data: eligibleParticipants, error: participantsError } = await supabase
       .from('participants')
       .select('*')
       .eq('contest_id', contestId)
       .gte('score', requiredPercentage)
-      .neq('status', 'WINNER'); // Exclude only previous winners
+      .neq('status', 'winner'); // Changed from 'WINNER' to 'winner'
 
     if (participantsError) throw participantsError;
     
@@ -51,7 +50,7 @@ export const drawService = {
     // Update winner status - explicitly set status to match enum
     const { error: winnerError } = await supabase
       .from('participants')
-      .update({ status: 'WINNER' })
+      .update({ status: 'winner' }) // Changed from 'WINNER' to 'winner'
       .eq('id', winner.id);
 
     if (winnerError) throw winnerError;
