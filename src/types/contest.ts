@@ -11,9 +11,7 @@ export interface Contest {
     last_name: string;
     score: number;
     status: string;
-    created_at: string; // Changed from updated_at to created_at
-    prize_claimed?: boolean;
-    prize_claimed_at?: string;
+    created_at: string;
     participant_prizes?: Array<{
       prize: {
         catalog_item: {

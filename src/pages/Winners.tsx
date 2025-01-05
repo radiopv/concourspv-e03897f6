@@ -27,8 +27,6 @@ const Winners = () => {
             score,
             status,
             created_at,
-            prize_claimed,
-            prize_claimed_at,
             participant_prizes (
               prize:prizes (
                 catalog_item:prize_catalog (

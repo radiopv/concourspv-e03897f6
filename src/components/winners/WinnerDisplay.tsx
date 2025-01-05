@@ -10,8 +10,6 @@ interface WinnerDisplayProps {
     last_name: string;
     score: number;
     created_at: string;
-    prize_claimed: boolean;
-    prize_claimed_at?: string;
     prize?: Array<{
       catalog_item: {
         name: string;
@@ -75,15 +73,6 @@ const WinnerDisplay = ({ winner, contestTitle }: WinnerDisplayProps) => {
                 </p>
               </div>
             </div>
-          </div>
-        )}
-
-        {winner.prize_claimed && (
-          <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg">
-            <Medal className="w-5 h-5" />
-            <span className="text-sm font-medium">
-              Prix réclamé le {format(new Date(winner.prize_claimed_at!), 'dd/MM/yyyy')}
-            </span>
           </div>
         )}
       </CardContent>
