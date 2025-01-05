@@ -9,12 +9,13 @@ import ContestStatusBadge from './contest-card/ContestStatusBadge';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
+import { drawService } from './services/drawService';
 
 interface ContestCardProps {
   contest: {
@@ -51,7 +52,6 @@ const ContestCard = ({
   const endDate = new Date(contest.end_date);
   const drawDate = contest.draw_date ? new Date(contest.draw_date) : null;
   const isExpiringSoon = endDate.getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000;
-  const canDraw = drawDate && new Date() >= drawDate;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -62,7 +62,7 @@ const ContestCard = ({
         .from('participants')
         .select('*')
         .eq('contest_id', contest.id)
-        .eq('status', 'winner');
+        .eq('status', 'WINNER');
       
       if (error) throw error;
       return data;
@@ -76,52 +76,7 @@ const ContestCard = ({
 
   const handleEndContestAndDraw = async () => {
     try {
-      // Mettre à jour la date de fin et la date de tirage au sort
-      const now = new Date().toISOString();
-      const { error: updateError } = await supabase
-        .from('contests')
-        .update({ 
-          end_date: now,
-          draw_date: now,
-          status: 'completed'
-        })
-        .eq('id', contest.id);
-
-      if (updateError) throw updateError;
-
-      // Sélectionner un gagnant parmi les participants éligibles (score >= 70%)
-      const { data: eligibleParticipants, error: participantsError } = await supabase
-        .from('participants')
-        .select('*')
-        .eq('contest_id', contest.id)
-        .gte('score', 70);
-
-      if (participantsError) throw participantsError;
-
-      if (!eligibleParticipants?.length) {
-        toast({
-          title: "Aucun gagnant possible",
-          description: "Aucun participant n'a obtenu un score suffisant (minimum 70%)",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Sélectionner un gagnant au hasard
-      const winner = eligibleParticipants[Math.floor(Math.random() * eligibleParticipants.length)];
-
-      // Mettre à jour le statut du gagnant
-      const { error: winnerError } = await supabase
-        .from('participants')
-        .update({ status: 'winner' })
-        .eq('id', winner.id);
-
-      if (winnerError) throw winnerError;
-
-      // Rafraîchir les données
-      await queryClient.invalidateQueries({ queryKey: ['contests'] });
-      await queryClient.invalidateQueries({ queryKey: ['contest-winners', contest.id] });
-
+      const winner = await drawService.endContestAndDraw(contest.id, queryClient);
       toast({
         title: "Concours terminé",
         description: `Le gagnant est ${winner.first_name} ${winner.last_name} avec un score de ${winner.score}%`,
@@ -130,7 +85,7 @@ const ContestCard = ({
       console.error('Error ending contest:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de terminer le concours",
+        description: error instanceof Error ? error.message : "Impossible de terminer le concours",
         variant: "destructive",
       });
     }
@@ -197,28 +152,22 @@ const ContestCard = ({
             </Button>
           )}
 
-          {drawDate && (
+          {drawDate && winners && winners.length > 0 && (
             <div className="pt-2 border-t">
               <p className="text-sm text-gray-600 mb-2">
                 Date du tirage : {format(drawDate, 'dd MMMM yyyy', { locale: fr })}
               </p>
-              {winners && winners.length > 0 && (
-                <div className="bg-amber-50 p-3 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Trophy className="w-5 h-5 text-amber-600" />
-                    <h4 className="font-semibold text-amber-900">Gagnants</h4>
-                  </div>
-                  <div className="space-y-2">
-                    {winners.map((winner) => (
-                      <div key={winner.id} className="flex items-center gap-2 text-sm">
-                        <Users className="w-4 h-4 text-amber-600" />
-                        <span>{winner.first_name} {winner.last_name}</span>
-                        <span className="text-amber-600">({winner.score}%)</span>
-                      </div>
-                    ))}
-                  </div>
+              <div className="bg-amber-50 p-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-amber-600" />
+                  <h4 className="font-semibold text-amber-900">Gagnants</h4>
                 </div>
-              )}
+                {winners.map((winner) => (
+                  <div key={winner.id} className="mt-2 text-sm text-amber-800">
+                    {winner.first_name} {winner.last_name} ({winner.score}%)
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
