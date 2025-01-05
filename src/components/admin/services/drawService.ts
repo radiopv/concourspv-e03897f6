@@ -35,13 +35,12 @@ export const drawService = {
 
       if (updateError) throw updateError;
 
-      // Get eligible participants
+      // Get eligible participants (only check score, not status)
       const { data: eligibleParticipants, error: participantsError } = await supabase
         .from('participants')
         .select('*')
         .eq('contest_id', contestId)
-        .gte('score', requiredPercentage)
-        .is('status', null);
+        .gte('score', requiredPercentage);
 
       if (participantsError) throw participantsError;
       
