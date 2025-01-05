@@ -34,14 +34,17 @@ const AdminDashboard = () => {
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: true
   });
 
   if (isLoading) {
     return <div>Chargement...</div>;
   }
 
-  const firstContestId = contests?.[0]?.id;
+  // Sélectionner le premier concours actif par défaut
+  const activeContest = contests?.find(contest => contest.status === 'active');
+  const contestToUse = selectedContest || activeContest?.id;
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -58,8 +61,8 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {firstContestId ? (
-                <Link to={`/admin/contests/${firstContestId}/participants`}>
+              {contestToUse ? (
+                <Link to={`/admin/contests/${contestToUse}/participants`}>
                   <Button 
                     className="w-full"
                     variant="outline"
@@ -90,8 +93,8 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {firstContestId ? (
-                <Link to={`/admin/contests/${firstContestId}/draw`}>
+              {contestToUse ? (
+                <Link to={`/admin/contests/${contestToUse}/draw`}>
                   <Button 
                     className="w-full"
                     variant="outline"
@@ -122,8 +125,8 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {firstContestId ? (
-                <Link to={`/admin/contests/${firstContestId}/winners`}>
+              {contestToUse ? (
+                <Link to={`/admin/contests/${contestToUse}/winners`}>
                   <Button 
                     className="w-full"
                     variant="outline"

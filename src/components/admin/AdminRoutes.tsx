@@ -5,6 +5,7 @@ import QuestionBank from "../../pages/QuestionBank";
 import PrizeCatalogManager from "./prize-catalog/PrizeCatalogManager";
 import ParticipantsList from "./ParticipantsList";
 import DrawManager from "./DrawManager";
+import Winners from "../../pages/Winners";
 import { useParams } from "react-router-dom";
 
 const AdminRoutes = () => {
@@ -64,6 +65,14 @@ const AdminRoutes = () => {
                   Tirage
                 </Link>
               </li>
+              <li>
+                <Link
+                  to={`/admin/contests/${contestId}/winners`}
+                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+                >
+                  Gagnants
+                </Link>
+              </li>
             </>
           )}
         </ul>
@@ -71,7 +80,7 @@ const AdminRoutes = () => {
 
       <Routes>
         <Route index element={<AdminDashboard />} />
-        <Route path="contests/*" element={<AdminContestManager />} />
+        <Route path="contests" element={<AdminContestManager />} />
         <Route path="questions" element={<QuestionBank />} />
         <Route path="prizes" element={<PrizeCatalogManager />} />
         <Route 
@@ -81,6 +90,10 @@ const AdminRoutes = () => {
         <Route 
           path="contests/:contestId/draw" 
           element={<DrawManager contestId={contestId || ''} />} 
+        />
+        <Route 
+          path="contests/:contestId/winners" 
+          element={<Winners />} 
         />
       </Routes>
     </div>
