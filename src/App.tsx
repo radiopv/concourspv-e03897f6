@@ -14,16 +14,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-// Check if environment variables are defined
-if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.error('Missing Supabase environment variables');
-}
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseUrl = 'https://fgnrvnyzyiaqtzsyegzn.supabase.co';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Only create the client if we have both URL and key
-export const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey, {
+// Only create the client if we have the key
+export const supabase = supabaseKey ? createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
@@ -35,7 +30,7 @@ const queryClient = new QueryClient();
 
 export default function App() {
   // Show error message if environment variables are missing
-  if (!supabaseUrl || !supabaseKey) {
+  if (!supabaseKey) {
     return (
       <div className="container mx-auto p-4">
         <Alert variant="destructive">
