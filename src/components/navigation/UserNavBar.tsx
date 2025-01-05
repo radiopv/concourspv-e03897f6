@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Trophy, Menu, Settings } from "lucide-react";
+import { Trophy, Menu, Settings, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const UserNavBar = () => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const isAdmin = user?.email === "renaudcanuel@me.com";
 
   const NavLinks = () => (
@@ -46,6 +46,17 @@ const UserNavBar = () => {
           Administration
         </Link>
       )}
+      <Button
+        variant="ghost"
+        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 p-0 h-auto"
+        onClick={() => {
+          signOut();
+          setIsOpen(false);
+        }}
+      >
+        <LogOut className="w-4 h-4" />
+        Déconnexion
+      </Button>
     </div>
   );
 
