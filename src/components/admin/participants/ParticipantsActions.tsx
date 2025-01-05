@@ -29,7 +29,7 @@ export const ParticipantsActions = ({ participants, contestId }: ParticipantsAct
           ...participant,
           contest_id: contestId,
           completed_at: new Date().toISOString(),
-          status: participant.score >= 70 ? 'eligible' : 'ineligible'
+          status: 'pending' // On utilise 'pending' comme valeur par défaut
         }]);
 
       if (error) {
