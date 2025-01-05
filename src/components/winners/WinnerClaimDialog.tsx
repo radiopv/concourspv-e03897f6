@@ -37,7 +37,7 @@ const WinnerClaimDialog = ({ winner, open, onClose }: WinnerClaimDialogProps) =>
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['winners'] });
+      queryClient.invalidateQueries({ queryKey: ['contests-with-winners'] });
       toast({
         title: "Prix réclamé avec succès",
         description: "Nous vous contacterons bientôt pour la livraison.",
