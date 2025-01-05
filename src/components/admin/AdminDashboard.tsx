@@ -41,6 +41,8 @@ const AdminDashboard = () => {
     return <div>Chargement...</div>;
   }
 
+  const firstContestId = contests?.[0]?.id;
+
   return (
     <div className="max-w-6xl mx-auto p-4">
       <div className="space-y-8">
@@ -56,13 +58,24 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                className="w-full"
-                variant="outline"
-                onClick={() => setSelectedContest(contests?.[0]?.id)}
-              >
-                Voir les participants
-              </Button>
+              {firstContestId ? (
+                <Link to={`/admin/contests/${firstContestId}/participants`}>
+                  <Button 
+                    className="w-full"
+                    variant="outline"
+                  >
+                    Voir les participants
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  className="w-full"
+                  variant="outline"
+                  disabled
+                >
+                  Aucun concours disponible
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -77,13 +90,24 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                className="w-full"
-                variant="outline"
-                onClick={() => setSelectedContest(contests?.[0]?.id)}
-              >
-                Gérer les tirages
-              </Button>
+              {firstContestId ? (
+                <Link to={`/admin/contests/${firstContestId}/draw`}>
+                  <Button 
+                    className="w-full"
+                    variant="outline"
+                  >
+                    Gérer les tirages
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  className="w-full"
+                  variant="outline"
+                  disabled
+                >
+                  Aucun concours disponible
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -98,13 +122,24 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                className="w-full"
-                variant="outline"
-                onClick={() => setSelectedContest(contests?.[0]?.id)}
-              >
-                Voir les gagnants
-              </Button>
+              {firstContestId ? (
+                <Link to={`/admin/contests/${firstContestId}/winners`}>
+                  <Button 
+                    className="w-full"
+                    variant="outline"
+                  >
+                    Voir les gagnants
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  className="w-full"
+                  variant="outline"
+                  disabled
+                >
+                  Aucun concours disponible
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -119,7 +154,7 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to="/admin/question-bank">
+              <Link to="/admin/questions">
                 <Button 
                   className="w-full"
                   variant="outline"
