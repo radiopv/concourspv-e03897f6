@@ -6,6 +6,7 @@ import PrizeCatalogManager from "./prize-catalog/PrizeCatalogManager";
 import ParticipantsList from "./ParticipantsList";
 import DrawManager from "./DrawManager";
 import Winners from "../../pages/Winners";
+import GlobalSettings from "./GlobalSettings";
 import { useParams } from "react-router-dom";
 
 const AdminRoutes = () => {
@@ -47,6 +48,14 @@ const AdminRoutes = () => {
               Catalogue des prix
             </Link>
           </li>
+          <li>
+            <Link
+              to="/admin/settings"
+              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+            >
+              Paramètres
+            </Link>
+          </li>
           {contestId && (
             <>
               <li>
@@ -83,6 +92,7 @@ const AdminRoutes = () => {
         <Route path="contests" element={<AdminContestManager />} />
         <Route path="questions" element={<QuestionBank />} />
         <Route path="prizes" element={<PrizeCatalogManager />} />
+        <Route path="settings" element={<GlobalSettings />} />
         <Route 
           path="contests/:contestId/participants" 
           element={<ParticipantsList />} 
