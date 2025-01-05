@@ -9,12 +9,16 @@ export const useContests = () => {
         .from('contests')
         .select(`
           *,
-          participants (
+          participants:participants (
             count,
-            status,
-            first_name,
-            last_name,
-            updated_at
+            data:* (
+              id,
+              first_name,
+              last_name,
+              score,
+              status,
+              updated_at
+            )
           )
         `)
         .eq('status', 'active')

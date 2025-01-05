@@ -20,6 +20,15 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CustomBadge } from "@/components/ui/custom-badge";
 
+interface Participant {
+  id: string;
+  first_name: string;
+  last_name: string;
+  score: number;
+  status: string;
+  updated_at: string;
+}
+
 interface ContestCardProps {
   contest: {
     id: string;
@@ -28,13 +37,10 @@ interface ContestCardProps {
     is_new: boolean;
     has_big_prizes: boolean;
     status: string;
-    participants?: { 
+    participants?: {
       count: number;
-      status?: string;
-      first_name?: string;
-      last_name?: string;
-      updated_at?: string;
-    }[];
+      data?: Participant[];
+    };
   };
   onSelect: (id: string) => void;
   index: number;
@@ -44,7 +50,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const [showParticipants, setShowParticipants] = useState(false);
 
   // Find winner if contest has one
-  const winner = contest.participants?.find(p => p.status === 'WINNER');
+  const winner = contest.participants?.data?.find(p => p.status === 'WINNER');
 
   const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
@@ -169,7 +175,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contest.participants?.map((participant) => (
+                {contest.participants?.data?.map((participant) => (
                   <TableRow key={participant.id}>
                     <TableCell>{participant.first_name}</TableCell>
                     <TableCell>{participant.last_name}</TableCell>
