@@ -42,9 +42,9 @@ const AdminDashboard = () => {
     return <div>Chargement...</div>;
   }
 
-  // Sélectionner le premier concours actif par défaut
+  // Sélectionner le premier concours actif par défaut si aucun n'est sélectionné
   const activeContest = contests?.find(contest => contest.status === 'active');
-  const contestToUse = selectedContest || activeContest?.id;
+  const contestToUse = selectedContest || (activeContest?.id || '');
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -61,24 +61,18 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {contestToUse ? (
-                <Link to={`/admin/contests/${contestToUse}/participants`}>
-                  <Button 
-                    className="w-full"
-                    variant="outline"
-                  >
-                    Voir les participants
-                  </Button>
-                </Link>
-              ) : (
+              <Link 
+                to={`/admin/contests/${contestToUse}/participants`}
+                className={!contestToUse ? 'pointer-events-none' : ''}
+              >
                 <Button 
                   className="w-full"
                   variant="outline"
-                  disabled
+                  disabled={!contestToUse}
                 >
-                  Aucun concours disponible
+                  Voir les participants
                 </Button>
-              )}
+              </Link>
             </CardContent>
           </Card>
 
@@ -93,24 +87,18 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {contestToUse ? (
-                <Link to={`/admin/contests/${contestToUse}/draw`}>
-                  <Button 
-                    className="w-full"
-                    variant="outline"
-                  >
-                    Gérer les tirages
-                  </Button>
-                </Link>
-              ) : (
+              <Link 
+                to={`/admin/contests/${contestToUse}/draw`}
+                className={!contestToUse ? 'pointer-events-none' : ''}
+              >
                 <Button 
                   className="w-full"
                   variant="outline"
-                  disabled
+                  disabled={!contestToUse}
                 >
-                  Aucun concours disponible
+                  Gérer les tirages
                 </Button>
-              )}
+              </Link>
             </CardContent>
           </Card>
 
@@ -125,24 +113,18 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {contestToUse ? (
-                <Link to={`/admin/contests/${contestToUse}/winners`}>
-                  <Button 
-                    className="w-full"
-                    variant="outline"
-                  >
-                    Voir les gagnants
-                  </Button>
-                </Link>
-              ) : (
+              <Link 
+                to={`/admin/contests/${contestToUse}/winners`}
+                className={!contestToUse ? 'pointer-events-none' : ''}
+              >
                 <Button 
                   className="w-full"
                   variant="outline"
-                  disabled
+                  disabled={!contestToUse}
                 >
-                  Aucun concours disponible
+                  Voir les gagnants
                 </Button>
-              )}
+              </Link>
             </CardContent>
           </Card>
 
