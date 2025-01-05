@@ -5,12 +5,10 @@ import { Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParticipantsTable } from "./participants/ParticipantsTable";
+import { useParams } from "react-router-dom";
 
-interface ParticipantsListProps {
-  contestId: string;
-}
-
-const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
+const ParticipantsList = () => {
+  const { contestId } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

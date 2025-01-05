@@ -85,7 +85,7 @@ const AdminRoutes = () => {
         <Route path="prizes" element={<PrizeCatalogManager />} />
         <Route 
           path="contests/:contestId/participants" 
-          element={<ParticipantsList contestId={contestId || ''} />} 
+          element={<ParticipantsList />} 
         />
         <Route 
           path="contests/:contestId/draw" 
