@@ -1,86 +1,48 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Trophy, Gift, Medal } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { Trophy } from "lucide-react";
+import WinnersList from "@/components/winners/WinnersList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WinnerClaimDialog from "@/components/winners/WinnerClaimDialog";
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import WinnersList from "@/components/winners/WinnersList";
-import { useToast } from "@/components/ui/use-toast";
-import { useParams } from "react-router-dom";
 
 const Winners = () => {
   const [selectedWinner, setSelectedWinner] = useState<any>(null);
-  const { toast } = useToast();
-  const { contestId } = useParams();
 
   const { data: contests, isLoading } = useQuery({
-    queryKey: ['contests-with-winners', contestId],
+    queryKey: ['contests-with-winners'],
     queryFn: async () => {
-      // First, fetch the contests
       const { data: contestsData, error: contestsError } = await supabase
         .from('contests')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (contestsError) {
-        console.error('Error fetching contests:', contestsError);
-        throw contestsError;
-      }
+      if (contestsError) throw contestsError;
 
-      // Then, for each contest, fetch its winners with their prizes
       const contestsWithWinners = await Promise.all(
         contestsData.map(async (contest) => {
           const { data: winners, error: winnersError } = await supabase
             .from('participants')
             .select(`
               *,
-              contest:contests(*)
+              prize:prizes(
+                catalog_item:prize_catalog(*)
+              )
             `)
             .eq('contest_id', contest.id)
             .eq('status', 'winner');
 
-          if (winnersError) {
-            console.error('Error fetching winners:', winnersError);
-            throw winnersError;
-          }
-
-          // For each winner, fetch their prizes
-          const winnersWithPrizes = await Promise.all(
-            winners.map(async (winner) => {
-              const { data: prizes, error: prizesError } = await supabase
-                .from('prizes')
-                .select(`
-                  *,
-                  catalog_item:prize_catalog(*)
-                `)
-                .eq('contest_id', contest.id);
-
-              if (prizesError) {
-                console.error('Error fetching prizes:', prizesError);
-                throw prizesError;
-              }
-
-              return {
-                ...winner,
-                prize: prizes
-              };
-            })
-          );
+          if (winnersError) throw winnersError;
 
           return {
             ...contest,
-            participants: winnersWithPrizes
+            participants: winners
           };
         })
       );
 
       return contestsWithWinners;
-    },
-    enabled: true
+    }
   });
 
   if (isLoading) {
