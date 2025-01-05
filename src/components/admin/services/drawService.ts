@@ -3,6 +3,16 @@ import { QueryClient } from "@tanstack/react-query";
 
 export const drawService = {
   async endContestAndDraw(contestId: string, queryClient: QueryClient) {
+    // First get the required percentage from settings
+    const { data: settings, error: settingsError } = await supabase
+      .from('settings')
+      .select('required_percentage')
+      .single();
+
+    if (settingsError) throw settingsError;
+
+    const requiredPercentage = settings?.required_percentage || 70; // Fallback to 70 if no settings
+
     // Update contest end date and status
     const now = new Date().toISOString();
     const { error: updateError } = await supabase
@@ -16,17 +26,19 @@ export const drawService = {
 
     if (updateError) throw updateError;
 
-    // Get eligible participants
+    console.log(`Using required percentage: ${requiredPercentage}%`);
+
+    // Get eligible participants using the required percentage from settings
     const { data: eligibleParticipants, error: participantsError } = await supabase
       .from('participants')
       .select('*')
       .eq('contest_id', contestId)
-      .gte('score', 70)
+      .gte('score', requiredPercentage)
       .is('status', null);
 
     if (participantsError) throw participantsError;
     if (!eligibleParticipants?.length) {
-      throw new Error("Aucun participant n'a obtenu un score suffisant (minimum 70%)");
+      throw new Error(`Aucun participant n'a obtenu un score suffisant (minimum ${requiredPercentage}%)`);
     }
 
     // Select random winner
