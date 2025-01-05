@@ -39,22 +39,7 @@ const ParticipantsList = () => {
       if (error) throw error;
       console.log("Participants récupérés:", data);
 
-      return data.map(participant => {
-        if (!participant.participant_answers) {
-          return { ...participant, score: 0 };
-        }
-
-        const totalQuestions = participant.participant_answers.length;
-        const correctAnswers = participant.participant_answers.filter(answer => 
-          answer.answer === answer.questions?.correct_answer
-        ).length;
-
-        const score = totalQuestions > 0 
-          ? Math.round((correctAnswers / totalQuestions) * 100) 
-          : 0;
-
-        return { ...participant, score };
-      });
+      return data;
     },
     enabled: !!contestId
   });
