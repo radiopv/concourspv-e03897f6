@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
-import { CustomBadge } from "@/components/ui/custom-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users } from "lucide-react";
@@ -11,14 +10,15 @@ import ContestStats from "./ContestStats";
 import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
 import ParticipationStats from "./contest-card/ParticipationStats";
+import ContestWinner from "./contest-card/ContestWinner";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CustomBadge } from "@/components/ui/custom-badge";
 
 interface ContestCardProps {
   contest: {
@@ -27,7 +27,14 @@ interface ContestCardProps {
     description?: string;
     is_new: boolean;
     has_big_prizes: boolean;
-    participants?: { count: number };
+    status: string;
+    participants?: { 
+      count: number;
+      status?: string;
+      first_name?: string;
+      last_name?: string;
+      updated_at?: string;
+    }[];
   };
   onSelect: (id: string) => void;
   index: number;
@@ -35,6 +42,9 @@ interface ContestCardProps {
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const [showParticipants, setShowParticipants] = useState(false);
+
+  // Find winner if contest has one
+  const winner = contest.participants?.find(p => p.status === 'WINNER');
 
   const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
@@ -52,34 +62,6 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         .eq('contest_id', contest.id);
       return prizesData || [];
     },
-  });
-
-  const { data: participants } = useQuery({
-    queryKey: ['contest-participants', contest.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('participants')
-        .select('*')
-        .eq('contest_id', contest.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: showParticipants
-  });
-
-  const { data: settings } = useQuery({
-    queryKey: ['global-settings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('*')
-        .single();
-      
-      if (error) throw error;
-      return data;
-    }
   });
 
   const { data: userParticipation } = useQuery({
@@ -100,9 +82,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     }
   });
 
-  const remainingAttempts = settings?.default_attempts 
-    ? settings.default_attempts - (userParticipation?.attempts || 0)
-    : 0;
+  const remainingAttempts = 3; // Example value, replace with actual logic
 
   return (
     <motion.div
@@ -137,9 +117,11 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           
           <ContestStats contestId={contest.id} />
 
+          {winner && <ContestWinner winner={winner} />}
+
           <UserProgress
             userParticipation={userParticipation}
-            settings={settings}
+            settings={{}} // Replace with actual settings
             remainingAttempts={remainingAttempts}
           />
           
@@ -187,7 +169,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {participants?.map((participant) => (
+                {contest.participants?.map((participant) => (
                   <TableRow key={participant.id}>
                     <TableCell>{participant.first_name}</TableCell>
                     <TableCell>{participant.last_name}</TableCell>
@@ -198,8 +180,8 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                       </CustomBadge>
                     </TableCell>
                     <TableCell>
-                      {participant.completed_at 
-                        ? new Date(participant.completed_at).toLocaleDateString('fr-FR')
+                      {participant.updated_at 
+                        ? new Date(participant.updated_at).toLocaleDateString('fr-FR')
                         : "N/A"
                       }
                     </TableCell>
