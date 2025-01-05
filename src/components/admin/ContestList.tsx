@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import EditContestForm from './EditContestForm';
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -60,11 +60,12 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
         onStatusUpdate={(id, updates) => statusUpdateMutation.mutate({ id, updates })}
         onSelect={onSelectContest}
         onEdit={setEditingContestId}
+        editingContestId={editingContestId}
       />
 
       {editingContestId && (
-        <Dialog open={true} onOpenChange={() => setEditingContestId(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <Collapsible open={true} onOpenChange={() => setEditingContestId(null)}>
+          <CollapsibleContent className="p-4 bg-white rounded-lg shadow mt-4">
             <EditContestForm
               contestId={editingContestId}
               onClose={() => {
@@ -74,8 +75,8 @@ const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
                 queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
               }}
             />
-          </DialogContent>
-        </Dialog>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );
