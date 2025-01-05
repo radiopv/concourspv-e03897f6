@@ -5,6 +5,7 @@ import WinnersList from "@/components/winners/WinnersList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WinnerClaimDialog from "@/components/winners/WinnerClaimDialog";
 import { useState } from "react";
+import { Contest } from "@/types/contest";
 
 const Winners = () => {
   const [selectedWinner, setSelectedWinner] = useState<any>(null);
@@ -46,19 +47,8 @@ const Winners = () => {
         throw contestsError;
       }
 
-      // Transform the data to match the expected format
-      const transformedContests = contestsData.map(contest => ({
-        ...contest,
-        participants: contest.participants.map(participant => ({
-          ...participant,
-          prize: participant.participant_prizes?.[0]?.prize ? 
-            [{ catalog_item: participant.participant_prizes[0].prize.catalog_item }] : 
-            undefined
-        }))
-      }));
-
-      console.log('Transformed contests with winners:', transformedContests);
-      return transformedContests;
+      console.log('Fetched contests with winners:', contestsData);
+      return contestsData as Contest[];
     }
   });
 

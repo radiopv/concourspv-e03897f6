@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import ContestCard from "@/components/contests/ContestCard";
 import { useContests } from "@/hooks/useContests";
-import { Contest } from "@/types/contest";
+import { Contest, ContestWithParticipantCount } from "@/types/contest";
 
 const ContestsList = () => {
   const navigate = useNavigate();
@@ -47,6 +47,15 @@ const ContestsList = () => {
     );
   }
 
+  // Transform Contest[] to ContestWithParticipantCount[]
+  const contestsWithCount: ContestWithParticipantCount[] = contests.map((contest: Contest) => ({
+    ...contest,
+    participants: {
+      count: contest.participants?.length || 0,
+      data: contest.participants
+    }
+  }));
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
       <div className="container mx-auto px-4">
@@ -67,7 +76,7 @@ const ContestsList = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contests.map((contest: Contest, index) => (
+          {contestsWithCount.map((contest: ContestWithParticipantCount, index) => (
             <ContestCard
               key={contest.id}
               contest={contest}
