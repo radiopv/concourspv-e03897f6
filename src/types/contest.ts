@@ -27,13 +27,7 @@ export interface Contest {
   participants?: Participant[];
 }
 
-export interface ContestWithParticipantCount {
-  id: string;
-  title: string;
-  description?: string;
-  is_new: boolean;
-  has_big_prizes: boolean;
-  status: string;
+export interface ContestWithParticipantCount extends Omit<Contest, 'participants'> {
   participants?: {
     count: number;
     data?: Participant[];
