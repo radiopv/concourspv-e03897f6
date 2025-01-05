@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Gift, Medal } from "lucide-react";
+import { Trophy, Gift } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
