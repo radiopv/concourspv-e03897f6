@@ -34,13 +34,7 @@ export const ParticipantsTable = ({ participants, title, onDelete }: Participant
         .select(`
           id,
           contest_id,
-          status,
-          participant_prizes (
-            prize_catalog (
-              name,
-              value
-            )
-          )
+          status
         `);
       
       if (error) {
@@ -59,13 +53,6 @@ export const ParticipantsTable = ({ participants, title, onDelete }: Participant
           };
         }
         acc[curr.id].totalContests++;
-        if (curr.status === 'WINNER' && curr.participant_prizes?.length > 0) {
-          curr.participant_prizes.forEach((prize: any) => {
-            if (prize.prize_catalog) {
-              acc[curr.id].wonPrizes.push(prize.prize_catalog);
-            }
-          });
-        }
         return acc;
       }, {});
 
@@ -127,35 +114,12 @@ export const ParticipantsTable = ({ participants, title, onDelete }: Participant
                       <div className="text-sm">
                         <p className="font-semibold">Historique des participations</p>
                         <p>Total des participations: {history.totalContests}</p>
-                        <p>Ratio de victoires: {((history.wonPrizes.length / history.totalContests) * 100).toFixed(1)}%</p>
                       </div>
                     </HoverCardContent>
                   </HoverCard>
                 </TableCell>
                 <TableCell>
-                  {history.wonPrizes.length > 0 ? (
-                    <HoverCard>
-                      <HoverCardTrigger>
-                        <div className="flex items-center gap-1 cursor-help">
-                          <Award className="w-4 h-4 text-yellow-500" />
-                          {history.wonPrizes.length} prix
-                        </div>
-                      </HoverCardTrigger>
-                      <HoverCardContent>
-                        <div className="text-sm space-y-2">
-                          <p className="font-semibold">Prix gagnés</p>
-                          {history.wonPrizes.map((prize: any, index: number) => (
-                            <div key={index} className="flex justify-between">
-                              <span>{prize.name}</span>
-                              <span className="text-green-600">{prize.value}€</span>
-                            </div>
-                          ))}
-                        </div>
-                      </HoverCardContent>
-                    </HoverCard>
-                  ) : (
-                    <span className="text-gray-500 text-sm">Aucun prix</span>
-                  )}
+                  <span className="text-gray-500 text-sm">Bientôt disponible</span>
                 </TableCell>
                 <TableCell>
                   {participant.completed_at 
