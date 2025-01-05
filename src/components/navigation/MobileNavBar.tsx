@@ -7,6 +7,8 @@ const MobileNavBar = () => {
   const { user, signOut } = useAuth();
   const isAdmin = user?.email === "renaudcanuel@me.com";
 
+  if (!user) return null;
+
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 px-4 z-50">
       <div className="flex justify-around items-center">
