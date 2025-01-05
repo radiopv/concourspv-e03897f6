@@ -22,10 +22,22 @@ export const useContests = () => {
         return [];
       }
 
-      // Récupérer d'abord les concours
+      // First get user's winning participations
+      const { data: winningContests } = await supabase
+        .from('participants')
+        .select('contest_id')
+        .eq('id', session.user.id)
+        .eq('status', 'WINNER');
+
+      const winningContestIds = winningContests?.map(p => p.contest_id) || [];
+      console.log('Winning contest IDs:', winningContestIds);
+
+      // Get contests excluding the ones the user has won
       const { data: contests, error: contestsError } = await supabase
         .from('contests')
         .select('*')
+        .not('id', 'in', `(${winningContestIds.join(',')})`)
+        .eq('status', 'active')
         .order('created_at', { ascending: false });
 
       if (contestsError) {
@@ -33,7 +45,7 @@ export const useContests = () => {
         throw contestsError;
       }
 
-      // Pour chaque concours, compter les participants
+      // For each contest, count participants
       const contestsWithCounts = await Promise.all(contests.map(async (contest) => {
         const { count: participantsCount } = await supabase
           .from('participants')
