@@ -14,7 +14,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { drawService } from './services/drawService';
 import {
   Dialog,
@@ -72,9 +72,14 @@ const ContestCard = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: winners } = useQuery({
+  const { data: winners, error: winnersError } = useQuery({
     queryKey: ['contest-winners', contest.id],
     queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Session expired - please login again");
+      }
+
       const { data, error } = await supabase
         .from('participants')
         .select('*')
@@ -84,12 +89,18 @@ const ContestCard = ({
       if (error) throw error;
       return data;
     },
-    enabled: !!contest.id
+    enabled: !!contest.id,
+    retry: 1
   });
 
-  const { data: participants } = useQuery({
+  const { data: participants, error: participantsError } = useQuery({
     queryKey: ['contest-participants', contest.id],
     queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Session expired - please login again");
+      }
+
       const { data, error } = await supabase
         .from('participants')
         .select('*')
@@ -99,8 +110,21 @@ const ContestCard = ({
       if (error) throw error;
       return data;
     },
-    enabled: showParticipants
+    enabled: showParticipants,
+    retry: 1
   });
+
+  // Handle any auth errors
+  React.useEffect(() => {
+    if (winnersError || participantsError) {
+      const error = winnersError || participantsError;
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
+        variant: "destructive",
+      });
+    }
+  }, [winnersError, participantsError, toast]);
 
   const handleStatusToggle = (checked: boolean) => {
     onStatusUpdate(contest.id, { status: checked ? 'active' : 'draft' });
