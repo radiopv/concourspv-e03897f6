@@ -1,30 +1,26 @@
--- Drop existing policies
-DROP POLICY IF EXISTS "Enable read access for all users" ON "public"."participants";
-DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON "public"."participants";
-DROP POLICY IF EXISTS "Enable update for users based on id" ON "public"."participants";
+-- Enable RLS
+ALTER TABLE participants ENABLE ROW LEVEL SECURITY;
 
--- Create new policies
+-- Create policies
 CREATE POLICY "Enable read access for all users"
 ON "public"."participants"
 FOR SELECT
+TO public
 USING (true);
 
-CREATE POLICY "Enable insert for admins"
+CREATE POLICY "Enable insert for authenticated users only"
 ON "public"."participants"
 FOR INSERT
 TO authenticated
-WITH CHECK (
-  auth.email() = 'renaudcanuel@me.com'
-);
+WITH CHECK (true);
 
-CREATE POLICY "Enable update for admins"
+CREATE POLICY "Enable update for authenticated users only"
 ON "public"."participants"
 FOR UPDATE
 TO authenticated
-USING (auth.email() = 'renaudcanuel@me.com')
-WITH CHECK (auth.email() = 'renaudcanuel@me.com');
+USING (true);
 
-CREATE POLICY "Enable delete for admins"
+CREATE POLICY "Enable delete for admin only"
 ON "public"."participants"
 FOR DELETE
 TO authenticated

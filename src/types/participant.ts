@@ -1,4 +1,3 @@
-// Define valid participant statuses as an enum
 export const PARTICIPANT_STATUS = {
   PENDING: 'pending',
   COMPLETED: 'completed',
@@ -7,7 +6,13 @@ export const PARTICIPANT_STATUS = {
 
 export type ParticipantStatus = typeof PARTICIPANT_STATUS[keyof typeof PARTICIPANT_STATUS];
 
-// Helper function to validate status values
-export const isValidParticipantStatus = (status: string): status is ParticipantStatus => {
-  return Object.values(PARTICIPANT_STATUS).includes(status as ParticipantStatus);
-};
+export interface Participant {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  score: number;
+  status: ParticipantStatus | null;
+  contest_id: string;
+  completed_at?: string;
+}

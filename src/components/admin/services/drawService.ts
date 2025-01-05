@@ -1,6 +1,6 @@
 import { supabase } from "../../../App";
 import { QueryClient } from "@tanstack/react-query";
-import { PARTICIPANT_STATUS, isValidParticipantStatus } from "@/types/participant";
+import { PARTICIPANT_STATUS } from "@/types/participant";
 
 export const drawService = {
   async endContestAndDraw(contestId: string, queryClient: QueryClient) {
@@ -20,6 +20,7 @@ export const drawService = {
       if (settingsError) throw settingsError;
 
       const requiredPercentage = settings?.required_percentage || 70;
+      console.log(`Using required percentage: ${requiredPercentage}%`);
 
       // Update contest status
       const now = new Date().toISOString();
@@ -33,8 +34,6 @@ export const drawService = {
         .eq('id', contestId);
 
       if (updateError) throw updateError;
-
-      console.log(`Using required percentage: ${requiredPercentage}%`);
 
       // Get eligible participants
       const { data: eligibleParticipants, error: participantsError } = await supabase
