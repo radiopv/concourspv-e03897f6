@@ -37,7 +37,6 @@ const GlobalSettings = () => {
       const { data, error } = await supabase
         .from('settings')
         .upsert({
-          id: settings?.id || 1,
           default_attempts: defaultAttempts,
           required_percentage: requiredPercentage
         });
