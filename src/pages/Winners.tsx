@@ -20,13 +20,13 @@ const Winners = () => {
           title,
           description,
           status,
-          participants (
+          participants!inner (
             id,
             first_name,
             last_name,
             score,
             status,
-            updated_at,
+            created_at,
             prize_claimed,
             prize_claimed_at,
             participant_prizes (
@@ -41,7 +41,7 @@ const Winners = () => {
             )
           )
         `)
-        .eq('participants.status', 'WINNER');
+        .eq('participants.status', 'winner');
 
       if (contestsError) {
         console.error('Error fetching contests:', contestsError);

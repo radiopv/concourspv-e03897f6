@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Gift, Medal, User } from "lucide-react";
+import { Trophy, Gift, Medal } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -9,7 +9,7 @@ interface WinnerDisplayProps {
     first_name: string;
     last_name: string;
     score: number;
-    updated_at: string;
+    created_at: string;
     prize_claimed: boolean;
     prize_claimed_at?: string;
     prize?: Array<{
@@ -48,7 +48,7 @@ const WinnerDisplay = ({ winner, contestTitle }: WinnerDisplayProps) => {
         <div className="text-gray-700">
           <p className="font-medium text-lg">{contestTitle}</p>
           <p className="text-sm text-gray-500">
-            Gagné le {format(new Date(winner.updated_at), 'dd MMMM yyyy', { locale: fr })}
+            Gagné le {format(new Date(winner.created_at), 'dd MMMM yyyy', { locale: fr })}
           </p>
         </div>
 
