@@ -74,8 +74,14 @@ const AdminRoutes = () => {
         <Route path="contests/*" element={<AdminContestManager />} />
         <Route path="questions" element={<QuestionBank />} />
         <Route path="prizes" element={<PrizeCatalogManager />} />
-        <Route path="contests/:contestId/participants" element={<ParticipantsList />} />
-        <Route path="contests/:contestId/draw" element={<DrawManager />} />
+        <Route 
+          path="contests/:contestId/participants" 
+          element={<ParticipantsList contestId={contestId || ''} />} 
+        />
+        <Route 
+          path="contests/:contestId/draw" 
+          element={<DrawManager contestId={contestId || ''} />} 
+        />
       </Routes>
     </div>
   );
