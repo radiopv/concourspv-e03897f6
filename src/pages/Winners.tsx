@@ -26,10 +26,10 @@ const Winners = () => {
             .from('participants')
             .select(`
               *,
-              participant_prizes (
-                prize:prize_id (
+              participant_prizes!participant_id (
+                prizes!prize_id (
                   id,
-                  catalog_item:catalog_item_id (
+                  catalog_item:prize_catalog!catalog_item_id (
                     id,
                     name,
                     value,
@@ -49,7 +49,9 @@ const Winners = () => {
           // Transform the data structure to match what the components expect
           const transformedWinners = winners.map(winner => ({
             ...winner,
-            prize: winner.participant_prizes?.[0]?.prize ? [{ catalog_item: winner.participant_prizes[0].prize.catalog_item }] : undefined
+            prize: winner.participant_prizes?.[0]?.prizes ? 
+              [{ catalog_item: winner.participant_prizes[0].prizes.catalog_item }] : 
+              undefined
           }));
 
           console.log('Winners for contest:', contest.id, transformedWinners);
