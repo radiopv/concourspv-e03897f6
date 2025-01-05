@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import ContestCard from "@/components/contests/ContestCard";
 import { useContests } from "@/hooks/useContests";
+import { Contest } from "@/types/contest";
 
 const ContestsList = () => {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ const ContestsList = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contests.map((contest, index) => (
+          {contests.map((contest: Contest, index) => (
             <ContestCard
               key={contest.id}
               contest={contest}

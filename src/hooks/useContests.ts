@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
+import { Contest } from "../types/contest";
 
 export const useContests = () => {
-  return useQuery({
+  return useQuery<Contest[]>({
     queryKey: ['contests'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -25,7 +26,7 @@ export const useContests = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Contest[];
     }
   });
 };
