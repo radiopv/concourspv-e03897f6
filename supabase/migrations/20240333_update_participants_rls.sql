@@ -29,3 +29,8 @@ ON "public"."participants"
 FOR DELETE
 TO authenticated
 USING (auth.email() = 'renaudcanuel@me.com');
+
+-- Add check constraint for status
+ALTER TABLE participants DROP CONSTRAINT IF EXISTS participants_status_check;
+ALTER TABLE participants ADD CONSTRAINT participants_status_check 
+  CHECK (status IN ('pending', 'completed', 'winner'));

@@ -42,7 +42,7 @@ export const drawService = {
         .select('*')
         .eq('contest_id', contestId)
         .gte('score', requiredPercentage)
-        .neq('status', PARTICIPANT_STATUS.WINNER);
+        .is('status', null);
 
       if (participantsError) throw participantsError;
       
@@ -55,16 +55,10 @@ export const drawService = {
       // Select random winner
       const winner = eligibleParticipants[Math.floor(Math.random() * eligibleParticipants.length)];
 
-      // Validate status before update
-      const newStatus = PARTICIPANT_STATUS.WINNER;
-      if (!isValidParticipantStatus(newStatus)) {
-        throw new Error(`Invalid participant status: ${newStatus}`);
-      }
-
       // Update winner status
       const { error: winnerError } = await supabase
         .from('participants')
-        .update({ status: newStatus })
+        .update({ status: PARTICIPANT_STATUS.WINNER })
         .eq('id', winner.id);
 
       if (winnerError) throw winnerError;
