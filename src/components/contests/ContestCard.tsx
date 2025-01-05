@@ -66,7 +66,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         .select('*')
         .eq('contest_id', contest.id)
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle()
       
       if (error && error.code !== 'PGRST116') throw error;
       return data;
