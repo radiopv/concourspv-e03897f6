@@ -2,9 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../../App";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2, Plus, Link } from "lucide-react";
+import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,8 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PrizeForm } from "./PrizeForm";
+import { PrizeCard } from "./PrizeCard";
 import { usePrizeMutations } from "@/hooks/usePrizeMutations";
 
 export const PrizeCatalogManager = () => {
@@ -28,14 +27,13 @@ export const PrizeCatalogManager = () => {
     shop_url: '',
   });
 
-  // Mise à jour de la requête pour inclure explicitement toutes les colonnes
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
       console.log("Fetching prize catalog...");
       const { data, error } = await supabase
         .from('prize_catalog')
-        .select('id, name, description, value, image_url, shop_url, created_at, is_active')
+        .select('*')
         .order('name');
       
       if (error) {
@@ -112,14 +110,15 @@ export const PrizeCatalogManager = () => {
       setEditingPrize(null);
     } else {
       addPrizeToCatalog.mutate(data);
-      setFormData({
-        name: '',
-        description: '',
-        value: '',
-        image_url: '',
-        shop_url: '',
-      });
     }
+
+    setFormData({
+      name: '',
+      description: '',
+      value: '',
+      image_url: '',
+      shop_url: '',
+    });
   };
 
   if (isLoading) {
@@ -137,19 +136,24 @@ export const PrizeCatalogManager = () => {
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ajouter un prix au catalogue</DialogTitle>
+            <DialogTitle>
+              {editingPrize ? 'Modifier le prix' : 'Ajouter un prix au catalogue'}
+            </DialogTitle>
           </DialogHeader>
           <PrizeForm
             formData={formData}
             onFormChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
             onImageUpload={handleImageUpload}
-            onCancel={() => setFormData({
-              name: '',
-              description: '',
-              value: '',
-              image_url: '',
-              shop_url: '',
-            })}
+            onCancel={() => {
+              setEditingPrize(null);
+              setFormData({
+                name: '',
+                description: '',
+                value: '',
+                image_url: '',
+                shop_url: '',
+              });
+            }}
             onSave={handleSave}
             uploading={uploading}
           />
@@ -158,70 +162,12 @@ export const PrizeCatalogManager = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {prizes?.map((prize) => (
-          <Collapsible key={prize.id}>
-            <Card>
-              <CardContent className="pt-6">
-                {prize.image_url && (
-                  <div className="aspect-square relative mb-4">
-                    <img
-                      src={prize.image_url}
-                      alt={prize.name}
-                      className="object-cover rounded-lg w-full h-full"
-                    />
-                    <div className="absolute top-2 right-2 space-x-2">
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          onClick={() => handleEdit(prize)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => deletePrize.mutate(prize.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                <h3 className="font-semibold mb-2">{prize.name}</h3>
-                {prize.description && (
-                  <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
-                )}
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">
-                    {prize.value ? `${prize.value}€` : 'Prix non défini'}
-                  </span>
-                  {prize.shop_url && (
-                    <a
-                      href={prize.shop_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <Link className="h-4 w-4" />
-                    </a>
-                  )}
-                </div>
-              </CardContent>
-              <CollapsibleContent>
-                <CardContent className="pt-0">
-                  <PrizeForm
-                    formData={formData}
-                    onFormChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
-                    onImageUpload={handleImageUpload}
-                    onCancel={() => setEditingPrize(null)}
-                    onSave={handleSave}
-                    uploading={uploading}
-                  />
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
+          <PrizeCard
+            key={prize.id}
+            prize={prize}
+            onEdit={handleEdit}
+            onDelete={(id) => deletePrize.mutate(id)}
+          />
         ))}
       </div>
     </div>

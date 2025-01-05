@@ -4,14 +4,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, X } from "lucide-react";
 
+interface PrizeFormData {
+  name: string;
+  description: string;
+  value: string;
+  image_url: string;
+  shop_url: string;
+}
+
 interface PrizeFormProps {
-  formData: {
-    name: string;
-    description: string;
-    value: string;
-    image_url: string;
-    shop_url: string;
-  };
+  formData: PrizeFormData;
   onFormChange: (field: string, value: string) => void;
   onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onCancel: () => void;
@@ -40,22 +42,25 @@ export const PrizeForm = ({
       </div>
 
       <div>
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Description détaillée</Label>
         <Textarea
           id="description"
           value={formData.description}
           onChange={(e) => onFormChange("description", e.target.value)}
+          placeholder="Décrivez les caractéristiques et avantages du prix..."
+          className="h-32"
         />
       </div>
 
       <div>
-        <Label htmlFor="value">Valeur (€)</Label>
+        <Label htmlFor="value">Valeur ($ CAD)</Label>
         <Input
           id="value"
           type="number"
           step="0.01"
           value={formData.value}
           onChange={(e) => onFormChange("value", e.target.value)}
+          placeholder="0.00"
         />
       </div>
 
@@ -66,6 +71,7 @@ export const PrizeForm = ({
           type="url"
           value={formData.shop_url}
           onChange={(e) => onFormChange("shop_url", e.target.value)}
+          placeholder="https://..."
         />
       </div>
 
