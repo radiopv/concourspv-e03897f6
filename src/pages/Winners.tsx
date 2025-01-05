@@ -26,9 +26,9 @@ const Winners = () => {
             .from('participants')
             .select(`
               *,
-              prize:prize_id (
+              prizes!prize_id (
                 id,
-                catalog_item:catalog_item_id (
+                catalog_item:prize_catalog!catalog_item_id (
                   id,
                   name,
                   value,
