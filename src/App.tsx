@@ -19,16 +19,17 @@ if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KE
   console.error('Missing Supabase environment variables');
 }
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
+// Only create the client if we have both URL and key
+export const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
   }
-});
+}) : null;
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,19 @@ export default function App() {
         <Alert variant="destructive">
           <AlertDescription>
             Error: Missing Supabase configuration. Please check your environment variables.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // Only render the app if we have a valid Supabase client
+  if (!supabase) {
+    return (
+      <div className="container mx-auto p-4">
+        <Alert variant="destructive">
+          <AlertDescription>
+            Error: Failed to initialize Supabase client.
           </AlertDescription>
         </Alert>
       </div>
