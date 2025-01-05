@@ -10,38 +10,77 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WinnersList from "@/components/winners/WinnersList";
 import { useToast } from "@/components/ui/use-toast";
+import { useParams } from "react-router-dom";
 
 const Winners = () => {
   const [selectedWinner, setSelectedWinner] = useState<any>(null);
   const { toast } = useToast();
+  const { contestId } = useParams();
 
   const { data: contests, isLoading } = useQuery({
-    queryKey: ['contests-with-winners'],
+    queryKey: ['contests-with-winners', contestId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, fetch the contests
+      const { data: contestsData, error: contestsError } = await supabase
         .from('contests')
-        .select(`
-          *,
-          participants (
-            *,
-            prize:prizes(
-              catalog_item:prize_catalog(*)
-            )
-          )
-        `)
-        .eq('participants.status', 'winner')
+        .select('*')
         .order('created_at', { ascending: false });
-      
-      if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les gagnants",
-          variant: "destructive",
-        });
-        throw error;
+
+      if (contestsError) {
+        console.error('Error fetching contests:', contestsError);
+        throw contestsError;
       }
-      return data;
-    }
+
+      // Then, for each contest, fetch its winners with their prizes
+      const contestsWithWinners = await Promise.all(
+        contestsData.map(async (contest) => {
+          const { data: winners, error: winnersError } = await supabase
+            .from('participants')
+            .select(`
+              *,
+              contest:contests(*)
+            `)
+            .eq('contest_id', contest.id)
+            .eq('status', 'winner');
+
+          if (winnersError) {
+            console.error('Error fetching winners:', winnersError);
+            throw winnersError;
+          }
+
+          // For each winner, fetch their prizes
+          const winnersWithPrizes = await Promise.all(
+            winners.map(async (winner) => {
+              const { data: prizes, error: prizesError } = await supabase
+                .from('prizes')
+                .select(`
+                  *,
+                  catalog_item:prize_catalog(*)
+                `)
+                .eq('contest_id', contest.id);
+
+              if (prizesError) {
+                console.error('Error fetching prizes:', prizesError);
+                throw prizesError;
+              }
+
+              return {
+                ...winner,
+                prize: prizes
+              };
+            })
+          );
+
+          return {
+            ...contest,
+            participants: winnersWithPrizes
+          };
+        })
+      );
+
+      return contestsWithWinners;
+    },
+    enabled: true
   });
 
   if (isLoading) {
