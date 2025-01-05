@@ -19,7 +19,7 @@ export const ParticipantsActions = ({ participants, contestId }: ParticipantsAct
       { first_name: "Bob", last_name: "Test", email: "bob@test.com", score: 60 },
       { first_name: "Charlie", last_name: "Test", email: "charlie@test.com", score: 75 },
       { first_name: "David", last_name: "Test", email: "david@test.com", score: 85 },
-      { first_name: "Eve", last_name: "Test", email: "eve@test.com", score: 95 }
+      { first_name: "Eve", last_name: "Test", email: "eve@test.com", score: 100 }
     ];
 
     for (const participant of testParticipants) {
