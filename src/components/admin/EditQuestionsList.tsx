@@ -18,6 +18,7 @@ interface Question {
   options: string[];
   correct_answer: string;
   article_url?: string;
+  type: string;
 }
 
 const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
@@ -30,7 +31,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question_text, options, correct_answer, article_url, order_number')
+        .select('id, question_text, options, correct_answer, article_url, order_number, type')
         .eq('contest_id', contestId)
         .order('order_number');
       
@@ -72,7 +73,8 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           question_text: "Nouvelle question",
           options: ["Option 1", "Option 2", "Option 3", "Option 4"],
           correct_answer: "Option 1",
-          order_number: (questions?.length || 0) + 1
+          order_number: (questions?.length || 0) + 1,
+          type: 'multiple_choice' // Add the type field here
         }]);
 
       if (error) throw error;
