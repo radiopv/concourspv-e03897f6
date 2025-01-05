@@ -15,54 +15,44 @@ const Winners = () => {
       console.log('Fetching contests with winners...');
       const { data: contestsData, error: contestsError } = await supabase
         .from('contests')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (contestsError) throw contestsError;
-
-      const contestsWithWinners = await Promise.all(
-        contestsData.map(async (contest) => {
-          const { data: winners, error: winnersError } = await supabase
-            .from('participants')
-            .select(`
-              *,
-              participant_prizes!participant_id (
-                prizes!prize_id (
+        .select(`
+          *,
+          participants!inner (
+            *,
+            participant_prizes (
+              prize:prizes (
+                id,
+                catalog_item:prize_catalog (
                   id,
-                  catalog_item:prize_catalog!catalog_item_id (
-                    id,
-                    name,
-                    value,
-                    image_url
-                  )
+                  name,
+                  value,
+                  image_url
                 )
               )
-            `)
-            .eq('contest_id', contest.id)
-            .eq('status', 'WINNER');
+            )
+          )
+        `)
+        .eq('participants.status', 'WINNER')
+        .order('created_at', { ascending: false });
 
-          if (winnersError) {
-            console.error('Error fetching winners:', winnersError);
-            throw winnersError;
-          }
+      if (contestsError) {
+        console.error('Error fetching contests:', contestsError);
+        throw contestsError;
+      }
 
-          // Transform the data structure to match what the components expect
-          const transformedWinners = winners.map(winner => ({
-            ...winner,
-            prize: winner.participant_prizes?.[0]?.prizes ? 
-              [{ catalog_item: winner.participant_prizes[0].prizes.catalog_item }] : 
-              undefined
-          }));
+      // Transform the data to match the expected format
+      const transformedContests = contestsData.map(contest => ({
+        ...contest,
+        participants: contest.participants.map(participant => ({
+          ...participant,
+          prize: participant.participant_prizes?.[0]?.prize ? 
+            [{ catalog_item: participant.participant_prizes[0].prize.catalog_item }] : 
+            undefined
+        }))
+      }));
 
-          console.log('Winners for contest:', contest.id, transformedWinners);
-          return {
-            ...contest,
-            participants: transformedWinners
-          };
-        })
-      );
-
-      return contestsWithWinners;
+      console.log('Transformed contests:', transformedContests);
+      return transformedContests;
     }
   });
 
