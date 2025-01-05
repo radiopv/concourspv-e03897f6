@@ -21,7 +21,23 @@ const GlobalSettings = () => {
         .select('*')
         .single();
       
-      if (error) throw error;
+      if (error) {
+        // If no data exists, create initial settings
+        if (error.code === 'PGRST116') {
+          const { data: newData, error: insertError } = await supabase
+            .from('settings')
+            .insert([{
+              default_attempts: defaultAttempts,
+              required_percentage: requiredPercentage
+            }])
+            .select()
+            .single();
+          
+          if (insertError) throw insertError;
+          return newData;
+        }
+        throw error;
+      }
       
       if (data) {
         setDefaultAttempts(data.default_attempts);
@@ -34,12 +50,16 @@ const GlobalSettings = () => {
 
   const updateSettings = useMutation({
     mutationFn: async () => {
+      if (!settings?.id) throw new Error("Settings not found");
+      
       const { data, error } = await supabase
         .from('settings')
-        .upsert({
+        .update({
           default_attempts: defaultAttempts,
           required_percentage: requiredPercentage
-        });
+        })
+        .eq('id', settings.id)
+        .select();
 
       if (error) throw error;
       return data;
@@ -52,6 +72,7 @@ const GlobalSettings = () => {
       });
     },
     onError: (error) => {
+      console.error('Update error:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la mise à jour des paramètres.",
