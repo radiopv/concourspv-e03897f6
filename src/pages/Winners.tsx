@@ -12,6 +12,7 @@ const Winners = () => {
   const { data: contests, isLoading } = useQuery({
     queryKey: ['contests-with-winners'],
     queryFn: async () => {
+      console.log('Fetching contests with winners...');
       const { data: contestsData, error: contestsError } = await supabase
         .from('contests')
         .select('*')
@@ -25,15 +26,25 @@ const Winners = () => {
             .from('participants')
             .select(`
               *,
-              prize:prizes(
-                catalog_item:prize_catalog(*)
+              prize:prize_id (
+                id,
+                catalog_item:catalog_item_id (
+                  id,
+                  name,
+                  value,
+                  image_url
+                )
               )
             `)
             .eq('contest_id', contest.id)
             .eq('status', 'winner');
 
-          if (winnersError) throw winnersError;
+          if (winnersError) {
+            console.error('Error fetching winners:', winnersError);
+            throw winnersError;
+          }
 
+          console.log('Winners for contest:', contest.id, winners);
           return {
             ...contest,
             participants: winners
