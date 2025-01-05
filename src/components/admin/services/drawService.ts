@@ -1,5 +1,6 @@
 import { supabase } from "../../../App";
 import { QueryClient } from "@tanstack/react-query";
+import { PARTICIPANT_STATUS } from "@/types/participant";
 
 export const drawService = {
   async endContestAndDraw(contestId: string, queryClient: QueryClient) {
@@ -41,7 +42,7 @@ export const drawService = {
         .select('*')
         .eq('contest_id', contestId)
         .gte('score', requiredPercentage)
-        .neq('status', 'winner');
+        .neq('status', PARTICIPANT_STATUS.WINNER);
 
       if (participantsError) throw participantsError;
       
@@ -54,10 +55,10 @@ export const drawService = {
       // Select random winner
       const winner = eligibleParticipants[Math.floor(Math.random() * eligibleParticipants.length)];
 
-      // Update winner status - using lowercase 'winner' to match database constraint
+      // Update winner status using the correct enum value
       const { error: winnerError } = await supabase
         .from('participants')
-        .update({ status: 'winner' })
+        .update({ status: PARTICIPANT_STATUS.WINNER })
         .eq('id', winner.id);
 
       if (winnerError) throw winnerError;

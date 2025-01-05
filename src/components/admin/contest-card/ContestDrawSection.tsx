@@ -6,6 +6,7 @@ import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { drawService } from '../services/drawService';
+import { PARTICIPANT_STATUS } from '@/types/participant';
 
 interface ContestDrawSectionProps {
   contestId: string;
