@@ -12,9 +12,15 @@ import Winners from "./pages/Winners";
 import { createClient } from '@supabase/supabase-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Check if environment variables are defined
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.error('Missing Supabase environment variables');
+}
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
@@ -27,6 +33,19 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 const queryClient = new QueryClient();
 
 export default function App() {
+  // Show error message if environment variables are missing
+  if (!supabaseUrl || !supabaseKey) {
+    return (
+      <div className="container mx-auto p-4">
+        <Alert variant="destructive">
+          <AlertDescription>
+            Error: Missing Supabase configuration. Please check your environment variables.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
