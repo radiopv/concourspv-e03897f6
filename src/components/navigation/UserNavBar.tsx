@@ -13,68 +13,65 @@ const UserNavBar = () => {
   const isAdmin = user?.email === "renaudcanuel@me.com";
 
   const NavLinks = () => (
-    <>
+    <div className="flex flex-col md:flex-row md:space-x-8 space-y-4 md:space-y-0">
       <Link
         to="/"
-        className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
+        className="text-gray-900 hover:text-gray-600 transition-colors"
         onClick={() => setIsOpen(false)}
       >
         Accueil
       </Link>
       <Link
         to="/contests"
-        className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+        className="text-gray-900 hover:text-gray-600 transition-colors"
         onClick={() => setIsOpen(false)}
       >
         Concours
       </Link>
       <Link
         to="/winners"
-        className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
         onClick={() => setIsOpen(false)}
       >
-        <Trophy className="w-4 h-4 mr-2" />
+        <Trophy className="w-4 h-4" />
         Gagnants
       </Link>
       {isAdmin && (
         <Link
           to="/admin"
-          className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+          className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
           onClick={() => setIsOpen(false)}
         >
-          <Settings className="w-4 h-4 mr-2" />
+          <Settings className="w-4 h-4" />
           Administration
         </Link>
       )}
-    </>
+    </div>
   );
 
   return (
-    <nav className="bg-white border-b">
+    <nav className="bg-white border-b shadow-sm">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16 items-center">
+          <Link to="/" className="text-xl font-bold text-gray-900">
+            Concours
+          </Link>
+          
           {isMobile ? (
-            <>
-              <Link to="/" className="text-xl font-bold">
-                Concours
-              </Link>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[80vw] sm:w-[385px]">
-                  <div className="flex flex-col space-y-4 mt-8">
-                    <NavLinks />
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </>
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[80vw] sm:w-[385px]">
+                <div className="flex flex-col space-y-4 mt-8">
+                  <NavLinks />
+                </div>
+              </SheetContent>
+            </Sheet>
           ) : (
-            <div className="flex space-x-8">
-              <NavLinks />
-            </div>
+            <NavLinks />
           )}
         </div>
       </div>
