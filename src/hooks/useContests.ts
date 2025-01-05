@@ -23,7 +23,6 @@ export const useContests = () => {
             score,
             status,
             created_at,
-            updated_at,
             participant_prizes (
               prize:prizes (
                 catalog_item:prize_catalog (
