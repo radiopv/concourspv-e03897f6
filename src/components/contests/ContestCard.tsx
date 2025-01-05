@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Percent, ExternalLink, Gift } from "lucide-react";
+import { Trophy, Users, Percent, ExternalLink, Gift, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
@@ -39,24 +39,40 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     },
   });
 
-  const { data: eligibleParticipants } = useQuery({
-    queryKey: ['eligible-participants', contest.id],
+  const { data: settings } = useQuery({
+    queryKey: ['global-settings'],
     queryFn: async () => {
-      const { count } = await supabase
-        .from('participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('contest_id', contest.id)
-        .gte('score', 70)
-        .throwOnError();
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .single();
       
-      return count || 0;
+      if (error) throw error;
+      return data;
     }
   });
 
-  const calculateWinningChance = (eligibleCount: number, totalPrizes: number = prizes?.length || 1) => {
-    if (eligibleCount === 0) return 100;
-    return Math.round((totalPrizes / eligibleCount) * 100);
-  };
+  const { data: userParticipation } = useQuery({
+    queryKey: ['user-participation', contest.id],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('contest_id', contest.id)
+        .eq('id', session.user.id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    }
+  });
+
+  const remainingAttempts = settings?.default_attempts 
+    ? settings.default_attempts - (userParticipation?.attempts || 0)
+    : 0;
 
   return (
     <motion.div
@@ -90,6 +106,29 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           )}
           
           <ContestStats contestId={contest.id} />
+
+          {userParticipation && (
+            <div className="mb-6 space-y-4 bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
+                <AlertCircle className="w-5 h-5 text-blue-500" />
+                Votre progression
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white p-3 rounded-lg">
+                  <p className="text-sm text-gray-600">Score requis</p>
+                  <p className="text-lg font-bold text-blue-600">
+                    {settings?.required_percentage || 70}%
+                  </p>
+                </div>
+                <div className="bg-white p-3 rounded-lg">
+                  <p className="text-sm text-gray-600">Tentatives restantes</p>
+                  <p className={`text-lg font-bold ${remainingAttempts > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {remainingAttempts}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           
           {prizes && prizes.length > 0 && (
             <div className="mb-6 space-y-4">
@@ -140,7 +179,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                 Participants éligibles
               </p>
               <p className="text-2xl font-bold text-indigo-600">
-                {eligibleParticipants || 0}
+                {contest.participants?.count || 0}
               </p>
             </div>
             <div className="bg-white/50 p-4 rounded-lg">
@@ -149,7 +188,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                 Chances de gagner
               </p>
               <p className="text-2xl font-bold text-green-600">
-                {calculateWinningChance(eligibleParticipants || 0)}%
+                {calculateWinningChance(contest.participants?.count || 0)}%
               </p>
             </div>
           </div>
@@ -157,8 +196,9 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           <Button 
             onClick={() => onSelect(contest.id)}
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
+            disabled={remainingAttempts <= 0}
           >
-            Participer
+            {remainingAttempts > 0 ? 'Participer' : 'Plus de tentatives disponibles'}
           </Button>
         </CardContent>
       </Card>
