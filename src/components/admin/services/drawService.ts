@@ -54,7 +54,7 @@ export const drawService = {
       // Select random winner
       const winner = eligibleParticipants[Math.floor(Math.random() * eligibleParticipants.length)];
 
-      // Update winner status
+      // Update winner status - using lowercase 'winner' to match database constraint
       const { error: winnerError } = await supabase
         .from('participants')
         .update({ status: 'winner' })

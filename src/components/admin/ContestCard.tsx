@@ -6,16 +6,15 @@ import ContestCardToggles from './contest-card/ContestCardToggles';
 import ContestCardBadges from './contest-card/ContestCardBadges';
 import ContestCardPrize from './contest-card/ContestCardPrize';
 import ContestStatusBadge from './contest-card/ContestStatusBadge';
+import ContestDrawSection from './contest-card/ContestDrawSection';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Trophy, Users } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useToast } from "@/hooks/use-toast";
-import { drawService } from './services/drawService';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -69,10 +68,8 @@ const ContestCard = ({
   const endDate = new Date(contest.end_date);
   const drawDate = contest.draw_date ? new Date(contest.draw_date) : null;
   const isExpiringSoon = endDate.getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000;
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: winners, error: winnersError } = useQuery({
+  const { data: winners } = useQuery({
     queryKey: ['contest-winners', contest.id],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -93,7 +90,7 @@ const ContestCard = ({
     retry: 1
   });
 
-  const { data: participants, error: participantsError } = useQuery({
+  const { data: participants } = useQuery({
     queryKey: ['contest-participants', contest.id],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -114,37 +111,8 @@ const ContestCard = ({
     retry: 1
   });
 
-  // Handle any auth errors
-  React.useEffect(() => {
-    if (winnersError || participantsError) {
-      const error = winnersError || participantsError;
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-        variant: "destructive",
-      });
-    }
-  }, [winnersError, participantsError, toast]);
-
   const handleStatusToggle = (checked: boolean) => {
     onStatusUpdate(contest.id, { status: checked ? 'active' : 'draft' });
-  };
-
-  const handleEndContestAndDraw = async () => {
-    try {
-      const winner = await drawService.endContestAndDraw(contest.id, queryClient);
-      toast({
-        title: "Concours terminé",
-        description: `Le gagnant est ${winner.first_name} ${winner.last_name} avec un score de ${winner.score}%`,
-      });
-    } catch (error) {
-      console.error('Error ending contest:', error);
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de terminer le concours",
-        variant: "destructive",
-      });
-    }
   };
 
   return (
@@ -247,34 +215,12 @@ const ContestCard = ({
             </DialogContent>
           </Dialog>
 
-          {contest.status === 'active' && (
-            <Button 
-              onClick={handleEndContestAndDraw}
-              className="w-full bg-amber-500 hover:bg-amber-600"
-            >
-              <Trophy className="w-4 h-4 mr-2" />
-              Terminer et tirer au sort maintenant
-            </Button>
-          )}
-
-          {drawDate && winners && winners.length > 0 && (
-            <div className="pt-2 border-t">
-              <p className="text-sm text-gray-600 mb-2">
-                Date du tirage : {format(drawDate, 'dd MMMM yyyy', { locale: fr })}
-              </p>
-              <div className="bg-amber-50 p-3 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-amber-600" />
-                  <h4 className="font-semibold text-amber-900">Gagnants</h4>
-                </div>
-                {winners.map((winner) => (
-                  <div key={winner.id} className="mt-2 text-sm text-amber-800">
-                    {winner.first_name} {winner.last_name} ({winner.score}%)
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <ContestDrawSection 
+            contestId={contest.id}
+            status={contest.status}
+            drawDate={drawDate}
+            winners={winners || []}
+          />
 
           <div className="space-y-2 pt-4 border-t">
             <ContestCardToggles
