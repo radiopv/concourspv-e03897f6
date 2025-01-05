@@ -7,8 +7,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "../App";
 import QuestionBankImport from "../components/admin/question-bank/QuestionBankImport";
 import QuestionBankList from "../components/admin/question-bank/QuestionBankList";
+import AddQuestionForm from "../components/admin/question-bank/AddQuestionForm";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const QuestionBank = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,31 +44,52 @@ const QuestionBank = () => {
         <h1 className="text-2xl font-bold">Banque de Questions</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Importer des Questions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <QuestionBankImport />
-          
-          <div className="mt-6">
-            <Input
-              placeholder="Rechercher une question..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="mb-4"
-            />
-            
-            {isLoading ? (
-              <div>Chargement...</div>
-            ) : (
-              <QuestionBankList 
-                questions={filteredQuestions || []} 
+      <Tabs defaultValue="list" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="list">Liste des questions</TabsTrigger>
+          <TabsTrigger value="add">Ajouter une question</TabsTrigger>
+          <TabsTrigger value="import">Importer des questions</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="list">
+          <Card>
+            <CardHeader>
+              <CardTitle>Liste des questions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                placeholder="Rechercher une question..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="mb-4"
               />
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              
+              {isLoading ? (
+                <div>Chargement...</div>
+              ) : (
+                <QuestionBankList 
+                  questions={filteredQuestions || []} 
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="add">
+          <AddQuestionForm />
+        </TabsContent>
+
+        <TabsContent value="import">
+          <Card>
+            <CardHeader>
+              <CardTitle>Importer des Questions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <QuestionBankImport />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
