@@ -24,11 +24,15 @@ create policy "Allow authenticated read access to settings"
     to authenticated
     using (true);
 
+create policy "Allow admin insert access to settings"
+    on public.settings for insert
+    to authenticated
+    using (true);
+
 create policy "Allow admin update access to settings"
     on public.settings for update
     to authenticated
-    using (true)
-    with check (true);
+    using (true);
 
 -- Create updated_at trigger
 create or replace function public.handle_updated_at()
