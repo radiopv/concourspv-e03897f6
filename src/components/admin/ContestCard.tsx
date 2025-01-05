@@ -10,10 +10,11 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ContestCardProps {
   contest: {
@@ -51,6 +52,8 @@ const ContestCard = ({
   const drawDate = contest.draw_date ? new Date(contest.draw_date) : null;
   const isExpiringSoon = endDate.getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000;
   const canDraw = drawDate && new Date() >= drawDate;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: winners } = useQuery({
     queryKey: ['contest-winners', contest.id],
@@ -69,6 +72,68 @@ const ContestCard = ({
 
   const handleStatusToggle = (checked: boolean) => {
     onStatusUpdate(contest.id, { status: checked ? 'active' : 'draft' });
+  };
+
+  const handleEndContestAndDraw = async () => {
+    try {
+      // Mettre à jour la date de fin et la date de tirage au sort
+      const now = new Date().toISOString();
+      const { error: updateError } = await supabase
+        .from('contests')
+        .update({ 
+          end_date: now,
+          draw_date: now,
+          status: 'completed'
+        })
+        .eq('id', contest.id);
+
+      if (updateError) throw updateError;
+
+      // Sélectionner un gagnant parmi les participants éligibles (score >= 70%)
+      const { data: eligibleParticipants, error: participantsError } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('contest_id', contest.id)
+        .gte('score', 70);
+
+      if (participantsError) throw participantsError;
+
+      if (!eligibleParticipants?.length) {
+        toast({
+          title: "Aucun gagnant possible",
+          description: "Aucun participant n'a obtenu un score suffisant (minimum 70%)",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Sélectionner un gagnant au hasard
+      const winner = eligibleParticipants[Math.floor(Math.random() * eligibleParticipants.length)];
+
+      // Mettre à jour le statut du gagnant
+      const { error: winnerError } = await supabase
+        .from('participants')
+        .update({ status: 'winner' })
+        .eq('id', winner.id);
+
+      if (winnerError) throw winnerError;
+
+      // Rafraîchir les données
+      await queryClient.invalidateQueries({ queryKey: ['contests'] });
+      await queryClient.invalidateQueries({ queryKey: ['contest-winners', contest.id] });
+
+      toast({
+        title: "Concours terminé",
+        description: `Le gagnant est ${winner.first_name} ${winner.last_name} avec un score de ${winner.score}%`,
+      });
+    } catch (error) {
+      console.error('Error ending contest:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de terminer le concours",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -121,6 +186,16 @@ const ContestCard = ({
             questionsCount={contest.questions?.count || 0}
             endDate={contest.end_date}
           />
+
+          {contest.status === 'active' && (
+            <Button 
+              onClick={handleEndContestAndDraw}
+              className="w-full bg-amber-500 hover:bg-amber-600"
+            >
+              <Trophy className="w-4 h-4 mr-2" />
+              Terminer et tirer au sort maintenant
+            </Button>
+          )}
 
           {drawDate && (
             <div className="pt-2 border-t">
