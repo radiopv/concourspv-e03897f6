@@ -14,6 +14,15 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Add early return if no contestId is provided
+  if (!contestId) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-gray-600">Aucun concours sélectionné</p>
+      </div>
+    );
+  }
+
   const { data: participants, isLoading } = useQuery({
     queryKey: ['participants', contestId],
     queryFn: async () => {
@@ -49,7 +58,8 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
 
         return { ...participant, score };
       });
-    }
+    },
+    enabled: !!contestId // Only run query if contestId exists
   });
 
   const deleteParticipantMutation = useMutation({
