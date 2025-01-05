@@ -35,7 +35,7 @@ const ExcelImportForm = ({ contestId }: { contestId?: string }) => {
           correct_answer: q.correct_answer,
           article_url: q.article_url,
           order_number: index + 1,
-          type: 'multiple_choice'
+          type: 'multiple_choice' // Always set the type field
         }));
 
         const { error: questionsError } = await supabase
