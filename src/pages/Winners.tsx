@@ -5,7 +5,32 @@ import WinnersList from "@/components/winners/WinnersList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WinnerClaimDialog from "@/components/winners/WinnerClaimDialog";
 import { useState } from "react";
-import { Contest } from "@/types/contest";
+import { Contest, Participant, ParticipantPrize } from "@/types/contest";
+
+const transformParticipantPrizes = (prizes: any[]): ParticipantPrize[] => {
+  return prizes?.map((pp: any) => ({
+    prize: {
+      catalog_item: {
+        id: pp.prize.catalog_item.id,
+        name: pp.prize.catalog_item.name,
+        value: pp.prize.catalog_item.value,
+        image_url: pp.prize.catalog_item.image_url
+      }
+    }
+  })) || [];
+};
+
+const transformParticipants = (participants: any[]): Participant[] => {
+  return participants?.map((participant: any) => ({
+    id: participant.id,
+    first_name: participant.first_name,
+    last_name: participant.last_name,
+    score: participant.score,
+    status: participant.status,
+    created_at: participant.created_at,
+    participant_prizes: transformParticipantPrizes(participant.participant_prizes || [])
+  })) || [];
+};
 
 const Winners = () => {
   const [selectedWinner, setSelectedWinner] = useState<any>(null);
@@ -50,27 +75,15 @@ const Winners = () => {
       }
 
       // Transform the data to match our types
-      const transformedData = contestsData.map((contest: any) => ({
+      const transformedData: Contest[] = contestsData.map((contest: any) => ({
         id: contest.id,
         title: contest.title,
         description: contest.description,
         is_new: contest.is_new,
         has_big_prizes: contest.has_big_prizes,
         status: contest.status,
-        participants: contest.participants?.map((participant: any) => ({
-          id: participant.id,
-          first_name: participant.first_name,
-          last_name: participant.last_name,
-          score: participant.score,
-          status: participant.status,
-          created_at: participant.created_at,
-          participant_prizes: participant.participant_prizes?.map((pp: any) => ({
-            prize: {
-              catalog_item: pp.prize.catalog_item
-            }
-          }))
-        }))
-      })) as Contest[];
+        participants: transformParticipants(contest.participants || [])
+      }));
 
       return transformedData;
     }
