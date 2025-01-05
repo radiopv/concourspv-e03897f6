@@ -52,7 +52,10 @@ const ContestsList = () => {
     ...contest,
     participants: {
       count: contest.participants?.length || 0,
-      data: contest.participants
+      data: contest.participants?.map(p => ({
+        ...p,
+        updated_at: p.updated_at || p.created_at // Fallback to created_at if updated_at is not available
+      }))
     }
   }));
 

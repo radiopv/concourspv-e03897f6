@@ -22,7 +22,18 @@ export const useContests = () => {
             last_name,
             score,
             status,
-            created_at
+            created_at,
+            updated_at,
+            participant_prizes (
+              prize:prizes (
+                catalog_item:prize_catalog (
+                  id,
+                  name,
+                  value,
+                  image_url
+                )
+              )
+            )
           )
         `)
         .eq('status', 'active')

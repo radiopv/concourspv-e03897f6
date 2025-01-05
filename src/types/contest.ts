@@ -5,6 +5,7 @@ export interface Participant {
   score: number;
   status: string;
   created_at: string;
+  updated_at: string;
   participant_prizes?: Array<{
     prize: {
       catalog_item: {
