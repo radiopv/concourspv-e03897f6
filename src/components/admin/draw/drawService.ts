@@ -2,19 +2,19 @@ import { supabase } from "../../../App";
 
 export const drawService = {
   async performDraw(contestId: string) {
-    // Vérification anti-doublons
+    // Check for existing winner
     const { data: existingWinner } = await supabase
       .from('participants')
       .select('id')
       .eq('contest_id', contestId)
-      .eq('status', 'winner')
+      .eq('status', 'WINNER')
       .single();
 
     if (existingWinner) {
       throw new Error('Un gagnant a déjà été tiré au sort pour ce concours');
     }
 
-    // Sélection des participants éligibles
+    // Get eligible participants
     const { data: eligibleParticipants } = await supabase
       .from('participants')
       .select('*')
@@ -26,18 +26,18 @@ export const drawService = {
       throw new Error('Aucun participant éligible trouvé');
     }
 
-    // Sélection aléatoire du gagnant
+    // Select random winner
     const winner = eligibleParticipants[Math.floor(Math.random() * eligibleParticipants.length)];
 
-    // Mise à jour du statut du gagnant
+    // Update winner status
     const { error: updateError } = await supabase
       .from('participants')
-      .update({ status: 'winner' })
+      .update({ status: 'WINNER' })
       .eq('id', winner.id);
 
     if (updateError) throw updateError;
 
-    // Enregistrement dans l'historique
+    // Record in draw history
     const { error: historyError } = await supabase
       .from('draw_history')
       .insert({
@@ -48,7 +48,7 @@ export const drawService = {
 
     if (historyError) throw historyError;
 
-    // Envoi de la notification par email (via Edge Function)
+    // Send winner notification
     await supabase.functions.invoke('notify-winner', {
       body: {
         winnerId: winner.id,

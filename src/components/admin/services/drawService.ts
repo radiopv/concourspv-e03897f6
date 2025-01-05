@@ -21,7 +21,8 @@ export const drawService = {
       .from('participants')
       .select('*')
       .eq('contest_id', contestId)
-      .gte('score', 70);
+      .gte('score', 70)
+      .is('status', null);
 
     if (participantsError) throw participantsError;
     if (!eligibleParticipants?.length) {
