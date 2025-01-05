@@ -26,9 +26,9 @@ const Winners = () => {
             .from('participants')
             .select(`
               *,
-              prizes!prize_id (
+              prizes (
                 id,
-                catalog_item:prize_catalog!catalog_item_id (
+                catalog_item:prize_catalog (
                   id,
                   name,
                   value,
@@ -37,7 +37,7 @@ const Winners = () => {
               )
             `)
             .eq('contest_id', contest.id)
-            .eq('status', 'winner');
+            .eq('status', 'WINNER');
 
           if (winnersError) {
             console.error('Error fetching winners:', winnersError);
