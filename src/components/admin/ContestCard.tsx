@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import ContestCardHeader from './contest-card/ContestCardHeader';
 import ContestCardStats from './contest-card/ContestCardStats';
@@ -9,13 +9,29 @@ import ContestStatusBadge from './contest-card/ContestStatusBadge';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Trophy } from "lucide-react";
+import { Trophy, Users } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
 import { drawService } from './services/drawService';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { CustomBadge } from "@/components/ui/custom-badge";
 
 interface ContestCardProps {
   contest: {
@@ -49,6 +65,7 @@ const ContestCard = ({
   onSelect,
   onEdit,
 }: ContestCardProps) => {
+  const [showParticipants, setShowParticipants] = useState(false);
   const endDate = new Date(contest.end_date);
   const drawDate = contest.draw_date ? new Date(contest.draw_date) : null;
   const isExpiringSoon = endDate.getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000;
@@ -68,6 +85,21 @@ const ContestCard = ({
       return data;
     },
     enabled: !!contest.id
+  });
+
+  const { data: participants } = useQuery({
+    queryKey: ['contest-participants', contest.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('contest_id', contest.id)
+        .order('score', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: showParticipants
   });
 
   const handleStatusToggle = (checked: boolean) => {
@@ -141,6 +173,55 @@ const ContestCard = ({
             questionsCount={contest.questions?.count || 0}
             endDate={contest.end_date}
           />
+
+          <Dialog open={showParticipants} onOpenChange={setShowParticipants}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setShowParticipants(true)}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Voir les participants ({contest.participants?.count || 0})
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Participants au concours</DialogTitle>
+              </DialogHeader>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Prénom</TableHead>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Score</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Date de participation</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {participants?.map((participant) => (
+                    <TableRow key={participant.id}>
+                      <TableCell>{participant.first_name}</TableCell>
+                      <TableCell>{participant.last_name}</TableCell>
+                      <TableCell>{participant.score}%</TableCell>
+                      <TableCell>
+                        <CustomBadge variant={participant.status === 'WINNER' ? "success" : "secondary"}>
+                          {participant.status === 'WINNER' ? 'Gagnant' : 'Participant'}
+                        </CustomBadge>
+                      </TableCell>
+                      <TableCell>
+                        {participant.completed_at
+                          ? format(new Date(participant.completed_at), 'dd MMMM yyyy', { locale: fr })
+                          : 'Non complété'
+                        }
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </DialogContent>
+          </Dialog>
 
           {contest.status === 'active' && (
             <Button 
