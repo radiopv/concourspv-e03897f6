@@ -1,5 +1,6 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
+import { CustomBadge } from "@/components/ui/custom-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users } from "lucide-react";
@@ -192,9 +193,9 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                     <TableCell>{participant.last_name}</TableCell>
                     <TableCell>{participant.score}%</TableCell>
                     <TableCell>
-                      <Badge variant={participant.status === 'WINNER' ? "success" : "secondary"}>
+                      <CustomBadge variant={participant.status === 'WINNER' ? "success" : "secondary"}>
                         {participant.status === 'WINNER' ? 'Gagnant' : 'Participant'}
-                      </Badge>
+                      </CustomBadge>
                     </TableCell>
                     <TableCell>
                       {participant.completed_at 
