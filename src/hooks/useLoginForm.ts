@@ -29,9 +29,7 @@ export const useLoginForm = () => {
         password: values.password,
       });
 
-      if (error) throw error;
-
-      return { data, error: null };
+      return { data, error };
     } catch (error: any) {
       console.error("Erreur lors de la connexion:", error);
       return { data: null, error };
