@@ -8,6 +8,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,32 +49,51 @@ serve(async (req) => {
       throw new Error('OpenAI API key is not configured');
     }
 
-    console.log(`Making OpenAI API request for action: ${action}`);
+    // Maximum number of retries
+    const maxRetries = 3;
+    let retryCount = 0;
+    let response;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
-        ],
-      }),
-    });
+    while (retryCount < maxRetries) {
+      console.log(`Attempt ${retryCount + 1} of ${maxRetries} to call OpenAI API`);
+      
+      response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+          ],
+        }),
+      });
+
+      if (response.status === 429) {
+        retryCount++;
+        if (retryCount < maxRetries) {
+          // Exponential backoff: wait longer between each retry
+          const waitTime = Math.pow(2, retryCount) * 1000;
+          console.log(`Rate limited. Waiting ${waitTime}ms before retry...`);
+          await delay(waitTime);
+          continue;
+        }
+      }
+      break;
+    }
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('OpenAI API error:', errorData);
+      const errorData = await response.text();
+      console.error('OpenAI API error response:', errorData);
       throw new Error(`OpenAI API returned status ${response.status}`);
     }
 
     const result = await response.json();
     
-    if (!result.choices || !result.choices[0] || !result.choices[0].message) {
+    if (!result.choices?.[0]?.message?.content) {
       console.error('Unexpected OpenAI API response format:', result);
       throw new Error('Invalid response format from OpenAI API');
     }
