@@ -8,50 +8,39 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsCards from "@/components/dashboard/StatsCards";
 import { ExtendedProfileCard } from "@/components/profile/ExtendedProfileCard";
 import QuickActions from "@/components/dashboard/QuickActions";
+import { useToast } from "@/components/ui/use-toast";
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const { data: userProfile, isLoading, error, refetch } = useQuery({
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data: participationStats } = await supabase
-        .from('participants')
-        .select('score, status')
-        .eq('id', user.id);
-
-      const stats = participationStats?.reduce((acc, curr) => ({
-        contests_participated: acc.contests_participated + 1,
-        total_points: acc.total_points + (curr.score || 0),
-        contests_won: acc.contests_won + (curr.status === 'winner' ? 1 : 0),
-      }), {
-        contests_participated: 0,
-        total_points: 0,
-        contests_won: 0,
-      });
-
-      const { data: existingProfile } = await supabase
+      // Vérifier si le profil existe déjà
+      const { data: existingProfile, error: fetchError } = await supabase
         .from("members")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      if (existingProfile) {
-        return {
-          ...existingProfile,
-          ...stats
-        };
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
       }
 
+      if (existingProfile) {
+        return existingProfile;
+      }
+
+      // Si le profil n'existe pas, créer un nouveau profil
       const { data: userData } = await supabase.auth.getUser();
       const newProfile = {
         id: user.id,
         email: userData.user?.email || "",
         first_name: userData.user?.user_metadata?.first_name || "",
         last_name: userData.user?.user_metadata?.last_name || "",
-        ...stats,
         notifications_enabled: true,
         share_scores: true,
       };
@@ -62,11 +51,18 @@ const Dashboard = () => {
         .select()
         .single();
 
-      if (createError) throw createError;
+      if (createError) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de créer votre profil",
+          variant: "destructive",
+        });
+        throw createError;
+      }
 
       return createdProfile;
     },
-    retry: 1,
+    enabled: !!user?.id,
   });
 
   if (isLoading) {
