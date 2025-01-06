@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const Index = () => {
   const navigate = useNavigate();
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ['home-stats'],
     queryFn: async () => {
       const [contestsResponse, participantsResponse, prizesResponse] = await Promise.all([
@@ -71,7 +71,7 @@ const Index = () => {
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
               <Trophy className="w-12 h-12 mx-auto text-amber-500 mb-2" />
-              <CardTitle className="text-2xl">{stats?.contests || 0}</CardTitle>
+              <CardTitle className="text-2xl">{isLoading ? "..." : stats?.contests || 0}</CardTitle>
               <p className="text-gray-600">Concours Actifs</p>
             </CardHeader>
           </Card>
@@ -79,7 +79,7 @@ const Index = () => {
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
               <Users className="w-12 h-12 mx-auto text-indigo-500 mb-2" />
-              <CardTitle className="text-2xl">{stats?.participants || 0}</CardTitle>
+              <CardTitle className="text-2xl">{isLoading ? "..." : stats?.participants || 0}</CardTitle>
               <p className="text-gray-600">Participants</p>
             </CardHeader>
           </Card>
@@ -87,7 +87,7 @@ const Index = () => {
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
               <Award className="w-12 h-12 mx-auto text-green-500 mb-2" />
-              <CardTitle className="text-2xl">{stats?.prizes || 0}</CardTitle>
+              <CardTitle className="text-2xl">{isLoading ? "..." : stats?.prizes || 0}</CardTitle>
               <p className="text-gray-600">Prix à Gagner</p>
             </CardHeader>
           </Card>
