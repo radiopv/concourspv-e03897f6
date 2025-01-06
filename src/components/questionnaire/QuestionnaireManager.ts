@@ -22,6 +22,8 @@ export const calculateFinalScore = async (participantId: string) => {
     // Calculer les points et tentatives bonus
     const { points, bonusAttempts } = calculatePointsAndAttempts(correctAnswers);
 
+    console.log('Points calculés:', points, 'Tentatives bonus:', bonusAttempts);
+
     // Mettre à jour les points et tentatives du participant
     const { error: updateError } = await supabase
       .from('participants')
@@ -32,9 +34,11 @@ export const calculateFinalScore = async (participantId: string) => {
       })
       .eq('id', participantId);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error('Erreur lors de la mise à jour des points:', updateError);
+      throw updateError;
+    }
     
-    // Arrondir le pourcentage à l'entier le plus proche
     return Math.round(percentage);
   } catch (error) {
     console.error('Error calculating final score:', error);
