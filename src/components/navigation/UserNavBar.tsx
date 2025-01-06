@@ -6,20 +6,31 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const UserNavBar = () => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const isAdmin = user?.email === "renaudcanuel@me.com";
 
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate("/");
+      toast({
+        title: "Déconnexion réussie",
+        description: "À bientôt !",
+      });
+      navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion.",
+      });
     }
   };
 
@@ -32,50 +43,63 @@ const UserNavBar = () => {
       >
         Accueil
       </Link>
-      <Link
-        to="/dashboard"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-        onClick={() => setIsOpen(false)}
-      >
-        <User className="w-4 h-4" />
-        Mon Profil
-      </Link>
-      <Link
-        to="/contests"
-        className="text-gray-900 hover:text-gray-600 transition-colors"
-        onClick={() => setIsOpen(false)}
-      >
-        Concours
-      </Link>
-      <Link
-        to="/winners"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-        onClick={() => setIsOpen(false)}
-      >
-        <Trophy className="w-4 h-4" />
-        Gagnants
-      </Link>
-      {isAdmin && (
+      {user && (
+        <>
+          <Link
+            to="/dashboard"
+            className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
+            onClick={() => setIsOpen(false)}
+          >
+            <User className="w-4 h-4" />
+            {user.email}
+          </Link>
+          <Link
+            to="/contests"
+            className="text-gray-900 hover:text-gray-600 transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            Concours
+          </Link>
+          <Link
+            to="/winners"
+            className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
+            onClick={() => setIsOpen(false)}
+          >
+            <Trophy className="w-4 h-4" />
+            Gagnants
+          </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
+              onClick={() => setIsOpen(false)}
+            >
+              <Settings className="w-4 h-4" />
+              Administration
+            </Link>
+          )}
+          <Button
+            variant="ghost"
+            className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 p-0 h-auto"
+            onClick={() => {
+              handleLogout();
+              setIsOpen(false);
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+            Déconnexion
+          </Button>
+        </>
+      )}
+      {!user && (
         <Link
-          to="/admin"
-          className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
+          to="/login"
+          className="text-gray-900 hover:text-gray-600 transition-colors"
           onClick={() => setIsOpen(false)}
         >
-          <Settings className="w-4 h-4" />
-          Administration
+          Connexion
         </Link>
       )}
-      <Button
-        variant="ghost"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 p-0 h-auto"
-        onClick={() => {
-          handleLogout();
-          setIsOpen(false);
-        }}
-      >
-        <LogOut className="w-4 h-4" />
-        Déconnexion
-      </Button>
     </div>
   );
 

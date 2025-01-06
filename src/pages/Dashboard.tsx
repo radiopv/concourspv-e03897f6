@@ -9,33 +9,26 @@ import StatsCards from "@/components/dashboard/StatsCards";
 import { ExtendedProfileCard } from "@/components/profile/ExtendedProfileCard";
 import QuickActions from "@/components/dashboard/QuickActions";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Rediriger si l'utilisateur n'est pas connecté
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   const { data: userProfile, isLoading, error, refetch } = useQuery({
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // Récupérer les statistiques de participation
-      const { data: participationStats } = await supabase
-        .from('participants')
-        .select('score, status')
-        .eq('member_id', user.id);
-
-      const stats = participationStats?.reduce((acc, curr) => ({
-        contests_participated: acc.contests_participated + 1,
-        total_points: acc.total_points + (curr.score || 0),
-        contests_won: acc.contests_won + (curr.status === 'winner' ? 1 : 0),
-      }), {
-        contests_participated: 0,
-        total_points: 0,
-        contests_won: 0,
-      });
-
-      // Vérifier si le profil existe déjà
+      // Récupérer le profil existant
       const { data: existingProfile, error: fetchError } = await supabase
         .from("members")
         .select("*")
@@ -48,13 +41,8 @@ const Dashboard = () => {
       }
 
       if (existingProfile) {
-        return {
-          ...existingProfile,
-          ...stats
-        };
+        return existingProfile;
       }
-
-      console.log("Création d'un nouveau profil pour:", user.email);
 
       // Si le profil n'existe pas, créer un nouveau profil
       const { data: userData } = await supabase.auth.getUser();
@@ -66,7 +54,9 @@ const Dashboard = () => {
         role: user.email === "renaudcanuel@me.com" ? "admin" : "user",
         notifications_enabled: true,
         share_scores: true,
-        ...stats
+        total_points: 0,
+        contests_participated: 0,
+        contests_won: 0
       };
 
       const { data: createdProfile, error: createError } = await supabase
@@ -85,11 +75,14 @@ const Dashboard = () => {
         throw createError;
       }
 
-      console.log("Nouveau profil créé:", createdProfile);
       return createdProfile;
     },
     enabled: !!user?.id,
   });
+
+  if (!user) {
+    return null;
+  }
 
   if (isLoading) {
     return (
