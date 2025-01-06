@@ -19,6 +19,22 @@ const Dashboard = () => {
     queryFn: async () => {
       if (!user?.id) return null;
 
+      // Récupérer les statistiques de participation
+      const { data: participationStats } = await supabase
+        .from('participants')
+        .select('score, status')
+        .eq('member_id', user.id);
+
+      const stats = participationStats?.reduce((acc, curr) => ({
+        contests_participated: acc.contests_participated + 1,
+        total_points: acc.total_points + (curr.score || 0),
+        contests_won: acc.contests_won + (curr.status === 'winner' ? 1 : 0),
+      }), {
+        contests_participated: 0,
+        total_points: 0,
+        contests_won: 0,
+      });
+
       // Vérifier si le profil existe déjà
       const { data: existingProfile, error: fetchError } = await supabase
         .from("members")
@@ -27,12 +43,18 @@ const Dashboard = () => {
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error("Erreur lors de la récupération du profil:", fetchError);
         throw fetchError;
       }
 
       if (existingProfile) {
-        return existingProfile;
+        return {
+          ...existingProfile,
+          ...stats
+        };
       }
+
+      console.log("Création d'un nouveau profil pour:", user.email);
 
       // Si le profil n'existe pas, créer un nouveau profil
       const { data: userData } = await supabase.auth.getUser();
@@ -41,8 +63,10 @@ const Dashboard = () => {
         email: userData.user?.email || "",
         first_name: userData.user?.user_metadata?.first_name || "",
         last_name: userData.user?.user_metadata?.last_name || "",
+        role: user.email === "renaudcanuel@me.com" ? "admin" : "user",
         notifications_enabled: true,
         share_scores: true,
+        ...stats
       };
 
       const { data: createdProfile, error: createError } = await supabase
@@ -52,6 +76,7 @@ const Dashboard = () => {
         .single();
 
       if (createError) {
+        console.error("Erreur lors de la création du profil:", createError);
         toast({
           title: "Erreur",
           description: "Impossible de créer votre profil",
@@ -60,6 +85,7 @@ const Dashboard = () => {
         throw createError;
       }
 
+      console.log("Nouveau profil créé:", createdProfile);
       return createdProfile;
     },
     enabled: !!user?.id,
