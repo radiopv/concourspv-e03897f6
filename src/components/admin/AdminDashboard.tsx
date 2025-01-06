@@ -9,6 +9,7 @@ import ContestList from "./ContestList";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Award, Shuffle, Database } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ContestAIAssistant } from "./ContestAIAssistant";
 
 const AdminDashboard = () => {
   const [selectedContest, setSelectedContest] = useState<string | null>(null);
@@ -151,18 +152,22 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <Collapsible open={isNewContestOpen} onOpenChange={setIsNewContestOpen}>
-          <div className="flex items-center justify-between mb-4">
-            <CollapsibleTrigger asChild>
-              <Button variant="outline">
-                Créer un nouveau concours
-              </Button>
-            </CollapsibleTrigger>
-          </div>
-          <CollapsibleContent className="space-y-2">
-            <AdminContestManager />
-          </CollapsibleContent>
-        </Collapsible>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Collapsible open={isNewContestOpen} onOpenChange={setIsNewContestOpen}>
+            <div className="flex items-center justify-between mb-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline">
+                  Créer un nouveau concours
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent className="space-y-2">
+              <AdminContestManager />
+            </CollapsibleContent>
+          </Collapsible>
+
+          <ContestAIAssistant />
+        </div>
 
         <ContestList 
           contests={contests || []} 
