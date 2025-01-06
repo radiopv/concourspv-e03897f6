@@ -51,7 +51,7 @@ const UserNavBar = () => {
             onClick={() => setIsOpen(false)}
           >
             <User className="w-4 h-4" />
-            {user.email}
+            Mon profil
           </Link>
           <Link
             to="/contests"
