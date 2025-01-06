@@ -31,7 +31,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Passion Varadero <notifications@passionvaradero.com>",
+        from: "Passion Varadero <onboarding@resend.dev>", // Using Resend's default domain temporarily
         to: emailRequest.to,
         subject: emailRequest.subject,
         html: emailRequest.html,
