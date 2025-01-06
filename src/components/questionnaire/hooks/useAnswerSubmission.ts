@@ -26,16 +26,11 @@ export const useAnswerSubmission = (contestId: string) => {
       }
 
       const participantId = await ensureParticipantExists(session.session.user.id, contestId);
+      state.setParticipationId(participantId);
 
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
-      state.setIsCorrect(isAnswerCorrect);
-      state.setHasAnswered(true);
-      state.setTotalAnswered(prev => prev + 1);
-      if (isAnswerCorrect) {
-        state.setScore(prev => prev + 1);
-      }
-
-      const { error } = await supabase
+      
+      const { error: answerError } = await supabase
         .from('participant_answers')
         .insert([{
           participant_id: participantId,
@@ -43,7 +38,27 @@ export const useAnswerSubmission = (contestId: string) => {
           answer: state.selectedAnswer
         }]);
 
-      if (error) throw error;
+      if (answerError) throw answerError;
+
+      // Update participant score
+      if (isAnswerCorrect) {
+        const { error: scoreError } = await supabase
+          .from('participants')
+          .update({ 
+            score: state.score + 1,
+            points: (state.score + 1) * 10 // 10 points per correct answer
+          })
+          .eq('participation_id', participantId);
+
+        if (scoreError) throw scoreError;
+      }
+
+      state.setIsCorrect(isAnswerCorrect);
+      state.setHasAnswered(true);
+      state.setTotalAnswered(prev => prev + 1);
+      if (isAnswerCorrect) {
+        state.setScore(prev => prev + 1);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
@@ -51,9 +66,9 @@ export const useAnswerSubmission = (contestId: string) => {
 
       const message = getRandomMessage();
       toast({
-        title: "Réponse enregistrée",
+        title: isAnswerCorrect ? "Bonne réponse ! 🎉" : "Pas tout à fait...",
         description: message,
-        variant: "default",
+        variant: isAnswerCorrect ? "default" : "destructive",
       });
 
     } catch (error) {
