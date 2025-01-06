@@ -1,7 +1,9 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, History } from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface QuestionCardProps {
   question: {
@@ -11,6 +13,8 @@ interface QuestionCardProps {
     correct_answer: string;
     article_url?: string;
     status: 'available' | 'used';
+    last_used_date?: string;
+    last_used_contest?: string;
   };
   isSelected: boolean;
   onSelect: () => void;
@@ -20,7 +24,7 @@ export const QuestionCard = ({ question, isSelected, onSelect }: QuestionCardPro
   return (
     <Card className={`
       ${isSelected ? 'border-primary' : ''}
-      ${question.status === 'used' ? 'opacity-50' : ''}
+      ${question.status === 'used' ? 'bg-gray-50' : ''}
     `}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
@@ -47,10 +51,20 @@ export const QuestionCard = ({ question, isSelected, onSelect }: QuestionCardPro
                 Article source
               </a>
             )}
+            {question.status === 'used' && question.last_used_date && (
+              <div className="mt-2 text-sm text-gray-500 flex items-center gap-1">
+                <History className="w-4 h-4" />
+                Dernière utilisation : {format(new Date(question.last_used_date), 'dd MMMM yyyy', { locale: fr })}
+                {question.last_used_contest && (
+                  <span className="ml-1">
+                    dans "{question.last_used_contest}"
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <Button
             variant="outline"
-            disabled={question.status === 'used'}
             onClick={onSelect}
           >
             {isSelected ? 'Désélectionner' : 'Sélectionner'}

@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { QuestionCard } from "./QuestionCard";
 import { ContestSelector } from "./ContestSelector";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Question {
   id: string;
@@ -13,13 +14,11 @@ interface Question {
   correct_answer: string;
   article_url?: string;
   status: 'available' | 'used';
+  last_used_date?: string;
+  last_used_contest?: string;
 }
 
-interface QuestionBankListProps {
-  questions: Question[];
-}
-
-const QuestionBankList = ({ questions }: QuestionBankListProps) => {
+const QuestionBankList = ({ questions }: { questions: Question[] }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
@@ -38,6 +37,9 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
       return data;
     }
   });
+
+  const availableQuestions = questions.filter(q => q.status === 'available');
+  const usedQuestions = questions.filter(q => q.status === 'used');
 
   const handleAddToContest = async () => {
     if (!selectedContestId || selectedQuestions.length === 0) {
@@ -77,9 +79,20 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
 
       if (insertError) throw insertError;
 
+      const currentDate = new Date().toISOString();
+      const { data: contestTitle } = await supabase
+        .from('contests')
+        .select('title')
+        .eq('id', selectedContestId)
+        .single();
+
       const { error: updateError } = await supabase
         .from('question_bank')
-        .update({ status: 'used' })
+        .update({ 
+          status: 'used',
+          last_used_date: currentDate,
+          last_used_contest: contestTitle?.title || 'Concours inconnu'
+        })
         .in('id', selectedQuestions);
 
       if (updateError) throw updateError;
@@ -115,20 +128,50 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
         onAddToContest={handleAddToContest}
       />
 
-      {questions.map((question) => (
-        <QuestionCard
-          key={question.id}
-          question={question}
-          isSelected={selectedQuestions.includes(question.id)}
-          onSelect={() => {
-            if (selectedQuestions.includes(question.id)) {
-              setSelectedQuestions(prev => prev.filter(id => id !== question.id));
-            } else {
-              setSelectedQuestions(prev => [...prev, question.id]);
-            }
-          }}
-        />
-      ))}
+      <Tabs defaultValue="available" className="w-full">
+        <TabsList className="w-full">
+          <TabsTrigger value="available" className="flex-1">
+            Questions Disponibles ({availableQuestions.length})
+          </TabsTrigger>
+          <TabsTrigger value="used" className="flex-1">
+            Questions Utilisées ({usedQuestions.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="available" className="space-y-4">
+          {availableQuestions.map((question) => (
+            <QuestionCard
+              key={question.id}
+              question={question}
+              isSelected={selectedQuestions.includes(question.id)}
+              onSelect={() => {
+                if (selectedQuestions.includes(question.id)) {
+                  setSelectedQuestions(prev => prev.filter(id => id !== question.id));
+                } else {
+                  setSelectedQuestions(prev => [...prev, question.id]);
+                }
+              }}
+            />
+          ))}
+        </TabsContent>
+
+        <TabsContent value="used" className="space-y-4">
+          {usedQuestions.map((question) => (
+            <QuestionCard
+              key={question.id}
+              question={question}
+              isSelected={selectedQuestions.includes(question.id)}
+              onSelect={() => {
+                if (selectedQuestions.includes(question.id)) {
+                  setSelectedQuestions(prev => prev.filter(id => id !== question.id));
+                } else {
+                  setSelectedQuestions(prev => [...prev, question.id]);
+                }
+              }}
+            />
+          ))}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
