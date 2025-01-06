@@ -2,22 +2,24 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../App";
 import { useToast } from "@/hooks/use-toast";
-import { PrizeFormDialog } from "./PrizeFormDialog";
-import { PrizeGrid } from "./PrizeGrid";
-
-interface PrizeFormData {
-  name: string;
-  description?: string;
-  value?: number;
-  image_url?: string;
-  shop_url?: string;
-}
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { PrizeForm } from "./components/PrizeForm";
+import { PrizeCard } from "./components/PrizeCard";
+import { Prize, PrizeFormData } from "./types";
 
 const PrizeCatalogManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [uploading, setUploading] = useState(false);
-  const [editingPrize, setEditingPrize] = useState<any>(null);
+  const [editingPrize, setEditingPrize] = useState<Prize | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const { data: prizes, isLoading } = useQuery({
     queryKey: ["prize-catalog"],
@@ -30,50 +32,9 @@ const PrizeCatalogManager = () => {
 
       if (error) throw error;
       console.log("Prize catalog data:", data);
-      return data;
+      return data as Prize[];
     },
   });
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("prizes")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("prizes")
-        .getPublicUrl(filePath);
-
-      if (editingPrize) {
-        setEditingPrize({ ...editingPrize, image_url: publicUrl });
-      }
-
-      toast({
-        title: "Succès",
-        description: "L'image a été téléchargée",
-      });
-      return publicUrl;
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de télécharger l'image",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const addPrizeMutation = useMutation({
     mutationFn: async (data: PrizeFormData) => {
@@ -82,6 +43,7 @@ const PrizeCatalogManager = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["prize-catalog"] });
+      setIsDialogOpen(false);
       toast({
         title: "Succès",
         description: "Le prix a été ajouté au catalogue",
@@ -108,6 +70,7 @@ const PrizeCatalogManager = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["prize-catalog"] });
       setEditingPrize(null);
+      setIsDialogOpen(false);
       toast({
         title: "Succès",
         description: "Le prix a été mis à jour",
@@ -162,18 +125,40 @@ const PrizeCatalogManager = () => {
 
   return (
     <div className="space-y-6">
-      <PrizeFormDialog
-        onSubmit={handleSubmit}
-        onImageUpload={handleImageUpload}
-        initialData={editingPrize}
-        uploading={uploading}
-        isEditing={!!editingPrize}
-      />
-      <PrizeGrid
-        prizes={prizes || []}
-        onEdit={setEditingPrize}
-        onDelete={(id) => deletePrizeMutation.mutate(id)}
-      />
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button className="w-full bg-primary hover:bg-primary/90">
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter un prix au catalogue
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingPrize ? "Modifier le prix" : "Ajouter un prix au catalogue"}
+            </DialogTitle>
+          </DialogHeader>
+          <PrizeForm
+            initialData={editingPrize || undefined}
+            onSubmit={handleSubmit}
+            isEditing={!!editingPrize}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {prizes?.map((prize) => (
+          <PrizeCard
+            key={prize.id}
+            prize={prize}
+            onEdit={(prize) => {
+              setEditingPrize(prize);
+              setIsDialogOpen(true);
+            }}
+            onDelete={(id) => deletePrizeMutation.mutate(id)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
