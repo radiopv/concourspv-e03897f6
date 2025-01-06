@@ -1,7 +1,26 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { LoginForm } from "@/components/login/LoginForm";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/App";
 
 const Login = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        if (session.user.email === 'renaudcanuel@me.com') {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
+      }
+    };
+    checkAuth();
+  }, [navigate]);
+
   return (
     <div className="container max-w-md mx-auto px-4 py-8">
       <AnimatePresence mode="wait">

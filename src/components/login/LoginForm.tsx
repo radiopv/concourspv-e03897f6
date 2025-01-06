@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -20,6 +21,7 @@ export const LoginForm = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const state = location.state as { email?: string; message?: string } | null;
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -35,8 +37,15 @@ export const LoginForm = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          navigate("/dashboard", { replace: true });
+          // Check if user is admin
+          if (session.user.email === 'renaudcanuel@me.com') {
+            navigate("/admin", { replace: true });
+          } else {
+            navigate("/dashboard", { replace: true });
+          }
         }
+      } catch (error) {
+        console.error("Session check error:", error);
       } finally {
         setIsLoading(false);
       }
@@ -55,6 +64,7 @@ export const LoginForm = () => {
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
+      setIsSubmitting(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
@@ -81,7 +91,12 @@ export const LoginForm = () => {
           description: "Bienvenue sur votre espace membre !",
         });
         
-        navigate("/dashboard", { replace: true });
+        // Check if user is admin and redirect accordingly
+        if (data.user.email === 'renaudcanuel@me.com') {
+          navigate("/admin", { replace: true });
+        } else {
+          navigate("/dashboard", { replace: true });
+        }
       }
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
@@ -90,6 +105,8 @@ export const LoginForm = () => {
         title: "Erreur",
         description: "Une erreur est survenue lors de la connexion. Veuillez réessayer.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -126,7 +143,11 @@ export const LoginForm = () => {
   };
 
   if (isLoading) {
-    return null;
+    return (
+      <div className="flex justify-center items-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -170,8 +191,13 @@ export const LoginForm = () => {
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
+            disabled={isSubmitting}
           >
-            Se connecter
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Se connecter"
+            )}
           </Button>
 
           <div className="flex justify-between text-sm">
@@ -180,6 +206,7 @@ export const LoginForm = () => {
               variant="link"
               className="text-indigo-600"
               onClick={handleResetPassword}
+              disabled={isSubmitting}
             >
               Mot de passe oublié ?
             </Button>
