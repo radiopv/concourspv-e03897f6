@@ -270,6 +270,7 @@ export type Database = {
       participants: {
         Row: {
           attempts: number | null
+          bonus_attempts: number | null
           completed_at: string | null
           contest_id: string | null
           created_at: string
@@ -278,11 +279,13 @@ export type Database = {
           id: string
           last_name: string
           participation_id: string
+          points: number | null
           score: number | null
           status: string | null
         }
         Insert: {
           attempts?: number | null
+          bonus_attempts?: number | null
           completed_at?: string | null
           contest_id?: string | null
           created_at?: string
@@ -291,11 +294,13 @@ export type Database = {
           id?: string
           last_name: string
           participation_id?: string
+          points?: number | null
           score?: number | null
           status?: string | null
         }
         Update: {
           attempts?: number | null
+          bonus_attempts?: number | null
           completed_at?: string | null
           contest_id?: string | null
           created_at?: string
@@ -304,6 +309,7 @@ export type Database = {
           id?: string
           last_name?: string
           participation_id?: string
+          points?: number | null
           score?: number | null
           status?: string | null
         }

@@ -114,6 +114,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           totalQuestions={questions.length}
           score={state.score}
           totalAnswered={state.totalAnswered}
+          correctAnswers={state.score} // Add this line to fix the build error
         />
       </CardHeader>
       <CardContent className="space-y-6">
