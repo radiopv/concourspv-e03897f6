@@ -29,34 +29,12 @@ export const useLoginForm = () => {
         password: values.password,
       });
 
-      if (error) {
-        let errorMessage = "Email ou mot de passe incorrect.";
-        
-        if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Veuillez vérifier votre email pour activer votre compte.";
-        }
+      if (error) throw error;
 
-        toast({
-          variant: "destructive",
-          title: "Erreur de connexion",
-          description: errorMessage,
-        });
-        return;
-      }
-
-      if (data?.user) {
-        toast({
-          title: "Connexion réussie",
-          description: "Bienvenue sur votre espace membre !",
-        });
-      }
-    } catch (error) {
+      return { data, error: null };
+    } catch (error: any) {
       console.error("Erreur lors de la connexion:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la connexion. Veuillez réessayer.",
-      });
+      return { data: null, error };
     }
   };
 
