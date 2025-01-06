@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "../../../App";
+import { Pencil, Trash2, Save, X, Link } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Question {
   id: string;
@@ -22,6 +34,7 @@ interface QuestionAccordionProps {
 
 const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAccordionProps) => {
   const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = React.useState({
     question_text: question.question_text,
     options: [...question.options],
@@ -47,6 +60,7 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
         title: "Succès",
         description: "Question mise à jour",
       });
+      setIsEditing(false);
       onUpdate();
     } catch (error) {
       toast({
@@ -57,12 +71,67 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
     }
   };
 
+  const handleCancel = () => {
+    setFormData({
+      question_text: question.question_text,
+      options: [...question.options],
+      correct_answer: question.correct_answer,
+      article_url: question.article_url || '',
+    });
+    setIsEditing(false);
+  };
+
   return (
     <AccordionItem value={question.id} className="border rounded-lg mb-4 bg-white">
       <AccordionTrigger className="px-4 py-2 hover:no-underline">
-        <div className="flex items-center gap-4">
-          <span className="font-bold">Question {index + 1}</span>
-          <span className="text-sm text-gray-600">{formData.question_text}</span>
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-4">
+            <span className="font-bold">Question {index + 1}</span>
+            <span className="text-sm text-gray-600">{formData.question_text}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {formData.article_url && (
+              <Link className="h-4 w-4 text-blue-500" />
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(!isEditing);
+              }}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action ne peut pas être annulée. La question sera définitivement supprimée.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-500 hover:bg-red-600"
+                    onClick={() => onDelete(question.id)}
+                  >
+                    Supprimer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       </AccordionTrigger>
       <AccordionContent className="p-4 space-y-4">
@@ -75,6 +144,7 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
                 ...prev,
                 question_text: e.target.value
               }))}
+              disabled={!isEditing}
               placeholder="Texte de la question"
             />
           </div>
@@ -87,6 +157,7 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
                 ...prev,
                 article_url: e.target.value
               }))}
+              disabled={!isEditing}
               placeholder="https://..."
             />
           </div>
@@ -94,7 +165,7 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
           {formData.options.map((option, optionIndex) => (
             <div key={optionIndex}>
               <label className="text-sm font-medium">
-                Option {optionIndex + 1} 
+                Option {optionIndex + 1}
                 {option === formData.correct_answer && (
                   <span className="text-green-600 ml-2">(Réponse correcte)</span>
                 )}
@@ -110,6 +181,7 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
                       options: newOptions
                     }));
                   }}
+                  disabled={!isEditing}
                 />
                 <Button
                   variant="outline"
@@ -117,6 +189,7 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
                     ...prev,
                     correct_answer: option
                   }))}
+                  disabled={!isEditing}
                   className={option === formData.correct_answer ? "bg-green-50" : ""}
                 >
                   ✓
@@ -125,14 +198,16 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
             </div>
           ))}
 
-          <div className="flex justify-between pt-4">
-            <Button variant="outline" onClick={() => onDelete(question.id)}>
-              Supprimer
-            </Button>
-            <Button onClick={handleSave}>
-              Enregistrer
-            </Button>
-          </div>
+          {isEditing && (
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={handleCancel}>
+                <X className="w-4 h-4 mr-2" /> Annuler
+              </Button>
+              <Button onClick={handleSave}>
+                <Save className="w-4 h-4 mr-2" /> Enregistrer
+              </Button>
+            </div>
+          )}
         </div>
       </AccordionContent>
     </AccordionItem>
