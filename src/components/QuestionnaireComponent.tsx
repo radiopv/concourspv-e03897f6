@@ -11,6 +11,7 @@ import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
 import QuestionDisplay from './questionnaire/QuestionDisplay';
 import { useAttempts } from './questionnaire/hooks/useAttempts';
 import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
+import { useContestAI } from '@/hooks/useContestAI';
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -24,6 +25,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const { data: questions } = useQuestions(contestId);
   const { handleSubmitAnswer } = useAnswerSubmission(contestId);
   const currentQuestion = questions?.[state.currentQuestionIndex];
+  const { getParticipantFeedback } = useContestAI();
 
   useAttempts(contestId);
 
@@ -60,13 +62,16 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id);
 
+        // Get AI-powered feedback
+        const feedback = await getParticipantFeedback(finalScore, "Contest");
+
         toast({
           title: "Questionnaire terminé ! 🎉",
-          description: `Votre score final est de ${finalScore}%. ${
+          description: `${feedback || `Votre score final est de ${finalScore}%. ${
             finalScore >= 70 
               ? "Félicitations ! Vous êtes éligible pour le tirage au sort !" 
               : "Continuez à participer pour améliorer vos chances !"
-          }`,
+          }`}`,
           duration: 5000,
         });
 
