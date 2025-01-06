@@ -26,32 +26,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error fetching session:", error.message);
-          return;
-        }
+    // Récupérer la session initiale
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      setLoading(false);
+    });
 
+    // Écouter les changements d'état d'authentification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        console.log("Auth state changed:", event);
+        
         if (currentSession) {
           setSession(currentSession);
           setUser(currentSession.user);
           
-          // Check if user has a profile
-          const { data: profile, error: profileError } = await supabase
+          // Vérifier et créer le profil si nécessaire
+          const { data: profile } = await supabase
             .from('members')
             .select('*')
             .eq('id', currentSession.user.id)
-            .maybeSingle();
+            .single();
 
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            return;
-          }
-
-          // If no profile exists, create one
           if (!profile) {
             const { error: createError } = await supabase
               .from('members')
@@ -67,40 +64,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (createError) {
               console.error("Error creating profile:", createError);
-              return;
             }
           }
-        }
-      } catch (error) {
-        console.error("Session check error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log("Auth state changed:", event);
-      
-      if (currentSession) {
-        setSession(currentSession);
-        setUser(currentSession.user);
-        
-        // Redirect based on role
-        if (currentSession.user.email === 'renaudcanuel@me.com') {
-          navigate('/admin');
+          // Redirection basée sur le rôle
+          if (currentSession.user.email === 'renaudcanuel@me.com') {
+            navigate('/admin');
+          } else {
+            navigate('/');
+          }
         } else {
-          navigate('/dashboard');
+          setSession(null);
+          setUser(null);
+          navigate('/login');
         }
-      } else {
-        setSession(null);
-        setUser(null);
-        navigate('/login');
       }
-      
-      setLoading(false);
-    });
+    );
 
     return () => {
       subscription.unsubscribe();

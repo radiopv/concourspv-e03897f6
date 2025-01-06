@@ -8,6 +8,7 @@ import { LoginFormFields } from "./LoginFormFields";
 import { useLoginForm } from "@/hooks/useLoginForm";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { motion } from "framer-motion";
+import { AuthError } from "@supabase/supabase-js";
 
 export const LoginForm = () => {
   const { toast } = useToast();
@@ -21,11 +22,26 @@ export const LoginForm = () => {
     setIsSubmitting(true);
     try {
       const { data, error } = await handleLogin(values);
+      
       if (error) {
         let errorMessage = "Email ou mot de passe incorrect.";
-        if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Veuillez vérifier votre email pour confirmer votre compte.";
+        if (error instanceof AuthError) {
+          switch (error.message) {
+            case "Email not confirmed":
+              errorMessage = "Veuillez vérifier votre email pour confirmer votre compte.";
+              break;
+            case "Invalid login credentials":
+              errorMessage = "Identifiants invalides.";
+              break;
+            case "Invalid refresh token":
+            case "refresh_token_not_found":
+              errorMessage = "Session expirée. Veuillez vous reconnecter.";
+              break;
+            default:
+              errorMessage = error.message;
+          }
         }
+        
         toast({
           variant: "destructive",
           title: "Erreur de connexion",
