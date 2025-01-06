@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Trophy, Menu, Settings, LogOut } from "lucide-react";
+import { Trophy, Menu, Settings, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -21,42 +21,54 @@ const UserNavBar = () => {
       >
         Accueil
       </Link>
-      <Link
-        to="/contests"
-        className="text-gray-900 hover:text-gray-600 transition-colors"
-        onClick={() => setIsOpen(false)}
-      >
-        Concours
-      </Link>
-      <Link
-        to="/winners"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-        onClick={() => setIsOpen(false)}
-      >
-        <Trophy className="w-4 h-4" />
-        Gagnants
-      </Link>
-      {isAdmin && (
-        <Link
-          to="/admin"
-          className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-          onClick={() => setIsOpen(false)}
-        >
-          <Settings className="w-4 h-4" />
-          Administration
-        </Link>
+      {user && (
+        <>
+          <Link
+            to="/dashboard"
+            className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
+            onClick={() => setIsOpen(false)}
+          >
+            <User className="w-4 h-4" />
+            Mon Profil
+          </Link>
+          <Link
+            to="/contests"
+            className="text-gray-900 hover:text-gray-600 transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            Concours
+          </Link>
+          <Link
+            to="/winners"
+            className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
+            onClick={() => setIsOpen(false)}
+          >
+            <Trophy className="w-4 h-4" />
+            Gagnants
+          </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
+              onClick={() => setIsOpen(false)}
+            >
+              <Settings className="w-4 h-4" />
+              Administration
+            </Link>
+          )}
+          <Button
+            variant="ghost"
+            className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 p-0 h-auto"
+            onClick={() => {
+              signOut();
+              setIsOpen(false);
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+            Déconnexion
+          </Button>
+        </>
       )}
-      <Button
-        variant="ghost"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 p-0 h-auto"
-        onClick={() => {
-          signOut();
-          setIsOpen(false);
-        }}
-      >
-        <LogOut className="w-4 h-4" />
-        Déconnexion
-      </Button>
     </div>
   );
 
