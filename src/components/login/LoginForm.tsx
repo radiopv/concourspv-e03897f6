@@ -8,7 +8,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -19,6 +19,7 @@ export const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   const state = location.state as { email?: string; message?: string } | null;
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -31,22 +32,26 @@ export const LoginForm = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/dashboard", { replace: true });
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          navigate("/dashboard", { replace: true });
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
     checkSession();
   }, [navigate]);
 
   useEffect(() => {
-    if (state?.message) {
+    if (state?.message && !isLoading) {
       toast({
         title: "Information",
         description: state.message,
       });
     }
-  }, [state?.message, toast]);
+  }, [state?.message, toast, isLoading]);
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
@@ -119,6 +124,10 @@ export const LoginForm = () => {
       });
     }
   };
+
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <Form {...form}>
