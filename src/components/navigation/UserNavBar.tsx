@@ -12,6 +12,10 @@ const UserNavBar = () => {
   const { user, signOut } = useAuth();
   const isAdmin = user?.email === "renaudcanuel@me.com";
 
+  const handleLogout = async () => {
+    await signOut();
+  };
+
   const NavLinks = () => (
     <div className="flex flex-col md:flex-row md:space-x-8 space-y-4 md:space-y-0">
       <Link
@@ -21,51 +25,53 @@ const UserNavBar = () => {
       >
         Accueil
       </Link>
-      <Link
-        to="/dashboard"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-        onClick={() => setIsOpen(false)}
-      >
-        <User className="w-4 h-4" />
-        Mon Profil
-      </Link>
-      <Link
-        to="/contests"
-        className="text-gray-900 hover:text-gray-600 transition-colors"
-        onClick={() => setIsOpen(false)}
-      >
-        Concours
-      </Link>
-      <Link
-        to="/winners"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-        onClick={() => setIsOpen(false)}
-      >
-        <Trophy className="w-4 h-4" />
-        Gagnants
-      </Link>
-      {isAdmin && (
-        <Link
-          to="/admin"
-          className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-          onClick={() => setIsOpen(false)}
-        >
-          <Settings className="w-4 h-4" />
-          Administration
-        </Link>
-      )}
       {user && (
-        <Button
-          variant="ghost"
-          className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 p-0 h-auto"
-          onClick={() => {
-            signOut();
-            setIsOpen(false);
-          }}
-        >
-          <LogOut className="w-4 h-4" />
-          Déconnexion
-        </Button>
+        <>
+          <Link
+            to="/dashboard"
+            className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
+            onClick={() => setIsOpen(false)}
+          >
+            <User className="w-4 h-4" />
+            Mon Profil
+          </Link>
+          <Link
+            to="/contests"
+            className="text-gray-900 hover:text-gray-600 transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            Concours
+          </Link>
+          <Link
+            to="/winners"
+            className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
+            onClick={() => setIsOpen(false)}
+          >
+            <Trophy className="w-4 h-4" />
+            Gagnants
+          </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
+              onClick={() => setIsOpen(false)}
+            >
+              <Settings className="w-4 h-4" />
+              Administration
+            </Link>
+          )}
+          <Button
+            variant="ghost"
+            className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 p-0 h-auto"
+            onClick={() => {
+              handleLogout();
+              setIsOpen(false);
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+            Déconnexion
+          </Button>
+        </>
       )}
     </div>
   );
