@@ -13,12 +13,24 @@ export const LoginForm = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { form, handleLogin, handleResetPassword } = useLoginForm();
-  useAuthRedirect();
+  const { checkAndCreateProfile } = useAuthRedirect();
 
   const onSubmit = async (values: any) => {
     setIsSubmitting(true);
     try {
-      await handleLogin(values);
+      const { data, error } = await handleLogin(values);
+      if (error) throw error;
+      
+      if (data?.user) {
+        await checkAndCreateProfile(data.user.id, data.user.email || '');
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur de connexion",
+        description: error.message || "Une erreur est survenue lors de la connexion.",
+      });
     } finally {
       setIsSubmitting(false);
     }
