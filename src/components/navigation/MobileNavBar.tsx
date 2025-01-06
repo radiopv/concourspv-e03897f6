@@ -1,11 +1,21 @@
 import { Home, Trophy, Settings, LogOut, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
 const MobileNavBar = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = user?.email === "renaudcanuel@me.com";
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   if (!user) return null;
 
@@ -49,7 +59,7 @@ const MobileNavBar = () => {
         <Button
           variant="ghost"
           className="flex flex-col items-center text-gray-600 hover:text-gray-900 h-auto p-0"
-          onClick={signOut}
+          onClick={handleLogout}
         >
           <LogOut className="h-6 w-6" />
           <span className="text-xs mt-1">Déconnexion</span>
