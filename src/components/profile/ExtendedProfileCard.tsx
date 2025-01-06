@@ -41,21 +41,37 @@ export const ExtendedProfileCard = ({ userProfile, onUpdate }: ExtendedProfilePr
     bio: userProfile?.bio || "",
   });
 
-  // Fetch user profile data
+  // Fetch user profile data with proper error handling
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      
+      try {
+        const { data, error } = await supabase
+          .from('members')
+          .select('*')
+          .eq('id', user.id)
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) {
+          console.error('Error fetching profile:', error);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de charger votre profil. Veuillez réessayer.",
+          });
+          throw error;
+        }
+
+        return data;
+      } catch (error) {
+        console.error('Profile fetch error:', error);
+        throw error;
+      }
     },
     enabled: !!user?.id,
+    retry: 1,
   });
 
   if (isLoading) {
@@ -116,6 +132,7 @@ export const ExtendedProfileCard = ({ userProfile, onUpdate }: ExtendedProfilePr
       
       onUpdate();
     } catch (error) {
+      console.error('Photo upload error:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -141,6 +158,7 @@ export const ExtendedProfileCard = ({ userProfile, onUpdate }: ExtendedProfilePr
       setIsEditing(false);
       onUpdate();
     } catch (error) {
+      console.error('Profile update error:', error);
       toast({
         variant: "destructive",
         title: "Erreur",

@@ -130,49 +130,64 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          city: string | null
           contests_participated: number | null
           contests_won: number | null
+          country: string | null
           created_at: string
           email: string
+          facebook_profile_url: string | null
           first_name: string
           id: string
           last_name: string
           notifications_enabled: boolean | null
           phone_number: string | null
+          postal_code: string | null
           role: string | null
           share_scores: boolean | null
+          street_address: string | null
           total_points: number | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
           contests_participated?: number | null
           contests_won?: number | null
+          country?: string | null
           created_at?: string
           email: string
+          facebook_profile_url?: string | null
           first_name: string
           id: string
           last_name: string
           notifications_enabled?: boolean | null
           phone_number?: string | null
+          postal_code?: string | null
           role?: string | null
           share_scores?: boolean | null
+          street_address?: string | null
           total_points?: number | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
           contests_participated?: number | null
           contests_won?: number | null
+          country?: string | null
           created_at?: string
           email?: string
+          facebook_profile_url?: string | null
           first_name?: string
           id?: string
           last_name?: string
           notifications_enabled?: boolean | null
           phone_number?: string | null
+          postal_code?: string | null
           role?: string | null
           share_scores?: boolean | null
+          street_address?: string | null
           total_points?: number | null
         }
         Relationships: []
