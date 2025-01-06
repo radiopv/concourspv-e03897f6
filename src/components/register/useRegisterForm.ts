@@ -30,34 +30,8 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      // 1. Vérifier si l'email existe déjà
-      const { data: existingUsers, error: emailCheckError } = await supabase
-        .from('members')
-        .select('email')
-        .eq('email', values.email);
-
-      if (emailCheckError) {
-        console.error("Erreur lors de la vérification de l'email:", emailCheckError);
-        throw emailCheckError;
-      }
-
-      if (existingUsers && existingUsers.length > 0) {
-        toast({
-          title: "Email déjà utilisé",
-          description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
-          variant: "destructive",
-        });
-        navigate("/login", { 
-          state: { 
-            email: values.email,
-            message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
-          }
-        });
-        return;
-      }
-
-      // 2. Créer le compte d'authentification
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      // Vérifier d'abord si l'utilisateur existe déjà dans auth
+      const { data: { user: existingAuthUser }, error: authCheckError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -68,18 +42,34 @@ export const useRegisterForm = () => {
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (authCheckError) {
+        if (authCheckError.message.includes("User already registered")) {
+          toast({
+            title: "Email déjà utilisé",
+            description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
+            variant: "destructive",
+          });
+          navigate("/login", { 
+            state: { 
+              email: values.email,
+              message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
+            }
+          });
+          return;
+        }
+        throw authCheckError;
+      }
 
-      if (!authData.user) {
+      if (!existingAuthUser) {
         throw new Error("Erreur lors de la création du compte");
       }
 
-      // 3. Créer le profil dans la table members
+      // Créer le profil dans la table members
       const { error: profileError } = await supabase
         .from('members')
         .insert([
           {
-            id: authData.user.id,
+            id: existingAuthUser.id,
             first_name: values.firstName,
             last_name: values.lastName,
             email: values.email,
@@ -112,10 +102,24 @@ export const useRegisterForm = () => {
 
     } catch (error: any) {
       console.error("Erreur lors de l'inscription:", error);
+      
+      // Gestion spécifique des erreurs
+      let errorMessage = "Une erreur est survenue lors de l'inscription. Veuillez réessayer.";
+      
+      if (error.message.includes("User already registered")) {
+        errorMessage = "Un compte existe déjà avec cet email. Veuillez vous connecter.";
+        navigate("/login", { 
+          state: { 
+            email: values.email,
+            message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
+          }
+        });
+      }
+
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
+        description: errorMessage,
       });
     }
   };
