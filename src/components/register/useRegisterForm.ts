@@ -30,8 +30,30 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Vérifier d'abord si l'utilisateur existe déjà dans auth
-      const { data: { user: existingAuthUser }, error: authCheckError } = await supabase.auth.signUp({
+      // Vérifier d'abord si l'utilisateur existe dans auth
+      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (!signInError) {
+        // L'utilisateur existe déjà
+        toast({
+          title: "Email déjà utilisé",
+          description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
+          variant: "destructive",
+        });
+        navigate("/login", { 
+          state: { 
+            email: values.email,
+            message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
+          }
+        });
+        return;
+      }
+
+      // Si l'utilisateur n'existe pas, créer un nouveau compte
+      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -42,25 +64,11 @@ export const useRegisterForm = () => {
         },
       });
 
-      if (authCheckError) {
-        if (authCheckError.message.includes("User already registered")) {
-          toast({
-            title: "Email déjà utilisé",
-            description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
-            variant: "destructive",
-          });
-          navigate("/login", { 
-            state: { 
-              email: values.email,
-              message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
-            }
-          });
-          return;
-        }
-        throw authCheckError;
+      if (signUpError) {
+        throw signUpError;
       }
 
-      if (!existingAuthUser) {
+      if (!user) {
         throw new Error("Erreur lors de la création du compte");
       }
 
@@ -69,7 +77,7 @@ export const useRegisterForm = () => {
         .from('members')
         .insert([
           {
-            id: existingAuthUser.id,
+            id: user.id,
             first_name: values.firstName,
             last_name: values.lastName,
             email: values.email,
@@ -103,23 +111,10 @@ export const useRegisterForm = () => {
     } catch (error: any) {
       console.error("Erreur lors de l'inscription:", error);
       
-      // Gestion spécifique des erreurs
-      let errorMessage = "Une erreur est survenue lors de l'inscription. Veuillez réessayer.";
-      
-      if (error.message.includes("User already registered")) {
-        errorMessage = "Un compte existe déjà avec cet email. Veuillez vous connecter.";
-        navigate("/login", { 
-          state: { 
-            email: values.email,
-            message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
-          }
-        });
-      }
-
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: errorMessage,
+        description: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
       });
     }
   };
