@@ -43,6 +43,12 @@ serve(async (req) => {
         throw new Error('Invalid action specified');
     }
 
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key is not configured');
+    }
+
+    console.log(`Making OpenAI API request for action: ${action}`);
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -58,7 +64,19 @@ serve(async (req) => {
       }),
     });
 
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('OpenAI API error:', errorData);
+      throw new Error(`OpenAI API returned status ${response.status}`);
+    }
+
     const result = await response.json();
+    
+    if (!result.choices || !result.choices[0] || !result.choices[0].message) {
+      console.error('Unexpected OpenAI API response format:', result);
+      throw new Error('Invalid response format from OpenAI API');
+    }
+
     return new Response(JSON.stringify({
       content: result.choices[0].message.content
     }), {
@@ -67,7 +85,10 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in contest-ai function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: error.stack
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
