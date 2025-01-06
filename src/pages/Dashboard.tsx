@@ -6,16 +6,11 @@ import { supabase } from "@/App";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsCards from "@/components/dashboard/StatsCards";
-import ProfileCard from "@/components/dashboard/ProfileCard";
+import { ExtendedProfileCard } from "@/components/profile/ExtendedProfileCard";
 import QuickActions from "@/components/dashboard/QuickActions";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-  });
 
   const { data: userProfile, isLoading, error, refetch } = useQuery({
     queryKey: ["userProfile", user?.id],
@@ -74,15 +69,6 @@ const Dashboard = () => {
     retry: 1,
   });
 
-  useEffect(() => {
-    if (userProfile) {
-      setFormData({
-        first_name: userProfile.first_name || "",
-        last_name: userProfile.last_name || "",
-      });
-    }
-  }, [userProfile]);
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -106,21 +92,10 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 space-y-8">
       <DashboardHeader firstName={userProfile?.first_name} />
-      
       <StatsCards stats={userProfile} />
-
-      <ProfileCard
-        userProfile={userProfile}
-        isEditing={isEditing}
-        formData={formData}
-        setFormData={setFormData}
-        setIsEditing={setIsEditing}
-        userId={user?.id}
-        refetch={refetch}
-      />
-
+      <ExtendedProfileCard userProfile={userProfile} onUpdate={refetch} />
       <QuickActions />
     </div>
   );
