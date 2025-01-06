@@ -44,7 +44,6 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
     prize_image_url: '',
   });
 
-  // Update form data when contest data is loaded
   useEffect(() => {
     if (contest) {
       setFormData({
@@ -164,7 +163,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
               handleImageUpload={handleImageUpload}
               uploading={uploading}
             />
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
               Enregistrer les modifications
             </Button>
           </form>
