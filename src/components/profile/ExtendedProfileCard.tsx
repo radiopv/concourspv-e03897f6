@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Facebook, MapPin, Camera } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/App";
 import { useAuth } from "@/contexts/AuthContext";
+import { ProfileHeader } from "./ProfileHeader";
+import { ProfileStats } from "./ProfileStats";
+import { ProfileForm } from "./ProfileForm";
+import { useQuery } from "@tanstack/react-query";
 
 interface ExtendedProfileProps {
   userProfile: {
@@ -42,7 +41,24 @@ export const ExtendedProfileCard = ({ userProfile, onUpdate }: ExtendedProfilePr
     bio: userProfile?.bio || "",
   });
 
-  if (!userProfile) {
+  // Fetch user profile data
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  if (isLoading) {
     return (
       <Card className="w-full max-w-4xl mx-auto">
         <CardContent className="p-6">
@@ -53,6 +69,20 @@ export const ExtendedProfileCard = ({ userProfile, onUpdate }: ExtendedProfilePr
       </Card>
     );
   }
+
+  if (!profile && !userProfile) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardContent className="p-6">
+          <div className="text-center text-gray-500">
+            Profil non trouvé
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const currentProfile = profile || userProfile;
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -99,7 +129,7 @@ export const ExtendedProfileCard = ({ userProfile, onUpdate }: ExtendedProfilePr
       const { error } = await supabase
         .from('members')
         .update(formData)
-        .eq('id', userProfile.id);
+        .eq('id', currentProfile.id);
 
       if (error) throw error;
 
@@ -132,109 +162,21 @@ export const ExtendedProfileCard = ({ userProfile, onUpdate }: ExtendedProfilePr
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex flex-col items-center space-y-4">
-          <Avatar className="w-32 h-32">
-            <AvatarImage src={userProfile.avatar_url} />
-            <AvatarFallback className="bg-primary/10">
-              {userProfile.first_name?.[0]}{userProfile.last_name?.[0]}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex gap-4">
-            <input
-              type="file"
-              id="photo"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoUpload}
-            />
-            <Button
-              variant="outline"
-              onClick={() => document.getElementById("photo")?.click()}
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              Changer la photo
-            </Button>
-          </div>
-        </div>
+        <ProfileHeader 
+          userProfile={currentProfile} 
+          onPhotoUpload={handlePhotoUpload} 
+        />
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div>
-              <Label>Statistiques</Label>
-              <div className="mt-2 space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  Points totaux: {userProfile.total_points || 0}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Concours gagnés: {userProfile.contests_won || 0}
-                </p>
-              </div>
-            </div>
+        <ProfileForm 
+          formData={formData}
+          setFormData={setFormData}
+          isEditing={isEditing}
+        />
 
-            <div className="space-y-2">
-              <Label htmlFor="facebook">Profil Facebook</Label>
-              <div className="flex gap-2">
-                <Facebook className="w-5 h-5 text-blue-600" />
-                <Input
-                  id="facebook"
-                  value={formData.facebook_profile_url}
-                  onChange={(e) => setFormData({ ...formData, facebook_profile_url: e.target.value })}
-                  disabled={!isEditing}
-                  placeholder="URL de votre profil Facebook"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                value={formData.bio}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                disabled={!isEditing}
-                placeholder="Parlez-nous un peu de vous..."
-                className="h-32"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Adresse
-              </Label>
-              <Input
-                value={formData.street_address}
-                onChange={(e) => setFormData({ ...formData, street_address: e.target.value })}
-                disabled={!isEditing}
-                placeholder="Numéro et rue"
-                className="mb-2"
-              />
-              <Input
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                disabled={!isEditing}
-                placeholder="Ville"
-                className="mb-2"
-              />
-              <Input
-                value={formData.postal_code}
-                onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                disabled={!isEditing}
-                placeholder="Code postal"
-                className="mb-2"
-              />
-              <Input
-                value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                disabled={!isEditing}
-                placeholder="Pays"
-              />
-            </div>
-          </div>
-        </div>
+        <ProfileStats 
+          total_points={currentProfile.total_points}
+          contests_won={currentProfile.contests_won}
+        />
 
         {isEditing && (
           <div className="flex justify-end gap-4">
