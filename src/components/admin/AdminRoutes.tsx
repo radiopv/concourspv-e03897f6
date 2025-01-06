@@ -8,9 +8,37 @@ import DrawManager from "./DrawManager";
 import Winners from "../../pages/Winners";
 import GlobalSettings from "./GlobalSettings";
 import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../../App";
 
 const AdminRoutes = () => {
   const { contestId } = useParams();
+
+  const { data: contest } = useQuery({
+    queryKey: ['contest', contestId],
+    queryFn: async () => {
+      if (!contestId) return null;
+      const { data, error } = await supabase
+        .from('contests')
+        .select(`
+          *,
+          participants (
+            id,
+            first_name,
+            last_name,
+            email,
+            score,
+            status
+          )
+        `)
+        .eq('id', contestId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contestId
+  });
 
   return (
     <div className="container mx-auto p-4">
@@ -99,7 +127,7 @@ const AdminRoutes = () => {
         />
         <Route 
           path="contests/:contestId/draw" 
-          element={<DrawManager contestId={contestId || ''} />} 
+          element={contest ? <DrawManager contestId={contestId || ''} contest={contest} /> : null} 
         />
         <Route 
           path="contests/:contestId/winners" 
