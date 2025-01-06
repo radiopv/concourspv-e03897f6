@@ -4,6 +4,7 @@ import * as z from "zod";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/App";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const formSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
@@ -16,6 +17,7 @@ const formSchema = z.object({
 export const useRegisterForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { sendWelcomeEmail } = useNotifications();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -84,6 +86,9 @@ export const useRegisterForm = () => {
         console.error("Erreur de création du profil:", profileError);
         throw profileError;
       }
+
+      // Send welcome email
+      await sendWelcomeEmail(values.email, values.firstName);
 
       toast({
         title: "Inscription réussie !",
