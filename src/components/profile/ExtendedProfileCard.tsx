@@ -25,7 +25,7 @@ interface ExtendedProfileProps {
     bio?: string;
     total_points?: number;
     contests_won?: number;
-  };
+  } | null;
   onUpdate: () => void;
 }
 
@@ -34,13 +34,25 @@ export const ExtendedProfileCard = ({ userProfile, onUpdate }: ExtendedProfilePr
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    facebook_profile_url: userProfile.facebook_profile_url || "",
-    street_address: userProfile.street_address || "",
-    city: userProfile.city || "",
-    postal_code: userProfile.postal_code || "",
-    country: userProfile.country || "France",
-    bio: userProfile.bio || "",
+    facebook_profile_url: userProfile?.facebook_profile_url || "",
+    street_address: userProfile?.street_address || "",
+    city: userProfile?.city || "",
+    postal_code: userProfile?.postal_code || "",
+    country: userProfile?.country || "France",
+    bio: userProfile?.bio || "",
   });
+
+  if (!userProfile) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardContent className="p-6">
+          <div className="text-center text-gray-500">
+            Chargement du profil...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
