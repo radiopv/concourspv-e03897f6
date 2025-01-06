@@ -46,10 +46,12 @@ export const useRegisterForm = () => {
       if (error) {
         if (error.message.includes("User already registered")) {
           toast({
-            title: "Email déjà utilisé",
-            description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
             variant: "destructive",
+            title: "Compte existant",
+            description: "Un compte existe déjà avec cet email. Vous pouvez vous connecter directement ou utiliser la fonction 'Mot de passe oublié' si nécessaire.",
           });
+          
+          // Rediriger vers la page de connexion avec l'email pré-rempli
           navigate("/login", { 
             state: { 
               email: values.email,
