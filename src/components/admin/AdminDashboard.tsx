@@ -7,9 +7,10 @@ import { Link } from "react-router-dom";
 import AdminContestManager from "./AdminContestManager";
 import ContestList from "./ContestList";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Award, Shuffle, Database } from "lucide-react";
+import { Users, Award, Shuffle, Database, Mail } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ContestAIAssistant } from "./ContestAIAssistant";
+import { EmailManager } from "./EmailManager";
 
 const AdminDashboard = () => {
   const [selectedContest, setSelectedContest] = useState<string | null>(null);
@@ -168,6 +169,8 @@ const AdminDashboard = () => {
 
           <ContestAIAssistant />
         </div>
+
+        <EmailManager />
 
         <ContestList 
           contests={contests || []} 
