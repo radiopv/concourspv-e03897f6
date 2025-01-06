@@ -30,30 +30,7 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Vérifier d'abord si l'utilisateur existe dans auth
-      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (!signInError) {
-        // L'utilisateur existe déjà
-        toast({
-          title: "Email déjà utilisé",
-          description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
-          variant: "destructive",
-        });
-        navigate("/login", { 
-          state: { 
-            email: values.email,
-            message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
-          }
-        });
-        return;
-      }
-
-      // Si l'utilisateur n'existe pas, créer un nouveau compte
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+      const { data: { user }, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -64,15 +41,28 @@ export const useRegisterForm = () => {
         },
       });
 
-      if (signUpError) {
-        throw signUpError;
+      if (error) {
+        if (error.message.includes("User already registered")) {
+          toast({
+            title: "Email déjà utilisé",
+            description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
+            variant: "destructive",
+          });
+          navigate("/login", { 
+            state: { 
+              email: values.email,
+              message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
+            }
+          });
+          return;
+        }
+        throw error;
       }
 
       if (!user) {
         throw new Error("Erreur lors de la création du compte");
       }
 
-      // Créer le profil dans la table members
       const { error: profileError } = await supabase
         .from('members')
         .insert([
