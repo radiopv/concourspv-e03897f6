@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const AUTHORIZED_TEST_EMAIL = "passionvaradero@gmail.com";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +25,10 @@ serve(async (req) => {
     const emailRequest: EmailRequest = await req.json();
     console.log('Sending email:', emailRequest);
 
+    // During testing, enforce sending only to authorized test email
+    const to = [AUTHORIZED_TEST_EMAIL];
+    console.log('Sending test email to:', to);
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -32,7 +37,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Passion Varadero <onboarding@resend.dev>", // Using Resend's default domain temporarily
-        to: emailRequest.to,
+        to: to, // Always send to authorized test email during testing
         subject: emailRequest.subject,
         html: emailRequest.html,
       }),
