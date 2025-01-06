@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/App";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   session: Session | null;
@@ -22,9 +23,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Initial session check
     const checkSession = async () => {
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
@@ -37,6 +38,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (currentSession) {
           setSession(currentSession);
           setUser(currentSession.user);
+          
+          // Check if user has a profile
+          const { data: profile, error: profileError } = await supabase
+            .from('members')
+            .select('*')
+            .eq('id', currentSession.user.id)
+            .maybeSingle();
+
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+            return;
+          }
+
+          // If no profile exists, create one
+          if (!profile) {
+            const { error: createError } = await supabase
+              .from('members')
+              .insert([
+                {
+                  id: currentSession.user.id,
+                  email: currentSession.user.email,
+                  first_name: currentSession.user.email?.split('@')[0] || 'User',
+                  last_name: 'New',
+                  role: currentSession.user.email === 'renaudcanuel@me.com' ? 'admin' : 'user'
+                }
+              ]);
+
+            if (createError) {
+              console.error("Error creating profile:", createError);
+              return;
+            }
+          }
         }
       } catch (error) {
         console.error("Session check error:", error);
@@ -47,16 +80,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     checkSession();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth state changed:", event);
       
       if (currentSession) {
         setSession(currentSession);
         setUser(currentSession.user);
+        
+        // Redirect based on role
+        if (currentSession.user.email === 'renaudcanuel@me.com') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         setSession(null);
         setUser(null);
+        navigate('/login');
       }
       
       setLoading(false);
@@ -65,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const signOut = async () => {
     try {
@@ -79,6 +119,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Déconnexion réussie",
         description: "À bientôt !",
       });
+      
+      navigate('/login');
     } catch (error) {
       console.error("Sign out error:", error);
       toast({

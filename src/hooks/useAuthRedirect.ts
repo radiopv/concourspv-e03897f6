@@ -9,7 +9,6 @@ export const useAuthRedirect = () => {
 
   const checkAndCreateProfile = async (userId: string, email: string) => {
     try {
-      // Use maybeSingle() instead of single() to handle no results gracefully
       const { data: existingProfile, error: fetchError } = await supabase
         .from('members')
         .select()
@@ -21,7 +20,6 @@ export const useAuthRedirect = () => {
         throw fetchError;
       }
 
-      // Only create profile if it doesn't exist
       if (!existingProfile) {
         const { error: insertError } = await supabase
           .from('members')
@@ -30,7 +28,7 @@ export const useAuthRedirect = () => {
               id: userId,
               email: email,
               first_name: email.split('@')[0],
-              last_name: 'Utilisateur',
+              last_name: 'New',
               role: email === 'renaudcanuel@me.com' ? 'admin' : 'user'
             }
           ]);
@@ -75,9 +73,9 @@ export const useAuthRedirect = () => {
         }
 
         if (session.user.email === 'renaudcanuel@me.com') {
-          navigate('/admin', { replace: true });
+          navigate('/admin');
         } else {
-          navigate('/dashboard', { replace: true });
+          navigate('/dashboard');
         }
       }
     };
