@@ -77,7 +77,8 @@ const AdminRoutes = () => {
             email,
             score,
             status,
-            created_at
+            created_at,
+            contest_id
           )
         `)
         .eq('id', contestId)

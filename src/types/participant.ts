@@ -14,7 +14,7 @@ export interface Participant {
   score: number;
   status: ParticipantStatus;
   created_at: string;
-  contest_id: string;
+  contest_id?: string; // Made optional since it's not always needed in the UI context
   participant_prizes?: ParticipantPrize[];
 }
 
