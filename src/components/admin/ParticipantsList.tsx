@@ -6,12 +6,14 @@ import { ParticipantsTable } from "./participants/ParticipantsTable";
 import { ParticipantsActions } from "./participants/ParticipantsActions";
 import { useParams } from "react-router-dom";
 
+interface Question {
+  correct_answer: string;
+}
+
 interface ParticipantAnswer {
   question_id: string;
   answer: string;
-  questions?: {
-    correct_answer: string;
-  };
+  questions?: Question;
 }
 
 interface Participant {
@@ -34,13 +36,11 @@ interface ParticipationResponse {
     last_name: string;
     email: string;
   };
-  participant_answers: {
+  participant_answers: Array<{
     question_id: string;
     answer: string;
-    questions: {
-      correct_answer: string;
-    } | null;
-  }[];
+    questions: Question | null;
+  }>;
 }
 
 const ParticipantsList = () => {
@@ -56,7 +56,7 @@ const ParticipantsList = () => {
     );
   }
 
-  const { data: participants, isLoading } = useQuery({
+  const { data: participants = [], isLoading } = useQuery({
     queryKey: ['participants', contestId],
     queryFn: async () => {
       console.log('Fetching participants for contest:', contestId);
@@ -82,31 +82,27 @@ const ParticipantsList = () => {
           )
         `)
         .eq('contest_id', contestId);
-      
+
       if (error) {
         console.error('Error fetching participants:', error);
         throw error;
       }
 
-      // Transform the data to match the Participant interface
-      const transformedData: Participant[] = (data as ParticipationResponse[]).map(participation => ({
+      if (!data) return [];
+
+      return (data as ParticipationResponse[]).map((participation): Participant => ({
         id: participation.participant.id,
         first_name: participation.participant.first_name,
         last_name: participation.participant.last_name,
         email: participation.participant.email,
         score: participation.score,
         status: participation.status,
-        participant_answers: participation.participant_answers?.map(answer => ({
+        participant_answers: participation.participant_answers.map(answer => ({
           question_id: answer.question_id,
           answer: answer.answer,
-          questions: answer.questions ? {
-            correct_answer: answer.questions.correct_answer
-          } : undefined
+          questions: answer.questions || undefined
         }))
       }));
-
-      console.log('Transformed participant data:', transformedData);
-      return transformedData;
     }
   });
 
@@ -114,7 +110,6 @@ const ParticipantsList = () => {
     mutationFn: async (participantId: string) => {
       console.log('Deleting participant:', participantId);
       
-      // First delete from participations
       const { error: participationsError } = await supabase
         .from('participations')
         .delete()
@@ -123,7 +118,6 @@ const ParticipantsList = () => {
       
       if (participationsError) throw participationsError;
 
-      // Then delete the participant
       const { error: participantError } = await supabase
         .from('participants')
         .delete()
@@ -152,15 +146,15 @@ const ParticipantsList = () => {
     return <div>Chargement des participants...</div>;
   }
 
-  const eligibleParticipants = participants?.filter(p => p.score >= 70) || [];
-  const ineligibleParticipants = participants?.filter(p => p.score < 70) || [];
+  const eligibleParticipants = participants.filter(p => p.score >= 70);
+  const ineligibleParticipants = participants.filter(p => p.score < 70);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Liste des participants</h2>
         <ParticipantsActions 
-          participants={participants || []} 
+          participants={participants} 
           contestId={contestId} 
         />
       </div>
