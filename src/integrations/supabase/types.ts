@@ -195,6 +195,7 @@ export type Database = {
           id: string
           last_name: string | null
           participation_id: string | null
+          score: number | null
           status: string | null
         }
         Insert: {
@@ -206,6 +207,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           participation_id?: string | null
+          score?: number | null
           status?: string | null
         }
         Update: {
@@ -217,6 +219,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           participation_id?: string | null
+          score?: number | null
           status?: string | null
         }
         Relationships: [
@@ -263,29 +266,36 @@ export type Database = {
       }
       participant_prizes: {
         Row: {
-          id: number
-          participant_id: number
-          prize_name: string | null
-          prize_value: number | null
+          created_at: string
+          id: string
+          participant_id: string | null
+          prize_id: string | null
         }
         Insert: {
-          id?: number
-          participant_id: number
-          prize_name?: string | null
-          prize_value?: number | null
+          created_at?: string
+          id?: string
+          participant_id?: string | null
+          prize_id?: string | null
         }
         Update: {
-          id?: number
-          participant_id?: number
-          prize_name?: string | null
-          prize_value?: number | null
+          created_at?: string
+          id?: string
+          participant_id?: string | null
+          prize_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "participant_prizes_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "participants"
+            referencedRelation: "new_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participant_prizes_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "prizes"
             referencedColumns: ["id"]
           },
         ]

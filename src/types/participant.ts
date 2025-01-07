@@ -11,8 +11,20 @@ export interface Participant {
   first_name: string;
   last_name: string;
   email: string;
-  score: number;
+  score?: number;
   status: ParticipantStatus | null;
   contest_id: string;
-  completed_at?: string;
+  created_at: string;
+  participant_prizes?: ParticipantPrize[];
+}
+
+export interface ParticipantPrize {
+  prize: {
+    catalog_item: {
+      id: string;
+      name: string;
+      value: string;
+      image_url: string;
+    }
+  }
 }

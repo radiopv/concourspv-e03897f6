@@ -1,32 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../integrations/supabase/client";
-import { Contest, Participant, ParticipantPrize } from "../types/contest";
-
-const transformParticipantPrizes = (prizes: any[]): ParticipantPrize[] => {
-  return prizes?.map((pp: any) => ({
-    prize: {
-      catalog_item: {
-        id: pp.prize.catalog_item.id,
-        name: pp.prize.catalog_item.name,
-        value: pp.prize.catalog_item.value,
-        image_url: pp.prize.catalog_item.image_url
-      }
-    }
-  })) || [];
-};
-
-const transformParticipants = (participants: any[]): Participant[] => {
-  return participants?.map((participant: any) => ({
-    id: participant.id,
-    first_name: participant.first_name,
-    last_name: participant.last_name,
-    email: participant.email,
-    score: participant.score || 0,
-    status: participant.status,
-    created_at: participant.created_at,
-    participant_prizes: transformParticipantPrizes(participant.prizes || [])
-  })) || [];
-};
+import { Contest, Participant } from "../types/contest";
 
 export const useContests = () => {
   return useQuery({
@@ -51,9 +25,11 @@ export const useContests = () => {
             score,
             status,
             created_at,
-            prizes:participant_prizes (
-              prize:prizes (
-                catalog_item:prize_catalog!fk_prize_catalog (
+            participant_prizes (
+              prize_id,
+              prizes (
+                catalog_item_id,
+                prize_catalog (
                   id,
                   name,
                   value,
@@ -73,17 +49,28 @@ export const useContests = () => {
 
       console.log('Contests data:', data);
 
-      const transformedData: Contest[] = data.map((contest: any) => ({
+      return data.map((contest: any) => ({
         id: contest.id,
         title: contest.title,
         description: contest.description,
         is_new: contest.is_new,
         has_big_prizes: contest.has_big_prizes,
         status: contest.status,
-        participants: transformParticipants(contest.new_participants || [])
+        participants: contest.new_participants?.map((p: any) => ({
+          id: p.id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          email: p.email,
+          score: p.score,
+          status: p.status,
+          created_at: p.created_at,
+          participant_prizes: p.participant_prizes?.map((pp: any) => ({
+            prize: {
+              catalog_item: pp.prizes?.prize_catalog
+            }
+          })) || []
+        })) || []
       }));
-
-      return transformedData;
     }
   });
 };
