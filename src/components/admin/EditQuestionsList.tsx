@@ -25,47 +25,69 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     queryFn: async () => {
       console.log('Fetching questions for contest:', contestId);
       
-      // First get the questionnaire
-      const { data: questionnaire, error: questionnaireError } = await supabase
-        .from('questionnaires')
-        .select('id')
-        .eq('contest_id', contestId)
-        .maybeSingle();
-      
-      if (questionnaireError) {
-        console.error('Error fetching questionnaire:', questionnaireError);
-        throw questionnaireError;
-      }
+      try {
+        // First get or create the questionnaire
+        let questionnaireId;
+        const { data: existingQuestionnaire, error: questionnaireError } = await supabase
+          .from('questionnaires')
+          .select('id')
+          .eq('contest_id', contestId)
+          .maybeSingle();
+        
+        if (questionnaireError) {
+          console.error('Error fetching questionnaire:', questionnaireError);
+          throw questionnaireError;
+        }
 
-      if (!questionnaire) {
-        console.log('No questionnaire found for contest:', contestId);
-        return [];
-      }
+        if (!existingQuestionnaire) {
+          console.log('No questionnaire found, creating one...');
+          const { data: newQuestionnaire, error: createError } = await supabase
+            .from('questionnaires')
+            .insert([{
+              contest_id: contestId,
+              title: "Questionnaire du concours",
+            }])
+            .select()
+            .single();
+          
+          if (createError) {
+            console.error('Error creating questionnaire:', createError);
+            throw createError;
+          }
+          
+          questionnaireId = newQuestionnaire.id;
+        } else {
+          questionnaireId = existingQuestionnaire.id;
+        }
 
-      console.log('Found questionnaire:', questionnaire);
+        console.log('Using questionnaire ID:', questionnaireId);
 
-      // Then get the questions
-      const { data, error } = await supabase
-        .from('questions')
-        .select(`
-          id,
-          question_text,
-          options,
-          correct_answer,
-          article_url,
-          type,
-          order_number
-        `)
-        .eq('questionnaire_id', questionnaire.id)
-        .order('order_number', { ascending: true });
-      
-      if (error) {
-        console.error('Error fetching questions:', error);
+        // Then get the questions
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('questions')
+          .select(`
+            id,
+            question_text,
+            options,
+            correct_answer,
+            article_url,
+            type,
+            order_number
+          `)
+          .eq('questionnaire_id', questionnaireId)
+          .order('order_number', { ascending: true });
+        
+        if (questionsError) {
+          console.error('Error fetching questions:', questionsError);
+          throw questionsError;
+        }
+
+        console.log('Fetched questions:', questionsData);
+        return questionsData || [];
+      } catch (error) {
+        console.error('Error in question fetching process:', error);
         throw error;
       }
-
-      console.log('Fetched questions:', data);
-      return data as Question[];
     },
     enabled: !!contestId
   });
