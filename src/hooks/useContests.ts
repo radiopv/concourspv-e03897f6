@@ -28,7 +28,7 @@ const transformParticipants = (participants: any[]): Participant[] => {
 };
 
 export const useContests = () => {
-  return useQuery<Contest[]>({
+  return useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
       console.log('Fetching contests...');
@@ -68,7 +68,6 @@ export const useContests = () => {
         throw error;
       }
 
-      // Transform the data to match our types
       const transformedData: Contest[] = data.map((contest: any) => ({
         id: contest.id,
         title: contest.title,
@@ -80,6 +79,10 @@ export const useContests = () => {
       }));
 
       return transformedData;
-    }
+    },
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 };
