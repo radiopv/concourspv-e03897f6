@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../App";
+import { supabase } from "../../integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParticipantsTable } from "./participants/ParticipantsTable";
@@ -48,7 +48,7 @@ const ParticipantsList = () => {
           score,
           status,
           completed_at,
-          participant:participants (
+          participant:participants!inner (
             id,
             first_name,
             last_name,
@@ -64,27 +64,21 @@ const ParticipantsList = () => {
         `)
         .eq('contest_id', contestId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching participations:', error);
+        throw error;
+      }
       
+      if (!data) return [];
+
       // Transform the data to match ParticipationResponse type
       const transformedData: ParticipationResponse[] = data.map(item => ({
         id: item.id,
         score: item.score,
         status: item.status,
         completed_at: item.completed_at,
-        participant: {
-          id: item.participant.id,
-          first_name: item.participant.first_name,
-          last_name: item.participant.last_name,
-          email: item.participant.email
-        },
-        participant_answers: item.participant_answers?.map(answer => ({
-          question_id: answer.question_id,
-          answer: answer.answer,
-          questions: {
-            correct_answer: answer.questions.correct_answer
-          }
-        })) || []
+        participant: item.participant,
+        participant_answers: item.participant_answers || []
       }));
 
       return transformedData;
@@ -93,11 +87,11 @@ const ParticipantsList = () => {
   });
 
   const deleteParticipantMutation = useMutation({
-    mutationFn: async (participantId: string) => {
+    mutationFn: async (participationId: string) => {
       const { error } = await supabase
         .from('participations')
         .delete()
-        .eq('id', participantId); // Changed from participant_id to id
+        .eq('id', participationId);
       
       if (error) throw error;
     },
