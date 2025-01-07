@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../App";
+import { supabase } from "../integrations/supabase/client";
 import { Contest, Participant, ParticipantPrize } from "../types/contest";
 
 const transformParticipantPrizes = (prizes: any[]): ParticipantPrize[] => {
@@ -32,6 +32,7 @@ export const useContests = () => {
     queryKey: ['contests'],
     queryFn: async () => {
       console.log('Fetching contests...');
+      
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -50,7 +51,7 @@ export const useContests = () => {
             created_at,
             prizes:participant_prizes (
               prize:prizes (
-                catalog_item:prize_catalog (
+                catalog_item:prize_catalog!fk_prize_catalog (
                   id,
                   name,
                   value,
