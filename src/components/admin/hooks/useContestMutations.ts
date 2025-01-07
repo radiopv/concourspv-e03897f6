@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "../../../App";
 
 export const useContestMutations = () => {
@@ -7,19 +7,45 @@ export const useContestMutations = () => {
   const queryClient = useQueryClient();
 
   const invalidateQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ['contests'] });
     queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
     queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
   };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting contest:', id);
+      
+      // First delete related records
+      const { error: questionsError } = await supabase
+        .from('questions')
+        .delete()
+        .eq('contest_id', id);
+
+      if (questionsError) {
+        console.error('Error deleting questions:', questionsError);
+        throw questionsError;
+      }
+
+      const { error: prizesError } = await supabase
+        .from('prizes')
+        .delete()
+        .eq('contest_id', id);
+
+      if (prizesError) {
+        console.error('Error deleting prizes:', prizesError);
+        throw prizesError;
+      }
+
+      // Finally delete the contest
       const { error } = await supabase
         .from('contests')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting contest:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       invalidateQueries();
@@ -29,7 +55,7 @@ export const useContestMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error deleting contest:', error);
+      console.error('Error in delete mutation:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer le concours",
@@ -40,6 +66,7 @@ export const useContestMutations = () => {
 
   const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Archiving contest:', id);
       const { error } = await supabase
         .from('contests')
         .update({ status: 'archived' })
@@ -55,7 +82,7 @@ export const useContestMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error archiving contest:', error);
+      console.error('Error in archive mutation:', error);
       toast({
         title: "Erreur",
         description: "Impossible d'archiver le concours",
@@ -66,6 +93,7 @@ export const useContestMutations = () => {
 
   const featureToggleMutation = useMutation({
     mutationFn: async ({ id, featured }: { id: string; featured: boolean }) => {
+      console.log('Updating feature status:', { id, featured });
       const { error } = await supabase
         .from('contests')
         .update({ is_featured: featured })
@@ -81,7 +109,7 @@ export const useContestMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating contest feature status:', error);
+      console.error('Error in feature toggle mutation:', error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le statut en vedette",
@@ -99,6 +127,7 @@ export const useContestMutations = () => {
         status?: 'draft' | 'active' | 'archived';
       } 
     }) => {
+      console.log('Updating contest status:', { id, updates });
       const { error } = await supabase
         .from('contests')
         .update(updates)
@@ -114,7 +143,7 @@ export const useContestMutations = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating contest status:', error);
+      console.error('Error in status update mutation:', error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le statut",

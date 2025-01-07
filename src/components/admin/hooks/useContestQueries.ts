@@ -1,46 +1,99 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../../App";
+import { useToast } from "@/hooks/use-toast";
 
 export const useContestQueries = () => {
-  const { data: contestsWithCounts, isLoading } = useQuery({
+  const { toast } = useToast();
+
+  return useQuery({
     queryKey: ['admin-contests-with-counts'],
     queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session?.access_token) {
-        throw new Error("Not authenticated");
-      }
-
+      console.log('Fetching contests with counts...');
+      
       const { data: contests, error: contestsError } = await supabase
         .from('contests')
-        .select('*')
+        .select(`
+          *,
+          questionnaires (
+            id,
+            questions (count)
+          ),
+          participations (count)
+        `)
         .order('created_at', { ascending: false });
       
-      if (contestsError) throw contestsError;
+      if (contestsError) {
+        console.error('Error fetching contests:', contestsError);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les concours",
+          variant: "destructive",
+        });
+        throw contestsError;
+      }
 
-      const contestsWithQuestionCounts = await Promise.all(contests.map(async (contest) => {
-        const { count: participantsCount } = await supabase
-          .from('participants')
-          .select('*', { count: 'exact', head: true })
-          .eq('contest_id', contest.id);
+      console.log('Fetched contests:', contests);
 
-        const { count: questionsCount } = await supabase
-          .from('questions')
-          .select('*', { count: 'exact', head: true })
-          .eq('contest_id', contest.id);
-
-        return {
-          ...contest,
-          participants: { count: participantsCount || 0 },
-          questions: { count: questionsCount || 0 }
-        };
+      return contests.map(contest => ({
+        ...contest,
+        questionsCount: contest.questionnaires?.[0]?.questions?.count || 0,
+        participationsCount: contest.participations?.count || 0
       }));
-
-      return contestsWithQuestionCounts;
     },
     refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchInterval: 5000
+    refetchOnMount: true
   });
+};
 
-  return { contestsWithCounts, isLoading };
+export const useContest = (contestId: string) => {
+  const { toast } = useToast();
+
+  return useQuery({
+    queryKey: ['contest', contestId],
+    queryFn: async () => {
+      console.log('Fetching single contest:', contestId);
+      
+      const { data, error } = await supabase
+        .from('contests')
+        .select(`
+          *,
+          questionnaires (
+            id,
+            questions (
+              id,
+              question_text,
+              options,
+              correct_answer,
+              article_url,
+              order_number
+            )
+          ),
+          prizes (
+            id,
+            catalog_item:prize_catalog (
+              id,
+              name,
+              value,
+              image_url
+            )
+          )
+        `)
+        .eq('id', contestId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching contest:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger le concours",
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      console.log('Fetched contest data:', data);
+      return data;
+    },
+    enabled: !!contestId
+  });
 };
