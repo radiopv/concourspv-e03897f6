@@ -6,10 +6,25 @@ import { Trophy, Gift, Star, Calendar, Loader } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useContests } from "@/hooks/useContests";
+import { useToast } from "@/components/ui/use-toast";
 
 const ContestsList = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { data: contests, isLoading, error } = useContests();
+
+  const handleParticipateClick = (contestId: string) => {
+    console.log("Navigation vers le concours:", contestId);
+    if (contestId) {
+      navigate(`/contest/${contestId}`);
+    } else {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'accéder à ce concours pour le moment.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -138,7 +153,7 @@ const ContestsList = () => {
                 </div>
 
                 <Button 
-                  onClick={() => navigate(`/contest/${contest.id}`)}
+                  onClick={() => handleParticipateClick(contest.id)}
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 group"
                 >
                   <Gift className="w-4 h-4 mr-2 transform group-hover:scale-110 transition-transform" />
