@@ -7,10 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QuestionBankItem } from "@/types/question";
 
 interface QuestionBankListProps {
-  onAddToContest: (questions: QuestionBankItem[]) => Promise<void>;
+  onAddToContest?: (questions: QuestionBankItem[]) => Promise<void>;
+  mode?: 'select' | 'manage';
 }
 
-const QuestionBankList = ({ onAddToContest }: QuestionBankListProps) => {
+const QuestionBankList = ({ onAddToContest, mode = 'manage' }: QuestionBankListProps) => {
   const { toast } = useToast();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
 
@@ -28,6 +29,8 @@ const QuestionBankList = ({ onAddToContest }: QuestionBankListProps) => {
   });
 
   const handleAddToContest = async () => {
+    if (!onAddToContest) return;
+
     if (selectedQuestions.length === 0) {
       toast({
         title: "Erreur",
@@ -51,18 +54,20 @@ const QuestionBankList = ({ onAddToContest }: QuestionBankListProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">
-          Questions sélectionnées: {selectedQuestions.length}
-        </h2>
-        <button
-          onClick={handleAddToContest}
-          disabled={selectedQuestions.length === 0}
-          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-        >
-          Ajouter au concours
-        </button>
-      </div>
+      {mode === 'select' && (
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold">
+            Questions sélectionnées: {selectedQuestions.length}
+          </h2>
+          <button
+            onClick={handleAddToContest}
+            disabled={selectedQuestions.length === 0}
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+          >
+            Ajouter au concours
+          </button>
+        </div>
+      )}
 
       <Tabs defaultValue="available" className="w-full">
         <TabsList className="w-full">

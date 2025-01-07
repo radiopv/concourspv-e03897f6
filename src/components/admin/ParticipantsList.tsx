@@ -15,7 +15,7 @@ interface Participant {
 
 interface ParticipationResponse {
   id: string;
-  score: number;
+  score: number | null;
   status: string;
   participant: Participant;
   participant_answers: Array<{
@@ -77,8 +77,19 @@ const ParticipantsList = () => {
         id: item.id,
         score: item.score,
         status: item.status,
-        participant: item.participant,
-        participant_answers: item.participant_answers || []
+        participant: {
+          id: item.participant.id,
+          first_name: item.participant.first_name,
+          last_name: item.participant.last_name,
+          email: item.participant.email
+        },
+        participant_answers: (item.participant_answers || []).map(answer => ({
+          question_id: answer.question_id,
+          answer: answer.answer,
+          questions: answer.questions ? {
+            correct_answer: answer.questions.correct_answer
+          } : null
+        }))
       }));
 
       return typedData;
@@ -125,8 +136,8 @@ const ParticipantsList = () => {
     return <div>Chargement des participants...</div>;
   }
 
-  const eligibleParticipants = participations.filter(p => p.score >= 70);
-  const ineligibleParticipants = participations.filter(p => p.score < 70);
+  const eligibleParticipants = participations.filter(p => p.score && p.score >= 70);
+  const ineligibleParticipants = participations.filter(p => !p.score || p.score < 70);
 
   return (
     <div className="space-y-4">
