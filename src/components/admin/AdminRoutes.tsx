@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const AdminRoutes = () => {
   const { contestId } = useParams();
@@ -89,11 +90,6 @@ const AdminRoutes = () => {
   if (!user || user.email !== "renaudcanuel@me.com") {
     console.log("User not authorized for admin routes");
     return null;
-  }
-
-  if (isContestLoading && contestId) {
-    console.log("Loading contest data...");
-    return <div>Chargement...</div>;
   }
 
   return (
@@ -183,7 +179,19 @@ const AdminRoutes = () => {
         />
         <Route 
           path="contests/:contestId/draw" 
-          element={contest ? <DrawManager contestId={contestId || ''} contest={contest} /> : null} 
+          element={
+            isContestLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : contest ? (
+              <DrawManager contestId={contestId || ''} contest={contest} />
+            ) : (
+              <div className="text-center p-4 text-gray-500">
+                Aucune donnée de concours disponible
+              </div>
+            )
+          } 
         />
         <Route 
           path="contests/:contestId/winners" 
