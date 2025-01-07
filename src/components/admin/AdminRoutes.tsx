@@ -13,21 +13,47 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminRoutes = () => {
   const { contestId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Protect admin routes
   useEffect(() => {
-    if (!user || user.email !== "renaudcanuel@me.com") {
-      console.log("Unauthorized access attempt to admin routes");
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
+    const checkAdminAccess = async () => {
+      console.log("Checking admin access for user:", user?.email);
+      
+      if (!user) {
+        console.log("No user found, redirecting to login");
+        toast({
+          title: "Accès refusé",
+          description: "Veuillez vous connecter",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
 
-  const { data: contest } = useQuery({
+      if (user.email !== "renaudcanuel@me.com") {
+        console.log("Non-admin user detected, redirecting");
+        toast({
+          title: "Accès refusé",
+          description: "Vous n'avez pas les droits d'administration",
+          variant: "destructive",
+        });
+        navigate('/dashboard');
+        return;
+      }
+
+      console.log("Admin access granted");
+    };
+
+    checkAdminAccess();
+  }, [user, navigate, toast]);
+
+  const { data: contest, isLoading: isContestLoading } = useQuery({
     queryKey: ['contest', contestId],
     queryFn: async () => {
       if (!contestId) return null;
@@ -53,13 +79,21 @@ const AdminRoutes = () => {
         console.error("Error fetching contest:", error);
         throw error;
       }
+      
+      console.log("Contest data fetched:", data);
       return data;
     },
-    enabled: !!contestId
+    enabled: !!contestId && !!user
   });
 
   if (!user || user.email !== "renaudcanuel@me.com") {
+    console.log("User not authorized for admin routes");
     return null;
+  }
+
+  if (isContestLoading && contestId) {
+    console.log("Loading contest data...");
+    return <div>Chargement...</div>;
   }
 
   return (

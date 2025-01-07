@@ -22,7 +22,14 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const AuthenticatedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
@@ -30,14 +37,30 @@ const AuthenticatedRoute = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Checking authentication status");
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Auth check error:", error);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la vérification de votre session",
+          variant: "destructive"
+        });
+        navigate('/login');
+        return;
+      }
+
       if (!session) {
+        console.log("No active session found");
         toast({
           title: "Session expirée",
           description: "Veuillez vous reconnecter",
           variant: "destructive"
         });
         navigate('/login');
+      } else {
+        console.log("Active session found for user:", session.user.email);
       }
     };
 
@@ -48,6 +71,8 @@ const AuthenticatedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function App() {
+  console.log("App component rendering");
+  
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
