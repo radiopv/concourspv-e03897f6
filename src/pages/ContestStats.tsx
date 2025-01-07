@@ -12,66 +12,86 @@ interface LocationState {
 }
 
 const ContestStatsPage = () => {
-  const { id } = useParams();
+  const { id: contestId } = useParams();
   const location = useLocation();
   const state = location.state as LocationState;
 
   const { data: contest } = useQuery({
-    queryKey: ['contest', id],
+    queryKey: ['contest', contestId],
     queryFn: async () => {
+      if (!contestId) throw new Error('Contest ID is required');
+      console.log('Fetching contest data for ID:', contestId);
+
       const { data: contestData, error: contestError } = await supabase
         .from('contests')
         .select('*')
-        .eq('id', id)
+        .eq('id', contestId)
         .single();
       
       if (contestError) throw contestError;
 
       const { count: participantsCount } = await supabase
-        .from('participants')
+        .from('participations')
         .select('*', { count: 'exact', head: true })
-        .eq('contest_id', id);
+        .eq('contest_id', contestId);
 
       return {
         ...contestData,
         participants_count: participantsCount || 0
       };
-    }
+    },
+    enabled: !!contestId
   });
 
   const { data: topParticipants } = useQuery({
-    queryKey: ['top-participants', id],
+    queryKey: ['top-participants', contestId],
     queryFn: async () => {
+      if (!contestId) throw new Error('Contest ID is required');
+      console.log('Fetching top participants for contest:', contestId);
+
       const { data, error } = await supabase
-        .from('participants')
+        .from('participations')
         .select(`
           id,
           score,
-          first_name,
-          last_name
+          participant:participants (
+            id,
+            first_name,
+            last_name
+          )
         `)
-        .eq('contest_id', id)
+        .eq('contest_id', contestId)
         .order('score', { ascending: false })
         .limit(10);
 
       if (error) throw error;
-      return data;
-    }
+
+      return data?.map(p => ({
+        id: p.participant.id,
+        score: p.score || 0,
+        first_name: p.participant.first_name,
+        last_name: p.participant.last_name
+      })) || [];
+    },
+    enabled: !!contestId
   });
 
   const { data: stats } = useQuery({
-    queryKey: ['contest-stats', id],
+    queryKey: ['contest-stats', contestId],
     queryFn: async () => {
+      if (!contestId) throw new Error('Contest ID is required');
+      console.log('Fetching contest stats for ID:', contestId);
+
       const { count: qualifiedCount } = await supabase
-        .from('participants')
+        .from('participations')
         .select('*', { count: 'exact', head: true })
-        .eq('contest_id', id)
+        .eq('contest_id', contestId)
         .gte('score', 70);
 
       const { data: scores } = await supabase
-        .from('participants')
+        .from('participations')
         .select('score')
-        .eq('contest_id', id);
+        .eq('contest_id', contestId);
 
       const average = scores && scores.length > 0
         ? scores.reduce((acc, curr) => acc + (curr.score || 0), 0) / scores.length
@@ -81,7 +101,8 @@ const ContestStatsPage = () => {
         qualifiedCount: qualifiedCount || 0,
         averageScore: Math.round(average)
       };
-    }
+    },
+    enabled: !!contestId
   });
 
   if (!contest || !stats) {
