@@ -1,64 +1,62 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Trophy, User, Award } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const MobileNavBar = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
+  const { isAdmin } = useAuth();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
-      <div className="grid grid-cols-4 h-16">
-        <button
-          onClick={() => handleNavigation('/')}
-          className={`flex flex-col items-center justify-center ${
-            isActive('/') ? 'text-primary' : 'text-gray-500'
-          }`}
-        >
-          <Home className="h-5 w-5" />
-          <span className="text-xs mt-1">Accueil</span>
-        </button>
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="md:hidden">
+          <Menu className="h-6 w-6" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left">
+        <SheetHeader>
+          <SheetTitle>Menu</SheetTitle>
+        </SheetHeader>
+        <div className="flex flex-col space-y-4 mt-4">
+          <Link
+            to="/"
+            className="text-sm font-medium text-gray-900 hover:text-gray-700"
+          >
+            Accueil
+          </Link>
+          
+          <Link
+            to="/contests"
+            className="text-sm font-medium text-gray-900 hover:text-gray-700"
+          >
+            Concours
+          </Link>
 
-        <button
-          onClick={() => handleNavigation('/contests')}
-          className={`flex flex-col items-center justify-center ${
-            isActive('/contests') ? 'text-primary' : 'text-gray-500'
-          }`}
-        >
-          <Trophy className="h-5 w-5" />
-          <span className="text-xs mt-1">Concours</span>
-        </button>
+          <Link
+            to="/winners"
+            className="text-sm font-medium text-gray-900 hover:text-gray-700"
+          >
+            Gagnants
+          </Link>
 
-        <button
-          onClick={() => handleNavigation('/winners')}
-          className={`flex flex-col items-center justify-center ${
-            isActive('/winners') ? 'text-primary' : 'text-gray-500'
-          }`}
-        >
-          <Award className="h-5 w-5" />
-          <span className="text-xs mt-1">Gagnants</span>
-        </button>
-
-        <button
-          onClick={() => handleNavigation('/dashboard')}
-          className={`flex flex-col items-center justify-center ${
-            isActive('/dashboard') ? 'text-primary' : 'text-gray-500'
-          }`}
-        >
-          <User className="h-5 w-5" />
-          <span className="text-xs mt-1">Profil</span>
-        </button>
-      </div>
-    </nav>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="text-sm font-medium text-gray-900 hover:text-gray-700"
+            >
+              Administration
+            </Link>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 
