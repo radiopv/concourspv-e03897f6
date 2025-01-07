@@ -1,54 +1,64 @@
 import { supabase } from "../../App";
-import { PARTICIPANT_STATUS, ParticipantStatus } from "@/types/participant";
 
 export class ParticipantManager {
   static async ensureParticipantExists(userId: string, contestId: string, userEmail: string) {
-    console.log('Checking if participant exists...', { userId, contestId, userEmail });
+    console.log('Ensuring participant exists...', { userId, contestId, userEmail });
     
     try {
-      // Step 1: Check if participant exists
-      const { data: existingParticipant, error: checkError } = await supabase
+      // Step 1: Get or create participant
+      const { data: participant, error: participantError } = await supabase
         .from('participants')
-        .select('participation_id')
-        .eq('id', userId)
-        .eq('contest_id', contestId)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('Error checking for existing participant:', checkError);
-        throw checkError;
-      }
-
-      // If participant exists, return their participation_id
-      if (existingParticipant?.participation_id) {
-        console.log('Found existing participant:', existingParticipant);
-        return existingParticipant.participation_id;
-      }
-
-      // Step 2: If no participant exists, create a new one
-      const newParticipationId = crypto.randomUUID();
-      const { data: newParticipant, error: insertError } = await supabase
-        .from('participants')
-        .insert({
-          id: userId,
-          contest_id: contestId,
-          status: PARTICIPANT_STATUS.PENDING as ParticipantStatus,
-          first_name: userEmail.split('@')[0],
-          last_name: 'Participant',
+        .upsert({
           email: userEmail,
-          attempts: 0,
-          participation_id: newParticipationId
+          first_name: userEmail.split('@')[0], // Default first name
+          last_name: 'Participant' // Default last name
+        }, {
+          onConflict: 'email',
+          ignoreDuplicates: true
         })
-        .select('participation_id')
+        .select('id')
         .single();
 
-      if (insertError) {
-        console.error('Error creating participant:', insertError);
-        throw insertError;
+      if (participantError) {
+        console.error('Error ensuring participant:', participantError);
+        throw participantError;
       }
 
-      console.log('Created new participant:', newParticipant);
-      return newParticipant.participation_id;
+      if (!participant?.id) {
+        throw new Error('Failed to get or create participant');
+      }
+
+      // Step 2: Get current attempt number
+      const { data: lastParticipation } = await supabase
+        .from('participations')
+        .select('attempts')
+        .eq('participant_id', participant.id)
+        .eq('contest_id', contestId)
+        .order('attempts', { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextAttempt = (lastParticipation?.attempts || 0) + 1;
+
+      // Step 3: Create new participation
+      const { data: participation, error: participationError } = await supabase
+        .from('participations')
+        .insert({
+          participant_id: participant.id,
+          contest_id: contestId,
+          attempts: nextAttempt,
+          status: 'active'
+        })
+        .select('id')
+        .single();
+
+      if (participationError) {
+        console.error('Error creating participation:', participationError);
+        throw participationError;
+      }
+
+      console.log('Successfully created participation:', participation);
+      return participation.id;
 
     } catch (error) {
       console.error('Error in ensureParticipantExists:', error);
@@ -56,19 +66,19 @@ export class ParticipantManager {
     }
   }
 
-  static async updateParticipantStatus(participationId: string, status: ParticipantStatus) {
-    console.log('Updating participant status...', { participationId, status });
+  static async updateParticipationStatus(participationId: string, status: string) {
+    console.log('Updating participation status...', { participationId, status });
     
     const { error } = await supabase
-      .from('participants')
-      .update({ status })
-      .eq('participation_id', participationId);
+      .from('participations')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', participationId);
 
     if (error) {
-      console.error('Error updating participant status:', error);
+      console.error('Error updating participation status:', error);
       throw error;
     }
 
-    console.log('Successfully updated participant status');
+    console.log('Successfully updated participation status');
   }
 }

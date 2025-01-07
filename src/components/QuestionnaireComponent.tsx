@@ -51,20 +51,33 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
         await completeQuestionnaire(session.session.user.id, finalScore);
 
+        // Get current participation
         const { data: participant } = await supabase
           .from('participants')
-          .select('attempts')
-          .eq('contest_id', contestId)
-          .eq('id', session.session.user.id)
-          .maybeSingle();
+          .select('id')
+          .eq('email', session.session.user.email)
+          .single();
 
-        const newAttempts = (participant?.attempts || 0) + 1;
+        if (participant) {
+          const { data: participation } = await supabase
+            .from('participations')
+            .select('attempts')
+            .eq('participant_id', participant.id)
+            .eq('contest_id', contestId)
+            .order('attempts', { ascending: false })
+            .limit(1)
+            .single();
 
-        await supabase
-          .from('participants')
-          .update({ attempts: newAttempts })
-          .eq('contest_id', contestId)
-          .eq('id', session.session.user.id);
+          if (participation) {
+            await supabase
+              .from('participations')
+              .update({ 
+                score: finalScore,
+                completed_at: new Date().toISOString()
+              })
+              .eq('id', participation.id);
+          }
+        }
 
         // Get AI-powered feedback
         const feedback = await getParticipantFeedback(finalScore, "Contest");
