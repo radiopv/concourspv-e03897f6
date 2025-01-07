@@ -56,13 +56,14 @@ const AdminRoutes = () => {
           />
         } 
       />
+      <Route path="/contests/new" element={<AdminContestManager />} />
+      <Route path="/contests/:contestId" element={<AdminContestManager />} />
       <Route path="/contests/:contestId/participants" element={<ParticipantsList />} />
       <Route path="/participants" element={<ParticipantsList />} />
       <Route path="/settings" element={<GlobalSettings />} />
       <Route path="/prizes" element={<PrizeCatalogManager />} />
       <Route path="/questions" element={<QuestionBank />} />
       <Route path="/emails" element={<EmailManager />} />
-      <Route path="/contests/:contestId" element={<AdminContestManager />} />
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>
   );

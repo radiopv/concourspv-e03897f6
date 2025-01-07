@@ -1,20 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useParams, useNavigate } from 'react-router-dom';
 import ContestBasicForm from './ContestBasicForm';
 import ContestPrizeManager from './ContestPrizeManager';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface AdminContestManagerProps {
-  contestId: string | null;
-  onSuccess?: () => void;
-}
-
-const AdminContestManager = ({ contestId, onSuccess }: AdminContestManagerProps) => {
+const AdminContestManager = () => {
+  const { contestId } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
+
+  const defaultFormData = {
+    title: '',
+    description: '',
+    start_date: '',
+    end_date: '',
+    draw_date: '',
+    is_featured: false,
+    is_new: false,
+    has_big_prizes: false,
+    shop_url: '',
+    status: 'draft'
+  };
+
+  const [formData, setFormData] = useState(defaultFormData);
 
   const { data: contest, isLoading } = useQuery({
     queryKey: ['contest', contestId],
@@ -33,20 +47,11 @@ const AdminContestManager = ({ contestId, onSuccess }: AdminContestManagerProps)
     enabled: !!contestId
   });
 
-  const defaultFormData = {
-    title: '',
-    description: '',
-    start_date: '',
-    end_date: '',
-    draw_date: '',
-    is_featured: false,
-    is_new: false,
-    has_big_prizes: false,
-    shop_url: '',
-    status: 'draft'
-  };
-
-  const [formData, setFormData] = useState(contest || defaultFormData);
+  useEffect(() => {
+    if (contest) {
+      setFormData(contest);
+    }
+  }, [contest]);
 
   const contestMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -58,20 +63,25 @@ const AdminContestManager = ({ contestId, onSuccess }: AdminContestManagerProps)
         
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { data: newContest, error } = await supabase
           .from('contests')
-          .insert([data]);
+          .insert([data])
+          .select()
+          .single();
         
         if (error) throw error;
+        return newContest;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
       toast({
         title: "Succès",
         description: contestId ? "Le concours a été mis à jour" : "Le concours a été créé",
       });
-      if (onSuccess) onSuccess();
+      if (!contestId && data) {
+        navigate(`/admin/contests/${data.id}`);
+      }
     },
     onError: (error) => {
       toast({
@@ -93,27 +103,34 @@ const AdminContestManager = ({ contestId, onSuccess }: AdminContestManagerProps)
   }
 
   return (
-    <div className="space-y-8">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <ContestBasicForm 
-          formData={formData}
-          setFormData={setFormData}
-        />
-        <Button 
-          type="submit" 
-          className="w-full"
-          disabled={contestMutation.isPending}
-        >
-          {contestId ? 'Mettre à jour le concours' : 'Créer le concours'}
-        </Button>
-      </form>
+    <div className="max-w-4xl mx-auto p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>{contestId ? 'Modifier le concours' : 'Créer un nouveau concours'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <ContestBasicForm 
+              formData={formData}
+              setFormData={setFormData}
+            />
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={contestMutation.isPending}
+            >
+              {contestId ? 'Mettre à jour le concours' : 'Créer le concours'}
+            </Button>
+          </form>
 
-      {contestId && (
-        <div className="pt-8 border-t">
-          <h2 className="text-lg font-semibold mb-4">Prix du concours</h2>
-          <ContestPrizeManager contestId={contestId} />
-        </div>
-      )}
+          {contestId && (
+            <div className="pt-8 border-t mt-8">
+              <h2 className="text-lg font-semibold mb-4">Prix du concours</h2>
+              <ContestPrizeManager contestId={contestId} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
