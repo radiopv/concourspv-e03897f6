@@ -10,6 +10,7 @@ import GlobalSettings from './GlobalSettings';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import QuestionBank from '@/pages/QuestionBank';
 import { EmailManager } from './EmailManager';
+import AdminContestManager from './AdminContestManager';
 
 const AdminRoutes = () => {
   const { toast } = useToast();
@@ -43,7 +44,9 @@ const AdminRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<AdminDashboard />} />
+      <Route path="/contests" element={<ContestList />} />
       <Route path="/contests/:contestId/participants" element={<ParticipantsList />} />
+      <Route path="/participants" element={<ParticipantsList />} />
       <Route path="/settings" element={<GlobalSettings />} />
       <Route path="/prizes" element={<PrizeCatalogManager />} />
       <Route path="/questions" element={<QuestionBank />} />

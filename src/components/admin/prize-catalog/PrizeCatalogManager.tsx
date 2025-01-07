@@ -4,6 +4,9 @@ import { supabase } from "../../../App";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { PrizeForm } from "./components/PrizeForm";
+import { PrizeCard } from "./components/PrizeCard";
+import { Prize, PrizeFormData } from "./types";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { PrizeForm } from "./components/PrizeForm";
-import { PrizeCard } from "./components/PrizeCard";
-import { Prize, PrizeFormData } from "./types";
 
 const PrizeCatalogManager = () => {
   const { toast } = useToast();
@@ -124,27 +124,30 @@ const PrizeCatalogManager = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button className="w-full bg-primary hover:bg-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter un prix au catalogue
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingPrize ? "Modifier le prix" : "Ajouter un prix au catalogue"}
-            </DialogTitle>
-          </DialogHeader>
-          <PrizeForm
-            initialData={editingPrize || undefined}
-            onSubmit={handleSubmit}
-            isEditing={!!editingPrize}
-          />
-        </DialogContent>
-      </Dialog>
+    <div className="space-y-6 p-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Catalogue des Prix</h1>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-primary hover:bg-primary/90">
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter un prix au catalogue
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingPrize ? "Modifier le prix" : "Ajouter un prix au catalogue"}
+              </DialogTitle>
+            </DialogHeader>
+            <PrizeForm
+              initialData={editingPrize || undefined}
+              onSubmit={handleSubmit}
+              isEditing={!!editingPrize}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {prizes?.map((prize) => (
