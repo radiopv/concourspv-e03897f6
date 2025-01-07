@@ -16,6 +16,7 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     }
 
     if (existingParticipant) {
+      console.log('Existing participant found:', existingParticipant);
       return existingParticipant.participation_id;
     }
 
@@ -23,7 +24,7 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     const { data: { session } } = await supabase.auth.getSession();
     const userEmail = session?.user?.email || 'anonymous@user.com';
 
-    // Create new participation entry
+    // Create new participation entry with unique participation_id
     const { data: newParticipant, error: insertError } = await supabase
       .from('participants')
       .insert([{
@@ -33,7 +34,8 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
         first_name: userEmail.split('@')[0],
         last_name: 'Participant',
         email: userEmail,
-        attempts: 0
+        attempts: 0,
+        participation_id: crypto.randomUUID() // Generate a unique ID
       }])
       .select('participation_id')
       .single();
@@ -43,6 +45,7 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
       throw insertError;
     }
 
+    console.log('New participant created:', newParticipant);
     return newParticipant.participation_id;
   } catch (error) {
     console.error('Error in ensureParticipantExists:', error);

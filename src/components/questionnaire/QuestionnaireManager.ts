@@ -25,7 +25,7 @@ export const calculateFinalScore = async (participantId: string) => {
       return 0;
     }
 
-    // Count correct answers by comparing with question's correct answer
+    // Count correct answers
     const correctAnswers = answers.filter(answer => 
       answer.questions?.correct_answer === answer.answer
     ).length;
