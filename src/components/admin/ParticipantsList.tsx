@@ -23,9 +23,17 @@ const ParticipantsList = () => {
     queryKey: ['participants', contestId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('participants')
+        .from('participations')
         .select(`
-          *,
+          id,
+          score,
+          status,
+          participants (
+            id,
+            first_name,
+            last_name,
+            email
+          ),
           participant_answers (
             question_id,
             answer,
@@ -37,21 +45,42 @@ const ParticipantsList = () => {
         .eq('contest_id', contestId);
       
       if (error) throw error;
-      console.log("Participants récupérés:", data);
+      console.log("Participations récupérées:", data);
 
-      return data;
+      // Transform the data to match the expected format
+      const transformedData = data?.map(participation => ({
+        id: participation.participants.id,
+        first_name: participation.participants.first_name,
+        last_name: participation.participants.last_name,
+        email: participation.participants.email,
+        score: participation.score,
+        status: participation.status,
+        participant_answers: participation.participant_answers
+      }));
+
+      return transformedData || [];
     },
     enabled: !!contestId
   });
 
   const deleteParticipantMutation = useMutation({
     mutationFn: async (participantId: string) => {
-      const { error } = await supabase
+      // First delete from participations
+      const { error: participationsError } = await supabase
+        .from('participations')
+        .delete()
+        .eq('participant_id', participantId)
+        .eq('contest_id', contestId);
+      
+      if (participationsError) throw participationsError;
+
+      // Then delete the participant
+      const { error: participantError } = await supabase
         .from('participants')
         .delete()
         .eq('id', participantId);
       
-      if (error) throw error;
+      if (participantError) throw participantError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
