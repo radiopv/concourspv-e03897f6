@@ -43,7 +43,7 @@ const QuestionDisplay = ({
         {articleUrl && (
           <ArticleLink
             url={articleUrl}
-            hasClicked={hasClickedLink}
+            isRead={hasClickedLink}
             onArticleRead={onArticleRead}
           />
         )}
