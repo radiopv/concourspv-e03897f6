@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -129,6 +129,7 @@ export const PrizeForm = ({ initialData, onSubmit }: PrizeFormProps) => {
           type="url"
           value={formData.shop_url}
           onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
+          placeholder="https://..."
         />
       </div>
 
@@ -171,7 +172,7 @@ export const PrizeForm = ({ initialData, onSubmit }: PrizeFormProps) => {
       </div>
 
       <Button type="submit" className="w-full">
-        {initialData ? 'Mettre à jour' : 'Ajouter'}
+        {initialData ? 'Mettre à jour' : 'Ajouter au catalogue'}
       </Button>
     </form>
   );
