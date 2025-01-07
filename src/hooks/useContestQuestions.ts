@@ -5,7 +5,12 @@ export const useContestQuestions = (contestId: string) => {
   return useQuery({
     queryKey: ['contest-questions', contestId],
     queryFn: async () => {
-      // First get the questionnaire
+      if (!contestId) {
+        console.log('No contest ID provided');
+        return [];
+      }
+
+      // First get the questionnaire for this contest
       const { data: questionnaire, error: questionnaireError } = await supabase
         .from('questionnaires')
         .select('id')
@@ -14,7 +19,7 @@ export const useContestQuestions = (contestId: string) => {
 
       if (questionnaireError) {
         console.error('Error fetching questionnaire:', questionnaireError);
-        return [];
+        throw questionnaireError;
       }
 
       if (!questionnaire) {
@@ -22,18 +27,28 @@ export const useContestQuestions = (contestId: string) => {
         return [];
       }
 
-      // Then get the questions
-      const { data, error } = await supabase
+      // Then get the questions for this questionnaire
+      const { data: questions, error: questionsError } = await supabase
         .from('questions')
-        .select('*')
-        .eq('questionnaire_id', questionnaire.id);
-      
-      if (error) {
-        console.error('Error fetching questions:', error);
-        throw error;
+        .select(`
+          id,
+          question_text,
+          options,
+          correct_answer,
+          article_url,
+          type,
+          order_number
+        `)
+        .eq('questionnaire_id', questionnaire.id)
+        .order('order_number', { ascending: true });
+
+      if (questionsError) {
+        console.error('Error fetching questions:', questionsError);
+        throw questionsError;
       }
-      
-      return data;
-    }
+
+      return questions || [];
+    },
+    enabled: !!contestId
   });
 };

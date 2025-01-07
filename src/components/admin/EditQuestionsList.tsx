@@ -25,6 +25,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     queryFn: async () => {
       console.log('Fetching questions for contest:', contestId);
       
+      // First get the questionnaire
       const { data: questionnaire, error: questionnaireError } = await supabase
         .from('questionnaires')
         .select('id')
@@ -43,9 +44,18 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
 
       console.log('Found questionnaire:', questionnaire);
 
+      // Then get the questions
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question_text, options, correct_answer, article_url, type, order_number')
+        .select(`
+          id,
+          question_text,
+          options,
+          correct_answer,
+          article_url,
+          type,
+          order_number
+        `)
         .eq('questionnaire_id', questionnaire.id)
         .order('order_number', { ascending: true });
       
@@ -56,7 +66,8 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
 
       console.log('Fetched questions:', data);
       return data as Question[];
-    }
+    },
+    enabled: !!contestId
   });
 
   const { data: bankQuestions = [] } = useQuery({
