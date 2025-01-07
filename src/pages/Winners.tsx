@@ -23,11 +23,14 @@ const Winners = () => {
           is_new,
           has_big_prizes,
           status,
-          new_participants!inner (
+          participations!inner (
             id,
-            first_name,
-            last_name,
-            email,
+            participant:participants (
+              id,
+              first_name,
+              last_name,
+              email
+            ),
             score,
             status,
             created_at,
@@ -43,7 +46,7 @@ const Winners = () => {
             )
           )
         `)
-        .eq('new_participants.status', 'winner');
+        .eq('participations.status', 'winner');
 
       if (contestsError) {
         console.error('Error fetching contests:', contestsError);
@@ -57,11 +60,11 @@ const Winners = () => {
         is_new: contest.is_new,
         has_big_prizes: contest.has_big_prizes,
         status: contest.status,
-        participants: contest.new_participants.map((p: any) => ({
-          id: p.id,
-          first_name: p.first_name,
-          last_name: p.last_name,
-          email: p.email,
+        participants: contest.participations.map((p: any) => ({
+          id: p.participant.id,
+          first_name: p.participant.first_name,
+          last_name: p.participant.last_name,
+          email: p.participant.email,
           score: p.score,
           status: p.status,
           created_at: p.created_at,
