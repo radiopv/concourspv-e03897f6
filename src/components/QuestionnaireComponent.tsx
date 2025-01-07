@@ -1,17 +1,10 @@
-import React from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
-import { useQuestions } from './questionnaire/useQuestions';
-import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
-import { calculateFinalScore, completeQuestionnaire } from './questionnaire/QuestionnaireManager';
-import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
-import QuestionDisplay from './questionnaire/QuestionDisplay';
-import { useAttempts } from './questionnaire/hooks/useAttempts';
-import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
-import { useContestAI } from '@/hooks/useContestAI';
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -20,95 +13,84 @@ interface QuestionnaireComponentProps {
 const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const state = useQuestionnaireState();
-  const { data: questions } = useQuestions(contestId);
-  const { handleSubmitAnswer, isSubmitting: isSubmittingAnswer } = useAnswerSubmission(contestId);
-  const currentQuestion = questions?.[state.currentQuestionIndex];
-  const { getParticipantFeedback } = useContestAI();
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  useAttempts(contestId);
+  const { data: questions } = useQuery({
+    queryKey: ['contest-questions', contestId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('questionnaire_id', contestId)
+        .order('created_at');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
-  const handleNextQuestion = async () => {
-    if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
-      state.setCurrentQuestionIndex(prev => prev + 1);
-      state.setSelectedAnswer("");
-      state.setHasClickedLink(false);
-      state.setHasAnswered(false);
-      state.setIsCorrect(null);
-    } else {
-      state.setIsSubmitting(true);
-      try {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user?.id) {
-          throw new Error("User not authenticated");
-        }
+  const handleSubmitAnswer = async () => {
+    if (!selectedAnswer) return;
 
-        const finalScore = await calculateFinalScore(session.session.user.id);
-        if (finalScore === undefined || finalScore === null) {
-          throw new Error("Failed to calculate final score");
-        }
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) {
+        throw new Error("Not authenticated");
+      }
 
-        await completeQuestionnaire(session.session.user.id, finalScore);
+      // Get or create participant
+      const { data: participant } = await supabase
+        .from('participants')
+        .select('id')
+        .eq('email', session.session.user.email)
+        .single();
 
-        // Get current participant
-        const { data: participant } = await supabase
+      if (!participant) {
+        const { data: newParticipant, error: participantError } = await supabase
           .from('participants')
+          .insert({
+            email: session.session.user.email,
+            first_name: session.session.user.user_metadata.first_name || '',
+            last_name: session.session.user.user_metadata.last_name || ''
+          })
           .select('id')
-          .eq('email', session.session.user.email)
           .single();
 
-        if (participant) {
-          // Get current participation
-          const { data: participation } = await supabase
-            .from('participations')
-            .select('*')
-            .eq('participant_id', participant.id)
-            .eq('contest_id', contestId)
-            .order('attempts', { ascending: false })
-            .limit(1)
-            .single();
-
-          if (participation) {
-            await supabase
-              .from('participations')
-              .update({ 
-                score: finalScore,
-                completed_at: new Date().toISOString()
-              })
-              .eq('id', participation.id);
-          }
-        }
-
-        // Get AI-powered feedback
-        const feedback = await getParticipantFeedback(finalScore, "Contest");
-
-        toast({
-          title: "Questionnaire terminé ! 🎉",
-          description: `${feedback || `Votre score final est de ${finalScore}%. ${
-            finalScore >= 70 
-              ? "Félicitations ! Vous êtes éligible pour le tirage au sort !" 
-              : "Continuez à participer pour améliorer vos chances !"
-          }`}`,
-          duration: 5000,
-        });
-
-        navigate(`/contest/${contestId}/stats`, { 
-          state: { 
-            finalScore: finalScore
-          }
-        });
-
-      } catch (error) {
-        console.error('Error completing questionnaire:', error);
-        toast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la finalisation du questionnaire",
-          variant: "destructive",
-        });
-      } finally {
-        state.setIsSubmitting(false);
+        if (participantError) throw participantError;
       }
+
+      const currentQuestion = questions?.[currentQuestionIndex];
+      if (!currentQuestion) return;
+
+      // Save the answer
+      const { error: responseError } = await supabase
+        .from('responses')
+        .insert({
+          participant_id: participant?.id,
+          question_id: currentQuestion.id,
+          contest_id: contestId,
+          answer_text: selectedAnswer
+        });
+
+      if (responseError) throw responseError;
+
+      // Move to next question or finish
+      if (currentQuestionIndex < (questions?.length || 0) - 1) {
+        setCurrentQuestionIndex(prev => prev + 1);
+        setSelectedAnswer("");
+      } else {
+        navigate(`/contest/${contestId}/stats`);
+      }
+
+    } catch (error) {
+      console.error('Error submitting answer:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la soumission de votre réponse",
+        variant: "destructive",
+      });
     }
   };
 
@@ -124,33 +106,44 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     );
   }
 
+  const currentQuestion = questions[currentQuestionIndex];
+
   return (
-    <Card className="w-full max-w-2xl mx-auto animate-fadeIn">
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <QuestionnaireProgress
-          currentQuestionIndex={state.currentQuestionIndex}
-          totalQuestions={questions.length}
-          score={state.score}
-          totalAnswered={state.totalAnswered}
-          correctAnswers={state.score}
-        />
+        <div className="text-center">
+          <p className="text-sm text-gray-500">
+            Question {currentQuestionIndex + 1} sur {questions.length}
+          </p>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <QuestionDisplay
-          questionText={currentQuestion?.question_text || ""}
-          articleUrl={currentQuestion?.article_url}
-          options={currentQuestion?.options || []}
-          selectedAnswer={state.selectedAnswer}
-          correctAnswer={currentQuestion?.correct_answer}
-          hasClickedLink={state.hasClickedLink}
-          hasAnswered={state.hasAnswered}
-          isSubmitting={state.isSubmitting || isSubmittingAnswer}
-          onArticleRead={() => state.setHasClickedLink(true)}
-          onAnswerSelect={state.setSelectedAnswer}
-          onSubmitAnswer={() => handleSubmitAnswer(currentQuestion)}
-          onNextQuestion={handleNextQuestion}
-          isLastQuestion={state.currentQuestionIndex === questions.length - 1}
-        />
+        <div className="space-y-4">
+          <p className="text-lg font-medium">{currentQuestion.question_text}</p>
+          
+          {currentQuestion.options && (
+            <div className="space-y-2">
+              {currentQuestion.options.map((option: string) => (
+                <Button
+                  key={option}
+                  variant={selectedAnswer === option ? "default" : "outline"}
+                  className="w-full justify-start text-left"
+                  onClick={() => setSelectedAnswer(option)}
+                >
+                  {option}
+                </Button>
+              ))}
+            </div>
+          )}
+
+          <Button
+            onClick={handleSubmitAnswer}
+            disabled={!selectedAnswer}
+            className="w-full"
+          >
+            {currentQuestionIndex === questions.length - 1 ? "Terminer" : "Question suivante"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

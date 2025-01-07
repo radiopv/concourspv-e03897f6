@@ -1,94 +1,74 @@
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../App";
+import { Contest } from "@/types/contest";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy } from "lucide-react";
-import { motion } from "framer-motion";
-import { useContests } from "@/hooks/useContests";
-import ContestCard from "@/components/contests/ContestCard";
-import QuestionnaireComponent from "@/components/QuestionnaireComponent";
-import { Contest } from "@/types/contest";
+import { Trophy, Calendar, Users } from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 const ContestsList = () => {
   const navigate = useNavigate();
-  const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
-  const { data: contests, error } = useContests();
 
-  console.log("Contests data:", contests); // Debug log
+  const { data: contests, isLoading } = useQuery({
+    queryKey: ['contests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contests')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
 
-  if (selectedContestId) {
-    return <QuestionnaireComponent contestId={selectedContestId} />;
-  }
-
-  if (error) {
-    console.error("Error loading contests:", error); // Debug log
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
-        <Card className="max-w-lg mx-auto">
-          <CardContent className="text-center py-8">
-            <h2 className="text-xl font-semibold mb-4 text-red-600">
-              Impossible de charger les concours
-            </h2>
-            <Button onClick={() => window.location.reload()} variant="outline">
-              Réessayer
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!contests || contests.length === 0) {
-    console.log("No contests available"); // Debug log
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
-        <Card className="max-w-lg mx-auto">
-          <CardContent className="text-center py-8">
-            <Trophy className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-4">
-              Aucun concours disponible
-            </h2>
-            <Button onClick={() => navigate("/")} variant="outline">
-              Retour à l'accueil
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const contestsWithCount = contests.map((contest: Contest) => ({
-    ...contest,
-    participants: {
-      count: contest.participants?.length || 0
+      if (error) throw error;
+      return data as Contest[];
     }
-  }));
+  });
 
-  console.log("Processed contests:", contestsWithCount); // Debug log
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
       <div className="max-w-7xl mx-auto space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
+        <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Concours Disponibles</h1>
           <p className="text-gray-600">
             Participez à nos concours et tentez de gagner des prix exceptionnels !
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contestsWithCount.map((contest, index) => (
-            <ContestCard
-              key={contest.id}
-              contest={contest}
-              onSelect={() => setSelectedContestId(contest.id)}
-              index={index}
-            />
+          {contests?.map((contest) => (
+            <Card key={contest.id} className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold mb-4">{contest.title}</h2>
+                {contest.description && (
+                  <p className="text-gray-600 mb-4">{contest.description}</p>
+                )}
+                
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-gray-600">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    <span className="text-sm">
+                      Jusqu'au {format(new Date(contest.end_date), 'dd MMMM yyyy', { locale: fr })}
+                    </span>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={() => navigate(`/contest/${contest.id}`)}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                >
+                  Participer
+                </Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>

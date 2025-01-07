@@ -1,14 +1,12 @@
-export interface CatalogItem {
+export interface Contest {
   id: string;
-  name: string;
-  value: string;
-  image_url: string;
-}
-
-export interface ParticipantPrize {
-  prize: {
-    catalog_item: CatalogItem;
-  };
+  title: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Participant {
@@ -16,25 +14,25 @@ export interface Participant {
   first_name: string;
   last_name: string;
   email: string;
-  score?: number;
-  status: string;
-  created_at: string;
-  participant_prizes?: ParticipantPrize[];
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface Contest {
+export interface Question {
   id: string;
-  title: string;
-  description?: string;
-  is_new: boolean;
-  has_big_prizes: boolean;
-  status: string;
-  participants?: Participant[];
+  questionnaire_id: string;
+  question_text: string;
+  options?: string[];
+  correct_answer?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface ContestWithParticipantCount extends Omit<Contest, 'participants'> {
-  participants?: {
-    count: number;
-    data?: Participant[];
-  };
+export interface Response {
+  id: string;
+  participant_id: string;
+  question_id: string;
+  contest_id: string;
+  answer_text: string;
+  created_at?: string;
 }
