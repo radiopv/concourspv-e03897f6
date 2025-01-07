@@ -1,135 +1,141 @@
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../../App";
-import { useQuestionnaireState } from '../QuestionnaireState';
-import { getRandomMessage } from '../messages';
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
-export const useAnswerSubmission = (contestId: string) => {
+interface Answer {
+  questionId: string;
+  answer: string;
+}
+
+interface UseAnswerSubmissionProps {
+  contestId: string;
+  participant: {
+    id: string;
+  };
+}
+
+export const useAnswerSubmission = ({ contestId, participant }: UseAnswerSubmissionProps) => {
+  const [answers, setAnswers] = useState<Answer[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const state = useQuestionnaireState();
+  const navigate = useNavigate();
 
-  const handleSubmitAnswer = async (currentQuestion: any) => {
-    if (!state.selectedAnswer || !currentQuestion) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner une réponse",
-        variant: "destructive",
-      });
-      return;
-    }
+  const addAnswer = (questionId: string, answer: string) => {
+    setAnswers(prev => {
+      const existingAnswerIndex = prev.findIndex(a => a.questionId === questionId);
+      if (existingAnswerIndex !== -1) {
+        const newAnswers = [...prev];
+        newAnswers[existingAnswerIndex] = { questionId, answer };
+        return newAnswers;
+      }
+      return [...prev, { questionId, answer }];
+    });
+  };
 
-    state.setIsSubmitting(true);
+  const nextQuestion = () => {
+    setCurrentQuestionIndex(prev => prev + 1);
+  };
+
+  const previousQuestion = () => {
+    setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
+  };
+
+  const createParticipation = async () => {
     try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user?.id || !session.session.user.email) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté pour participer",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Get or create participant
-      let { data: participant } = await supabase
-        .from('participants')
-        .select('id')
-        .eq('email', session.session.user.email)
-        .single();
-
-      if (!participant) {
-        const { data: newParticipant } = await supabase
-          .from('participants')
-          .insert({
-            email: session.session.user.email,
-            first_name: session.session.user.email.split('@')[0],
-            last_name: 'Participant'
-          })
-          .select('id')
-          .single();
-        
-        participant = newParticipant;
-      }
-
-      if (!participant) {
-        throw new Error("Failed to get or create participant");
-      }
-
-      // Get current participation or create new one
-      let { data: participation } = await supabase
+      const { data: participation, error } = await supabase
         .from('participations')
-        .select('id, attempts')
-        .eq('participant_id', participant.id)
-        .eq('contest_id', contestId)
-        .order('attempts', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (!participation) {
-        const { data: newParticipation } = await supabase
-          .from('participations')
-          .insert({
-            participant_id: participant.id,
-            contest_id: contestId,
-            attempts: 1,
-            status: 'active'
-          })
-          .select('id, attempts')
-          .single();
-        
-        participation = newParticipation;
-      }
-
-      if (!participation) {
-        throw new Error("Failed to get or create participation");
-      }
-
-      // Submit the answer
-      const { error: submitError } = await supabase
-        .from('participant_answers')
         .insert({
-          participant_id: participation.id,
-          question_id: currentQuestion.id,
-          answer: state.selectedAnswer
-        });
-
-      if (submitError) {
-        console.error('Error submitting answer:', submitError);
-        throw submitError;
-      }
-
-      // Update state and show success message
-      const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
-      state.setIsCorrect(isAnswerCorrect);
-      state.setHasAnswered(true);
-      state.setTotalAnswered(prev => prev + 1);
-      if (isAnswerCorrect) {
-        state.setScore(prev => prev + 1);
-      }
-
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
-      queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
-
-      const message = getRandomMessage();
-      toast({
-        title: "Réponse enregistrée",
-        description: message,
-      });
-
+          participant_id: participant.id,
+          contest_id: contestId,
+          attempts: 1,
+          status: 'active'
+        })
+        .select('id, attempts')
+        .single();
+      
+      if (error) throw error;
+      return participation;
     } catch (error) {
-      console.error('Error in handleSubmitAnswer:', error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la soumission de votre réponse",
-        variant: "destructive",
-      });
-    } finally {
-      state.setIsSubmitting(false);
+      console.error('Error creating participation:', error);
+      throw error;
     }
   };
 
-  return { handleSubmitAnswer };
+  const submitAnswers = async () => {
+    try {
+      setIsSubmitting(true);
+
+      // Create participation record
+      const participation = await createParticipation();
+
+      // Insert all answers
+      const { error: answersError } = await supabase
+        .from('participant_answers')
+        .insert(
+          answers.map(answer => ({
+            participant_id: participant.id,
+            question_id: answer.questionId,
+            answer: answer.answer,
+            participation_id: participation.id
+          }))
+        );
+
+      if (answersError) throw answersError;
+
+      // Calculate score
+      const { data: questions } = await supabase
+        .from('questions')
+        .select('id, correct_answer')
+        .in('id', answers.map(a => a.questionId));
+
+      if (!questions) throw new Error('Could not fetch questions');
+
+      const correctAnswers = answers.filter(answer => {
+        const question = questions.find(q => q.id === answer.questionId);
+        return question && answer.answer === question.correct_answer;
+      });
+
+      const score = Math.round((correctAnswers.length / questions.length) * 100);
+
+      // Update participation with score
+      const { error: updateError } = await supabase
+        .from('participations')
+        .update({
+          score,
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', participation.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Réponses enregistrées",
+        description: "Vos réponses ont été enregistrées avec succès.",
+      });
+
+      navigate(`/contests/${contestId}/results`);
+    } catch (error) {
+      console.error('Error submitting answers:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'enregistrement de vos réponses.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return {
+    answers,
+    currentQuestionIndex,
+    isSubmitting,
+    addAnswer,
+    nextQuestion,
+    previousQuestion,
+    submitAnswers
+  };
 };

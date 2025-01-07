@@ -1,5 +1,3 @@
-import { Contest } from "./contest";
-
 export const PARTICIPANT_STATUS = {
   PENDING: 'pending',
   COMPLETED: 'completed',
@@ -29,12 +27,6 @@ export interface Participant {
   score: number;
   status: ParticipantStatus;
   created_at: string;
+  updated_at: string;
   participant_prizes?: ParticipantPrize[];
-}
-
-export interface ContestWithParticipantCount extends Omit<Contest, 'participants'> {
-  participants?: {
-    count: number;
-    data?: Participant[];
-  };
 }

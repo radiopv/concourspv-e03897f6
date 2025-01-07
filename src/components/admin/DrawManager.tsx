@@ -34,7 +34,7 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
           setRequiredScore(settings.required_percentage);
         }
 
-        // First get participants
+        // First get participants with their participations
         const { data: participantsData, error: participantsError } = await supabase
           .from('participants')
           .select(`
