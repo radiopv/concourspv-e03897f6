@@ -6,40 +6,24 @@ import { ParticipantsTable } from "./participants/ParticipantsTable";
 import { ParticipantsActions } from "./participants/ParticipantsActions";
 import { useParams } from "react-router-dom";
 
-interface Question {
-  correct_answer: string;
-}
-
-interface ParticipantAnswer {
-  question_id: string;
-  answer: string;
-  questions?: Question;
-}
-
 interface Participant {
   id: string;
   first_name: string;
   last_name: string;
   email: string;
-  score: number;
-  status: string;
-  participant_answers?: ParticipantAnswer[];
 }
 
 interface ParticipationResponse {
   id: string;
   score: number;
   status: string;
-  participant: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
+  participant: Participant;
   participant_answers: Array<{
     question_id: string;
     answer: string;
-    questions: Question | null;
+    questions: {
+      correct_answer: string;
+    } | null;
   }>;
 }
 
@@ -88,21 +72,7 @@ const ParticipantsList = () => {
         throw error;
       }
 
-      if (!data) return [];
-
-      return (data as ParticipationResponse[]).map((participation): Participant => ({
-        id: participation.participant.id,
-        first_name: participation.participant.first_name,
-        last_name: participation.participant.last_name,
-        email: participation.participant.email,
-        score: participation.score,
-        status: participation.status,
-        participant_answers: participation.participant_answers.map(answer => ({
-          question_id: answer.question_id,
-          answer: answer.answer,
-          questions: answer.questions || undefined
-        }))
-      }));
+      return (data || []) as ParticipationResponse[];
     }
   });
 
