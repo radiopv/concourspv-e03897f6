@@ -7,7 +7,7 @@ import { supabase } from "../../App";
 import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import QuestionAccordion from './questions/QuestionAccordion';
-import QuestionBankList from './question-bank/QuestionBankList';
+import { QuestionBankList } from './question-bank/QuestionBankList';
 import { Question, QuestionBankItem } from '@/types/question';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
