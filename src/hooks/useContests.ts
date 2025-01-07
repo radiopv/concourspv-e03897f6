@@ -8,9 +8,6 @@ export const useContests = () => {
     queryFn: async () => {
       console.log('Début de la récupération des concours...');
       
-      const { data: session } = await supabase.auth.getSession();
-      console.log('Session actuelle:', session);
-      
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -34,16 +31,8 @@ export const useContests = () => {
         throw error;
       }
 
-      if (!data || data.length === 0) {
-        console.log('Aucun concours actif trouvé');
-      } else {
-        console.log('Concours récupérés avec succès:', data);
-      }
-
+      console.log('Concours récupérés:', data);
       return data as Contest[];
     },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchInterval: 5000
   });
 };
