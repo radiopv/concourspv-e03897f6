@@ -12,9 +12,14 @@ interface Participant {
   first_name: string;
   last_name: string;
   email: string;
-  score: number;
-  status: string;
-  completed_at?: string;
+}
+
+interface ParticipantAnswer {
+  question_id: string;
+  answer: string;
+  questions: {
+    correct_answer: string;
+  };
 }
 
 interface ParticipationResponse {
@@ -22,13 +27,8 @@ interface ParticipationResponse {
   participant: Participant;
   score: number;
   status: string;
-  participant_answers: Array<{
-    question_id: string;
-    answer: string;
-    questions: {
-      correct_answer: string;
-    };
-  }>;
+  completed_at?: string;
+  participant_answers: ParticipantAnswer[];
 }
 
 const ParticipantsList = () => {
@@ -47,7 +47,7 @@ const ParticipantsList = () => {
           id,
           score,
           status,
-          participant:participants (
+          participant:participants!inner (
             id,
             first_name,
             last_name,
@@ -64,7 +64,17 @@ const ParticipantsList = () => {
         .eq('contest_id', contestId);
 
       if (error) throw error;
-      return data as ParticipationResponse[];
+      
+      // Transform the data to match ParticipationResponse type
+      const transformedData: ParticipationResponse[] = data.map(item => ({
+        id: item.id,
+        score: item.score,
+        status: item.status,
+        participant: item.participant,
+        participant_answers: item.participant_answers || []
+      }));
+
+      return transformedData;
     }
   });
 
