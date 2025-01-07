@@ -15,7 +15,10 @@ export type Database = {
           description: string | null
           draw_date: string | null
           end_date: string
+          has_big_prizes: boolean | null
           id: string
+          is_featured: boolean | null
+          is_new: boolean | null
           prize_image_url: string | null
           shop_url: string | null
           start_date: string
@@ -28,7 +31,10 @@ export type Database = {
           description?: string | null
           draw_date?: string | null
           end_date: string
+          has_big_prizes?: boolean | null
           id?: string
+          is_featured?: boolean | null
+          is_new?: boolean | null
           prize_image_url?: string | null
           shop_url?: string | null
           start_date: string
@@ -41,7 +47,10 @@ export type Database = {
           description?: string | null
           draw_date?: string | null
           end_date?: string
+          has_big_prizes?: boolean | null
           id?: string
+          is_featured?: boolean | null
+          is_new?: boolean | null
           prize_image_url?: string | null
           shop_url?: string | null
           start_date?: string
