@@ -22,18 +22,10 @@ export const useContests = () => {
               shop_url
             )
           ),
-          questionnaires (
+          questions:questionnaires (
             id,
             title,
-            description,
-            questions (
-              id,
-              question_text,
-              options,
-              correct_answer,
-              article_url,
-              order_number
-            )
+            description
           )
         `)
         .eq('status', 'active')
@@ -55,6 +47,8 @@ export const useContest = (contestId: string | undefined) => {
     queryKey: ['contest', contestId],
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
+      
+      console.log('Fetching contest with ID:', contestId);
 
       const { data, error } = await supabase
         .from('contests')
@@ -70,18 +64,10 @@ export const useContest = (contestId: string | undefined) => {
               shop_url
             )
           ),
-          questionnaires (
+          questions:questionnaires (
             id,
             title,
-            description,
-            questions (
-              id,
-              question_text,
-              options,
-              correct_answer,
-              article_url,
-              order_number
-            )
+            description
           )
         `)
         .eq('id', contestId)
@@ -96,6 +82,7 @@ export const useContest = (contestId: string | undefined) => {
         throw new Error('Contest not found');
       }
 
+      console.log('Fetched contest data:', data);
       return data as Contest;
     },
     enabled: !!contestId,

@@ -49,7 +49,7 @@ const Contest = () => {
     );
   }
 
-  const hasQuestionnaire = contest.questionnaires && contest.questionnaires.length > 0;
+  const hasQuestionnaire = contest.questions && contest.questions.length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
