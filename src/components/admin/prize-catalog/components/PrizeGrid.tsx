@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Link as LinkIcon } from "lucide-react";
+import { Link } from "lucide-react";
 import { Prize } from "@/types/prize";
+import { PrizeActions } from "./PrizeActions";
+import { PrizeImage } from "./PrizeImage";
 
 interface PrizeGridProps {
   prizes: Prize[];
@@ -15,31 +16,13 @@ export const PrizeGrid = ({ prizes, onEdit, onDelete }: PrizeGridProps) => {
       {prizes.map((prize) => (
         <Card key={prize.id} className="hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
-            {prize.main_image_url && (
-              <div className="aspect-square relative mb-4">
-                <img
-                  src={prize.main_image_url}
-                  alt={prize.name}
-                  className="object-cover rounded-lg w-full h-full"
-                />
-                <div className="absolute top-2 right-2 space-x-2">
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    onClick={() => onEdit(prize)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => onDelete(prize.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
+            <PrizeImage imageUrl={prize.main_image_url} altText={prize.name}>
+              <PrizeActions
+                onEdit={() => onEdit(prize)}
+                onDelete={() => onDelete(prize.id)}
+              />
+            </PrizeImage>
+            
             <h3 className="font-semibold mb-2">{prize.name}</h3>
             {prize.description && (
               <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
@@ -55,7 +38,7 @@ export const PrizeGrid = ({ prizes, onEdit, onDelete }: PrizeGridProps) => {
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800"
                 >
-                  <LinkIcon className="h-4 w-4" />
+                  <Link className="h-4 w-4" />
                 </a>
               )}
             </div>
