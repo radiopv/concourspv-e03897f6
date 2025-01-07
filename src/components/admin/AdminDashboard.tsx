@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   const [isNewContestOpen, setIsNewContestOpen] = useState(false);
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: contests, isLoading } = useQuery({
     queryKey: ['admin-contests'],
@@ -40,6 +41,35 @@ const AdminDashboard = () => {
       return data;
     },
     enabled: true
+  });
+
+  const createContestMutation = useMutation({
+    mutationFn: async (contestData: any) => {
+      const { data, error } = await supabase
+        .from('contests')
+        .insert([contestData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      toast({
+        title: "Succès",
+        description: "Le concours a été créé",
+      });
+      setIsNewContestOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer le concours",
+        variant: "destructive",
+      });
+      console.error('Error creating contest:', error);
+    }
   });
 
   const handleSelectContest = (id: string) => {
@@ -119,7 +149,14 @@ const AdminDashboard = () => {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-2">
-            <AdminContestManager contestId={selectedContestId} />
+            <AdminContestManager 
+              contestId={selectedContestId} 
+              onSuccess={() => {
+                setIsNewContestOpen(false);
+                setSelectedContestId(null);
+                queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+              }}
+            />
           </CollapsibleContent>
         </Collapsible>
 

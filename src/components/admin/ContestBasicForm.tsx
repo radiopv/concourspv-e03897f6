@@ -4,6 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ContestBasicFormProps {
   formData: {
@@ -17,6 +24,7 @@ interface ContestBasicFormProps {
     has_big_prizes: boolean;
     shop_url?: string;
     prize_image_url?: string;
+    status?: string;
   };
   setFormData: (data: any) => void;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -43,6 +51,23 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="status">Statut</Label>
+        <Select
+          value={formData.status}
+          onValueChange={(value) => setFormData({ ...formData, status: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Sélectionnez un statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="draft">Brouillon</SelectItem>
+            <SelectItem value="active">Actif</SelectItem>
+            <SelectItem value="archived">Archivé</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>
