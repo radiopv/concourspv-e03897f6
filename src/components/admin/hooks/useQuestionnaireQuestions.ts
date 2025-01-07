@@ -46,7 +46,7 @@ export const useQuestionnaireQuestions = (contestId: string) => {
           console.log('Using existing questionnaire ID:', questionnaireId);
         }
 
-        // Then get the questions
+        // Then get the questions - removing type from select until migration is applied
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions')
           .select(`
