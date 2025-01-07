@@ -71,7 +71,7 @@ const ContestStatsPage = () => {
         .select(`
           id,
           score,
-          participant:participants (
+          participant:participants!inner (
             id,
             first_name,
             last_name
@@ -83,7 +83,9 @@ const ContestStatsPage = () => {
 
       if (error) throw error;
 
-      return (data as ParticipationData[]).map(p => ({
+      // Type assertion and mapping to ensure correct types
+      const participations = data as unknown as ParticipationData[];
+      return participations.map(p => ({
         id: p.participant.id,
         score: p.score || 0,
         first_name: p.participant.first_name,
