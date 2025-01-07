@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
 import { motion } from "framer-motion";
-import { Participant } from "@/types/participant";
+import { Participant, PARTICIPANT_STATUS } from "@/types/participant";
 import ContestStats from "./ContestStats";
 import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
@@ -27,7 +27,7 @@ interface ContestCardProps {
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   // Find winner if contest has one
-  const winner = contest.participants?.find(p => p.status === 'WINNER');
+  const winner = contest.participants?.find(p => p.status === PARTICIPANT_STATUS.WINNER);
 
   return (
     <motion.div

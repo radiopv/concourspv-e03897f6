@@ -11,10 +11,10 @@ export interface Participant {
   first_name: string;
   last_name: string;
   email: string;
+  score: number;
+  status?: ParticipantStatus;
   created_at: string;
   updated_at: string;
-  score?: number;
-  status?: ParticipantStatus;
 }
 
 export interface ParticipationWithResponses extends Participant {
