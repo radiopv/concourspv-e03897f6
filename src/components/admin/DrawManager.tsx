@@ -34,8 +34,40 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
           setRequiredScore(settings.required_percentage);
         }
 
-        // First get participants with their participations
-        const { data: participantsData, error: participantsError } = await supabase
+        // Calculate scores for participants based on their responses
+        const { data: responses } = await supabase
+          .from('responses')
+          .select(`
+            participant_id,
+            question_id,
+            answer_text,
+            questions!inner (
+              correct_answer
+            )
+          `)
+          .eq('contest_id', contestId);
+
+        if (!responses) return;
+
+        // Group responses by participant
+        const participantScores = responses.reduce((acc, response) => {
+          const participantId = response.participant_id;
+          if (!acc[participantId]) {
+            acc[participantId] = {
+              correct: 0,
+              total: 0
+            };
+          }
+          
+          const isCorrect = response.answer_text === response.questions.correct_answer;
+          acc[participantId].correct += isCorrect ? 1 : 0;
+          acc[participantId].total += 1;
+          
+          return acc;
+        }, {} as Record<string, { correct: number; total: number }>);
+
+        // Fetch participants with calculated scores
+        const { data: participantsData } = await supabase
           .from('participants')
           .select(`
             id,
@@ -43,32 +75,25 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
             last_name,
             email,
             created_at,
-            updated_at,
-            participations!inner (
-              status,
-              score,
-              contest_id
-            )
+            updated_at
           `)
-          .eq('participations.contest_id', contestId)
-          .eq('participations.status', 'completed' as ParticipantStatus)
-          .gte('participations.score', requiredScore);
+          .in('id', Object.keys(participantScores));
 
-        if (participantsError) throw participantsError;
+        if (!participantsData) return;
 
-        // Transform the data to match the Participant type
-        const participants: Participant[] = participantsData.map(p => ({
-          id: p.id,
-          first_name: p.first_name,
-          last_name: p.last_name,
-          email: p.email,
-          created_at: p.created_at,
-          updated_at: p.updated_at,
-          score: p.participations[0].score,
-          status: p.participations[0].status as ParticipantStatus
+        // Add scores to participants
+        const participantsWithScores: Participant[] = participantsData.map(p => ({
+          ...p,
+          score: participantScores[p.id] 
+            ? Math.round((participantScores[p.id].correct / participantScores[p.id].total) * 100)
+            : 0,
+          status: 'completed' as ParticipantStatus
         }));
 
-        setEligibleParticipants(participants);
+        // Filter eligible participants
+        const eligible = participantsWithScores.filter(p => (p.score || 0) >= requiredScore);
+        setEligibleParticipants(eligible);
+
       } catch (error) {
         console.error('Error fetching eligible participants:', error);
         toast({
