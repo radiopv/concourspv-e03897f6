@@ -12,7 +12,7 @@ import { Contest, ContestWithParticipantCount } from "@/types/contest";
 const ContestsList = () => {
   const navigate = useNavigate();
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
-  const { data: contests, isLoading, error } = useContests();
+  const { data: contests, isLoading } = useContests();
 
   if (selectedContestId) {
     return <QuestionnaireComponent contestId={selectedContestId} />;
@@ -22,26 +22,6 @@ const ContestsList = () => {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-indigo-50 to-white">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full">
-          <CardContent className="text-center py-12">
-            <h2 className="text-2xl font-semibold mb-4 text-red-600">
-              Une erreur est survenue
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Impossible de charger les concours. Veuillez réessayer plus tard.
-            </p>
-            <Button onClick={() => window.location.reload()} variant="outline">
-              Réessayer
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -67,7 +47,6 @@ const ContestsList = () => {
     );
   }
 
-  // Transform Contest[] to ContestWithParticipantCount[]
   const contestsWithCount: ContestWithParticipantCount[] = contests.map((contest: Contest) => ({
     ...contest,
     participants: {

@@ -28,7 +28,7 @@ const transformParticipants = (participants: any[]): Participant[] => {
 };
 
 export const useContests = () => {
-  return useQuery({
+  return useQuery<Contest[]>({
     queryKey: ['contests'],
     queryFn: async () => {
       console.log('Fetching contests...');
@@ -79,10 +79,6 @@ export const useContests = () => {
       }));
 
       return transformedData;
-    },
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    staleTime: 1 * 60 * 1000, // 1 minute
-    retry: 1,
-    refetchOnWindowFocus: false
+    }
   });
 };
