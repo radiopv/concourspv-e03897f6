@@ -18,16 +18,6 @@ interface TopParticipant {
   last_name: string;
 }
 
-interface ParticipationData {
-  id: string;
-  score: number | null;
-  participant: {
-    id: string;
-    first_name: string;
-    last_name: string;
-  };
-}
-
 const ContestStatsPage = () => {
   const { id: contestId } = useParams<{ id: string }>();
   const location = useLocation();
@@ -37,8 +27,7 @@ const ContestStatsPage = () => {
     queryKey: ['contest', contestId],
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
-      console.log('Fetching contest data for ID:', contestId);
-
+      
       const { data: contestData, error: contestError } = await supabase
         .from('contests')
         .select('*')
@@ -64,14 +53,13 @@ const ContestStatsPage = () => {
     queryKey: ['top-participants', contestId],
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
-      console.log('Fetching top participants for contest:', contestId);
 
       const { data, error } = await supabase
         .from('participations')
         .select(`
           id,
           score,
-          participant:participants!inner (
+          participant:participants (
             id,
             first_name,
             last_name
@@ -83,9 +71,7 @@ const ContestStatsPage = () => {
 
       if (error) throw error;
 
-      // Type assertion and mapping to ensure correct types
-      const participations = data as unknown as ParticipationData[];
-      return participations.map(p => ({
+      return data.map(p => ({
         id: p.participant.id,
         score: p.score || 0,
         first_name: p.participant.first_name,
@@ -99,7 +85,6 @@ const ContestStatsPage = () => {
     queryKey: ['contest-stats', contestId],
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
-      console.log('Fetching contest stats for ID:', contestId);
 
       const { count: qualifiedCount } = await supabase
         .from('participations')
