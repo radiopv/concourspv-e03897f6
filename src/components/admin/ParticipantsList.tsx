@@ -67,8 +67,8 @@ const ParticipantsList = () => {
         throw error;
       }
 
-      // Transform the data to match the expected format
-      const transformedData = data?.map(participation => ({
+      // Transform the data to match the Participant interface
+      const transformedData: Participant[] = data?.map(participation => ({
         id: participation.participant.id,
         first_name: participation.participant.first_name,
         last_name: participation.participant.last_name,
@@ -82,10 +82,10 @@ const ParticipantsList = () => {
             correct_answer: answer.questions.correct_answer
           } : undefined
         }))
-      }));
+      })) || [];
 
       console.log('Transformed participant data:', transformedData);
-      return transformedData || [];
+      return transformedData;
     }
   });
 
