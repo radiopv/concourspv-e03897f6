@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Check, X } from "lucide-react";
-import { PrizeFormData } from "../types";
+import { PrizeFormData } from "@/types/prize";
 import { PrizeImages } from "./PrizeImages";
 import { PrizeDescription } from "./PrizeDescription";
 
