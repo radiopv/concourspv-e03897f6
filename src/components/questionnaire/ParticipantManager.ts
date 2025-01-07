@@ -27,7 +27,7 @@ export class ParticipantManager {
     console.log('Creating new participant...');
     const { data: newParticipant, error: createError } = await supabase
       .from('participants')
-      .insert([{
+      .insert({
         id: userId,
         contest_id: contestId,
         status: PARTICIPANT_STATUS.PENDING as ParticipantStatus,
@@ -35,9 +35,9 @@ export class ParticipantManager {
         last_name: 'Participant',
         email: userEmail,
         attempts: 0
-      }])
+      })
       .select('participation_id')
-      .maybeSingle();
+      .single();
 
     if (createError) {
       console.error('Error creating participant:', createError);
