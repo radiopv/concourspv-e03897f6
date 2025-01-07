@@ -6,6 +6,22 @@ import { ParticipantsTable } from "./participants/ParticipantsTable";
 import { ParticipantsActions } from "./participants/ParticipantsActions";
 import { useParams } from "react-router-dom";
 
+interface Participant {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  score: number;
+  status: string;
+  participant_answers?: Array<{
+    question_id: string;
+    answer: string;
+    questions?: {
+      correct_answer: string;
+    };
+  }>;
+}
+
 const ParticipantsList = () => {
   const { contestId } = useParams();
   const { toast } = useToast();
@@ -45,7 +61,6 @@ const ParticipantsList = () => {
         .eq('contest_id', contestId);
       
       if (error) throw error;
-      console.log("Participations récupérées:", data);
 
       // Transform the data to match the expected format
       const transformedData = data?.map(participation => ({
@@ -56,11 +71,10 @@ const ParticipantsList = () => {
         score: participation.score,
         status: participation.status,
         participant_answers: participation.participant_answers
-      }));
+      })) as Participant[];
 
       return transformedData || [];
-    },
-    enabled: !!contestId
+    }
   });
 
   const deleteParticipantMutation = useMutation({
