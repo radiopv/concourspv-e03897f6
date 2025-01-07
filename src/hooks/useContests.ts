@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../integrations/supabase/client";
-import { Contest } from "../types/contest";
+import { supabase } from "../App";
+import { Contest } from "@/types/contest";
 
 export const useContests = () => {
   return useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
-      console.log('Début de la récupération des concours...');
+      console.log('Fetching contests...');
       
       const { data, error } = await supabase
         .from('contests')
@@ -27,11 +27,11 @@ export const useContests = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Erreur lors de la récupération des concours:', error);
+        console.error('Error fetching contests:', error);
         throw error;
       }
 
-      console.log('Concours récupérés:', data);
+      console.log('Contests fetched:', data);
       return data as Contest[];
     },
   });
