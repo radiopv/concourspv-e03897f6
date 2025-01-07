@@ -50,7 +50,10 @@ export const useAnswerSubmission = (contestId: string) => {
           onConflict: 'participant_id,question_id'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error submitting answer:', error);
+        throw error;
+      }
 
       queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
