@@ -10,18 +10,23 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader } from "lucide-react";
 
 const Contest = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
 
+  console.log('Contest ID from params:', id); // Debugging log
+
   const { data: contest, isLoading, error } = useQuery({
     queryKey: ['contest', id],
     queryFn: async () => {
+      if (!id) {
+        console.error('No contest ID provided');
+        throw new Error('Contest ID is required');
+      }
+
       console.log('Fetching contest with ID:', id);
-      if (!id) throw new Error('Contest ID is required');
       
-      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -51,8 +56,6 @@ const Contest = () => {
           )
         `)
         .eq('id', id)
-        .eq('status', 'active')
-        .gte('end_date', now)
         .single();
       
       if (error) {
@@ -61,12 +64,14 @@ const Contest = () => {
       }
 
       if (!data) {
-        throw new Error('Contest not found or no longer available');
+        console.error('No contest found with ID:', id);
+        throw new Error('Contest not found');
       }
 
-      console.log('Contest data:', data);
+      console.log('Contest data retrieved:', data);
       return data as ContestType;
     },
+    enabled: !!id,
     meta: {
       errorMessage: "Le concours n'est plus disponible ou a expiré."
     }
@@ -134,22 +139,21 @@ const Contest = () => {
                   {contest.questionnaires.map(questionnaire => (
                     <div key={questionnaire.id}>
                       <h4 className="font-medium">{questionnaire.title}</h4>
-                      {showQuestionnaire && (
+                      {showQuestionnaire ? (
                         <QuestionnaireComponent contestId={contest.id} />
+                      ) : (
+                        <Button 
+                          className="mt-4 w-full" 
+                          onClick={() => setShowQuestionnaire(true)}
+                        >
+                          Participer
+                        </Button>
                       )}
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            {!showQuestionnaire && (
-              <Button 
-                className="mt-4 w-full" 
-                onClick={() => setShowQuestionnaire(true)}
-              >
-                Participer
-              </Button>
-            )}
           </CardContent>
         </Card>
       </div>
