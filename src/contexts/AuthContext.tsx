@@ -1,28 +1,30 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/App";
-import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { createContext, useContext, useEffect, useState } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '../App';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
-  session: Session | null;
   user: User | null;
-  loading: boolean;
+  session: Session | null;
   signOut: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  session: null,
   user: null,
-  loading: true,
+  session: null,
   signOut: async () => {},
+  loading: true,
 });
 
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 {
                   id: currentSession.user.id,
                   email: currentSession.user.email,
-                  first_name: currentSession.user.email?.split('@')[0] || 'User',
+                  first_name: currentSession.user.email?.split('@')[0] || '',
                   last_name: 'New',
                   role: currentSession.user.email === 'renaudcanuel@me.com' ? 'admin' : 'user'
                 }
@@ -67,11 +69,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
           }
 
-          // Redirection basée sur le rôle
-          if (currentSession.user.email === 'renaudcanuel@me.com') {
-            navigate('/admin');
-          } else {
-            navigate('/');
+          // Ne rediriger que lors de la connexion initiale
+          if (event === 'SIGNED_IN') {
+            if (currentSession.user.email === 'renaudcanuel@me.com') {
+              navigate('/admin');
+            } else {
+              navigate('/');
+            }
           }
         } else {
           setSession(null);
@@ -88,39 +92,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      setSession(null);
+      await supabase.auth.signOut();
       setUser(null);
-      
-      toast({
-        title: "Déconnexion réussie",
-        description: "À bientôt !",
-      });
-      
+      setSession(null);
       navigate('/login');
     } catch (error) {
-      console.error("Sign out error:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la déconnexion.",
-      });
+      console.error('Error signing out:', error);
     }
   };
 
+  const value = {
+    user,
+    session,
+    signOut,
+    loading,
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, loading, signOut }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 };
