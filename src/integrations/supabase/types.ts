@@ -576,28 +576,34 @@ export type Database = {
       }
       questions: {
         Row: {
+          article_url: string | null
           correct_answer: string | null
           created_at: string | null
           id: string
           options: Json | null
+          order_number: number | null
           question_text: string
           questionnaire_id: string
           updated_at: string | null
         }
         Insert: {
+          article_url?: string | null
           correct_answer?: string | null
           created_at?: string | null
           id?: string
           options?: Json | null
+          order_number?: number | null
           question_text: string
           questionnaire_id: string
           updated_at?: string | null
         }
         Update: {
+          article_url?: string | null
           correct_answer?: string | null
           created_at?: string | null
           id?: string
           options?: Json | null
+          order_number?: number | null
           question_text?: string
           questionnaire_id?: string
           updated_at?: string | null

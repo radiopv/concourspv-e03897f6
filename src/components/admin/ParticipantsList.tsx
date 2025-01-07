@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParticipantsTable } from "./participants/ParticipantsTable";
 import { ParticipantsActions } from "./participants/ParticipantsActions";
@@ -56,7 +56,7 @@ const ParticipantsList = () => {
     );
   }
 
-  const { data: participants = [], isLoading } = useQuery({
+  const { data: participations = [], isLoading } = useQuery({
     queryKey: ['participants', contestId],
     queryFn: async () => {
       console.log('Fetching participants for contest:', contestId);
@@ -146,15 +146,15 @@ const ParticipantsList = () => {
     return <div>Chargement des participants...</div>;
   }
 
-  const eligibleParticipants = participants.filter(p => p.score >= 70);
-  const ineligibleParticipants = participants.filter(p => p.score < 70);
+  const eligibleParticipants = participations.filter(p => p.score >= 70);
+  const ineligibleParticipants = participations.filter(p => p.score < 70);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Liste des participants</h2>
         <ParticipantsActions 
-          participants={participants} 
+          participants={participations} 
           contestId={contestId} 
         />
       </div>
