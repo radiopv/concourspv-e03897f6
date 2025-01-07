@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Participant } from "@/types/participant";
+import { Participant, ParticipantStatus } from "@/types/participant";
 
 interface ContestWithParticipants {
   title: string;
@@ -89,9 +89,15 @@ const AdminRoutes = () => {
         throw error;
       }
       
+      // Cast the status to ensure type safety
+      const participantsWithCorrectStatus = data.participants?.map(p => ({
+        ...p,
+        status: p.status as ParticipantStatus
+      })) || [];
+      
       const contestWithParticipants: ContestWithParticipants = {
         title: data.title,
-        participants: data.participants || []
+        participants: participantsWithCorrectStatus
       };
       
       console.log("Contest data fetched:", contestWithParticipants);

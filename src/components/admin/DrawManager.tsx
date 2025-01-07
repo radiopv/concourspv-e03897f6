@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { Participant } from "@/types/participant";
+import { Participant, ParticipantStatus } from "@/types/participant";
 import { DrawManagerContent } from "./draw/DrawManagerContent";
 
 interface DrawManagerProps {
@@ -38,12 +38,18 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
-          .eq('status', 'completed')
+          .eq('status', 'completed' as ParticipantStatus)
           .gte('score', requiredScore);
 
         if (error) throw error;
 
-        setEligibleParticipants(data as Participant[]);
+        // Cast the status to ensure type safety
+        const participantsWithCorrectStatus = (data || []).map(p => ({
+          ...p,
+          status: p.status as ParticipantStatus
+        }));
+
+        setEligibleParticipants(participantsWithCorrectStatus);
       } catch (error) {
         console.error('Error fetching eligible participants:', error);
         toast({
