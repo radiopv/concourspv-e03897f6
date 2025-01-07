@@ -37,10 +37,12 @@ export const DrawManagerContent = ({
       setIsDrawing(true);
       console.log("Selecting winner:", participant);
       
+      // Update participation status instead of participant status
       const { error: updateError } = await supabase
-        .from('participants')
+        .from('participations')
         .update({ status: 'winner' as ParticipantStatus })
-        .eq('id', participant.id);
+        .eq('participant_id', participant.id)
+        .eq('contest_id', contestId);
 
       if (updateError) throw updateError;
 

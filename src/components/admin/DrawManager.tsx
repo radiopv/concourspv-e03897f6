@@ -34,22 +34,41 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
           setRequiredScore(settings.required_percentage);
         }
 
-        const { data, error } = await supabase
+        // First get participants
+        const { data: participantsData, error: participantsError } = await supabase
           .from('participants')
-          .select('*')
-          .eq('contest_id', contestId)
-          .eq('status', 'completed' as ParticipantStatus)
-          .gte('score', requiredScore);
+          .select(`
+            id,
+            first_name,
+            last_name,
+            email,
+            created_at,
+            updated_at,
+            participations!inner (
+              status,
+              score,
+              contest_id
+            )
+          `)
+          .eq('participations.contest_id', contestId)
+          .eq('participations.status', 'completed' as ParticipantStatus)
+          .gte('participations.score', requiredScore);
 
-        if (error) throw error;
+        if (participantsError) throw participantsError;
 
-        // Cast the status to ensure type safety
-        const participantsWithCorrectStatus = (data || []).map(p => ({
-          ...p,
-          status: p.status as ParticipantStatus
+        // Transform the data to match the Participant type
+        const participants: Participant[] = participantsData.map(p => ({
+          id: p.id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          email: p.email,
+          created_at: p.created_at,
+          updated_at: p.updated_at,
+          score: p.participations[0].score,
+          status: p.participations[0].status as ParticipantStatus
         }));
 
-        setEligibleParticipants(participantsWithCorrectStatus);
+        setEligibleParticipants(participants);
       } catch (error) {
         console.error('Error fetching eligible participants:', error);
         toast({

@@ -75,7 +75,7 @@ export const useAnswerSubmission = (contestId: string) => {
             attempts: 1,
             status: 'active'
           })
-          .select('id')
+          .select('id, attempts')
           .single();
         
         participation = newParticipation;
