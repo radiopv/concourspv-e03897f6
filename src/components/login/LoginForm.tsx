@@ -19,13 +19,17 @@ export const LoginForm = () => {
   const onSubmit = async (values: any) => {
     if (isSubmitting) return;
     
+    console.log("Tentative de connexion avec:", values.email);
     setIsSubmitting(true);
+    
     try {
       const { data, error } = await handleLogin(values);
+      console.log("Résultat de la connexion:", { data, error });
       
       if (error) {
         let errorMessage = "Email ou mot de passe incorrect.";
         if (error instanceof AuthError) {
+          console.log("Erreur d'authentification:", error.message);
           switch (error.message) {
             case "Email not confirmed":
               errorMessage = "Veuillez vérifier votre email pour confirmer votre compte.";
@@ -51,6 +55,7 @@ export const LoginForm = () => {
       }
       
       if (data?.user) {
+        console.log("Utilisateur connecté:", data.user);
         await checkAndCreateProfile(data.user.id, data.user.email || '');
         toast({
           title: "Connexion réussie",
@@ -58,7 +63,7 @@ export const LoginForm = () => {
         });
       }
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Erreur détaillée:', error);
     } finally {
       setIsSubmitting(false);
     }

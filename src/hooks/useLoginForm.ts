@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/App";
+import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -23,12 +23,14 @@ export const useLoginForm = () => {
   });
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
+    console.log("Début de la tentative de connexion");
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
+      console.log("Réponse de Supabase:", { data, error });
       return { data, error };
     } catch (error: any) {
       console.error("Erreur lors de la connexion:", error);
@@ -47,6 +49,7 @@ export const useLoginForm = () => {
     }
 
     try {
+      console.log("Tentative de réinitialisation du mot de passe pour:", email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
