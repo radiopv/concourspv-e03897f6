@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../App';
 import { QuestionBankList } from '@/components/admin/question-bank/QuestionBankList';
-import { AddQuestionForm } from '@/components/admin/question-bank/AddQuestionForm';
+import AddQuestionForm from '@/components/admin/question-bank/AddQuestionForm';
 
 export interface QuestionBankItem {
   id: string;
