@@ -10,6 +10,7 @@ export interface Prize {
   is_hidden?: boolean;
   category?: string;
   stock?: number;
+  created_at?: string;
 }
 
 export interface PrizeFormData {
