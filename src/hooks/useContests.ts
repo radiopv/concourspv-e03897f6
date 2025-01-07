@@ -1,25 +1,62 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Contest } from "@/types/contest";
+import { supabase } from "../App";
+import { Contest, Participant, ParticipantPrize } from "../types/contest";
+
+const transformParticipantPrizes = (prizes: any[]): ParticipantPrize[] => {
+  return prizes?.map((pp: any) => ({
+    prize: {
+      catalog_item: {
+        id: pp.prize.catalog_item.id,
+        name: pp.prize.catalog_item.name,
+        value: pp.prize.catalog_item.value,
+        image_url: pp.prize.catalog_item.image_url
+      }
+    }
+  })) || [];
+};
+
+const transformParticipants = (participants: any[]): Participant[] => {
+  return participants?.map((participant: any) => ({
+    id: participant.id,
+    first_name: participant.first_name,
+    last_name: participant.last_name,
+    score: participant.score,
+    status: participant.status,
+    created_at: participant.created_at,
+    participant_prizes: transformParticipantPrizes(participant.participant_prizes || [])
+  })) || [];
+};
 
 export const useContests = () => {
-  return useQuery({
+  return useQuery<Contest[]>({
     queryKey: ['contests'],
     queryFn: async () => {
       console.log('Fetching contests...');
-      
       const { data, error } = await supabase
         .from('contests')
         .select(`
-          *,
-          prizes (
+          id,
+          title,
+          description,
+          is_new,
+          has_big_prizes,
+          status,
+          participants (
             id,
-            catalog_item:prize_catalog (
-              name,
-              value,
-              image_url,
-              description,
-              shop_url
+            first_name,
+            last_name,
+            score,
+            status,
+            created_at,
+            participant_prizes (
+              prize:prizes (
+                catalog_item:prize_catalog (
+                  id,
+                  name,
+                  value,
+                  image_url
+                )
+              )
             )
           )
         `)
@@ -31,8 +68,18 @@ export const useContests = () => {
         throw error;
       }
 
-      console.log('Contests fetched:', data);
-      return data as Contest[];
-    },
+      // Transform the data to match our types
+      const transformedData: Contest[] = data.map((contest: any) => ({
+        id: contest.id,
+        title: contest.title,
+        description: contest.description,
+        is_new: contest.is_new,
+        has_big_prizes: contest.has_big_prizes,
+        status: contest.status,
+        participants: transformParticipants(contest.participants || [])
+      }));
+
+      return transformedData;
+    }
   });
 };

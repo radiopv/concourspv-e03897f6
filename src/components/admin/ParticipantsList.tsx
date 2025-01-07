@@ -1,31 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParticipantsTable } from "./participants/ParticipantsTable";
 import { ParticipantsActions } from "./participants/ParticipantsActions";
 import { useParams } from "react-router-dom";
-
-interface Participant {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-}
-
-interface ParticipationResponse {
-  id: string;
-  score: number;
-  status: string;
-  participant: Participant;
-  participant_answers: Array<{
-    question_id: string;
-    answer: string;
-    questions: {
-      correct_answer: string;
-    } | null;
-  }>;
-}
 
 const ParticipantsList = () => {
   const { contestId } = useParams();
@@ -40,23 +19,13 @@ const ParticipantsList = () => {
     );
   }
 
-  const { data: participations = [], isLoading } = useQuery({
+  const { data: participants, isLoading } = useQuery({
     queryKey: ['participants', contestId],
     queryFn: async () => {
-      console.log('Fetching participants for contest:', contestId);
-      
       const { data, error } = await supabase
-        .from('participations')
+        .from('participants')
         .select(`
-          id,
-          score,
-          status,
-          participant:participants!inner (
-            id,
-            first_name,
-            last_name,
-            email
-          ),
+          *,
           participant_answers (
             question_id,
             answer,
@@ -66,54 +35,23 @@ const ParticipantsList = () => {
           )
         `)
         .eq('contest_id', contestId);
+      
+      if (error) throw error;
+      console.log("Participants récupérés:", data);
 
-      if (error) {
-        console.error('Error fetching participants:', error);
-        throw error;
-      }
-
-      // Transform the data to match our expected types
-      const typedData = (data || []).map((item: any): ParticipationResponse => ({
-        id: item.id,
-        score: item.score || 0,
-        status: item.status || 'pending',
-        participant: {
-          id: item.participant.id,
-          first_name: item.participant.first_name,
-          last_name: item.participant.last_name,
-          email: item.participant.email
-        },
-        participant_answers: (item.participant_answers || []).map((answer: any) => ({
-          question_id: answer.question_id,
-          answer: answer.answer,
-          questions: answer.questions ? {
-            correct_answer: answer.questions.correct_answer
-          } : null
-        }))
-      }));
-
-      return typedData;
-    }
+      return data;
+    },
+    enabled: !!contestId
   });
 
   const deleteParticipantMutation = useMutation({
     mutationFn: async (participantId: string) => {
-      console.log('Deleting participant:', participantId);
-      
-      const { error: participationsError } = await supabase
-        .from('participations')
-        .delete()
-        .eq('participant_id', participantId)
-        .eq('contest_id', contestId);
-      
-      if (participationsError) throw participationsError;
-
-      const { error: participantError } = await supabase
+      const { error } = await supabase
         .from('participants')
         .delete()
         .eq('id', participantId);
       
-      if (participantError) throw participantError;
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
@@ -122,8 +60,7 @@ const ParticipantsList = () => {
         description: "Le participant a été supprimé",
       });
     },
-    onError: (error) => {
-      console.error('Error deleting participant:', error);
+    onError: () => {
       toast({
         title: "Erreur",
         description: "Impossible de supprimer le participant",
@@ -136,15 +73,15 @@ const ParticipantsList = () => {
     return <div>Chargement des participants...</div>;
   }
 
-  const eligibleParticipants = participations.filter(p => p.score >= 70);
-  const ineligibleParticipants = participations.filter(p => p.score < 70);
+  const eligibleParticipants = participants?.filter(p => p.score >= 70) || [];
+  const ineligibleParticipants = participants?.filter(p => p.score < 70) || [];
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Liste des participants</h2>
         <ParticipantsActions 
-          participants={participations} 
+          participants={participants || []} 
           contestId={contestId} 
         />
       </div>

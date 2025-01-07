@@ -1,64 +1,53 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Trophy, User, Award } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Home, Trophy, Settings, LogOut } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const MobileNavBar = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { user, signOut } = useAuth();
+  const isAdmin = user?.email === "renaudcanuel@me.com";
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
+  if (!user) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
-      <div className="grid grid-cols-4 h-16">
-        <button
-          onClick={() => handleNavigation('/')}
-          className={`flex flex-col items-center justify-center ${
-            isActive('/') ? 'text-primary' : 'text-gray-500'
-          }`}
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 px-4 z-50">
+      <div className="flex justify-around items-center">
+        <Link 
+          to="/" 
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
         >
-          <Home className="h-5 w-5" />
+          <Home className="h-6 w-6" />
           <span className="text-xs mt-1">Accueil</span>
-        </button>
-
-        <button
-          onClick={() => handleNavigation('/contests')}
-          className={`flex flex-col items-center justify-center ${
-            isActive('/contests') ? 'text-primary' : 'text-gray-500'
-          }`}
+        </Link>
+        
+        <Link 
+          to="/contests" 
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
         >
-          <Trophy className="h-5 w-5" />
+          <Trophy className="h-6 w-6" />
           <span className="text-xs mt-1">Concours</span>
-        </button>
+        </Link>
 
-        <button
-          onClick={() => handleNavigation('/winners')}
-          className={`flex flex-col items-center justify-center ${
-            isActive('/winners') ? 'text-primary' : 'text-gray-500'
-          }`}
-        >
-          <Award className="h-5 w-5" />
-          <span className="text-xs mt-1">Gagnants</span>
-        </button>
+        {isAdmin && (
+          <Link 
+            to="/admin" 
+            className="flex flex-col items-center text-gray-600 hover:text-gray-900"
+          >
+            <Settings className="h-6 w-6" />
+            <span className="text-xs mt-1">Admin</span>
+          </Link>
+        )}
 
-        <button
-          onClick={() => handleNavigation('/dashboard')}
-          className={`flex flex-col items-center justify-center ${
-            isActive('/dashboard') ? 'text-primary' : 'text-gray-500'
-          }`}
+        <Button
+          variant="ghost"
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900 h-auto p-0"
+          onClick={signOut}
         >
-          <User className="h-5 w-5" />
-          <span className="text-xs mt-1">Profil</span>
-        </button>
+          <LogOut className="h-6 w-6" />
+          <span className="text-xs mt-1">Déconnexion</span>
+        </Button>
       </div>
-    </nav>
+    </div>
   );
 };
 

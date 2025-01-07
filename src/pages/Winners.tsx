@@ -5,12 +5,37 @@ import WinnersList from "@/components/winners/WinnersList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WinnerClaimDialog from "@/components/winners/WinnerClaimDialog";
 import { useState } from "react";
-import { Contest, Participant } from "@/types/contest";
+import { Contest, Participant, ParticipantPrize } from "@/types/contest";
+
+const transformParticipantPrizes = (prizes: any[]): ParticipantPrize[] => {
+  return prizes?.map((pp: any) => ({
+    prize: {
+      catalog_item: {
+        id: pp.prize.catalog_item.id,
+        name: pp.prize.catalog_item.name,
+        value: pp.prize.catalog_item.value,
+        image_url: pp.prize.catalog_item.image_url
+      }
+    }
+  })) || [];
+};
+
+const transformParticipants = (participants: any[]): Participant[] => {
+  return participants?.map((participant: any) => ({
+    id: participant.id,
+    first_name: participant.first_name,
+    last_name: participant.last_name,
+    score: participant.score,
+    status: participant.status,
+    created_at: participant.created_at,
+    participant_prizes: transformParticipantPrizes(participant.participant_prizes || [])
+  })) || [];
+};
 
 const Winners = () => {
-  const [selectedWinner, setSelectedWinner] = useState<Participant | null>(null);
+  const [selectedWinner, setSelectedWinner] = useState<any>(null);
 
-  const { data: contests, isLoading } = useQuery({
+  const { data: contests, isLoading } = useQuery<Contest[]>({
     queryKey: ['contests-with-winners'],
     queryFn: async () => {
       console.log('Fetching contests with winners...');
@@ -23,20 +48,16 @@ const Winners = () => {
           is_new,
           has_big_prizes,
           status,
-          participations!inner (
+          participants!inner (
             id,
-            participant:participants (
-              id,
-              first_name,
-              last_name,
-              email
-            ),
+            first_name,
+            last_name,
             score,
             status,
             created_at,
             participant_prizes (
-              prizes (
-                prize_catalog (
+              prize:prizes (
+                catalog_item:prize_catalog (
                   id,
                   name,
                   value,
@@ -46,35 +67,25 @@ const Winners = () => {
             )
           )
         `)
-        .eq('participations.status', 'winner');
+        .eq('participants.status', 'winner');
 
       if (contestsError) {
         console.error('Error fetching contests:', contestsError);
         throw contestsError;
       }
 
-      return contestsData.map((contest: any) => ({
+      // Transform the data to match our types
+      const transformedData: Contest[] = contestsData.map((contest: any) => ({
         id: contest.id,
         title: contest.title,
         description: contest.description,
         is_new: contest.is_new,
         has_big_prizes: contest.has_big_prizes,
         status: contest.status,
-        participants: contest.participations.map((p: any) => ({
-          id: p.participant.id,
-          first_name: p.participant.first_name,
-          last_name: p.participant.last_name,
-          email: p.participant.email,
-          score: p.score,
-          status: p.status,
-          created_at: p.created_at,
-          participant_prizes: p.participant_prizes?.map((pp: any) => ({
-            prize: {
-              catalog_item: pp.prizes?.prize_catalog
-            }
-          })) || []
-        }))
+        participants: transformParticipants(contest.participants || [])
       }));
+
+      return transformedData;
     }
   });
 

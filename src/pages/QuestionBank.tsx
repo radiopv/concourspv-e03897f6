@@ -11,13 +11,12 @@ import AddQuestionForm from "../components/admin/question-bank/AddQuestionForm";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { QuestionBankItem } from "@/types/question";
 
 const QuestionBank = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
-  const { data: questions = [], isLoading } = useQuery({
+  const { data: questions, isLoading } = useQuery({
     queryKey: ['question-bank'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -26,7 +25,7 @@ const QuestionBank = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as QuestionBankItem[];
+      return data;
     }
   });
 
@@ -69,13 +68,7 @@ const QuestionBank = () => {
                 <div>Chargement...</div>
               ) : (
                 <QuestionBankList 
-                  onAddToContest={async (questions) => {
-                    // Implementation of onAddToContest
-                    toast({
-                      title: "Succès",
-                      description: `${questions.length} questions ajoutées au concours`,
-                    });
-                  }}
+                  questions={filteredQuestions || []} 
                 />
               )}
             </CardContent>

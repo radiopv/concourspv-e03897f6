@@ -3,9 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { supabase } from "../../App";
 
 interface AdminAuthProps {
   onAuthenticated: () => void;
@@ -14,15 +12,10 @@ interface AdminAuthProps {
 const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    console.log("Tentative de connexion admin avec:", email);
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -30,47 +23,29 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
         password,
       });
 
-      console.log("Réponse de connexion admin:", { data, error });
+      if (error) throw error;
 
-      if (error) {
-        console.error("Erreur de connexion:", error);
+      if (email === "renaudcanuel@me.com") {
+        localStorage.setItem("adminAuthenticated", "true");
+        localStorage.setItem("adminEmail", email);
+        onAuthenticated();
+        toast({
+          title: "Succès",
+          description: "Vous êtes maintenant connecté",
+        });
+      } else {
         toast({
           title: "Erreur",
-          description: error.message,
+          description: "Email non autorisé",
           variant: "destructive",
         });
-        return;
       }
-
-      if (data?.user) {
-        console.log("Utilisateur connecté:", data.user);
-        
-        if (email === "renaudcanuel@me.com") {
-          localStorage.setItem("adminAuthenticated", "true");
-          localStorage.setItem("adminEmail", email);
-          onAuthenticated();
-          navigate("/admin");
-          toast({
-            title: "Succès",
-            description: "Vous êtes maintenant connecté",
-          });
-        } else {
-          toast({
-            title: "Erreur",
-            description: "Email non autorisé",
-            variant: "destructive",
-          });
-        }
-      }
-    } catch (error: any) {
-      console.error("Erreur détaillée:", error);
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Erreur de connexion",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -89,7 +64,6 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full"
-                disabled={isLoading}
               />
             </div>
             <div>
@@ -99,17 +73,9 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full"
-                disabled={isLoading}
               />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
+            <Button type="submit" className="w-full">
               Se connecter
             </Button>
           </form>

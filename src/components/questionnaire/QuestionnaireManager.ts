@@ -1,78 +1,28 @@
 import { supabase } from "../../App";
 
-interface ParticipantAnswer {
-  answer: string;
-  question: {
-    correct_answer: string;
-  };
-}
-
-// Update the interface to match the Supabase response structure
-interface AnswerResult {
-  answer: string;
-  questions: {
-    correct_answer: string;
-  };
-}
-
 export const calculateFinalScore = async (participantId: string) => {
   try {
-    // Get all participant answers with their corresponding questions
+    // Récupérer toutes les réponses du participant
     const { data: answers, error: answersError } = await supabase
       .from('participant_answers')
-      .select(`
-        answer,
-        questions!inner (
-          correct_answer
-        )
-      `)
+      .select('is_correct')
       .eq('participant_id', participantId);
 
-    if (answersError) {
-      console.error('Error fetching answers:', answersError);
-      throw answersError;
-    }
+    if (answersError) throw answersError;
 
-    if (!answers || answers.length === 0) {
-      console.warn('No answers found for participant:', participantId);
-      return 0;
-    }
+    if (!answers || answers.length === 0) return 0;
 
-    // Type assertion to ensure the response matches our interface
-    const typedAnswers = answers as unknown as AnswerResult[];
-
-    // Count correct answers
-    const correctAnswers = typedAnswers.filter(answer => 
-      answer.questions?.correct_answer === answer.answer
-    ).length;
+    // Compter le nombre de réponses correctes
+    const correctAnswers = answers.filter(answer => answer.is_correct).length;
     
-    // Calculate percentage
-    const percentage = Math.round((correctAnswers / typedAnswers.length) * 100);
-
-    console.log('Score calculation:', {
-      totalAnswers: typedAnswers.length,
-      correctAnswers,
-      percentage
-    });
-
-    // Update participant's score
-    const { error: updateError } = await supabase
-      .from('participants')
-      .update({
-        score: percentage,
-        points: percentage,
-      })
-      .eq('id', participantId);
-
-    if (updateError) {
-      console.error('Error updating participant score:', updateError);
-      throw updateError;
-    }
+    // Calculer le pourcentage
+    const percentage = (correctAnswers / answers.length) * 100;
     
-    return percentage;
+    // Arrondir le pourcentage à l'entier le plus proche
+    return Math.round(percentage);
   } catch (error) {
     console.error('Error calculating final score:', error);
-    throw error;
+    return 0;
   }
 };
 
@@ -86,8 +36,5 @@ export const completeQuestionnaire = async (participantId: string, finalScore: n
     })
     .eq('id', participantId);
 
-  if (error) {
-    console.error('Error completing questionnaire:', error);
-    throw error;
-  }
+  if (error) throw error;
 };

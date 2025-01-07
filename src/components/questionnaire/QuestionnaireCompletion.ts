@@ -1,42 +1,49 @@
-import { supabase } from "@/App";
+import { supabase } from "../../App";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useNotifications } from "@/hooks/use-notifications";
 
-export const useQuestionnaireCompletion = (contestId: string) => {
+export const useQuestionnaireCompletion = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const { sendParticipationConfirmation } = useNotifications();
 
-  const handleCompletion = async (score: number, participantEmail: string, contestTitle: string) => {
+  const completeQuestionnaire = async (contestId: string) => {
     try {
-      const { error } = await supabase
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      // Mettre à jour le statut du participant à 'completed'
+      const { error: updateError } = await supabase
         .from('participants')
-        .update({ 
-          status: 'completed',
-          score: score,
-          completed_at: new Date().toISOString()
-        })
-        .eq('contest_id', contestId);
+        .update({ status: 'completed' })
+        .eq('contest_id', contestId)
+        .eq('id', session.session.user.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      // Send participation confirmation email
-      await sendParticipationConfirmation(participantEmail, contestTitle);
-
+      // Afficher le toast de succès
       toast({
-        title: "Félicitations !",
-        description: "Votre participation a été enregistrée avec succès.",
+        title: "Félicitations ! 🎉",
+        description: "Questionnaire terminé avec succès !",
       });
+
+      // Rediriger vers la liste des concours après un court délai
+      setTimeout(() => {
+        navigate('/contests');
+      }, 2000);
+
+      return true;
     } catch (error) {
       console.error('Error completing questionnaire:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'enregistrement de votre participation.",
+        description: "Une erreur est survenue lors de la finalisation du questionnaire",
       });
+      return false;
     }
   };
 
-  return {
-    handleCompletion,
-  };
+  return { completeQuestionnaire };
 };
