@@ -6,6 +6,14 @@ import { ParticipantsTable } from "./participants/ParticipantsTable";
 import { ParticipantsActions } from "./participants/ParticipantsActions";
 import { useParams } from "react-router-dom";
 
+interface ParticipantAnswer {
+  question_id: string;
+  answer: string;
+  questions?: {
+    correct_answer: string;
+  };
+}
+
 interface Participant {
   id: string;
   first_name: string;
@@ -13,13 +21,7 @@ interface Participant {
   email: string;
   score: number;
   status: string;
-  participant_answers?: Array<{
-    question_id: string;
-    answer: string;
-    questions?: {
-      correct_answer: string;
-    };
-  }>;
+  participant_answers?: ParticipantAnswer[];
 }
 
 const ParticipantsList = () => {
