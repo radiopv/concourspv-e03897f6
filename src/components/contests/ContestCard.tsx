@@ -13,6 +13,8 @@ interface ContestCardProps {
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
+  if (!contest) return null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -20,7 +22,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="h-full"
     >
-      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card">
+      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
         <CardContent className="flex-1 flex flex-col p-6">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-xl font-bold">{contest.title}</h3>
@@ -32,7 +34,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           </div>
 
           {contest.description && (
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-4 line-clamp-3">
               {contest.description}
             </p>
           )}

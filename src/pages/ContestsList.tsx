@@ -15,7 +15,6 @@ const ContestsList = () => {
   const { toast } = useToast();
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
   
-  // Optimisation de la requête avec staleTime et cacheTime
   const { data: contests, isLoading, error, isError } = useContests();
 
   // Si un concours est sélectionné, afficher le questionnaire
@@ -26,7 +25,7 @@ const ContestsList = () => {
   // Affichage du loader pendant le chargement
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-indigo-50 to-white">
+      <div className="flex justify-center items-center min-h-[60vh]">
         <div className="text-center space-y-4">
           <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto" />
           <p className="text-gray-600">Chargement des concours...</p>
@@ -44,7 +43,7 @@ const ContestsList = () => {
       variant: "destructive",
     });
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <Card className="max-w-lg w-full">
           <CardContent className="text-center py-12">
             <Trophy className="w-16 h-16 text-red-500 mx-auto mb-6" />
@@ -66,7 +65,7 @@ const ContestsList = () => {
   // Gestion du cas où il n'y a pas de concours
   if (!contests || contests.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <Card className="max-w-lg w-full glass-card">
           <CardContent className="text-center py-12">
             <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-bounce" />
@@ -95,7 +94,7 @@ const ContestsList = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
+    <div className="min-h-screen py-12">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}

@@ -57,7 +57,8 @@ const fetchContests = async () => {
         )
       )
     `)
-    .eq('status', 'active');
+    .eq('status', 'active')
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching contests:', error);
