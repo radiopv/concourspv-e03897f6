@@ -6,10 +6,30 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Papa from 'papaparse';
 
+interface PrizeImportData {
+  name: string;
+  description?: string;
+  value?: number;
+}
+
 export const PrizeCsvImport = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isImporting, setIsImporting] = useState(false);
+
+  const validatePrizeData = (data: any): PrizeImportData | null => {
+    // Name is required
+    if (!data.name && !data.nom) {
+      console.error('Missing required name field:', data);
+      return null;
+    }
+
+    return {
+      name: data.name || data.nom,
+      description: data.description || null,
+      value: data.price || data.prix ? parseFloat(data.price || data.prix) : null
+    };
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -18,21 +38,26 @@ export const PrizeCsvImport = () => {
     try {
       setIsImporting(true);
       
-      // Lire le fichier CSV
+      // Read the CSV file
       const text = await file.text();
       Papa.parse(text, {
         header: true,
         complete: async (results) => {
           try {
-            const prizes = results.data.map((row: any) => ({
-              name: row.name || row.nom,
-              description: row.description,
-              value: parseFloat(row.price || row.prix) || null
-            }));
+            // Validate and filter out invalid data
+            const validPrizes = results.data
+              .map((row: any) => validatePrizeData(row))
+              .filter((prize): prize is PrizeImportData => prize !== null);
+
+            if (validPrizes.length === 0) {
+              throw new Error('No valid prize data found in CSV');
+            }
+
+            console.log('Importing prizes:', validPrizes);
 
             const { error } = await supabase
               .from('prize_catalog')
-              .insert(prizes);
+              .insert(validPrizes);
 
             if (error) throw error;
 
@@ -40,7 +65,7 @@ export const PrizeCsvImport = () => {
             
             toast({
               title: "Succès",
-              description: `${prizes.length} prix ont été importés avec succès.`,
+              description: `${validPrizes.length} prix ont été importés avec succès.`,
             });
           } catch (error) {
             console.error('Error importing prizes:', error);
@@ -79,7 +104,7 @@ export const PrizeCsvImport = () => {
     <div className="mt-4">
       <Label htmlFor="csv-upload">Importer des prix (CSV)</Label>
       <p className="text-sm text-gray-500 mb-2">
-        Le fichier doit contenir les colonnes: name/nom, description, price/prix
+        Le fichier doit contenir les colonnes: name/nom (obligatoire), description, price/prix
       </p>
       <Input
         id="csv-upload"
