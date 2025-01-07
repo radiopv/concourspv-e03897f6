@@ -6,9 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "../../App";
-import ExcelImportForm from "./ExcelImportForm";
 import { useQueryClient } from "@tanstack/react-query";
-import CreateTestContest from "./test/CreateTestContest";
 
 const AdminContestManager = () => {
   const [newContest, setNewContest] = useState({
@@ -17,7 +15,6 @@ const AdminContestManager = () => {
     start_date: "",
     end_date: "",
   });
-  const [createdContestId, setCreatedContestId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +28,7 @@ const AdminContestManager = () => {
       if (!newContest.title || !newContest.start_date || !newContest.end_date) {
         toast({
           title: "Erreur",
-          description: "Veuillez remplir tous les champs obligatoires (titre, date de début et date de fin)",
+          description: "Veuillez remplir tous les champs obligatoires",
           variant: "destructive",
         });
         return;
@@ -47,6 +44,7 @@ const AdminContestManager = () => {
         return;
       }
 
+      // Create contest
       const { data: contest, error: contestError } = await supabase
         .from('contests')
         .insert([{
@@ -59,22 +57,20 @@ const AdminContestManager = () => {
         .select()
         .single();
 
-      if (contestError) {
-        console.error('Error creating contest:', contestError);
-        throw contestError;
-      }
+      if (contestError) throw contestError;
 
-      if (!contest) {
-        throw new Error('No contest was created');
-      }
+      // Create default questionnaire
+      const { error: questionnaireError } = await supabase
+        .from('questionnaires')
+        .insert([{
+          contest_id: contest.id,
+          title: `Questionnaire - ${newContest.title}`,
+          description: "Questionnaire par défaut"
+        }]);
 
-      setCreatedContestId(contest.id);
+      if (questionnaireError) throw questionnaireError;
 
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin-contests'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] }),
-        queryClient.invalidateQueries({ queryKey: ['contests'] })
-      ]);
+      await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
 
       toast({
         title: "Succès",
@@ -149,12 +145,6 @@ const AdminContestManager = () => {
         >
           {isSubmitting ? 'Création en cours...' : 'Créer le concours'}
         </Button>
-        
-        <div className="pt-4 border-t">
-          <CreateTestContest />
-        </div>
-        
-        <ExcelImportForm contestId={createdContestId || undefined} />
       </CardContent>
     </Card>
   );

@@ -7,10 +7,8 @@ import { Link } from "react-router-dom";
 import AdminContestManager from "./AdminContestManager";
 import ContestList from "./ContestList";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Award, Shuffle, Database, Mail } from "lucide-react";
+import { Users, Award, Shuffle, Database } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ContestAIAssistant } from "./ContestAIAssistant";
-import { EmailManager } from "./EmailManager";
 
 const AdminDashboard = () => {
   const [selectedContest, setSelectedContest] = useState<string | null>(null);
@@ -29,8 +27,12 @@ const AdminDashboard = () => {
         .from('contests')
         .select(`
           *,
-          participants:participants(count),
-          questions:questions(count)
+          questionnaires (
+            count
+          ),
+          responses (
+            count
+          )
         `)
         .order('created_at', { ascending: false });
       
@@ -44,7 +46,6 @@ const AdminDashboard = () => {
     return <div>Chargement...</div>;
   }
 
-  // Sélectionner le premier concours actif par défaut si aucun n'est sélectionné
   const activeContest = contests?.find(contest => contest.status === 'active');
   const contestToUse = selectedContest || (activeContest?.id || '');
 
@@ -81,52 +82,21 @@ const AdminDashboard = () => {
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Shuffle className="w-5 h-5 text-purple-500" />
-                Tirages
-              </CardTitle>
-              <CardDescription>
-                Effectuez les tirages au sort
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link 
-                to={`/admin/contests/${contestToUse}/draw`}
-                className={!contestToUse ? 'pointer-events-none' : ''}
-              >
-                <Button 
-                  className="w-full"
-                  variant="outline"
-                  disabled={!contestToUse}
-                >
-                  Gérer les tirages
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
                 <Award className="w-5 h-5 text-amber-500" />
-                Gagnants
+                Concours
               </CardTitle>
               <CardDescription>
-                Consultez les gagnants des concours
+                Gérez les concours
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link 
-                to={`/admin/contests/${contestToUse}/winners`}
-                className={!contestToUse ? 'pointer-events-none' : ''}
+              <Button 
+                className="w-full"
+                variant="outline"
+                onClick={() => setIsNewContestOpen(!isNewContestOpen)}
               >
-                <Button 
-                  className="w-full"
-                  variant="outline"
-                  disabled={!contestToUse}
-                >
-                  Voir les gagnants
-                </Button>
-              </Link>
+                {isNewContestOpen ? 'Fermer' : 'Nouveau concours'}
+              </Button>
             </CardContent>
           </Card>
 
@@ -134,10 +104,10 @@ const AdminDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Database className="w-5 h-5 text-green-500" />
-                Banque de Questions
+                Questions
               </CardTitle>
               <CardDescription>
-                Gérez votre banque de questions
+                Gérez la banque de questions
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -146,31 +116,18 @@ const AdminDashboard = () => {
                   className="w-full"
                   variant="outline"
                 >
-                  Accéder à la banque
+                  Banque de questions
                 </Button>
               </Link>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Collapsible open={isNewContestOpen} onOpenChange={setIsNewContestOpen}>
-            <div className="flex items-center justify-between mb-4">
-              <CollapsibleTrigger asChild>
-                <Button variant="outline">
-                  Créer un nouveau concours
-                </Button>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent className="space-y-2">
-              <AdminContestManager />
-            </CollapsibleContent>
-          </Collapsible>
-
-          <ContestAIAssistant />
-        </div>
-
-        <EmailManager />
+        <Collapsible open={isNewContestOpen} onOpenChange={setIsNewContestOpen}>
+          <CollapsibleContent className="space-y-2">
+            <AdminContestManager />
+          </CollapsibleContent>
+        </Collapsible>
 
         <ContestList 
           contests={contests || []} 
