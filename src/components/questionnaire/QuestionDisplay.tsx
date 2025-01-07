@@ -1,12 +1,12 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
-import AnswerOptions from './AnswerOptions';
+import { ArrowRight } from "lucide-react";
 import ArticleLink from './ArticleLink';
+import AnswerOptions from './AnswerOptions';
 
 interface QuestionDisplayProps {
   questionText: string;
-  articleUrl?: string | null;
+  articleUrl?: string;
   options: string[];
   selectedAnswer: string;
   correctAnswer?: string;
@@ -33,56 +33,67 @@ const QuestionDisplay = ({
   onAnswerSelect,
   onSubmitAnswer,
   onNextQuestion,
-  isLastQuestion,
+  isLastQuestion
 }: QuestionDisplayProps) => {
-  return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">{questionText}</h3>
-        
-        {articleUrl && (
-          <ArticleLink
-            url={articleUrl}
-            isRead={hasClickedLink}
-            onArticleRead={onArticleRead}
-          />
-        )}
+  const getPartialQuestion = (text: string) => {
+    if (!text) return "";
+    const words = text.split(" ");
+    const partialLength = Math.min(5, words.length);
+    return words.slice(0, partialLength).join(" ") + "...";
+  };
 
+  return (
+    <div className="space-y-4">
+      <p className="text-lg font-medium">
+        {hasClickedLink ? questionText : getPartialQuestion(questionText)}
+      </p>
+      
+      {articleUrl && (
+        <ArticleLink
+          url={articleUrl}
+          onArticleRead={onArticleRead}
+          isRead={hasClickedLink}
+        />
+      )}
+      
+      {(hasClickedLink || !articleUrl) && (
         <AnswerOptions
           options={options}
           selectedAnswer={selectedAnswer}
-          correctAnswer={correctAnswer}
+          correctAnswer={hasAnswered ? correctAnswer : undefined}
           hasAnswered={hasAnswered}
-          isDisabled={isSubmitting || hasAnswered || (!!articleUrl && !hasClickedLink)}
+          isDisabled={articleUrl && !hasClickedLink}
           onAnswerSelect={onAnswerSelect}
         />
-      </div>
+      )}
 
-      <div className="flex justify-end space-x-4">
-        {!hasAnswered ? (
-          <Button
-            onClick={onSubmitAnswer}
-            disabled={!selectedAnswer || isSubmitting || (!!articleUrl && !hasClickedLink)}
-            className="min-w-[120px]"
-          >
-            {isSubmitting ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Envoi...</span>
-              </div>
-            ) : (
-              "Valider"
-            )}
-          </Button>
-        ) : (
-          <Button
-            onClick={onNextQuestion}
-            className="min-w-[120px]"
-          >
-            {isLastQuestion ? "Terminer" : "Question suivante"}
-          </Button>
-        )}
-      </div>
+      {!hasAnswered && (hasClickedLink || !articleUrl) && (
+        <Button
+          onClick={onSubmitAnswer}
+          disabled={!selectedAnswer || (articleUrl && !hasClickedLink) || isSubmitting}
+          className="w-full"
+        >
+          {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
+        </Button>
+      )}
+
+      {hasAnswered && (
+        <Button
+          onClick={onNextQuestion}
+          className="w-full"
+          variant="outline"
+          disabled={isSubmitting}
+        >
+          {isLastQuestion ? (
+            "Terminer le quiz"
+          ) : (
+            <>
+              Question suivante
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </>
+          )}
+        </Button>
+      )}
     </div>
   );
 };

@@ -27,70 +27,59 @@ const transformParticipants = (participants: any[]): Participant[] => {
   })) || [];
 };
 
-const fetchContests = async () => {
-  console.log('Fetching contests...');
-  const { data: contestsData, error } = await supabase
-    .from('contests')
-    .select(`
-      id,
-      title,
-      description,
-      is_new,
-      has_big_prizes,
-      status,
-      participants (
-        id,
-        first_name,
-        last_name,
-        score,
-        status,
-        created_at,
-        participant_prizes (
-          prize:prizes (
-            catalog_item:prize_catalog (
-              id,
-              name,
-              value,
-              image_url
+export const useContests = () => {
+  return useQuery<Contest[]>({
+    queryKey: ['contests'],
+    queryFn: async () => {
+      console.log('Fetching contests...');
+      const { data, error } = await supabase
+        .from('contests')
+        .select(`
+          id,
+          title,
+          description,
+          is_new,
+          has_big_prizes,
+          status,
+          participants (
+            id,
+            first_name,
+            last_name,
+            score,
+            status,
+            created_at,
+            participant_prizes (
+              prize:prizes (
+                catalog_item:prize_catalog (
+                  id,
+                  name,
+                  value,
+                  image_url
+                )
+              )
             )
           )
-        )
-      )
-    `)
-    .eq('status', 'active')
-    .order('created_at', { ascending: false });
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching contests:', error);
-    throw error;
-  }
+      if (error) {
+        console.error('Error fetching contests:', error);
+        throw error;
+      }
 
-  if (!contestsData) {
-    return [];
-  }
+      // Transform the data to match our types
+      const transformedData: Contest[] = data.map((contest: any) => ({
+        id: contest.id,
+        title: contest.title,
+        description: contest.description,
+        is_new: contest.is_new,
+        has_big_prizes: contest.has_big_prizes,
+        status: contest.status,
+        participants: transformParticipants(contest.participants || [])
+      }));
 
-  // Transform the data to match our types
-  const transformedData: Contest[] = contestsData.map((contest: any) => ({
-    id: contest.id,
-    title: contest.title,
-    description: contest.description,
-    is_new: contest.is_new,
-    has_big_prizes: contest.has_big_prizes,
-    status: contest.status,
-    participants: transformParticipants(contest.participants || [])
-  }));
-
-  return transformedData;
-};
-
-export const useContests = () => {
-  return useQuery({
-    queryKey: ['contests'],
-    queryFn: fetchContests,
-    staleTime: 1000 * 60, // 1 minute
-    gcTime: 1000 * 60 * 5, // 5 minutes
-    retry: 2,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true
+      return transformedData;
+    }
   });
 };
