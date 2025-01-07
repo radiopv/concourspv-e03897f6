@@ -27,7 +27,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
       
       try {
         // First get or create the questionnaire
-        let questionnaireId;
         const { data: existingQuestionnaire, error: questionnaireError } = await supabase
           .from('questionnaires')
           .select('id')
@@ -39,15 +38,17 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           throw questionnaireError;
         }
 
+        let questionnaireId;
+        
         if (!existingQuestionnaire) {
           console.log('No questionnaire found, creating one...');
           const { data: newQuestionnaire, error: createError } = await supabase
             .from('questionnaires')
             .insert([{
               contest_id: contestId,
-              title: "Questionnaire du concours",
+              title: "Questionnaire du concours"
             }])
-            .select()
+            .select('id')
             .single();
           
           if (createError) {
@@ -56,11 +57,11 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           }
           
           questionnaireId = newQuestionnaire.id;
+          console.log('Created new questionnaire with ID:', questionnaireId);
         } else {
           questionnaireId = existingQuestionnaire.id;
+          console.log('Using existing questionnaire ID:', questionnaireId);
         }
-
-        console.log('Using questionnaire ID:', questionnaireId);
 
         // Then get the questions
         const { data: questionsData, error: questionsError } = await supabase
@@ -89,7 +90,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         throw error;
       }
     },
-    enabled: !!contestId
+    retry: 1
   });
 
   const { data: bankQuestions = [] } = useQuery({
@@ -178,7 +179,13 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   }
 
   if (error) {
-    return <div className="text-red-500">Une erreur est survenue lors du chargement des questions</div>;
+    console.error('Error loading questions:', error);
+    return (
+      <div className="text-red-500">
+        Une erreur est survenue lors du chargement des questions. 
+        Veuillez réessayer plus tard.
+      </div>
+    );
   }
 
   return (
