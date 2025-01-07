@@ -38,13 +38,15 @@ const ParticipantsList = () => {
   const { data: participants, isLoading } = useQuery({
     queryKey: ['participants', contestId],
     queryFn: async () => {
+      console.log('Fetching participants for contest:', contestId);
+      
       const { data, error } = await supabase
         .from('participations')
         .select(`
           id,
           score,
           status,
-          participant:participants (
+          participant:participants!inner (
             id,
             first_name,
             last_name,
@@ -60,7 +62,10 @@ const ParticipantsList = () => {
         `)
         .eq('contest_id', contestId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching participants:', error);
+        throw error;
+      }
 
       // Transform the data to match the expected format
       const transformedData = data?.map(participation => ({
@@ -71,14 +76,17 @@ const ParticipantsList = () => {
         score: participation.score,
         status: participation.status,
         participant_answers: participation.participant_answers
-      }));
+      })) satisfies Participant[];
 
+      console.log('Transformed participant data:', transformedData);
       return transformedData || [];
     }
   });
 
   const deleteParticipantMutation = useMutation({
     mutationFn: async (participantId: string) => {
+      console.log('Deleting participant:', participantId);
+      
       // First delete from participations
       const { error: participationsError } = await supabase
         .from('participations')
@@ -103,7 +111,8 @@ const ParticipantsList = () => {
         description: "Le participant a été supprimé",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error deleting participant:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer le participant",
