@@ -5,10 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 const Login = () => {
-  const { loading } = useAuth();
+  const { isLoading } = useAuth();
   useAuthRedirect();
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
