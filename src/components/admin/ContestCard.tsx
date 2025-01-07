@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import ContestCardHeader from './contest-card/ContestCardHeader';
 import ContestCardStats from './contest-card/ContestCardStats';
@@ -7,30 +7,11 @@ import ContestCardBadges from './contest-card/ContestCardBadges';
 import ContestCardPrize from './contest-card/ContestCardPrize';
 import ContestStatusBadge from './contest-card/ContestStatusBadge';
 import ContestDrawSection from './contest-card/ContestDrawSection';
+import ContestParticipantsDialog from './contest-card/ContestParticipantsDialog';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Users } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../App";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { CustomBadge } from "@/components/ui/custom-badge";
+import { useContestParticipations } from "@/hooks/useContestParticipations";
+import { useContestQuestions } from "@/hooks/useContestQuestions";
 
 interface ContestCardProps {
   contest: {
@@ -62,59 +43,12 @@ const ContestCard = ({
   onSelect,
   onEdit,
 }: ContestCardProps) => {
-  const [showParticipants, setShowParticipants] = useState(false);
   const endDate = new Date(contest.end_date);
   const drawDate = contest.draw_date ? new Date(contest.draw_date) : null;
   const isExpiringSoon = endDate.getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000;
 
-  // Updated query to get participants through participations table
-  const { data: participations } = useQuery({
-    queryKey: ['contest-participations', contest.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('participations')
-        .select(`
-          id,
-          score,
-          status,
-          completed_at,
-          participant:participants (
-            id,
-            first_name,
-            last_name,
-            email
-          )
-        `)
-        .eq('contest_id', contest.id)
-        .order('score', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: showParticipants
-  });
-
-  // Updated query to get questions through questionnaires table
-  const { data: questions } = useQuery({
-    queryKey: ['contest-questions', contest.id],
-    queryFn: async () => {
-      const { data: questionnaire } = await supabase
-        .from('questionnaires')
-        .select('id')
-        .eq('contest_id', contest.id)
-        .single();
-
-      if (!questionnaire) return [];
-
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('questionnaire_id', questionnaire.id);
-      
-      if (error) throw error;
-      return data;
-    }
-  });
+  const { data: participations } = useContestParticipations(contest.id, false);
+  const { data: questions } = useContestQuestions(contest.id);
 
   // Get winners from participations
   const winners = participations?.filter(p => p.status === 'winner') || [];
@@ -174,54 +108,7 @@ const ContestCard = ({
             endDate={contest.end_date}
           />
 
-          <Dialog open={showParticipants} onOpenChange={setShowParticipants}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => setShowParticipants(true)}
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Voir les participants ({participations?.length || 0})
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Participants au concours</DialogTitle>
-              </DialogHeader>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Prénom</TableHead>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Date de participation</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {participations?.map((participation) => (
-                    <TableRow key={participation.id}>
-                      <TableCell>{participation.participant.first_name}</TableCell>
-                      <TableCell>{participation.participant.last_name}</TableCell>
-                      <TableCell>{participation.score}%</TableCell>
-                      <TableCell>
-                        <CustomBadge variant={participation.status === 'winner' ? "success" : "secondary"}>
-                          {participation.status === 'winner' ? 'Gagnant' : 'Participant'}
-                        </CustomBadge>
-                      </TableCell>
-                      <TableCell>
-                        {participation.completed_at
-                          ? format(new Date(participation.completed_at), 'dd MMMM yyyy', { locale: fr })
-                          : 'Non complété'
-                        }
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </DialogContent>
-          </Dialog>
+          <ContestParticipantsDialog contestId={contest.id} />
 
           <ContestDrawSection 
             contestId={contest.id}
