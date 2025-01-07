@@ -48,7 +48,7 @@ const ParticipantsList = () => {
           score,
           status,
           completed_at,
-          participant:participants!inner (
+          participant:participants (
             id,
             first_name,
             last_name,
@@ -78,17 +78,18 @@ const ParticipantsList = () => {
           last_name: item.participant.last_name,
           email: item.participant.email
         },
-        participant_answers: (item.participant_answers || []).map(answer => ({
+        participant_answers: item.participant_answers?.map(answer => ({
           question_id: answer.question_id,
           answer: answer.answer,
           questions: {
             correct_answer: answer.questions.correct_answer
           }
-        }))
+        })) || []
       }));
 
       return transformedData;
-    }
+    },
+    enabled: !!contestId
   });
 
   const deleteParticipantMutation = useMutation({
@@ -96,7 +97,7 @@ const ParticipantsList = () => {
       const { error } = await supabase
         .from('participations')
         .delete()
-        .eq('participant_id', participantId);
+        .eq('id', participantId); // Changed from participant_id to id
       
       if (error) throw error;
     },
