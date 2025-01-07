@@ -25,34 +25,40 @@ export const useAnswerSubmission = (contestId: string) => {
         return;
       }
 
-      // Get the participation_id which will be used as participant_id in answers
+      // First ensure the participant exists and get the participation_id
+      console.log('Ensuring participant exists for user:', session.session.user.id);
       const participationId = await ensureParticipantExists(session.session.user.id, contestId);
+      
       if (!participationId) {
+        console.error('Failed to get participation ID');
         throw new Error("Failed to get participation ID");
       }
 
-      const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
-      state.setIsCorrect(isAnswerCorrect);
-      state.setHasAnswered(true);
-      state.setTotalAnswered(prev => prev + 1);
-      if (isAnswerCorrect) {
-        state.setScore(prev => prev + 1);
-      }
+      console.log('Got participation ID:', participationId);
 
-      // Use the participationId instead of userId for participant_id
+      // Now submit the answer using the participation_id
       const { error } = await supabase
         .from('participant_answers')
-        .upsert([{
+        .upsert({
           participant_id: participationId,
           question_id: currentQuestion.id,
           answer: state.selectedAnswer
-        }], {
+        }, {
           onConflict: 'participant_id,question_id'
         });
 
       if (error) {
         console.error('Error submitting answer:', error);
         throw error;
+      }
+
+      // Update state and show success message
+      const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
+      state.setIsCorrect(isAnswerCorrect);
+      state.setHasAnswered(true);
+      state.setTotalAnswered(prev => prev + 1);
+      if (isAnswerCorrect) {
+        state.setScore(prev => prev + 1);
       }
 
       queryClient.invalidateQueries({ queryKey: ['contests'] });
@@ -67,7 +73,7 @@ export const useAnswerSubmission = (contestId: string) => {
       });
 
     } catch (error) {
-      console.error('Error submitting answer:', error);
+      console.error('Error in handleSubmitAnswer:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la soumission de votre réponse",
