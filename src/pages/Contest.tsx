@@ -17,6 +17,8 @@ const Contest = () => {
   const { data: contest, isLoading } = useQuery({
     queryKey: ['contest', id],
     queryFn: async () => {
+      if (!id) throw new Error('Contest ID is required');
+      
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -36,9 +38,13 @@ const Contest = () => {
         .eq('id', id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching contest:', error);
+        throw error;
+      }
       return data as ContestType;
-    }
+    },
+    enabled: !!id
   });
 
   if (isLoading) {
