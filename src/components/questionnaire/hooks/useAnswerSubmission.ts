@@ -2,7 +2,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../App";
 import { useQuestionnaireState } from '../QuestionnaireState';
-import { ensureParticipantExists } from '../ParticipantManager';
+import { ParticipantManager } from '../ParticipantManager';
 import { getRandomMessage } from '../messages';
 
 export const useAnswerSubmission = (contestId: string) => {
@@ -23,7 +23,7 @@ export const useAnswerSubmission = (contestId: string) => {
     state.setIsSubmitting(true);
     try {
       const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user?.id) {
+      if (!session?.session?.user?.id || !session.session.user.email) {
         toast({
           title: "Erreur",
           description: "Vous devez être connecté pour participer",
@@ -34,7 +34,11 @@ export const useAnswerSubmission = (contestId: string) => {
 
       // First ensure the participant exists and get the participation_id
       console.log('Getting participation ID for user:', session.session.user.id);
-      const participationId = await ensureParticipantExists(session.session.user.id, contestId);
+      const participationId = await ParticipantManager.ensureParticipantExists(
+        session.session.user.id, 
+        contestId,
+        session.session.user.email
+      );
       
       if (!participationId) {
         console.error('Failed to get participation ID');
