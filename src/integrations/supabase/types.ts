@@ -293,7 +293,7 @@ export type Database = {
       participants: {
         Row: {
           attempts: number | null
-          contest_id: number
+          contest_id: string | null
           created_at: string | null
           email: string | null
           first_name: string | null
@@ -304,7 +304,7 @@ export type Database = {
         }
         Insert: {
           attempts?: number | null
-          contest_id: number
+          contest_id?: string | null
           created_at?: string | null
           email?: string | null
           first_name?: string | null
@@ -315,7 +315,7 @@ export type Database = {
         }
         Update: {
           attempts?: number | null
-          contest_id?: number
+          contest_id?: string | null
           created_at?: string | null
           email?: string | null
           first_name?: string | null
