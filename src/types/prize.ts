@@ -3,20 +3,25 @@ export interface Prize {
   name: string;
   description?: string;
   value?: number;
-  image_url?: string;
+  images?: string[];
+  main_image_url?: string;
   shop_url?: string;
   category?: string;
-  is_active?: boolean;
   stock?: number;
+  is_archived?: boolean;
+  is_hidden?: boolean;
+  created_at?: string;
 }
 
 export interface PrizeFormData {
   name: string;
   description: string;
-  value: number;
-  image_url?: string;
+  value?: number;
+  images?: string[];
+  main_image_url?: string;
   shop_url?: string;
   category?: string;
-  is_active?: boolean;
   stock?: number;
+  is_archived?: boolean;
+  is_hidden?: boolean;
 }
