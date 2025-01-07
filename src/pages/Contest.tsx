@@ -1,14 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { useState } from "react";
 import { Contest as ContestType } from "@/types/contest";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader } from "lucide-react";
 
 const Contest = () => {
   const { id } = useParams();
@@ -19,12 +18,39 @@ const Contest = () => {
   const { data: contest, isLoading, error } = useQuery({
     queryKey: ['contest', id],
     queryFn: async () => {
+      console.log('Fetching contest with ID:', id);
       if (!id) throw new Error('Contest ID is required');
       
       const { data, error } = await supabase
         .from('contests')
-        .select('*')
+        .select(`
+          *,
+          prizes (
+            id,
+            catalog_item:prize_catalog (
+              name,
+              value,
+              image_url,
+              description,
+              shop_url
+            )
+          ),
+          questionnaires (
+            id,
+            title,
+            description,
+            questions (
+              id,
+              question_text,
+              options,
+              correct_answer,
+              article_url,
+              order_number
+            )
+          )
+        `)
         .eq('id', id)
+        .eq('status', 'active')
         .single();
       
       if (error) {
@@ -36,23 +62,21 @@ const Contest = () => {
         throw new Error('Contest not found');
       }
 
+      console.log('Contest data:', data);
       return data as ContestType;
     },
-    retry: 1,
-    onError: (error) => {
-      console.error('Error in contest query:', error);
-      toast({
-        title: "Erreur",
-        description: "Le concours n'a pas pu être chargé. Veuillez réessayer plus tard.",
-        variant: "destructive",
-      });
+    meta: {
+      errorMessage: "Le concours n'a pas pu être chargé. Veuillez réessayer plus tard."
     }
   });
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader className="w-8 h-8 animate-spin text-indigo-600" />
+          <p className="text-gray-600">Chargement du concours...</p>
+        </div>
       </div>
     );
   }
@@ -61,15 +85,18 @@ const Contest = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center">
         <Card className="max-w-lg w-full mx-4">
-          <CardContent className="text-center py-12">
-            <h2 className="text-2xl font-semibold mb-4">
-              Concours non trouvé
-            </h2>
-            <p className="text-gray-600 mb-6">
+          <CardHeader>
+            <CardTitle className="text-center text-red-600">Concours non trouvé</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-center text-gray-600">
               Le concours que vous recherchez n'existe pas ou n'est plus disponible.
             </p>
-            <Button onClick={() => navigate('/contests')} variant="outline">
-              Voir les concours disponibles
+            <Button 
+              className="w-full" 
+              onClick={() => navigate('/contests')}
+            >
+              Retour aux concours
             </Button>
           </CardContent>
         </Card>
@@ -77,45 +104,48 @@ const Contest = () => {
     );
   }
 
-  if (showQuestionnaire) {
-    return <QuestionnaireComponent contestId={id || ''} />;
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              {contest.title}
-            </h1>
-            {contest.description && (
-              <p className="text-xl text-gray-600">
-                {contest.description}
-              </p>
-            )}
-          </div>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="text-center">
-                  <p className="text-lg text-gray-600">
-                    Date de fin : {format(new Date(contest.end_date), 'dd MMMM yyyy', { locale: fr })}
-                  </p>
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
+      <div className="max-w-7xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center text-2xl font-bold">{contest.title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600">{contest.description}</p>
+            <div className="mt-4">
+              {contest.prizes && contest.prizes.length > 0 && (
+                <div>
+                  <h3 className="font-semibold">Prix à gagner:</h3>
+                  <ul>
+                    {contest.prizes.map(prize => (
+                      <li key={prize.id}>{prize.catalog_item.name} - {prize.catalog_item.value}€</li>
+                    ))}
+                  </ul>
                 </div>
-
-                <Button
-                  onClick={() => setShowQuestionnaire(true)}
-                  size="lg"
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-lg px-8 py-6 h-auto"
-                >
-                  Commencer le questionnaire
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              )}
+            </div>
+            <div className="mt-4">
+              {contest.questionnaires && contest.questionnaires.length > 0 && (
+                <div>
+                  <h3 className="font-semibold">Questionnaires:</h3>
+                  {contest.questionnaires.map(questionnaire => (
+                    <div key={questionnaire.id}>
+                      <h4 className="font-medium">{questionnaire.title}</h4>
+                      <QuestionnaireComponent questionnaire={questionnaire} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Button 
+              className="mt-4" 
+              onClick={() => setShowQuestionnaire(true)}
+            >
+              Participer
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
