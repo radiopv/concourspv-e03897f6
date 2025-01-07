@@ -36,7 +36,7 @@ const ContestListHeader = () => {
 
       {isNewContestOpen && (
         <Card className="w-full p-6">
-          <AdminContestManager />
+          <AdminContestManager contestId={null} />
         </Card>
       )}
     </div>
