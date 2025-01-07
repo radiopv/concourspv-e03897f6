@@ -1,5 +1,4 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,15 +22,12 @@ interface ContestBasicFormProps {
     is_new: boolean;
     has_big_prizes: boolean;
     shop_url?: string;
-    prize_image_url?: string;
     status?: string;
   };
   setFormData: (data: any) => void;
-  handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  uploading: boolean;
 }
 
-const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading }: ContestBasicFormProps) => {
+const ContestBasicForm = ({ formData, setFormData }: ContestBasicFormProps) => {
   return (
     <div className="space-y-4">
       <div>
@@ -79,24 +75,6 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
           onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
           placeholder="https://..."
         />
-      </div>
-
-      <div>
-        <Label htmlFor="prize_image">Image du prix</Label>
-        <Input
-          id="prize_image"
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          disabled={uploading}
-        />
-        {formData.prize_image_url && (
-          <img 
-            src={formData.prize_image_url} 
-            alt="Prix du concours" 
-            className="mt-2 max-w-xs rounded-lg"
-          />
-        )}
       </div>
 
       <div>
