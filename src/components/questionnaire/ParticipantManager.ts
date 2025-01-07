@@ -5,52 +5,44 @@ export class ParticipantManager {
   static async ensureParticipantExists(userId: string, contestId: string, userEmail: string) {
     console.log('Checking if participant exists...', { userId, contestId, userEmail });
     
-    // First, try to find an existing participant
-    const { data: existingParticipant, error: findError } = await supabase
-      .from('participants')
-      .select('participation_id')
-      .eq('id', userId)
-      .eq('contest_id', contestId)
-      .maybeSingle();
+    try {
+      const { data: participant, error } = await supabase
+        .from('participants')
+        .upsert(
+          {
+            id: userId,
+            contest_id: contestId,
+            status: PARTICIPANT_STATUS.PENDING as ParticipantStatus,
+            first_name: userEmail.split('@')[0],
+            last_name: 'Participant',
+            email: userEmail,
+            attempts: 0
+          },
+          {
+            onConflict: 'id,contest_id',
+            ignoreDuplicates: false
+          }
+        )
+        .select('participation_id')
+        .maybeSingle();
 
-    if (findError) {
-      console.error('Error finding participant:', findError);
-      throw findError;
+      if (error) {
+        console.error('Error ensuring participant exists:', error);
+        throw error;
+      }
+
+      if (!participant?.participation_id) {
+        console.error('No participation_id returned');
+        throw new Error('Failed to get participation_id');
+      }
+
+      console.log('Successfully got participation_id:', participant.participation_id);
+      return participant.participation_id;
+
+    } catch (error) {
+      console.error('Error in ensureParticipantExists:', error);
+      throw error;
     }
-
-    if (existingParticipant?.participation_id) {
-      console.log('Found existing participant:', existingParticipant);
-      return existingParticipant.participation_id;
-    }
-
-    // If no participant exists, create a new one
-    console.log('Creating new participant...');
-    const { data: newParticipant, error: createError } = await supabase
-      .from('participants')
-      .insert({
-        id: userId,
-        contest_id: contestId,
-        status: PARTICIPANT_STATUS.PENDING as ParticipantStatus,
-        first_name: userEmail.split('@')[0],
-        last_name: 'Participant',
-        email: userEmail,
-        attempts: 0
-      })
-      .select('participation_id')
-      .single();
-
-    if (createError) {
-      console.error('Error creating participant:', createError);
-      throw createError;
-    }
-
-    if (!newParticipant?.participation_id) {
-      console.error('No participation_id returned after creation');
-      throw new Error('Failed to create participant: no participation_id returned');
-    }
-
-    console.log('Created new participant:', newParticipant);
-    return newParticipant.participation_id;
   }
 
   static async updateParticipantStatus(participationId: string, status: ParticipantStatus) {
