@@ -34,12 +34,14 @@ const Winners = () => {
               last_name,
               email
             ),
-            prizes (
-              catalog_item:prize_catalog (
-                id,
-                name,
-                value,
-                image_url
+            participant_prizes (
+              prize:prizes (
+                catalog_item:prize_catalog (
+                  id,
+                  name,
+                  value,
+                  image_url
+                )
               )
             )
           )
@@ -66,8 +68,8 @@ const Winners = () => {
           score: p.score,
           status: p.status,
           created_at: p.created_at,
-          prizes: p.prizes?.map((prize: any) => ({
-            catalog_item: prize.catalog_item
+          prizes: p.participant_prizes?.map((pp: any) => ({
+            catalog_item: pp.prize.catalog_item
           })) || []
         }))
       }));
