@@ -3,6 +3,7 @@ import { supabase } from "../App";
 import { Contest, Participant, ParticipantPrize } from "../types/contest";
 
 const transformParticipantPrizes = (prizes: any[]): ParticipantPrize[] => {
+  console.log('Transforming prizes:', prizes);
   return prizes?.map((pp: any) => ({
     prize: {
       catalog_item: {
@@ -16,6 +17,7 @@ const transformParticipantPrizes = (prizes: any[]): ParticipantPrize[] => {
 };
 
 const transformParticipants = (participants: any[]): Participant[] => {
+  console.log('Transforming participants:', participants);
   return participants?.map((participant: any) => ({
     id: participant.id,
     first_name: participant.first_name,
@@ -31,7 +33,8 @@ export const useContests = () => {
   return useQuery<Contest[]>({
     queryKey: ['contests'],
     queryFn: async () => {
-      console.log('Fetching contests...');
+      console.log('Starting contests fetch...');
+      
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -68,6 +71,8 @@ export const useContests = () => {
         throw error;
       }
 
+      console.log('Raw contests data:', data);
+
       const transformedData: Contest[] = data.map((contest: any) => ({
         id: contest.id,
         title: contest.title,
@@ -78,6 +83,7 @@ export const useContests = () => {
         participants: transformParticipants(contest.participants || [])
       }));
 
+      console.log('Transformed contests data:', transformedData);
       return transformedData;
     }
   });

@@ -12,32 +12,46 @@ import { Contest, ContestWithParticipantCount } from "@/types/contest";
 const ContestsList = () => {
   const navigate = useNavigate();
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
-  const { data: contests, isLoading } = useContests();
+  const { data: contests, isLoading, error } = useContests();
+
+  console.log('ContestsList render state:', { isLoading, error, contestsCount: contests?.length });
 
   if (selectedContestId) {
     return <QuestionnaireComponent contestId={selectedContestId} />;
   }
 
-  if (isLoading) {
+  if (!contests && !error) {
+    console.log('Waiting for contests data...');
+    return null;
+  }
+
+  if (error) {
+    console.error('ContestsList error:', error);
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-indigo-50 to-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
+        <Card className="max-w-lg mx-auto">
+          <CardContent className="text-center py-8">
+            <h2 className="text-xl font-semibold mb-4 text-red-600">
+              Impossible de charger les concours
+            </h2>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Réessayer
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!contests || contests.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full glass-card">
-          <CardContent className="text-center py-12">
-            <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-bounce" />
-            <h2 className="text-2xl font-semibold mb-4">
-              Aucun concours n'est actuellement disponible
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
+        <Card className="max-w-lg mx-auto">
+          <CardContent className="text-center py-8">
+            <Trophy className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-4">
+              Aucun concours disponible
             </h2>
-            <p className="text-gray-600 mb-6">
-              Revenez plus tard pour découvrir nos nouveaux concours !
-            </p>
             <Button onClick={() => navigate("/")} variant="outline">
               Retour à l'accueil
             </Button>
@@ -75,7 +89,7 @@ const ContestsList = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contestsWithCount.map((contest: ContestWithParticipantCount, index) => (
+          {contestsWithCount.map((contest, index) => (
             <ContestCard
               key={contest.id}
               contest={contest}
