@@ -72,13 +72,24 @@ const ParticipantsList = () => {
         throw error;
       }
 
-      // Ensure proper typing of the response
-      const typedData = (data || []).map((item): ParticipationResponse => ({
+      // Transform the data to match our expected types
+      const typedData = (data || []).map((item: any): ParticipationResponse => ({
         id: item.id,
-        score: item.score,
-        status: item.status,
-        participant: item.participant,
-        participant_answers: item.participant_answers || []
+        score: item.score || 0,
+        status: item.status || 'pending',
+        participant: {
+          id: item.participant.id,
+          first_name: item.participant.first_name,
+          last_name: item.participant.last_name,
+          email: item.participant.email
+        },
+        participant_answers: (item.participant_answers || []).map((answer: any) => ({
+          question_id: answer.question_id,
+          answer: answer.answer,
+          questions: answer.questions ? {
+            correct_answer: answer.questions.correct_answer
+          } : null
+        }))
       }));
 
       return typedData;
