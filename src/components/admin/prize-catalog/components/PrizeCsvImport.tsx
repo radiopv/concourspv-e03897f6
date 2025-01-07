@@ -27,12 +27,7 @@ export const PrizeCsvImport = () => {
             const prizes = results.data.map((row: any) => ({
               name: row.name || row.nom,
               description: row.description,
-              value: parseFloat(row.value || row.valeur) || null,
-              image_url: row.image_url || row.image,
-              shop_url: row.shop_url || row.url,
-              category: row.category || row.categorie,
-              stock: parseInt(row.stock) || 0,
-              is_active: row.is_active !== 'false'
+              value: parseFloat(row.price || row.prix) || null
             }));
 
             const { error } = await supabase
@@ -84,7 +79,7 @@ export const PrizeCsvImport = () => {
     <div className="mt-4">
       <Label htmlFor="csv-upload">Importer des prix (CSV)</Label>
       <p className="text-sm text-gray-500 mb-2">
-        Le fichier doit contenir les colonnes: name/nom, description, value/valeur, image_url/image, shop_url/url, category/categorie, stock
+        Le fichier doit contenir les colonnes: name/nom, description, price/prix
       </p>
       <Input
         id="csv-upload"
