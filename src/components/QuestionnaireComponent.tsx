@@ -51,7 +51,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
         await completeQuestionnaire(session.session.user.id, finalScore);
 
-        // Get current participation
+        // Get current participant
         const { data: participant } = await supabase
           .from('participants')
           .select('id')
@@ -59,6 +59,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           .single();
 
         if (participant) {
+          // Get current participation
           const { data: participation } = await supabase
             .from('participations')
             .select('*')
