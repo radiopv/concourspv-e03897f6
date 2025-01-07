@@ -65,6 +65,10 @@ const fetchContests = async () => {
     throw error;
   }
 
+  if (!contestsData) {
+    return [];
+  }
+
   // Transform the data to match our types
   const transformedData: Contest[] = contestsData.map((contest: any) => ({
     id: contest.id,
@@ -84,7 +88,7 @@ export const useContests = () => {
     queryKey: ['contests'],
     queryFn: fetchContests,
     staleTime: 1000 * 60, // 1 minute
-    gcTime: 1000 * 60 * 5, // 5 minutes (previously cacheTime)
+    gcTime: 1000 * 60 * 5, // 5 minutes
     retry: 2,
     refetchOnWindowFocus: false,
     refetchOnMount: true
