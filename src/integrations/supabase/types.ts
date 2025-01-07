@@ -13,8 +13,11 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          draw_date: string | null
           end_date: string
           id: string
+          prize_image_url: string | null
+          shop_url: string | null
           start_date: string
           status: string | null
           title: string
@@ -23,8 +26,11 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          draw_date?: string | null
           end_date: string
           id?: string
+          prize_image_url?: string | null
+          shop_url?: string | null
           start_date: string
           status?: string | null
           title: string
@@ -33,8 +39,11 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          draw_date?: string | null
           end_date?: string
           id?: string
+          prize_image_url?: string | null
+          shop_url?: string | null
           start_date?: string
           status?: string | null
           title?: string
