@@ -28,11 +28,11 @@ const transformParticipants = (participants: any[]): Participant[] => {
 };
 
 export const useContests = () => {
-  return useQuery<Contest[]>({
+  return useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
       console.log('Fetching contests...');
-      const { data, error } = await supabase
+      const { data: contestsData, error } = await supabase
         .from('contests')
         .select(`
           id,
@@ -60,8 +60,7 @@ export const useContests = () => {
             )
           )
         `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .eq('status', 'active');
 
       if (error) {
         console.error('Error fetching contests:', error);
@@ -69,7 +68,7 @@ export const useContests = () => {
       }
 
       // Transform the data to match our types
-      const transformedData: Contest[] = data.map((contest: any) => ({
+      const transformedData: Contest[] = contestsData.map((contest: any) => ({
         id: contest.id,
         title: contest.title,
         description: contest.description,
@@ -80,6 +79,9 @@ export const useContests = () => {
       }));
 
       return transformedData;
-    }
+    },
+    retry: 1,
+    staleTime: 1000 * 60, // 1 minute
+    refetchOnWindowFocus: false
   });
 };

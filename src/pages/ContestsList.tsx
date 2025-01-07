@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Trophy } from "lucide-react";
+import { Trophy, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -8,20 +8,51 @@ import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import ContestCard from "@/components/contests/ContestCard";
 import { useContests } from "@/hooks/useContests";
 import { Contest, ContestWithParticipantCount } from "@/types/contest";
+import { useToast } from "@/hooks/use-toast";
 
 const ContestsList = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
-  const { data: contests, isLoading } = useContests();
+  const { data: contests, isLoading, error } = useContests();
 
   if (selectedContestId) {
     return <QuestionnaireComponent contestId={selectedContestId} />;
   }
 
+  if (error) {
+    toast({
+      title: "Erreur",
+      description: "Impossible de charger les concours. Veuillez réessayer plus tard.",
+      variant: "destructive",
+    });
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center p-4">
+        <Card className="max-w-lg w-full">
+          <CardContent className="text-center py-12">
+            <Trophy className="w-16 h-16 text-red-500 mx-auto mb-6" />
+            <h2 className="text-2xl font-semibold mb-4 text-red-600">
+              Une erreur est survenue
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Impossible de charger les concours. Veuillez réessayer plus tard.
+            </p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Réessayer
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-indigo-50 to-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
+          <p className="text-gray-600">Chargement des concours...</p>
+        </div>
       </div>
     );
   }
