@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import { Plus } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import QuestionAccordion from './questions/QuestionAccordion';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import QuestionBankList from './question-bank/QuestionBankList';
 import { Question, QuestionBankItem } from '@/types/question';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface EditQuestionsListProps {
   contestId: string;
@@ -18,14 +18,13 @@ interface EditQuestionsListProps {
 const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showQuestionBank, setShowQuestionBank] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
       console.log('Fetching questions for contest:', contestId);
       
-      // First get the questionnaire for this contest
       const { data: questionnaire, error: questionnaireError } = await supabase
         .from('questionnaires')
         .select('id')
@@ -37,7 +36,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         throw questionnaireError;
       }
 
-      // If no questionnaire exists, return empty array
       if (!questionnaire) {
         console.log('No questionnaire found for contest:', contestId);
         return [];
@@ -45,7 +43,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
 
       console.log('Found questionnaire:', questionnaire);
 
-      // Then get the questions for this questionnaire
       const { data, error } = await supabase
         .from('questions')
         .select('id, question_text, options, correct_answer, article_url, type, order_number')
@@ -64,7 +61,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
 
   const handleAddFromBank = async (bankQuestions: QuestionBankItem[]) => {
     try {
-      // First get or create the questionnaire
       let questionnaireId;
       const { data: existingQuestionnaire, error: questionnaireError } = await supabase
         .from('questionnaires')
@@ -73,7 +69,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         .single();
       
       if (questionnaireError) {
-        // Create new questionnaire if none exists
         const { data: newQuestionnaire, error: createError } = await supabase
           .from('questionnaires')
           .insert([{
@@ -89,7 +84,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         questionnaireId = existingQuestionnaire.id;
       }
 
-      // Get the current highest order number
       const { data: lastQuestion } = await supabase
         .from('questions')
         .select('order_number')
@@ -100,7 +94,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
 
       const startOrderNumber = (lastQuestion?.order_number || 0) + 1;
 
-      // Add selected questions to the questionnaire
       const questionsToAdd = bankQuestions.map((q, index) => ({
         questionnaire_id: questionnaireId,
         question_text: q.question_text,
@@ -123,7 +116,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         description: `${bankQuestions.length} questions ont été ajoutées`,
       });
       
-      setShowQuestionBank(false);
+      setIsOpen(false);
     } catch (error) {
       console.error('Error adding questions from bank:', error);
       toast({
@@ -142,19 +135,26 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Questions du concours</CardTitle>
-        <Dialog open={showQuestionBank} onOpenChange={setShowQuestionBank}>
-          <DialogTrigger asChild>
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
             <Button className="flex items-center gap-2">
-              <Plus className="w-4 h-4" /> Ajouter des questions
+              <Plus className="w-4 h-4" />
+              Ajouter des questions
+              {isOpen ? (
+                <ChevronUp className="w-4 h-4 ml-2" />
+              ) : (
+                <ChevronDown className="w-4 h-4 ml-2" />
+              )}
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Sélectionner des questions</DialogTitle>
-            </DialogHeader>
-            <QuestionBankList onAddToContest={handleAddFromBank} />
-          </DialogContent>
-        </Dialog>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4">
+            <Card>
+              <CardContent className="pt-4">
+                <QuestionBankList onAddToContest={handleAddFromBank} />
+              </CardContent>
+            </Card>
+          </CollapsibleContent>
+        </Collapsible>
       </CardHeader>
       <CardContent>
         <Accordion type="multiple" className="space-y-2">
