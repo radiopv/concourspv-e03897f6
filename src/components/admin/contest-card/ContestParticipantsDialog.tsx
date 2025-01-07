@@ -25,6 +25,21 @@ interface ContestParticipantsDialogProps {
   contestId: string;
 }
 
+interface Participant {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+interface Participation {
+  id: string;
+  score: number | null;
+  status: string;
+  completed_at: string | null;
+  participant: Participant;
+}
+
 const ContestParticipantsDialog = ({ contestId }: ContestParticipantsDialogProps) => {
   const [open, setOpen] = React.useState(false);
   const { data: participations } = useContestParticipations(contestId, open);
@@ -56,7 +71,7 @@ const ContestParticipantsDialog = ({ contestId }: ContestParticipantsDialogProps
             </TableRow>
           </TableHeader>
           <TableBody>
-            {participations?.map((participation) => (
+            {participations?.map((participation: Participation) => (
               <TableRow key={participation.id}>
                 <TableCell>{participation.participant.first_name}</TableCell>
                 <TableCell>{participation.participant.last_name}</TableCell>

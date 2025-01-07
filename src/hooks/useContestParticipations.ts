@@ -22,7 +22,11 @@ export const useContestParticipations = (contestId: string, enabled: boolean = t
         .eq('contest_id', contestId)
         .order('score', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching participations:', error);
+        throw error;
+      }
+      
       return data;
     },
     enabled
