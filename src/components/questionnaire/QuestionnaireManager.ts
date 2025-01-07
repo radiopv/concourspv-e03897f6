@@ -1,5 +1,18 @@
 import { supabase } from "../../App";
-import { calculatePointsAndAttempts } from "../../utils/pointsCalculator";
+
+interface ParticipantAnswer {
+  answer: string;
+  question: {
+    correct_answer: string;
+  };
+}
+
+interface AnswerResult {
+  answer: string;
+  questions: {
+    correct_answer: string;
+  };
+}
 
 export const calculateFinalScore = async (participantId: string) => {
   try {
@@ -8,8 +21,7 @@ export const calculateFinalScore = async (participantId: string) => {
       .from('participant_answers')
       .select(`
         answer,
-        question_id,
-        questions!inner (
+        questions (
           correct_answer
         )
       `)
@@ -26,31 +38,25 @@ export const calculateFinalScore = async (participantId: string) => {
     }
 
     // Count correct answers
-    const correctAnswers = answers.filter(answer => 
+    const correctAnswers = (answers as AnswerResult[]).filter(answer => 
       answer.questions?.correct_answer === answer.answer
     ).length;
     
     // Calculate percentage
     const percentage = Math.round((correctAnswers / answers.length) * 100);
-    
-    // Calculate points and bonus attempts
-    const { points, bonusAttempts } = calculatePointsAndAttempts(correctAnswers);
 
     console.log('Score calculation:', {
       totalAnswers: answers.length,
       correctAnswers,
-      percentage,
-      points,
-      bonusAttempts
+      percentage
     });
 
-    // Update participant's score and points
+    // Update participant's score
     const { error: updateError } = await supabase
       .from('participants')
       .update({
         score: percentage,
-        points: points,
-        bonus_attempts: bonusAttempts
+        points: percentage,
       })
       .eq('id', participantId);
 
