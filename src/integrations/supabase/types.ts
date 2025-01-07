@@ -376,13 +376,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "prizes_catalog_item_id_fkey"
-            columns: ["catalog_item_id"]
-            isOneToOne: false
-            referencedRelation: "prize_catalog"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "prizes_contest_id_fkey"
             columns: ["contest_id"]
             isOneToOne: false
