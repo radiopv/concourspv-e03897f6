@@ -16,7 +16,7 @@ export interface Contest {
     id: string;
     catalog_item: {
       name: string;
-      value: number; // Changed from string to number
+      value: number;
       image_url?: string;
       description?: string;
       shop_url?: string;
@@ -37,5 +37,5 @@ export interface Contest {
   }[];
 }
 
-// Re-export Participant type from participant.ts
-export { Participant } from './participant';
+// Re-export Participant type from participant.ts using 'export type'
+export type { Participant } from './participant';
