@@ -2,10 +2,16 @@ import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import { PrizeList } from "./prize/PrizeList";
-import { PrizeCatalogDialog } from "./prize/PrizeCatalogDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface ContestPrizeManagerProps {
   contestId: string;
@@ -15,14 +21,6 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editingPrize, setEditingPrize] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({
-    name: '',
-    description: '',
-    value: '',
-    image_url: '',
-    shop_url: '',
-  });
 
   // Query to fetch prizes with catalog information
   const { data: contestPrizes, isLoading } = useQuery({
@@ -110,7 +108,19 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
 
   return (
     <div className="space-y-6">
-      <PrizeCatalogDialog onSelectPrize={(id) => addPrizeMutation.mutate(id)} />
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button className="w-full">Ajouter un prix au concours</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sélectionner un prix du catalogue</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Nous afficherons ici la liste des prix du catalogue disponibles */}
+          </div>
+        </DialogContent>
+      </Dialog>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {contestPrizes?.map((prize) => (
