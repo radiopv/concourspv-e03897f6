@@ -29,10 +29,10 @@ export const QuestionBankList = ({ questions, onAddToContest }: QuestionBankList
     }
   };
 
-  if (questions.length === 0) {
+  if (!questions || questions.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">Aucune question dans la banque</p>
+        <p className="text-gray-500">Aucune question disponible dans la banque</p>
       </div>
     );
   }

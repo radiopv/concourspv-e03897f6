@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
 import { Plus, ChevronDown, ChevronUp } from "lucide-react";
@@ -20,7 +20,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: questions, isLoading } = useQuery({
+  const { data: questions = [], isLoading, error } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
       console.log('Fetching questions for contest:', contestId);
@@ -56,6 +56,19 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
 
       console.log('Fetched questions:', data);
       return data as Question[];
+    }
+  });
+
+  const { data: bankQuestions = [] } = useQuery({
+    queryKey: ['question-bank'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('question_bank')
+        .select('*')
+        .eq('status', 'available');
+      
+      if (error) throw error;
+      return data as QuestionBankItem[];
     }
   });
 
@@ -131,6 +144,10 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     return <div>Chargement des questions...</div>;
   }
 
+  if (error) {
+    return <div className="text-red-500">Une erreur est survenue lors du chargement des questions</div>;
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -150,7 +167,10 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           <CollapsibleContent className="mt-4">
             <Card>
               <CardContent className="pt-4">
-                <QuestionBankList onAddToContest={handleAddFromBank} />
+                <QuestionBankList 
+                  questions={bankQuestions}
+                  onAddToContest={handleAddFromBank}
+                />
               </CardContent>
             </Card>
           </CollapsibleContent>
