@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PrizeCatalogItem } from "@/types/prize-catalog";
 
 interface ContestPrizeManagerProps {
   contestId: string;
@@ -22,7 +23,6 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Query to fetch prizes with catalog information
   const { data: contestPrizes, isLoading } = useQuery({
     queryKey: ['prizes', contestId],
     queryFn: async () => {
@@ -44,9 +44,40 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     }
   });
 
+  const updatePrizeMutation = useMutation({
+    mutationFn: async (prize: PrizeCatalogItem) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .update({
+          name: prize.name,
+          description: prize.description,
+          value: prize.value,
+          shop_url: prize.shop_url,
+          image_url: prize.image_url
+        })
+        .eq('id', prize.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été mis à jour",
+      });
+    },
+    onError: (error) => {
+      console.error("Update prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le prix",
+        variant: "destructive",
+      });
+    }
+  });
+
   const addPrizeMutation = useMutation({
     mutationFn: async (catalogItemId: string) => {
-      console.log('Adding prize to contest:', { contestId, catalogItemId });
       const { error } = await supabase
         .from('prizes')
         .insert([{
@@ -54,10 +85,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
           catalog_item_id: catalogItemId
         }]);
       
-      if (error) {
-        console.error('Error adding prize:', error);
-        throw error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
@@ -102,6 +130,48 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     }
   });
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, prizeId: string) => {
+    try {
+      setUploading(true);
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('prizes')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('prizes')
+        .getPublicUrl(filePath);
+
+      // Update the prize with the new image URL
+      await updatePrizeMutation.mutateAsync({
+        id: prizeId,
+        image_url: publicUrl
+      } as PrizeCatalogItem);
+
+      toast({
+        title: "Succès",
+        description: "L'image a été mise à jour",
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour l'image",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (isLoading) {
     return <div>Chargement des prix...</div>;
   }
@@ -133,16 +203,52 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
                     alt={prize.catalog_item.name}
                     className="object-cover rounded-lg w-full h-full"
                   />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, prize.catalog_item.id)}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    disabled={uploading}
+                  />
                 </div>
               )}
-              <h3 className="font-semibold mb-2">{prize.catalog_item?.name}</h3>
-              {prize.catalog_item?.description && (
-                <p className="text-sm text-gray-500 mb-2">{prize.catalog_item.description}</p>
-              )}
+              <input
+                type="text"
+                value={prize.catalog_item?.name || ''}
+                onChange={(e) => updatePrizeMutation.mutate({
+                  ...prize.catalog_item,
+                  name: e.target.value
+                } as PrizeCatalogItem)}
+                className="font-semibold mb-2 w-full p-2 border rounded"
+              />
+              <textarea
+                value={prize.catalog_item?.description || ''}
+                onChange={(e) => updatePrizeMutation.mutate({
+                  ...prize.catalog_item,
+                  description: e.target.value
+                } as PrizeCatalogItem)}
+                className="text-sm text-gray-500 mb-2 w-full p-2 border rounded"
+              />
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">
-                  {prize.catalog_item?.value ? `${prize.catalog_item.value}€` : 'Prix non défini'}
-                </span>
+                <input
+                  type="number"
+                  value={prize.catalog_item?.value || ''}
+                  onChange={(e) => updatePrizeMutation.mutate({
+                    ...prize.catalog_item,
+                    value: parseFloat(e.target.value)
+                  } as PrizeCatalogItem)}
+                  className="text-sm font-medium w-24 p-2 border rounded"
+                />
+                <input
+                  type="url"
+                  value={prize.catalog_item?.shop_url || ''}
+                  onChange={(e) => updatePrizeMutation.mutate({
+                    ...prize.catalog_item,
+                    shop_url: e.target.value
+                  } as PrizeCatalogItem)}
+                  className="text-sm text-blue-600 p-2 border rounded"
+                  placeholder="URL de la boutique"
+                />
                 {prize.catalog_item?.shop_url && (
                   <a
                     href={prize.catalog_item.shop_url}
