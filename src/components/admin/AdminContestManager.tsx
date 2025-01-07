@@ -4,6 +4,7 @@ import { supabase } from "../../App";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import ContestBasicForm from './ContestBasicForm';
+import ContestPrizeManager from './ContestPrizeManager';
 
 interface AdminContestManagerProps {
   contestId: string | null;
@@ -42,47 +43,10 @@ const AdminContestManager = ({ contestId, onSuccess }: AdminContestManagerProps)
     is_new: false,
     has_big_prizes: false,
     shop_url: '',
-    prize_image_url: '',
     status: 'draft'
   };
 
   const [formData, setFormData] = useState(contest || defaultFormData);
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files || event.target.files.length === 0) {
-      return;
-    }
-    setUploading(true);
-    try {
-      const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('prizes')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      const { data } = supabase.storage
-        .from('prizes')
-        .getPublicUrl(filePath);
-
-      setFormData({ ...formData, prize_image_url: data.publicUrl });
-      return data.publicUrl;
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "L'upload de l'image a échoué",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const contestMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -129,21 +93,28 @@ const AdminContestManager = ({ contestId, onSuccess }: AdminContestManagerProps)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <ContestBasicForm 
-        formData={formData}
-        setFormData={setFormData}
-        handleImageUpload={handleImageUpload}
-        uploading={uploading}
-      />
-      <Button 
-        type="submit" 
-        className="w-full"
-        disabled={contestMutation.isPending}
-      >
-        {contestId ? 'Mettre à jour le concours' : 'Créer le concours'}
-      </Button>
-    </form>
+    <div className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <ContestBasicForm 
+          formData={formData}
+          setFormData={setFormData}
+        />
+        <Button 
+          type="submit" 
+          className="w-full"
+          disabled={contestMutation.isPending}
+        >
+          {contestId ? 'Mettre à jour le concours' : 'Créer le concours'}
+        </Button>
+      </form>
+
+      {contestId && (
+        <div className="pt-8 border-t">
+          <h2 className="text-lg font-semibold mb-4">Prix du concours</h2>
+          <ContestPrizeManager contestId={contestId} />
+        </div>
+      )}
+    </div>
   );
 };
 
