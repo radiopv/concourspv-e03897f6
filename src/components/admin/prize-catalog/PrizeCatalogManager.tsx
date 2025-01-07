@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { PrizeForm } from "./components/PrizeForm";
 import { PrizeCard } from "./components/PrizeCard";
 import { Prize, PrizeFormData } from "@/types/prize";
-import { PrizeCsvImport } from "./components/PrizeCsvImport";
 
 export const PrizeCatalogManager = () => {
   const { toast } = useToast();
@@ -221,19 +220,16 @@ export const PrizeCatalogManager = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4">
-        <Button
-          className="flex-1"
-          onClick={() => {
-            resetForm();
-            setIsDialogOpen(true);
-          }}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Ajouter un prix au catalogue
-        </Button>
-        <PrizeCsvImport />
-      </div>
+      <Button
+        className="w-full"
+        onClick={() => {
+          resetForm();
+          setIsDialogOpen(true);
+        }}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Ajouter un prix au catalogue
+      </Button>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl">
