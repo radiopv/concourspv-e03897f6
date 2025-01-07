@@ -119,7 +119,7 @@ const Contest = () => {
                   <h3 className="font-semibold">Prix à gagner:</h3>
                   <ul>
                     {contest.prizes.map(prize => (
-                      <li key={prize.id}>{prize.catalog_item.name} - {prize.catalog_item.value}€</li>
+                      <li key={prize.id}>{prize.catalog_item?.name} - {prize.catalog_item?.value}€</li>
                     ))}
                   </ul>
                 </div>
@@ -132,7 +132,9 @@ const Contest = () => {
                   {contest.questionnaires.map(questionnaire => (
                     <div key={questionnaire.id}>
                       <h4 className="font-medium">{questionnaire.title}</h4>
-                      <QuestionnaireComponent questionnaire={questionnaire} />
+                      {showQuestionnaire && (
+                        <QuestionnaireComponent contestId={contest.id} />
+                      )}
                     </div>
                   ))}
                 </div>
