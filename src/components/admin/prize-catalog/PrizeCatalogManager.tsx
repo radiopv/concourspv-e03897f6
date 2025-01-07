@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../../App";
+import { supabase } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
 import {

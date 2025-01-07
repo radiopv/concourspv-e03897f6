@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/App";
 import { Prize } from "@/types/prize";
@@ -20,12 +19,8 @@ export const PrizeForm = ({ initialData, onSubmit }: PrizeFormProps) => {
     name: "",
     description: "",
     value: undefined,
-    category: "",
-    stock: 0,
-    shop_url: "",
-    is_archived: false,
-    is_hidden: false,
     main_image_url: "",
+    shop_url: "",
   });
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,25 +99,6 @@ export const PrizeForm = ({ initialData, onSubmit }: PrizeFormProps) => {
       </div>
 
       <div>
-        <Label htmlFor="category">Catégorie</Label>
-        <Input
-          id="category"
-          value={formData.category}
-          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="stock">Stock</Label>
-        <Input
-          id="stock"
-          type="number"
-          value={formData.stock || ''}
-          onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })}
-        />
-      </div>
-
-      <div>
         <Label htmlFor="shop_url">Lien vers la boutique</Label>
         <Input
           id="shop_url"
@@ -151,24 +127,6 @@ export const PrizeForm = ({ initialData, onSubmit }: PrizeFormProps) => {
             />
           </div>
         )}
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="archived"
-          checked={formData.is_archived}
-          onCheckedChange={(checked) => setFormData({ ...formData, is_archived: checked })}
-        />
-        <Label htmlFor="archived">Archiver</Label>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="hidden"
-          checked={formData.is_hidden}
-          onCheckedChange={(checked) => setFormData({ ...formData, is_hidden: checked })}
-        />
-        <Label htmlFor="hidden">Masquer</Label>
       </div>
 
       <Button type="submit" className="w-full">
