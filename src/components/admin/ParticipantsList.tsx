@@ -72,7 +72,7 @@ const ParticipantsList = () => {
         throw error;
       }
 
-      return (data || []).map((item): ParticipationResponse => ({
+      return data.map((item): ParticipationResponse => ({
         id: item.id,
         score: item.score,
         status: item.status,
@@ -82,13 +82,13 @@ const ParticipantsList = () => {
           last_name: item.participant.last_name,
           email: item.participant.email
         },
-        participant_answers: (item.participant_answers || []).map(answer => ({
+        participant_answers: item.participant_answers?.map(answer => ({
           question_id: answer.question_id,
           answer: answer.answer,
           questions: {
             correct_answer: answer.questions?.correct_answer || ''
           }
-        }))
+        })) || []
       }));
     }
   });
