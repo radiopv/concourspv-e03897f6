@@ -1,4 +1,5 @@
 import { supabase } from "../../App";
+import { PARTICIPANT_STATUS, ParticipantStatus } from "@/types/participant";
 
 export const ensureParticipantExists = async (userId: string, contestId: string) => {
   try {
@@ -30,16 +31,13 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
       .upsert([{
         id: userId,
         contest_id: contestId,
-        status: 'pending',
+        status: PARTICIPANT_STATUS.PENDING,
         first_name: userEmail.split('@')[0],
         last_name: 'Participant',
         email: userEmail,
         attempts: 0,
-        participation_id: crypto.randomUUID() // Generate a unique ID
-      }], {
-        onConflict: 'id,contest_id', // Use the composite unique constraint
-        ignoreDuplicates: false
-      })
+        participation_id: crypto.randomUUID()
+      }])
       .select('participation_id')
       .single();
 
