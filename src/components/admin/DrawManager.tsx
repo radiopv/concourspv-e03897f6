@@ -2,11 +2,20 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../App";
+import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotifications } from "@/hooks/use-notifications";
-import { Trophy, Users, AlertCircle } from "lucide-react";
+import { Trophy, Users, AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Participant {
   id: string;
@@ -27,7 +36,9 @@ interface DrawManagerProps {
 
 const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
   const [isDrawing, setIsDrawing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [eligibleParticipants, setEligibleParticipants] = useState<Participant[]>([]);
+  const [requiredScore, setRequiredScore] = useState(70);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { sendWinnerAnnouncement } = useNotifications();
@@ -35,14 +46,20 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
   useEffect(() => {
     const fetchEligibleParticipants = async () => {
       try {
+        setIsLoading(true);
         console.log("Fetching eligible participants for contest:", contestId);
+        
+        // Fetch required score from settings
         const { data: settings } = await supabase
           .from('settings')
           .select('required_percentage')
           .single();
 
-        const requiredScore = settings?.required_percentage || 70;
+        if (settings?.required_percentage) {
+          setRequiredScore(settings.required_percentage);
+        }
 
+        // Fetch eligible participants
         const { data, error } = await supabase
           .from('participants')
           .select('*')
@@ -61,11 +78,15 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
           title: "Erreur",
           description: "Impossible de récupérer la liste des participants éligibles.",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchEligibleParticipants();
-  }, [contestId, toast]);
+    if (contestId) {
+      fetchEligibleParticipants();
+    }
+  }, [contestId, requiredScore, toast]);
 
   const handleWinnerSelection = async (participant: Participant) => {
     try {
@@ -129,6 +150,14 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
     await handleWinnerSelection(selectedWinner);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -144,17 +173,49 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
         <CardContent className="space-y-4">
           <div className="flex items-center gap-2 text-sm">
             <Users className="w-4 h-4 text-blue-500" />
-            <span>{eligibleParticipants.length} participants éligibles</span>
+            <span>{eligibleParticipants.length} participants éligibles (score minimum : {requiredScore}%)</span>
           </div>
 
-          {eligibleParticipants.length === 0 && (
+          {eligibleParticipants.length === 0 ? (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 Aucun participant n'est actuellement éligible pour le tirage.
-                Les participants doivent avoir complété le questionnaire avec un score suffisant.
+                Les participants doivent avoir complété le questionnaire avec un score minimum de {requiredScore}%.
               </AlertDescription>
             </Alert>
+          ) : (
+            <ScrollArea className="h-[300px] rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Score</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {eligibleParticipants.map((participant) => (
+                    <TableRow key={participant.id}>
+                      <TableCell>
+                        {participant.first_name} {participant.last_name}
+                      </TableCell>
+                      <TableCell>{participant.score}%</TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleWinnerSelection(participant)}
+                          disabled={isDrawing}
+                        >
+                          Sélectionner
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
           )}
 
           <Button
@@ -162,7 +223,14 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
             disabled={isDrawing || eligibleParticipants.length === 0}
             className="w-full"
           >
-            {isDrawing ? "Tirage en cours..." : "Effectuer le tirage"}
+            {isDrawing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Tirage en cours...
+              </>
+            ) : (
+              "Effectuer un tirage aléatoire"
+            )}
           </Button>
         </CardContent>
       </Card>
