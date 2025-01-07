@@ -7,7 +7,7 @@ import { Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PrizeForm } from "./components/PrizeForm";
 import { PrizeCard } from "./components/PrizeCard";
-import { Prize, PrizeFormData } from "./types";
+import { Prize, PrizeFormData } from "@/types/prize";
 import { PrizeCsvImport } from "./components/PrizeCsvImport";
 
 export const PrizeCatalogManager = () => {

@@ -15,10 +15,10 @@ export const PrizeGrid = ({ prizes, onEdit, onDelete }: PrizeGridProps) => {
       {prizes?.map((prize) => (
         <Card key={prize.id} className="hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
-            {prize.image_url && (
+            {prize.main_image_url && (
               <div className="aspect-square relative mb-4">
                 <img
-                  src={prize.image_url}
+                  src={prize.main_image_url}
                   alt={prize.name}
                   className="object-cover rounded-lg w-full h-full"
                 />
