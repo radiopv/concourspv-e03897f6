@@ -10,14 +10,17 @@ export const useContestQuestions = (contestId: string) => {
         .from('questionnaires')
         .select('id')
         .eq('contest_id', contestId)
-        .single();
+        .maybeSingle();
 
       if (questionnaireError) {
         console.error('Error fetching questionnaire:', questionnaireError);
         return [];
       }
 
-      if (!questionnaire) return [];
+      if (!questionnaire) {
+        console.log('No questionnaire found for contest:', contestId);
+        return [];
+      }
 
       // Then get the questions
       const { data, error } = await supabase

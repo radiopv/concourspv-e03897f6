@@ -12,7 +12,7 @@ export const useContestParticipations = (contestId: string, enabled: boolean = t
           score,
           status,
           completed_at,
-          participant:participant_id (
+          participant:participants!participant_id (
             id,
             first_name,
             last_name,
