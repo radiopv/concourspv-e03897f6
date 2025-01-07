@@ -7,6 +7,18 @@ export interface Contest {
   status: string;
   created_at?: string;
   updated_at?: string;
+  is_new?: boolean;
+  has_big_prizes?: boolean;
+  prizes?: {
+    id: string;
+    catalog_item?: {
+      name: string;
+      value?: number;
+      image_url?: string;
+      description?: string;
+      shop_url?: string;
+    };
+  }[];
 }
 
 export interface Participant {
