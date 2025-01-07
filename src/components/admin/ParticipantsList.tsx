@@ -1,10 +1,31 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParticipantsTable } from "./participants/ParticipantsTable";
 import { ParticipantsActions } from "./participants/ParticipantsActions";
 import { useParams } from "react-router-dom";
+
+interface Participant {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+interface ParticipationResponse {
+  id: string;
+  score: number;
+  status: string;
+  participant: Participant;
+  participant_answers: Array<{
+    question_id: string;
+    answer: string;
+    questions: {
+      correct_answer: string;
+    } | null;
+  }>;
+}
 
 const ParticipantsList = () => {
   const { contestId } = useParams();
@@ -19,13 +40,23 @@ const ParticipantsList = () => {
     );
   }
 
-  const { data: participants, isLoading } = useQuery({
+  const { data: participations = [], isLoading } = useQuery({
     queryKey: ['participants', contestId],
     queryFn: async () => {
+      console.log('Fetching participants for contest:', contestId);
+      
       const { data, error } = await supabase
-        .from('participants')
+        .from('participations')
         .select(`
-          *,
+          id,
+          score,
+          status,
+          participant:participants!inner (
+            id,
+            first_name,
+            last_name,
+            email
+          ),
           participant_answers (
             question_id,
             answer,
@@ -35,23 +66,43 @@ const ParticipantsList = () => {
           )
         `)
         .eq('contest_id', contestId);
-      
-      if (error) throw error;
-      console.log("Participants récupérés:", data);
 
-      return data;
-    },
-    enabled: !!contestId
+      if (error) {
+        console.error('Error fetching participants:', error);
+        throw error;
+      }
+
+      // Ensure proper typing of the response
+      const typedData = (data || []).map((item): ParticipationResponse => ({
+        id: item.id,
+        score: item.score,
+        status: item.status,
+        participant: item.participant,
+        participant_answers: item.participant_answers || []
+      }));
+
+      return typedData;
+    }
   });
 
   const deleteParticipantMutation = useMutation({
     mutationFn: async (participantId: string) => {
-      const { error } = await supabase
+      console.log('Deleting participant:', participantId);
+      
+      const { error: participationsError } = await supabase
+        .from('participations')
+        .delete()
+        .eq('participant_id', participantId)
+        .eq('contest_id', contestId);
+      
+      if (participationsError) throw participationsError;
+
+      const { error: participantError } = await supabase
         .from('participants')
         .delete()
         .eq('id', participantId);
       
-      if (error) throw error;
+      if (participantError) throw participantError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
@@ -60,7 +111,8 @@ const ParticipantsList = () => {
         description: "Le participant a été supprimé",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error deleting participant:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer le participant",
@@ -73,15 +125,15 @@ const ParticipantsList = () => {
     return <div>Chargement des participants...</div>;
   }
 
-  const eligibleParticipants = participants?.filter(p => p.score >= 70) || [];
-  const ineligibleParticipants = participants?.filter(p => p.score < 70) || [];
+  const eligibleParticipants = participations.filter(p => p.score >= 70);
+  const ineligibleParticipants = participations.filter(p => p.score < 70);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Liste des participants</h2>
         <ParticipantsActions 
-          participants={participants || []} 
+          participants={participations} 
           contestId={contestId} 
         />
       </div>

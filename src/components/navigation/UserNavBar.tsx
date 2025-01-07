@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogoutButton } from '@/components/auth/LogoutButton';
 
 const UserNavBar = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const location = useLocation();
 
   const isActive = (path: string) => {
@@ -37,6 +37,14 @@ const UserNavBar = () => {
                 >
                   Gagnants
                 </Link>
+                {isAdmin && (
+                  <Link 
+                    to="/admin" 
+                    className={`text-lg ${isActive('/admin') ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}
+                  >
+                    Administration
+                  </Link>
+                )}
               </>
             )}
           </div>

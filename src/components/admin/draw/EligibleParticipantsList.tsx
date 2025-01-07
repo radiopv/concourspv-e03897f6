@@ -2,15 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-
-interface Participant {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  score: number;
-  status: string;
-}
+import { Participant } from "@/types/participant";
 
 interface EligibleParticipantsListProps {
   participants: Participant[];

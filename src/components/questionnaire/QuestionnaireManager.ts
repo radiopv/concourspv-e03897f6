@@ -1,5 +1,19 @@
 import { supabase } from "../../App";
-import { calculatePointsAndAttempts } from "../../utils/pointsCalculator";
+
+interface ParticipantAnswer {
+  answer: string;
+  question: {
+    correct_answer: string;
+  };
+}
+
+// Update the interface to match the Supabase response structure
+interface AnswerResult {
+  answer: string;
+  questions: {
+    correct_answer: string;
+  };
+}
 
 export const calculateFinalScore = async (participantId: string) => {
   try {
@@ -8,7 +22,6 @@ export const calculateFinalScore = async (participantId: string) => {
       .from('participant_answers')
       .select(`
         answer,
-        question_id,
         questions!inner (
           correct_answer
         )
@@ -25,32 +38,29 @@ export const calculateFinalScore = async (participantId: string) => {
       return 0;
     }
 
+    // Type assertion to ensure the response matches our interface
+    const typedAnswers = answers as unknown as AnswerResult[];
+
     // Count correct answers
-    const correctAnswers = answers.filter(answer => 
+    const correctAnswers = typedAnswers.filter(answer => 
       answer.questions?.correct_answer === answer.answer
     ).length;
     
     // Calculate percentage
-    const percentage = Math.round((correctAnswers / answers.length) * 100);
-    
-    // Calculate points and bonus attempts
-    const { points, bonusAttempts } = calculatePointsAndAttempts(correctAnswers);
+    const percentage = Math.round((correctAnswers / typedAnswers.length) * 100);
 
     console.log('Score calculation:', {
-      totalAnswers: answers.length,
+      totalAnswers: typedAnswers.length,
       correctAnswers,
-      percentage,
-      points,
-      bonusAttempts
+      percentage
     });
 
-    // Update participant's score and points
+    // Update participant's score
     const { error: updateError } = await supabase
       .from('participants')
       .update({
         score: percentage,
-        points: points,
-        bonus_attempts: bonusAttempts
+        points: percentage,
       })
       .eq('id', participantId);
 
