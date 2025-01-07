@@ -11,8 +11,15 @@ interface LocationState {
   finalScore?: number;
 }
 
+interface TopParticipant {
+  id: string;
+  score: number;
+  first_name: string;
+  last_name: string;
+}
+
 const ContestStatsPage = () => {
-  const { id: contestId } = useParams();
+  const { id: contestId } = useParams<{ id: string }>();
   const location = useLocation();
   const state = location.state as LocationState;
 
@@ -43,7 +50,7 @@ const ContestStatsPage = () => {
     enabled: !!contestId
   });
 
-  const { data: topParticipants } = useQuery({
+  const { data: topParticipants } = useQuery<TopParticipant[]>({
     queryKey: ['top-participants', contestId],
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
@@ -66,12 +73,12 @@ const ContestStatsPage = () => {
 
       if (error) throw error;
 
-      return data?.map(p => ({
+      return (data || []).map(p => ({
         id: p.participant.id,
         score: p.score || 0,
         first_name: p.participant.first_name,
         last_name: p.participant.last_name
-      })) || [];
+      }));
     },
     enabled: !!contestId
   });
@@ -91,10 +98,12 @@ const ContestStatsPage = () => {
       const { data: scores } = await supabase
         .from('participations')
         .select('score')
-        .eq('contest_id', contestId);
+        .eq('contest_id', contestId)
+        .not('score', 'is', null);
 
-      const average = scores && scores.length > 0
-        ? scores.reduce((acc, curr) => acc + (curr.score || 0), 0) / scores.length
+      const validScores = scores?.filter(s => s.score !== null) || [];
+      const average = validScores.length > 0
+        ? validScores.reduce((acc, curr) => acc + (curr.score || 0), 0) / validScores.length
         : 0;
 
       return {
