@@ -389,6 +389,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_contest"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_participations_participant"
             columns: ["participant_id"]
             isOneToOne: false
