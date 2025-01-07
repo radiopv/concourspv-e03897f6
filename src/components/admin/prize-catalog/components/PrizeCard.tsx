@@ -1,8 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Link, Package } from "lucide-react";
-import { Prize } from "../types";
+import { Prize } from "@/types/prize";
 
 interface PrizeCardProps {
   prize: Prize;
@@ -47,13 +47,17 @@ export const PrizeCard = ({ prize, onEdit, onDelete }: PrizeCardProps) => {
           {prize.category && (
             <Badge variant="secondary">{prize.category}</Badge>
           )}
-          <Badge variant={prize.is_active ? "default" : "secondary"}>
-            {prize.is_active ? "Actif" : "Inactif"}
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Package className="w-3 h-3" />
-            {prize.stock || 0}
-          </Badge>
+          {prize.is_active !== undefined && (
+            <Badge variant={prize.is_active ? "default" : "secondary"}>
+              {prize.is_active ? "Actif" : "Inactif"}
+            </Badge>
+          )}
+          {prize.stock !== undefined && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Package className="w-3 h-3" />
+              {prize.stock}
+            </Badge>
+          )}
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium">

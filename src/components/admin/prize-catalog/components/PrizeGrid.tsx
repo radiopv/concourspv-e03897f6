@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Link as LinkIcon } from "lucide-react";
-import { Prize } from "../types";
+import { Prize } from "@/types/prize";
 
 interface PrizeGridProps {
   prizes: Prize[];
