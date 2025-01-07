@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../integrations/supabase/client";
-import { Contest } from "../types/contest";
+import type { Contest } from "../types/contest";
 
 export const useContests = () => {
   return useQuery({
@@ -21,6 +21,9 @@ export const useContests = () => {
               description,
               shop_url
             )
+          ),
+          participations (
+            id
           )
         `)
         .eq('status', 'active')
