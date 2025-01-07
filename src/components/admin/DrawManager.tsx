@@ -9,15 +9,7 @@ import { Loader2 } from "lucide-react";
 import { DrawHeader } from "./draw/DrawHeader";
 import { EligibleParticipantsList } from "./draw/EligibleParticipantsList";
 import { NoParticipantsAlert } from "./draw/NoParticipantsAlert";
-
-interface Participant {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  score: number;
-  status: string;
-}
+import { Participant } from "@/types/contest";
 
 interface DrawManagerProps {
   contestId: string;
@@ -52,7 +44,7 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
         }
 
         const { data, error } = await supabase
-          .from('participants')
+          .from('new_participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('status', 'completed')
@@ -60,8 +52,18 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
 
         if (error) throw error;
 
-        console.log("Eligible participants:", data);
-        setEligibleParticipants(data || []);
+        const transformedParticipants: Participant[] = data.map(p => ({
+          id: p.id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          email: p.email,
+          score: p.score || 0,
+          status: p.status,
+          created_at: p.created_at
+        }));
+
+        console.log("Eligible participants:", transformedParticipants);
+        setEligibleParticipants(transformedParticipants);
       } catch (error) {
         console.error('Error fetching eligible participants:', error);
         toast({

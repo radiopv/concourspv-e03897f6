@@ -15,7 +15,8 @@ export interface Participant {
   id: string;
   first_name: string;
   last_name: string;
-  score: number;
+  email: string;
+  score?: number;
   status: string;
   created_at: string;
   participant_prizes?: ParticipantPrize[];

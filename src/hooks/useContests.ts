@@ -20,7 +20,8 @@ const transformParticipants = (participants: any[]): Participant[] => {
     id: participant.id,
     first_name: participant.first_name,
     last_name: participant.last_name,
-    score: participant.score,
+    email: participant.email,
+    score: participant.score || 0,
     status: participant.status,
     created_at: participant.created_at,
     participant_prizes: transformParticipantPrizes(participant.prizes || [])
@@ -46,6 +47,7 @@ export const useContests = () => {
             id,
             first_name,
             last_name,
+            email,
             score,
             status,
             created_at,
