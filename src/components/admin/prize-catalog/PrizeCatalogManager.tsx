@@ -30,18 +30,24 @@ export const PrizeCatalogManager = () => {
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
+      console.log('Fetching prize catalog');
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching prize catalog:', error);
+        throw error;
+      }
+      console.log('Fetched prizes:', data);
       return data as Prize[];
     }
   });
 
   const addPrizeMutation = useMutation({
     mutationFn: async (data: PrizeFormData) => {
+      console.log('Adding prize:', data);
       const { error } = await supabase
         .from('prize_catalog')
         .insert([data]);
@@ -69,6 +75,7 @@ export const PrizeCatalogManager = () => {
 
   const updatePrizeMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: PrizeFormData }) => {
+      console.log('Updating prize:', id, data);
       const { error } = await supabase
         .from('prize_catalog')
         .update(data)
@@ -97,6 +104,7 @@ export const PrizeCatalogManager = () => {
 
   const deletePrizeMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting prize:', id);
       const { error } = await supabase
         .from('prize_catalog')
         .delete()
