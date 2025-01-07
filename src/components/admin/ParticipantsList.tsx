@@ -75,8 +75,14 @@ const ParticipantsList = () => {
         email: participation.participant.email,
         score: participation.score,
         status: participation.status,
-        participant_answers: participation.participant_answers
-      })) satisfies Participant[];
+        participant_answers: participation.participant_answers?.map(answer => ({
+          question_id: answer.question_id,
+          answer: answer.answer,
+          questions: answer.questions ? {
+            correct_answer: answer.questions.correct_answer
+          } : undefined
+        }))
+      })) as Participant[];
 
       console.log('Transformed participant data:', transformedData);
       return transformedData || [];
