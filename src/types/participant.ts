@@ -11,10 +11,10 @@ export interface Participant {
   first_name: string;
   last_name: string;
   email: string;
-  score?: number;
-  status: ParticipantStatus | null;
-  contest_id: string;
+  score: number;
+  status: ParticipantStatus;
   created_at: string;
+  contest_id: string;
   participant_prizes?: ParticipantPrize[];
 }
 

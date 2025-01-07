@@ -15,6 +15,12 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { Participant } from "@/types/participant";
+
+interface ContestWithParticipants {
+  title: string;
+  participants: Participant[];
+}
 
 const AdminRoutes = () => {
   const { contestId } = useParams();
@@ -64,13 +70,14 @@ const AdminRoutes = () => {
         .from('contests')
         .select(`
           *,
-          participants (
+          new_participants (
             id,
             first_name,
             last_name,
             email,
             score,
-            status
+            status,
+            created_at
           )
         `)
         .eq('id', contestId)
@@ -81,8 +88,13 @@ const AdminRoutes = () => {
         throw error;
       }
       
-      console.log("Contest data fetched:", data);
-      return data;
+      const contestWithParticipants: ContestWithParticipants = {
+        title: data.title,
+        participants: data.new_participants || []
+      };
+      
+      console.log("Contest data fetched:", contestWithParticipants);
+      return contestWithParticipants;
     },
     enabled: !!contestId && !!user
   });
