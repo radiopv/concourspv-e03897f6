@@ -87,13 +87,6 @@ export type Database = {
             referencedRelation: "contests"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "draw_history_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["participation_id"]
-          },
         ]
       }
       featured_winners: {
@@ -216,13 +209,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "participant_answers_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["participation_id"]
-          },
-          {
             foreignKeyName: "participant_answers_question_id_fkey"
             columns: ["question_id"]
             isOneToOne: false
@@ -251,13 +237,6 @@ export type Database = {
           prize_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "participant_prizes_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "participant_prizes_prize_id_fkey"
             columns: ["prize_id"]
