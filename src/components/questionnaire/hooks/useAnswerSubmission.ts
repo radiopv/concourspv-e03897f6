@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../App";
@@ -9,10 +10,12 @@ export const useAnswerSubmission = (contestId: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const state = useQuestionnaireState();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmitAnswer = async (currentQuestion: any) => {
-    if (!state.selectedAnswer || !currentQuestion) return;
+    if (!state.selectedAnswer || !currentQuestion || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user?.id) {
@@ -29,7 +32,7 @@ export const useAnswerSubmission = (contestId: string) => {
 
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
       
-      // First, insert the answer
+      // Insert the answer
       const { error: answerError } = await supabase
         .from('participant_answers')
         .insert([{
@@ -43,13 +46,13 @@ export const useAnswerSubmission = (contestId: string) => {
         throw answerError;
       }
 
-      // Then update the participant's score and points
+      // Update participant's score and points
       const newScore = isAnswerCorrect ? state.score + 1 : state.score;
       const { error: scoreError } = await supabase
         .from('participants')
         .update({ 
           score: newScore,
-          points: newScore * 10 // 10 points per correct answer
+          points: newScore * 10
         })
         .eq('participation_id', participantId);
 
@@ -86,9 +89,9 @@ export const useAnswerSubmission = (contestId: string) => {
         variant: "destructive",
       });
     } finally {
-      state.setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
-  return { handleSubmitAnswer };
+  return { handleSubmitAnswer, isSubmitting };
 };

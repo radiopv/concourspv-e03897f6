@@ -12,6 +12,7 @@ import QuestionDisplay from './questionnaire/QuestionDisplay';
 import { useAttempts } from './questionnaire/hooks/useAttempts';
 import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
 import { useContestAI } from '@/hooks/useContestAI';
+import { Loader2 } from "lucide-react";
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -22,8 +23,8 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const state = useQuestionnaireState();
-  const { data: questions } = useQuestions(contestId);
-  const { handleSubmitAnswer } = useAnswerSubmission(contestId);
+  const { data: questions, isLoading: questionsLoading, error: questionsError } = useQuestions(contestId);
+  const { handleSubmitAnswer, isSubmitting } = useAnswerSubmission(contestId);
   const currentQuestion = questions?.[state.currentQuestionIndex];
   const { getParticipantFeedback } = useContestAI();
 
@@ -37,11 +38,16 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       state.setHasAnswered(false);
       state.setIsCorrect(null);
     } else {
-      state.setIsSubmitting(true);
       try {
         const { data: session } = await supabase.auth.getSession();
         if (!session?.session?.user?.id) {
-          throw new Error("User not authenticated");
+          toast({
+            title: "Erreur",
+            description: "Vous devez être connecté pour participer",
+            variant: "destructive",
+          });
+          navigate('/login');
+          return;
         }
 
         const finalScore = await calculateFinalScore(session.session.user.id);
@@ -54,11 +60,20 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           .eq('id', session.session.user.id)
           .maybeSingle();
 
-        const newAttempts = (participant?.attempts || 0) + 1;
+        if (!participant) {
+          throw new Error("Participant not found");
+        }
+
+        const newAttempts = (participant.attempts || 0) + 1;
 
         await supabase
           .from('participants')
-          .update({ attempts: newAttempts })
+          .update({ 
+            attempts: newAttempts,
+            score: finalScore,
+            points: finalScore * 10,
+            completed_at: new Date().toISOString()
+          })
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id);
 
@@ -75,6 +90,9 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           duration: 5000,
         });
 
+        queryClient.invalidateQueries({ queryKey: ['contests'] });
+        queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
+
         navigate(`/contests/${contestId}/stats`, { 
           state: { 
             finalScore: finalScore
@@ -88,11 +106,33 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           description: "Une erreur est survenue lors de la finalisation du questionnaire",
           variant: "destructive",
         });
-      } finally {
-        state.setIsSubmitting(false);
       }
     }
   };
+
+  if (questionsLoading) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-6">
+          <div className="flex justify-center items-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (questionsError) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-6">
+          <div className="text-center text-red-600">
+            Une erreur est survenue lors du chargement des questions.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!questions || questions.length === 0) {
     return (
@@ -114,7 +154,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           totalQuestions={questions.length}
           score={state.score}
           totalAnswered={state.totalAnswered}
-          correctAnswers={state.score} // Add this line to fix the build error
+          correctAnswers={state.score}
         />
       </CardHeader>
       <CardContent className="space-y-6">
@@ -126,7 +166,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           correctAnswer={currentQuestion?.correct_answer}
           hasClickedLink={state.hasClickedLink}
           hasAnswered={state.hasAnswered}
-          isSubmitting={state.isSubmitting}
+          isSubmitting={isSubmitting}
           onArticleRead={() => state.setHasClickedLink(true)}
           onAnswerSelect={state.setSelectedAnswer}
           onSubmitAnswer={() => handleSubmitAnswer(currentQuestion)}
