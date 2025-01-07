@@ -13,7 +13,6 @@ export const useAnswerSubmission = (contestId: string) => {
   const handleSubmitAnswer = async (currentQuestion: any) => {
     if (!state.selectedAnswer || !currentQuestion) return;
 
-    state.setIsSubmitting(true);
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user?.id) {
@@ -30,6 +29,7 @@ export const useAnswerSubmission = (contestId: string) => {
 
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
       
+      // First, insert the answer
       const { error: answerError } = await supabase
         .from('participant_answers')
         .insert([{
@@ -38,21 +38,27 @@ export const useAnswerSubmission = (contestId: string) => {
           answer: state.selectedAnswer
         }]);
 
-      if (answerError) throw answerError;
-
-      // Update participant score
-      if (isAnswerCorrect) {
-        const { error: scoreError } = await supabase
-          .from('participants')
-          .update({ 
-            score: state.score + 1,
-            points: (state.score + 1) * 10 // 10 points per correct answer
-          })
-          .eq('participation_id', participantId);
-
-        if (scoreError) throw scoreError;
+      if (answerError) {
+        console.error('Error inserting answer:', answerError);
+        throw answerError;
       }
 
+      // Then update the participant's score and points
+      const newScore = isAnswerCorrect ? state.score + 1 : state.score;
+      const { error: scoreError } = await supabase
+        .from('participants')
+        .update({ 
+          score: newScore,
+          points: newScore * 10 // 10 points per correct answer
+        })
+        .eq('participation_id', participantId);
+
+      if (scoreError) {
+        console.error('Error updating score:', scoreError);
+        throw scoreError;
+      }
+
+      // Update local state
       state.setIsCorrect(isAnswerCorrect);
       state.setHasAnswered(true);
       state.setTotalAnswered(prev => prev + 1);
@@ -60,6 +66,7 @@ export const useAnswerSubmission = (contestId: string) => {
         state.setScore(prev => prev + 1);
       }
 
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
       queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
