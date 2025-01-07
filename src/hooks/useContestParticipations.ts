@@ -1,6 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../integrations/supabase/client";
 
+export interface Participant {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+export interface Participation {
+  id: string;
+  score: number | null;
+  status: string;
+  completed_at: string | null;
+  participant: Participant;
+}
+
 export const useContestParticipations = (contestId: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: ['contest-participations', contestId],
@@ -27,7 +42,7 @@ export const useContestParticipations = (contestId: string, enabled: boolean = t
         throw error;
       }
       
-      return data;
+      return data as Participation[];
     },
     enabled
   });

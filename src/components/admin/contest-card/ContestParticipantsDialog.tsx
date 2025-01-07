@@ -19,25 +19,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CustomBadge } from "@/components/ui/custom-badge";
-import { useContestParticipations } from "@/hooks/useContestParticipations";
+import { useContestParticipations, Participation } from "@/hooks/useContestParticipations";
 
 interface ContestParticipantsDialogProps {
   contestId: string;
-}
-
-interface Participant {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-}
-
-interface Participation {
-  id: string;
-  score: number | null;
-  status: string;
-  completed_at: string | null;
-  participant: Participant;
 }
 
 const ContestParticipantsDialog = ({ contestId }: ContestParticipantsDialogProps) => {
