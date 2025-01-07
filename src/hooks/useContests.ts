@@ -42,7 +42,7 @@ export const useContests = () => {
           is_new,
           has_big_prizes,
           status,
-          participants (
+          new_participants (
             id,
             first_name,
             last_name,
@@ -78,7 +78,7 @@ export const useContests = () => {
         is_new: contest.is_new,
         has_big_prizes: contest.has_big_prizes,
         status: contest.status,
-        participants: transformParticipants(contest.participants || [])
+        participants: transformParticipants(contest.new_participants || [])
       }));
 
       return transformedData;

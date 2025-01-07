@@ -185,6 +185,50 @@ export type Database = {
         }
         Relationships: []
       }
+      new_participants: {
+        Row: {
+          attempts: number | null
+          contest_id: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          participation_id: string | null
+          status: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          contest_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          participation_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          contest_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          participation_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "new_participants_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       participant_answers: {
         Row: {
           answer: string
