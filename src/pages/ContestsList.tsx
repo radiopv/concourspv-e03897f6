@@ -14,7 +14,6 @@ const ContestsList = () => {
   const { data: contests, isLoading, error } = useContests();
 
   const handleParticipateClick = (contestId: string) => {
-    console.log("Navigation vers le concours:", contestId);
     if (contestId) {
       navigate(`/contest/${contestId}`);
     } else {

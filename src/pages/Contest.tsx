@@ -1,13 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "../integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Contest as ContestType } from "@/types/contest";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import { useToast } from "@/hooks/use-toast";
 import { Loader } from "lucide-react";
+import { useContest } from "@/hooks/useContests";
 
 const Contest = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,85 +13,7 @@ const Contest = () => {
   const { toast } = useToast();
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
 
-  console.log('Contest ID from params:', id);
-
-  const { data: contest, isLoading, error } = useQuery({
-    queryKey: ['contest', id],
-    queryFn: async () => {
-      if (!id) {
-        console.error('No contest ID provided');
-        throw new Error('Contest ID is required');
-      }
-
-      console.log('Fetching contest with ID:', id);
-      
-      // D'abord, récupérons le concours
-      const { data: contestData, error: contestError } = await supabase
-        .from('contests')
-        .select(`
-          *,
-          prizes (
-            id,
-            catalog_item:prize_catalog (
-              name,
-              value,
-              image_url,
-              description,
-              shop_url
-            )
-          )
-        `)
-        .eq('id', id)
-        .single();
-      
-      if (contestError) {
-        console.error('Error fetching contest:', contestError);
-        throw contestError;
-      }
-
-      if (!contestData) {
-        console.error('No contest found with ID:', id);
-        throw new Error('Contest not found');
-      }
-
-      // Ensuite, récupérons le questionnaire associé
-      const { data: questionnaireData, error: questionnaireError } = await supabase
-        .from('questionnaires')
-        .select(`
-          id,
-          title,
-          description,
-          questions (
-            id,
-            question_text,
-            options,
-            correct_answer,
-            article_url,
-            order_number
-          )
-        `)
-        .eq('contest_id', id)
-        .maybeSingle();
-
-      if (questionnaireError) {
-        console.error('Error fetching questionnaire:', questionnaireError);
-        throw questionnaireError;
-      }
-
-      // Combinons les données
-      const fullContestData = {
-        ...contestData,
-        questionnaires: questionnaireData ? [questionnaireData] : []
-      };
-
-      console.log('Contest data retrieved:', fullContestData);
-      return fullContestData as ContestType;
-    },
-    enabled: !!id,
-    meta: {
-      errorMessage: "Le concours n'est plus disponible ou a expiré."
-    }
-  });
+  const { data: contest, isLoading, error } = useContest(id);
 
   if (isLoading) {
     return (
@@ -129,6 +49,8 @@ const Contest = () => {
     );
   }
 
+  const hasQuestionnaire = contest.questionnaires && contest.questionnaires.length > 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
       <div className="max-w-7xl mx-auto">
@@ -136,42 +58,62 @@ const Contest = () => {
           <CardHeader>
             <CardTitle className="text-center text-2xl font-bold">{contest.title}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">{contest.description}</p>
-            <div className="mt-4">
-              {contest.prizes && contest.prizes.length > 0 && (
-                <div>
-                  <h3 className="font-semibold">Prix à gagner:</h3>
-                  <ul>
-                    {contest.prizes.map(prize => (
-                      <li key={prize.id}>{prize.catalog_item?.name} - {prize.catalog_item?.value}€</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-            <div className="mt-4">
-              {contest.questionnaires && contest.questionnaires.length > 0 && (
-                <div>
-                  <h3 className="font-semibold">Questionnaires:</h3>
-                  {contest.questionnaires.map(questionnaire => (
-                    <div key={questionnaire.id}>
-                      <h4 className="font-medium">{questionnaire.title}</h4>
-                      {showQuestionnaire ? (
-                        <QuestionnaireComponent contestId={contest.id} />
-                      ) : (
-                        <Button 
-                          className="mt-4 w-full" 
-                          onClick={() => setShowQuestionnaire(true)}
-                        >
-                          Participer
-                        </Button>
-                      )}
-                    </div>
+          <CardContent className="space-y-6">
+            {contest.description && (
+              <p className="text-gray-600">{contest.description}</p>
+            )}
+            
+            {contest.prizes && contest.prizes.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-semibold text-lg">Prix à gagner :</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {contest.prizes.map(prize => (
+                    prize.catalog_item && (
+                      <Card key={prize.id} className="p-4">
+                        <div className="flex items-center gap-4">
+                          {prize.catalog_item.image_url && (
+                            <img 
+                              src={prize.catalog_item.image_url} 
+                              alt={prize.catalog_item.name}
+                              className="w-20 h-20 object-cover rounded"
+                            />
+                          )}
+                          <div>
+                            <h4 className="font-medium">{prize.catalog_item.name}</h4>
+                            {prize.catalog_item.value && (
+                              <p className="text-sm text-gray-600">Valeur : {prize.catalog_item.value}€</p>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    )
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {hasQuestionnaire ? (
+              <div className="space-y-4">
+                {showQuestionnaire ? (
+                  <QuestionnaireComponent contestId={contest.id} />
+                ) : (
+                  <Button 
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700" 
+                    onClick={() => setShowQuestionnaire(true)}
+                  >
+                    Participer maintenant
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Card className="bg-yellow-50 border-yellow-200">
+                <CardContent className="p-4">
+                  <p className="text-yellow-800">
+                    Ce concours n'est pas encore disponible. Revenez plus tard.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </CardContent>
         </Card>
       </div>

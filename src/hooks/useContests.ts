@@ -6,7 +6,6 @@ export const useContests = () => {
   return useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
-      console.log('Début de la récupération des concours...');
       const now = new Date().toISOString();
       
       const { data, error } = await supabase
@@ -23,8 +22,18 @@ export const useContests = () => {
               shop_url
             )
           ),
-          participations (
-            id
+          questionnaires (
+            id,
+            title,
+            description,
+            questions (
+              id,
+              question_text,
+              options,
+              correct_answer,
+              article_url,
+              order_number
+            )
           )
         `)
         .eq('status', 'active')
@@ -32,12 +41,63 @@ export const useContests = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Erreur lors de la récupération des concours:', error);
+        console.error('Error fetching contests:', error);
         throw error;
       }
 
-      console.log('Concours récupérés:', data);
       return data as Contest[];
     },
+  });
+};
+
+export const useContest = (contestId: string | undefined) => {
+  return useQuery({
+    queryKey: ['contest', contestId],
+    queryFn: async () => {
+      if (!contestId) throw new Error('Contest ID is required');
+
+      const { data, error } = await supabase
+        .from('contests')
+        .select(`
+          *,
+          prizes (
+            id,
+            catalog_item:prize_catalog (
+              name,
+              value,
+              image_url,
+              description,
+              shop_url
+            )
+          ),
+          questionnaires (
+            id,
+            title,
+            description,
+            questions (
+              id,
+              question_text,
+              options,
+              correct_answer,
+              article_url,
+              order_number
+            )
+          )
+        `)
+        .eq('id', contestId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching contest:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('Contest not found');
+      }
+
+      return data as Contest;
+    },
+    enabled: !!contestId,
   });
 };
