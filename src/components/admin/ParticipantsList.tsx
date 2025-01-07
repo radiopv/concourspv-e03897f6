@@ -82,7 +82,7 @@ const ParticipantsList = () => {
             correct_answer: answer.questions.correct_answer
           } : undefined
         }))
-      })) as Participant[];
+      }));
 
       console.log('Transformed participant data:', transformedData);
       return transformedData || [];
