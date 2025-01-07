@@ -4,7 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Link } from "lucide-react";
 import { Prize } from "@/types/prize";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PrizeForm } from "./PrizeForm";
+import { PrizeForm } from "../PrizeForm";
+import { PrizeActions } from "./PrizeActions";
+import { PrizeImage } from "./PrizeImage";
 
 interface PrizeCardProps {
   prize: Prize;
@@ -16,52 +18,66 @@ export const PrizeCard = ({ prize, onEdit, onDelete }: PrizeCardProps) => {
   return (
     <Card className={`hover:shadow-lg transition-shadow ${prize.is_archived ? 'opacity-60' : ''}`}>
       <CardContent className="pt-6">
-        {prize.main_image_url && (
-          <div className="aspect-square relative mb-4">
-            <img
-              src={prize.main_image_url}
-              alt={prize.name}
-              className="object-cover rounded-lg w-full h-full"
-            />
-            <div className="absolute top-2 right-2 space-x-2">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(prize);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Modifier le prix</DialogTitle>
-                  </DialogHeader>
-                  <PrizeForm 
-                    initialData={prize}
-                    onSubmit={(data) => {
-                      onEdit({ ...prize, ...data });
-                    }}
-                  />
-                </DialogContent>
-              </Dialog>
+        <PrizeImage imageUrl={prize.main_image_url} altText={prize.name}>
+          <Dialog>
+            <DialogTrigger asChild>
               <Button
-                variant="destructive"
+                variant="secondary"
                 size="icon"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete(prize.id);
                 }}
               >
-                <Trash2 className="h-4 w-4" />
+                <Edit className="h-4 w-4" />
               </Button>
-            </div>
-          </div>
-        )}
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Modifier le prix</DialogTitle>
+              </DialogHeader>
+              <PrizeForm 
+                formData={{
+                  name: prize.name,
+                  description: prize.description || "",
+                  value: prize.value?.toString() || "",
+                  image_url: prize.main_image_url || "",
+                  shop_url: prize.shop_url || "",
+                }}
+                onFormChange={(field, value) => {
+                  const updatedPrize = { ...prize, [field]: value };
+                  onEdit(updatedPrize);
+                }}
+                onImageUpload={async (event) => {
+                  // L'upload d'image est géré dans le PrizeForm
+                }}
+                onCancelEdit={() => {
+                  const closeButton = document.querySelector('[data-dialog-close]');
+                  if (closeButton instanceof HTMLElement) {
+                    closeButton.click();
+                  }
+                }}
+                onSaveEdit={() => {
+                  const closeButton = document.querySelector('[data-dialog-close]');
+                  if (closeButton instanceof HTMLElement) {
+                    closeButton.click();
+                  }
+                }}
+                uploading={false}
+              />
+            </DialogContent>
+          </Dialog>
+          <Button
+            variant="destructive"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(prize.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </PrizeImage>
+        
         <h3 className="font-semibold mb-2">{prize.name}</h3>
         <div className="flex flex-wrap gap-2 mb-2">
           {prize.category && (
