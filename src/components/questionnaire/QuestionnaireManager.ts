@@ -3,28 +3,47 @@ import { calculatePointsAndAttempts } from "../../utils/pointsCalculator";
 
 export const calculateFinalScore = async (participantId: string) => {
   try {
-    // Récupérer toutes les réponses du participant
+    // Get all participant answers with their corresponding questions to check correctness
     const { data: answers, error: answersError } = await supabase
       .from('participant_answers')
-      .select('is_correct')
+      .select(`
+        answer,
+        questions (
+          correct_answer
+        )
+      `)
       .eq('participant_id', participantId);
 
-    if (answersError) throw answersError;
+    if (answersError) {
+      console.error('Error fetching answers:', answersError);
+      throw answersError;
+    }
 
-    if (!answers || answers.length === 0) return 0;
+    if (!answers || answers.length === 0) {
+      console.warn('No answers found for participant:', participantId);
+      return 0;
+    }
 
-    // Compter le nombre de réponses correctes
-    const correctAnswers = answers.filter(answer => answer.is_correct).length;
+    // Count correct answers by comparing with question's correct answer
+    const correctAnswers = answers.filter(answer => 
+      answer.questions?.correct_answer === answer.answer
+    ).length;
     
-    // Calculer le pourcentage pour la qualification (70% requis)
-    const percentage = (correctAnswers / answers.length) * 100;
+    // Calculate percentage
+    const percentage = Math.round((correctAnswers / answers.length) * 100);
     
-    // Calculer les points et tentatives bonus
+    // Calculate points and bonus attempts
     const { points, bonusAttempts } = calculatePointsAndAttempts(correctAnswers);
 
-    console.log('Points calculés:', points, 'Tentatives bonus:', bonusAttempts);
+    console.log('Score calculation:', {
+      totalAnswers: answers.length,
+      correctAnswers,
+      percentage,
+      points,
+      bonusAttempts
+    });
 
-    // Mettre à jour les points et tentatives du participant
+    // Update participant's score and points
     const { error: updateError } = await supabase
       .from('participants')
       .update({
@@ -35,14 +54,14 @@ export const calculateFinalScore = async (participantId: string) => {
       .eq('id', participantId);
 
     if (updateError) {
-      console.error('Erreur lors de la mise à jour des points:', updateError);
+      console.error('Error updating participant score:', updateError);
       throw updateError;
     }
     
-    return Math.round(percentage);
+    return percentage;
   } catch (error) {
     console.error('Error calculating final score:', error);
-    return 0;
+    throw error;
   }
 };
 
@@ -56,5 +75,8 @@ export const completeQuestionnaire = async (participantId: string, finalScore: n
     })
     .eq('id', participantId);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error completing questionnaire:', error);
+    throw error;
+  }
 };
