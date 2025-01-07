@@ -25,7 +25,11 @@ export const useAnswerSubmission = (contestId: string) => {
         return;
       }
 
+      // Get the participation_id which will be used as participant_id in answers
       const participationId = await ensureParticipantExists(session.session.user.id, contestId);
+      if (!participationId) {
+        throw new Error("Failed to get participation ID");
+      }
 
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
       state.setIsCorrect(isAnswerCorrect);
@@ -35,7 +39,7 @@ export const useAnswerSubmission = (contestId: string) => {
         state.setScore(prev => prev + 1);
       }
 
-      // Use upsert for participant answers as well
+      // Use the participationId instead of userId for participant_id
       const { error } = await supabase
         .from('participant_answers')
         .upsert([{
@@ -43,8 +47,7 @@ export const useAnswerSubmission = (contestId: string) => {
           question_id: currentQuestion.id,
           answer: state.selectedAnswer
         }], {
-          onConflict: 'participant_id,question_id',
-          ignoreDuplicates: false
+          onConflict: 'participant_id,question_id'
         });
 
       if (error) throw error;
