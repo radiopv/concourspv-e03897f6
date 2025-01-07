@@ -1,34 +1,61 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "../App";
+import { supabase } from "@/integrations/supabase/client";
 import AdminAuth from "../components/admin/AdminAuth";
 import { useToast } from "@/hooks/use-toast";
 import AdminRoutes from "@/components/admin/AdminRoutes";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email === "renaudcanuel@me.com") {
+    const checkAdminAuth = async () => {
+      console.log("Checking admin authentication for user:", user?.email);
+      
+      if (user?.email === "renaudcanuel@me.com") {
+        console.log("Admin user detected, setting authenticated state");
         setIsAuthenticated(true);
+        localStorage.setItem("adminAuthenticated", "true");
+        localStorage.setItem("adminEmail", user.email);
+      } else if (user) {
+        console.log("Non-admin user detected, redirecting");
+        toast({
+          title: "Accès refusé",
+          description: "Vous n'avez pas les droits d'administration",
+          variant: "destructive",
+        });
+        navigate('/dashboard');
+      } else {
+        console.log("No user detected, redirecting to login");
+        navigate('/login');
       }
     };
-    checkAuth();
-  }, []);
+
+    checkAdminAuth();
+  }, [user, navigate, toast]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
+    localStorage.removeItem("adminAuthenticated");
+    localStorage.removeItem("adminEmail");
     toast({
       title: "Déconnexion",
       description: "Vous avez été déconnecté",
     });
+    navigate('/login');
   };
 
-  if (!isAuthenticated) {
+  if (!user) {
+    return null;
+  }
+
+  if (!isAuthenticated && user.email !== "renaudcanuel@me.com") {
     return <AdminAuth onAuthenticated={() => setIsAuthenticated(true)} />;
   }
 
