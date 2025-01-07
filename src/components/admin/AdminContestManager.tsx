@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { useParams, useNavigate } from 'react-router-dom';
 import ContestBasicForm from './ContestBasicForm';
 import ContestPrizeManager from './ContestPrizeManager';
+import EditQuestionsList from './EditQuestionsList';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminContestManager = () => {
   const { contestId } = useParams();
@@ -109,26 +111,45 @@ const AdminContestManager = () => {
           <CardTitle>{contestId ? 'Modifier le concours' : 'Créer un nouveau concours'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <ContestBasicForm 
-              formData={formData}
-              setFormData={setFormData}
-            />
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={contestMutation.isPending}
-            >
-              {contestId ? 'Mettre à jour le concours' : 'Créer le concours'}
-            </Button>
-          </form>
+          <Tabs defaultValue="basic" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="basic">Informations</TabsTrigger>
+              {contestId && (
+                <>
+                  <TabsTrigger value="prizes">Prix</TabsTrigger>
+                  <TabsTrigger value="questions">Questions</TabsTrigger>
+                </>
+              )}
+            </TabsList>
 
-          {contestId && (
-            <div className="pt-8 border-t mt-8">
-              <h2 className="text-lg font-semibold mb-4">Prix du concours</h2>
-              <ContestPrizeManager contestId={contestId} />
-            </div>
-          )}
+            <TabsContent value="basic">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <ContestBasicForm 
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={contestMutation.isPending}
+                >
+                  {contestId ? 'Mettre à jour le concours' : 'Créer le concours'}
+                </Button>
+              </form>
+            </TabsContent>
+
+            {contestId && (
+              <>
+                <TabsContent value="prizes">
+                  <ContestPrizeManager contestId={contestId} />
+                </TabsContent>
+
+                <TabsContent value="questions">
+                  <EditQuestionsList contestId={contestId} />
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
         </CardContent>
       </Card>
     </div>
