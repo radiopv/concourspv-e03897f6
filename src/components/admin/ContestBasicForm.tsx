@@ -21,7 +21,6 @@ interface ContestBasicFormProps {
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
-    shop_url?: string;
     status?: string;
   };
   setFormData: (data: any) => void;
@@ -64,17 +63,6 @@ const ContestBasicForm = ({ formData, setFormData }: ContestBasicFormProps) => {
             <SelectItem value="archived">Archivé</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="shop_url">Lien vers la boutique</Label>
-        <Input
-          id="shop_url"
-          type="url"
-          value={formData.shop_url}
-          onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
-          placeholder="https://..."
-        />
       </div>
 
       <div>
