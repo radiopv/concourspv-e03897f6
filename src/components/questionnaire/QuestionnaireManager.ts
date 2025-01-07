@@ -3,12 +3,13 @@ import { calculatePointsAndAttempts } from "../../utils/pointsCalculator";
 
 export const calculateFinalScore = async (participantId: string) => {
   try {
-    // Get all participant answers with their corresponding questions to check correctness
+    // Get all participant answers with their corresponding questions
     const { data: answers, error: answersError } = await supabase
       .from('participant_answers')
       .select(`
         answer,
-        questions (
+        question_id,
+        questions!inner (
           correct_answer
         )
       `)

@@ -45,6 +45,10 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         }
 
         const finalScore = await calculateFinalScore(session.session.user.id);
+        if (finalScore === undefined || finalScore === null) {
+          throw new Error("Failed to calculate final score");
+        }
+
         await completeQuestionnaire(session.session.user.id, finalScore);
 
         const { data: participant } = await supabase
@@ -75,7 +79,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           duration: 5000,
         });
 
-        navigate(`/contests/${contestId}/stats`, { 
+        navigate(`/contest/${contestId}/stats`, { 
           state: { 
             finalScore: finalScore
           }
