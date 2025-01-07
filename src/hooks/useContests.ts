@@ -7,6 +7,7 @@ export const useContests = () => {
     queryKey: ['contests'],
     queryFn: async () => {
       console.log('Début de la récupération des concours...');
+      const now = new Date().toISOString();
       
       const { data, error } = await supabase
         .from('contests')
@@ -27,6 +28,7 @@ export const useContests = () => {
           )
         `)
         .eq('status', 'active')
+        .gte('end_date', now)
         .order('created_at', { ascending: false });
 
       if (error) {

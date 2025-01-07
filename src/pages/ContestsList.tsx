@@ -6,7 +6,7 @@ import { Trophy, Gift, Star, Calendar, Loader } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useContests } from "@/hooks/useContests";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const ContestsList = () => {
   const navigate = useNavigate();
