@@ -63,7 +63,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           console.log('Using existing questionnaire ID:', questionnaireId);
         }
 
-        // Then get the questions, excluding the type field for now
+        // Then get the questions
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions')
           .select(`
@@ -85,7 +85,8 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         // Add default type to each question
         const questionsWithType = questionsData?.map(q => ({
           ...q,
-          type: 'multiple_choice' // Default type
+          type: 'multiple_choice', // Default type
+          questionnaire_id: questionnaireId // Ensure this is included
         })) || [];
 
         console.log('Fetched questions:', questionsWithType);
@@ -98,19 +99,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     retry: 1
   });
 
-  const { data: bankQuestions = [] } = useQuery({
-    queryKey: ['question-bank'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('question_bank')
-        .select('*')
-        .eq('status', 'available');
-      
-      if (error) throw error;
-      return data as QuestionBankItem[];
-    }
-  });
-
   const handleAddFromBank = async (bankQuestions: QuestionBankItem[]) => {
     try {
       let questionnaireId;
@@ -118,7 +106,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         .from('questionnaires')
         .select('id')
         .eq('contest_id', contestId)
-        .single();
+        .maybeSingle();
       
       if (questionnaireError) {
         const { data: newQuestionnaire, error: createError } = await supabase
@@ -133,18 +121,19 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         if (createError) throw createError;
         questionnaireId = newQuestionnaire.id;
       } else {
-        questionnaireId = existingQuestionnaire.id;
+        questionnaireId = existingQuestionnaire?.id;
       }
 
-      const { data: lastQuestion } = await supabase
+      // Get the last order number, handling the case where no questions exist
+      const { data: lastQuestionData } = await supabase
         .from('questions')
         .select('order_number')
         .eq('questionnaire_id', questionnaireId)
         .order('order_number', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single
 
-      const startOrderNumber = (lastQuestion?.order_number || 0) + 1;
+      const startOrderNumber = (lastQuestionData?.order_number || 0) + 1;
 
       const questionsToAdd = bankQuestions.map((q, index) => ({
         questionnaire_id: questionnaireId,
@@ -152,7 +141,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         options: q.options,
         correct_answer: q.correct_answer,
         article_url: q.article_url,
-        type: 'multiple_choice',
         order_number: startOrderNumber + index
       }));
 
@@ -213,7 +201,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
             <Card>
               <CardContent className="pt-4">
                 <QuestionBankList 
-                  questions={bankQuestions}
+                  questions={questions}
                   onAddToContest={handleAddFromBank}
                 />
               </CardContent>
