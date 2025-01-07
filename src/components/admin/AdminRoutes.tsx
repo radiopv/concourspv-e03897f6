@@ -13,35 +13,30 @@ import { EmailManager } from './EmailManager';
 import AdminContestManager from './AdminContestManager';
 import { useContestQueries } from './hooks/useContestQueries';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const AdminRoutes = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { contestsWithCounts, isLoading } = useContestQueries();
-
-  const { data: isAdmin } = useQuery({
-    queryKey: ['isAdmin'],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.user?.email === 'renaudcanuel@me.com';
-    }
-  });
+  const { contestsWithCounts, isLoading: contestsLoading } = useContestQueries();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (isAdmin === false) {
+    if (!authLoading && !isAdmin) {
       toast({
         title: "Accès refusé",
         description: "Vous n'avez pas les droits d'accès à cette section.",
         variant: "destructive",
       });
+      navigate('/');
     }
-  }, [isAdmin, toast]);
+  }, [isAdmin, authLoading, toast, navigate]);
 
   const handleSelectContest = (contestId: string) => {
     navigate(`/admin/contests/${contestId}`);
   };
 
-  if (isAdmin === undefined || isLoading) {
+  if (authLoading || contestsLoading) {
     return <div>Chargement...</div>;
   }
 
@@ -67,6 +62,8 @@ const AdminRoutes = () => {
       <Route path="/prizes" element={<PrizeCatalogManager />} />
       <Route path="/questions" element={<QuestionBank />} />
       <Route path="/emails" element={<EmailManager />} />
+      <Route path="/contests/:contestId" element={<AdminContestManager />} />
+      <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>
   );
 };
