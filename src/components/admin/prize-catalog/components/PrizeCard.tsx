@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Link } from "lucide-react";
 import { Prize } from "@/types/prize";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { PrizeForm } from "./PrizeForm";
 
 interface PrizeCardProps {
   prize: Prize;
@@ -22,17 +24,38 @@ export const PrizeCard = ({ prize, onEdit, onDelete }: PrizeCardProps) => {
               className="object-cover rounded-lg w-full h-full"
             />
             <div className="absolute top-2 right-2 space-x-2">
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={() => onEdit(prize)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(prize);
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Modifier le prix</DialogTitle>
+                  </DialogHeader>
+                  <PrizeForm 
+                    initialData={prize}
+                    onSubmit={(data) => {
+                      onEdit({ ...prize, ...data });
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
               <Button
                 variant="destructive"
                 size="icon"
-                onClick={() => onDelete(prize.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(prize.id);
+                }}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>

@@ -1,48 +1,96 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Check, X } from "lucide-react";
-import { PrizeFormData } from "@/types/prize";
-import { PrizeImages } from "./PrizeImages";
-import { PrizeDescription } from "./PrizeDescription";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/App";
+import { Prize } from "@/types/prize";
 
 interface PrizeFormProps {
-  formData: PrizeFormData;
-  onFormChange: (field: keyof PrizeFormData, value: any) => void;
-  onCancel: () => void;
-  onSave: () => void;
+  initialData?: Partial<Prize>;
+  onSubmit: (data: Partial<Prize>) => void;
 }
 
-export const PrizeForm = ({
-  formData,
-  onFormChange,
-  onCancel,
-  onSave,
-}: PrizeFormProps) => {
+export const PrizeForm = ({ initialData, onSubmit }: PrizeFormProps) => {
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
+  const [formData, setFormData] = useState<Partial<Prize>>(initialData || {
+    name: "",
+    description: "",
+    value: undefined,
+    category: "",
+    stock: 0,
+    shop_url: "",
+    is_archived: false,
+    is_hidden: false,
+    main_image_url: "",
+  });
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('prizes')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('prizes')
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, main_image_url: publicUrl });
+      
+      toast({
+        title: "Succès",
+        description: "L'image a été téléchargée",
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de télécharger l'image",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
   return (
-    <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="name">Nom du prix</Label>
         <Input
           id="name"
           value={formData.name}
-          onChange={(e) => onFormChange("name", e.target.value)}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
         />
       </div>
 
-      <PrizeDescription
-        description={formData.description}
-        onChange={(value) => onFormChange("description", value)}
-      />
-
-      <PrizeImages
-        images={formData.images || []}
-        mainImage={formData.main_image_url}
-        onImagesChange={(images) => onFormChange("images", images)}
-        onMainImageChange={(url) => onFormChange("main_image_url", url)}
-      />
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+        />
+      </div>
 
       <div>
         <Label htmlFor="value">Valeur ($ CAD)</Label>
@@ -51,17 +99,7 @@ export const PrizeForm = ({
           type="number"
           step="0.01"
           value={formData.value || ''}
-          onChange={(e) => onFormChange("value", parseFloat(e.target.value))}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="shop_url">Lien vers la boutique</Label>
-        <Input
-          id="shop_url"
-          type="url"
-          value={formData.shop_url || ''}
-          onChange={(e) => onFormChange("shop_url", e.target.value)}
+          onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })}
         />
       </div>
 
@@ -69,8 +107,8 @@ export const PrizeForm = ({
         <Label htmlFor="category">Catégorie</Label>
         <Input
           id="category"
-          value={formData.category || ''}
-          onChange={(e) => onFormChange("category", e.target.value)}
+          value={formData.category}
+          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
         />
       </div>
 
@@ -80,15 +118,45 @@ export const PrizeForm = ({
           id="stock"
           type="number"
           value={formData.stock || ''}
-          onChange={(e) => onFormChange("stock", parseInt(e.target.value))}
+          onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="shop_url">Lien vers la boutique</Label>
+        <Input
+          id="shop_url"
+          type="url"
+          value={formData.shop_url}
+          onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="image">Image du prix</Label>
+        <Input
+          id="image"
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          disabled={uploading}
+        />
+        {formData.main_image_url && (
+          <div className="mt-2">
+            <img
+              src={formData.main_image_url}
+              alt="Aperçu"
+              className="w-32 h-32 object-cover rounded"
+            />
+          </div>
+        )}
       </div>
 
       <div className="flex items-center space-x-2">
         <Switch
           id="archived"
-          checked={formData.is_archived || false}
-          onCheckedChange={(checked) => onFormChange("is_archived", checked)}
+          checked={formData.is_archived}
+          onCheckedChange={(checked) => setFormData({ ...formData, is_archived: checked })}
         />
         <Label htmlFor="archived">Archiver</Label>
       </div>
@@ -96,29 +164,15 @@ export const PrizeForm = ({
       <div className="flex items-center space-x-2">
         <Switch
           id="hidden"
-          checked={formData.is_hidden || false}
-          onCheckedChange={(checked) => onFormChange("is_hidden", checked)}
+          checked={formData.is_hidden}
+          onCheckedChange={(checked) => setFormData({ ...formData, is_hidden: checked })}
         />
         <Label htmlFor="hidden">Masquer</Label>
       </div>
 
-      <div className="flex justify-end space-x-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-        >
-          <X className="w-4 h-4 mr-2" />
-          Annuler
-        </Button>
-        <Button
-          type="button"
-          onClick={onSave}
-        >
-          <Check className="w-4 h-4 mr-2" />
-          Enregistrer
-        </Button>
-      </div>
+      <Button type="submit" className="w-full">
+        {initialData ? 'Mettre à jour' : 'Ajouter'}
+      </Button>
     </form>
   );
 };
