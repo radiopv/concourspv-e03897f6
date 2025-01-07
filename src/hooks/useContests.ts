@@ -37,7 +37,7 @@ export const useContests = () => {
         throw error;
       }
 
-      return data as Contest[];
+      return data as unknown as Contest[];
     },
   });
 };
@@ -83,7 +83,7 @@ export const useContest = (contestId: string | undefined) => {
       }
 
       console.log('Fetched contest data:', data);
-      return data as Contest;
+      return data as unknown as Contest;
     },
     enabled: !!contestId,
   });

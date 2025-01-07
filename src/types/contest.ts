@@ -10,11 +10,13 @@ export interface Contest {
   is_new: boolean;
   has_big_prizes: boolean;
   created_at?: string;
+  prize_image_url?: string;
+  shop_url?: string;
   prizes?: {
     id: string;
     catalog_item: {
       name: string;
-      value: string;
+      value: number; // Changed from string to number
       image_url?: string;
       description?: string;
       shop_url?: string;
@@ -34,3 +36,6 @@ export interface Contest {
     }[];
   }[];
 }
+
+// Re-export Participant type from participant.ts
+export { Participant } from './participant';
