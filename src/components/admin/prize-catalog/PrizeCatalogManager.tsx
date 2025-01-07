@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PrizeForm } from "./components/PrizeForm";
 import { PrizeGrid } from "./components/PrizeGrid";
 import { PrizeHeader } from "./components/PrizeHeader";
+import { PrizeCsvImport } from "./components/PrizeCsvImport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Prize } from "./types";
 
@@ -33,6 +34,7 @@ const PrizeCatalogManager = () => {
   return (
     <div className="space-y-6 p-6">
       <PrizeHeader onAddPrize={() => setIsDialogOpen(true)} />
+      <PrizeCsvImport />
       
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl">
