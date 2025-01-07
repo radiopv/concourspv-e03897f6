@@ -1,75 +1,55 @@
-import { Routes, Route, Link } from "react-router-dom";
-import AdminDashboard from "./AdminDashboard";
-import AdminContestManager from "./AdminContestManager";
-import QuestionBank from "../../pages/QuestionBank";
-import PrizeCatalogManager from "./prize-catalog/PrizeCatalogManager";
-import ParticipantsList from "./ParticipantsList";
-import DrawManager from "./DrawManager";
-import Winners from "../../pages/Winners";
-import GlobalSettings from "./GlobalSettings";
-import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import { Participant, ParticipantStatus } from "@/types/participant";
-
-interface ContestWithParticipants {
-  title: string;
-  participants: Participant[];
-}
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../App';
+import ContestList from './ContestList';
+import ParticipantsList from './ParticipantsList';
+import { PARTICIPANT_STATUS, ParticipantStatus } from '@/types/participant';
+import { useEffect, useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 const AdminRoutes = () => {
-  const { contestId } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const checkAdminAccess = async () => {
-      console.log("Checking admin access for user:", user?.email);
-      
-      if (!user) {
-        console.log("No user found, redirecting to login");
-        toast({
-          title: "Accès refusé",
-          description: "Veuillez vous connecter",
-          variant: "destructive",
-        });
-        navigate('/login');
-        return;
-      }
-
-      if (user.email !== "renaudcanuel@me.com") {
-        console.log("Non-admin user detected, redirecting");
-        toast({
-          title: "Accès refusé",
-          description: "Vous n'avez pas les droits d'administration",
-          variant: "destructive",
-        });
-        navigate('/dashboard');
-        return;
-      }
-
-      console.log("Admin access granted");
-    };
-
-    checkAdminAccess();
-  }, [user, navigate, toast]);
-
-  const { data: contest, isLoading: isContestLoading } = useQuery({
-    queryKey: ['contest', contestId],
+  const { data: isAdmin } = useQuery({
+    queryKey: ['isAdmin'],
     queryFn: async () => {
-      if (!contestId) return null;
-      console.log("Fetching contest data for:", contestId);
-      
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.user?.email === 'renaudcanuel@me.com';
+    }
+  });
+
+  const { data: contests } = useQuery({
+    queryKey: ['admin-contests'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
       const { data, error } = await supabase
         .from('contests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin
+  });
+
+  const { data: contestsWithWinners } = useQuery({
+    queryKey: ['contests-with-winners'],
+    queryFn: async () => {
+      const { data: contestsData, error: contestsError } = await supabase
+        .from('contests')
         .select(`
-          *,
+          id,
+          title,
+          description,
+          is_new,
+          has_big_prizes,
+          status,
           participants (
             id,
             first_name,
@@ -78,146 +58,84 @@ const AdminRoutes = () => {
             score,
             status,
             created_at,
-            contest_id
+            participant_prizes (
+              prizes (
+                prize_catalog (
+                  id,
+                  name,
+                  value,
+                  image_url
+                )
+              )
+            )
           )
         `)
-        .eq('id', contestId)
-        .single();
-      
-      if (error) {
-        console.error("Error fetching contest:", error);
-        throw error;
+        .eq('participants.status', PARTICIPANT_STATUS.WINNER);
+
+      if (contestsError) {
+        console.error('Error fetching contests:', contestsError);
+        throw contestsError;
       }
-      
-      // Cast the status to ensure type safety
-      const participantsWithCorrectStatus = data.participants?.map(p => ({
-        ...p,
-        status: p.status as ParticipantStatus
-      })) || [];
-      
-      const contestWithParticipants: ContestWithParticipants = {
-        title: data.title,
-        participants: participantsWithCorrectStatus
-      };
-      
-      console.log("Contest data fetched:", contestWithParticipants);
-      return contestWithParticipants;
-    },
-    enabled: !!contestId && !!user
+
+      return contestsData.map((contest: any) => ({
+        id: contest.id,
+        title: contest.title,
+        description: contest.description,
+        is_new: contest.is_new,
+        has_big_prizes: contest.has_big_prizes,
+        status: contest.status,
+        participants: contest.participants?.map((p: any) => ({
+          id: p.id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          email: p.email,
+          score: p.score,
+          status: p.status as ParticipantStatus,
+          created_at: p.created_at,
+          participant_prizes: p.participant_prizes?.map((pp: any) => ({
+            prize: {
+              catalog_item: pp.prizes?.prize_catalog
+            }
+          })) || []
+        }))
+      }));
+    }
   });
 
-  if (!user || user.email !== "renaudcanuel@me.com") {
-    console.log("User not authorized for admin routes");
-    return null;
+  useEffect(() => {
+    if (isAdmin === false) {
+      toast({
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits d'accès à cette section.",
+        variant: "destructive",
+      });
+    }
+  }, [isAdmin, toast]);
+
+  if (isAdmin === undefined) {
+    return <div>Chargement...</div>;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <nav className="mb-8">
-        <ul className="flex space-x-4 overflow-x-auto pb-4">
-          <li>
-            <Link
-              to="/admin"
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-            >
-              Tableau de bord
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/admin/contests"
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-            >
-              Concours
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/admin/questions"
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-            >
-              Banque de questions
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/admin/prizes"
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-            >
-              Catalogue des prix
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/admin/settings"
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-            >
-              Paramètres
-            </Link>
-          </li>
-          {contestId && (
-            <>
-              <li>
-                <Link
-                  to={`/admin/contests/${contestId}/participants`}
-                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-                >
-                  Participants
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to={`/admin/contests/${contestId}/draw`}
-                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-                >
-                  Tirage
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to={`/admin/contests/${contestId}/winners`}
-                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-                >
-                  Gagnants
-                </Link>
-              </li>
-            </>
-          )}
-        </ul>
-      </nav>
-
-      <Routes>
-        <Route index element={<AdminDashboard />} />
-        <Route path="contests" element={<AdminContestManager />} />
-        <Route path="questions" element={<QuestionBank />} />
-        <Route path="prizes" element={<PrizeCatalogManager />} />
-        <Route path="settings" element={<GlobalSettings />} />
-        <Route 
-          path="contests/:contestId/participants" 
-          element={<ParticipantsList />} 
-        />
-        <Route 
-          path="contests/:contestId/draw" 
-          element={
-            isContestLoading ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : contest ? (
-              <DrawManager contestId={contestId || ''} contest={contest} />
-            ) : (
-              <div className="text-center p-4 text-gray-500">
-                Aucune donnée de concours disponible
-              </div>
-            )
-          } 
-        />
-        <Route 
-          path="contests/:contestId/winners" 
-          element={<Winners />} 
-        />
-      </Routes>
-    </div>
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <ContestList
+            contests={contests || []}
+            onSelectContest={setSelectedContestId}
+          />
+        }
+      />
+      <Route
+        path="/participants/:contestId"
+        element={<ParticipantsList />}
+      />
+    </Routes>
   );
 };
 
