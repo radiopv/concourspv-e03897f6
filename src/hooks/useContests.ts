@@ -6,38 +6,23 @@ export const useContests = () => {
   return useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
-      console.log('Fetching contests...');
+      console.log('Début de la récupération des concours...');
+      
+      const { data: session } = await supabase.auth.getSession();
+      console.log('Session actuelle:', session);
       
       const { data, error } = await supabase
         .from('contests')
         .select(`
-          id,
-          title,
-          description,
-          is_new,
-          has_big_prizes,
-          status,
-          participations (
-            participant:participants (
-              id,
-              first_name,
-              last_name,
-              email
-            ),
-            score,
-            status,
-            created_at,
-            participant_prizes (
-              prize_id,
-              prizes (
-                catalog_item_id,
-                prize_catalog (
-                  id,
-                  name,
-                  value,
-                  image_url
-                )
-              )
+          *,
+          prizes (
+            id,
+            catalog_item:prize_catalog (
+              name,
+              value,
+              image_url,
+              description,
+              shop_url
             )
           )
         `)
@@ -45,34 +30,20 @@ export const useContests = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching contests:', error);
+        console.error('Erreur lors de la récupération des concours:', error);
         throw error;
       }
 
-      console.log('Contests data:', data);
+      if (!data || data.length === 0) {
+        console.log('Aucun concours actif trouvé');
+      } else {
+        console.log('Concours récupérés avec succès:', data);
+      }
 
-      return data.map((contest: any) => ({
-        id: contest.id,
-        title: contest.title,
-        description: contest.description,
-        is_new: contest.is_new,
-        has_big_prizes: contest.has_big_prizes,
-        status: contest.status,
-        participants: contest.participations?.map((p: any) => ({
-          id: p.participant.id,
-          first_name: p.participant.first_name,
-          last_name: p.participant.last_name,
-          email: p.participant.email,
-          score: p.score,
-          status: p.status,
-          created_at: p.created_at,
-          participant_prizes: p.participant_prizes?.map((pp: any) => ({
-            prize: {
-              catalog_item: pp.prizes?.prize_catalog
-            }
-          })) || []
-        })) || []
-      }));
-    }
+      return data as Contest[];
+    },
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000
   });
 };

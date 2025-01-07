@@ -5,49 +5,22 @@ import { Contest } from "@/types/contest";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Gift, Star, Calendar } from "lucide-react";
+import { Trophy, Gift, Star, Calendar, Loader } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useContests } from "@/hooks/useContests";
 
 const ContestsList = () => {
   const navigate = useNavigate();
-
-  const { data: contests, isLoading, error } = useQuery({
-    queryKey: ['contests'],
-    queryFn: async () => {
-      console.log('Fetching active contests...');
-      const { data, error } = await supabase
-        .from('contests')
-        .select(`
-          *,
-          prizes (
-            id,
-            catalog_item:prize_catalog (
-              name,
-              value,
-              image_url,
-              description,
-              shop_url
-            )
-          )
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching contests:', error);
-        throw error;
-      }
-
-      console.log('Contests data:', data);
-      return data as Contest[];
-    }
-  });
+  const { data: contests, isLoading, error } = useContests();
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader className="w-8 h-8 animate-spin text-indigo-600" />
+          <p className="text-gray-600">Chargement des concours...</p>
+        </div>
       </div>
     );
   }
@@ -113,50 +86,45 @@ const ContestsList = () => {
               </CardHeader>
 
               <CardContent className="space-y-6">
-                {/* Prix à gagner */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold flex items-center gap-2 text-purple-700">
-                    <Trophy className="w-5 h-5" />
-                    Prix à gagner
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {contest.prizes?.map((prize, index) => (
-                      prize.catalog_item && (
-                        <div 
-                          key={index} 
-                          className="relative group overflow-hidden rounded-lg border border-purple-100 bg-white"
-                        >
-                          {prize.catalog_item.image_url && (
-                            <div className="aspect-square relative">
-                              <img
-                                src={prize.catalog_item.image_url}
-                                alt={prize.catalog_item.name}
-                                className="w-full h-full object-cover transform transition-transform group-hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                                <p className="text-white text-sm">
-                                  {prize.catalog_item.description}
-                                </p>
+                {contest.prizes && contest.prizes.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold flex items-center gap-2 text-purple-700">
+                      <Trophy className="w-5 h-5" />
+                      Prix à gagner
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {contest.prizes.map((prize, index) => (
+                        prize.catalog_item && (
+                          <div 
+                            key={index} 
+                            className="relative group overflow-hidden rounded-lg border border-purple-100 bg-white"
+                          >
+                            {prize.catalog_item.image_url && (
+                              <div className="aspect-square relative">
+                                <img
+                                  src={prize.catalog_item.image_url}
+                                  alt={prize.catalog_item.name}
+                                  className="w-full h-full object-cover transform transition-transform group-hover:scale-105"
+                                />
                               </div>
-                            </div>
-                          )}
-                          <div className="p-3">
-                            <p className="font-medium text-purple-700">
-                              {prize.catalog_item.name}
-                            </p>
-                            {prize.catalog_item.value && (
-                              <p className="text-sm text-purple-600">
-                                Valeur: {prize.catalog_item.value}€
-                              </p>
                             )}
+                            <div className="p-3">
+                              <p className="font-medium text-purple-700">
+                                {prize.catalog_item.name}
+                              </p>
+                              {prize.catalog_item.value && (
+                                <p className="text-sm text-purple-600">
+                                  Valeur: {prize.catalog_item.value}€
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )
-                    ))}
+                        )
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Informations importantes */}
                 <div className="flex items-center justify-between text-sm text-gray-600 border-t border-gray-100 pt-4">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-indigo-600" />
@@ -172,7 +140,6 @@ const ContestsList = () => {
                   )}
                 </div>
 
-                {/* Bouton de participation */}
                 <Button 
                   onClick={() => navigate(`/contest/${contest.id}`)}
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 group"
