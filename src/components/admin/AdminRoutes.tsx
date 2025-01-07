@@ -11,9 +11,13 @@ import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import QuestionBank from '@/pages/QuestionBank';
 import { EmailManager } from './EmailManager';
 import AdminContestManager from './AdminContestManager';
+import { useContestQueries } from './hooks/useContestQueries';
+import { useNavigate } from 'react-router-dom';
 
 const AdminRoutes = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { contestsWithCounts, isLoading } = useContestQueries();
 
   const { data: isAdmin } = useQuery({
     queryKey: ['isAdmin'],
@@ -33,7 +37,11 @@ const AdminRoutes = () => {
     }
   }, [isAdmin, toast]);
 
-  if (isAdmin === undefined) {
+  const handleSelectContest = (contestId: string) => {
+    navigate(`/admin/contests/${contestId}`);
+  };
+
+  if (isAdmin === undefined || isLoading) {
     return <div>Chargement...</div>;
   }
 
@@ -44,7 +52,15 @@ const AdminRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<AdminDashboard />} />
-      <Route path="/contests" element={<ContestList />} />
+      <Route 
+        path="/contests" 
+        element={
+          <ContestList 
+            contests={contestsWithCounts || []} 
+            onSelectContest={handleSelectContest}
+          />
+        } 
+      />
       <Route path="/contests/:contestId/participants" element={<ParticipantsList />} />
       <Route path="/participants" element={<ParticipantsList />} />
       <Route path="/settings" element={<GlobalSettings />} />
