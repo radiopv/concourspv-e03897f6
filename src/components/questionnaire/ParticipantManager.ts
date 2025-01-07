@@ -24,10 +24,10 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     const { data: { session } } = await supabase.auth.getSession();
     const userEmail = session?.user?.email || 'anonymous@user.com';
 
-    // Create new participation entry with unique participation_id
-    const { data: newParticipant, error: insertError } = await supabase
+    // Use upsert to handle potential race conditions
+    const { data: newParticipant, error: upsertError } = await supabase
       .from('participants')
-      .insert([{
+      .upsert([{
         id: userId,
         contest_id: contestId,
         status: 'pending',
@@ -36,17 +36,25 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
         email: userEmail,
         attempts: 0,
         participation_id: crypto.randomUUID() // Generate a unique ID
-      }])
+      }], {
+        onConflict: 'id,contest_id', // Use the composite unique constraint
+        ignoreDuplicates: false
+      })
       .select('participation_id')
       .single();
 
-    if (insertError) {
-      console.error('Error creating participant:', insertError);
-      throw insertError;
+    if (upsertError) {
+      console.error('Error creating participant:', upsertError);
+      throw upsertError;
+    }
+
+    if (!newParticipant) {
+      throw new Error('Failed to create participant record');
     }
 
     console.log('New participant created:', newParticipant);
     return newParticipant.participation_id;
+
   } catch (error) {
     console.error('Error in ensureParticipantExists:', error);
     throw error;

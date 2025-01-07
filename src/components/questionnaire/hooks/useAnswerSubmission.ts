@@ -25,7 +25,7 @@ export const useAnswerSubmission = (contestId: string) => {
         return;
       }
 
-      const participantId = await ensureParticipantExists(session.session.user.id, contestId);
+      const participationId = await ensureParticipantExists(session.session.user.id, contestId);
 
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
       state.setIsCorrect(isAnswerCorrect);
@@ -35,13 +35,17 @@ export const useAnswerSubmission = (contestId: string) => {
         state.setScore(prev => prev + 1);
       }
 
+      // Use upsert for participant answers as well
       const { error } = await supabase
         .from('participant_answers')
-        .insert([{
-          participant_id: participantId,
+        .upsert([{
+          participant_id: participationId,
           question_id: currentQuestion.id,
           answer: state.selectedAnswer
-        }]);
+        }], {
+          onConflict: 'participant_id,question_id',
+          ignoreDuplicates: false
+        });
 
       if (error) throw error;
 
