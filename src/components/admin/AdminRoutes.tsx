@@ -70,7 +70,7 @@ const AdminRoutes = () => {
         .from('contests')
         .select(`
           *,
-          new_participants (
+          participants (
             id,
             first_name,
             last_name,
@@ -91,7 +91,7 @@ const AdminRoutes = () => {
       
       const contestWithParticipants: ContestWithParticipants = {
         title: data.title,
-        participants: data.new_participants || []
+        participants: data.participants || []
       };
       
       console.log("Contest data fetched:", contestWithParticipants);

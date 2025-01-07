@@ -38,7 +38,7 @@ export const DrawManagerContent = ({
       console.log("Selecting winner:", participant);
       
       const { error: updateError } = await supabase
-        .from('new_participants')
+        .from('participants')
         .update({ status: 'winner' })
         .eq('id', participant.id);
 

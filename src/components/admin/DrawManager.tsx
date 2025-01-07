@@ -35,7 +35,7 @@ const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
         }
 
         const { data, error } = await supabase
-          .from('new_participants')
+          .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('status', 'completed')
