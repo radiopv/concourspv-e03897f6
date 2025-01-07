@@ -25,23 +25,21 @@ const Winners = () => {
           status,
           participations!inner (
             id,
+            score,
+            status,
+            created_at,
             participant:participants (
               id,
               first_name,
               last_name,
               email
             ),
-            score,
-            status,
-            created_at,
-            participant_prizes (
-              prizes (
-                prize_catalog (
-                  id,
-                  name,
-                  value,
-                  image_url
-                )
+            prizes (
+              catalog_item:prize_catalog (
+                id,
+                name,
+                value,
+                image_url
               )
             )
           )
@@ -68,10 +66,8 @@ const Winners = () => {
           score: p.score,
           status: p.status,
           created_at: p.created_at,
-          participant_prizes: p.participant_prizes?.map((pp: any) => ({
-            prize: {
-              catalog_item: pp.prizes?.prize_catalog
-            }
+          prizes: p.prizes?.map((prize: any) => ({
+            catalog_item: prize.catalog_item
           })) || []
         }))
       }));
