@@ -1,3 +1,5 @@
+import { Contest } from "./contest";
+
 export const PARTICIPANT_STATUS = {
   PENDING: 'pending',
   COMPLETED: 'completed',
@@ -5,6 +7,13 @@ export const PARTICIPANT_STATUS = {
 } as const;
 
 export type ParticipantStatus = typeof PARTICIPANT_STATUS[keyof typeof PARTICIPANT_STATUS];
+
+export interface CatalogItem {
+  id: string;
+  name: string;
+  value: string;
+  image_url: string;
+}
 
 export interface ParticipantPrize {
   prize: {
@@ -17,7 +26,7 @@ export interface Participant {
   first_name: string;
   last_name: string;
   email: string;
-  score?: number;
+  score: number;
   status: ParticipantStatus;
   created_at: string;
   participant_prizes?: ParticipantPrize[];

@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 import { DrawHeader } from "./DrawHeader";
 import { EligibleParticipantsList } from "./EligibleParticipantsList";
 import { NoParticipantsAlert } from "./NoParticipantsAlert";
-import { Participant } from "@/types/participant";
+import { Participant, ParticipantStatus } from "@/types/participant";
 
 interface DrawManagerContentProps {
   contestId: string;
@@ -39,7 +39,7 @@ export const DrawManagerContent = ({
       
       const { error: updateError } = await supabase
         .from('participants')
-        .update({ status: 'winner' })
+        .update({ status: 'winner' as ParticipantStatus })
         .eq('id', participant.id);
 
       if (updateError) throw updateError;
