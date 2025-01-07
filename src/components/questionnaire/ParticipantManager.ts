@@ -9,7 +9,7 @@ export class ParticipantManager {
       // First check if participant exists
       const { data: existingParticipant, error: checkError } = await supabase
         .from('participants')
-        .select('participation_id')
+        .select('*')
         .eq('id', userId)
         .eq('contest_id', contestId)
         .maybeSingle();
@@ -19,7 +19,7 @@ export class ParticipantManager {
         throw checkError;
       }
 
-      if (existingParticipant?.participation_id) {
+      if (existingParticipant) {
         console.log('Found existing participant:', existingParticipant);
         return existingParticipant.participation_id;
       }
@@ -34,9 +34,10 @@ export class ParticipantManager {
           first_name: userEmail.split('@')[0],
           last_name: 'Participant',
           email: userEmail,
-          attempts: 0
+          attempts: 0,
+          participation_id: crypto.randomUUID() // Generate a unique ID here
         })
-        .select('participation_id')
+        .select()
         .single();
 
       if (insertError) {
