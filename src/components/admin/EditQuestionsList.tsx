@@ -7,6 +7,8 @@ import { supabase } from "../../App";
 import { Plus } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import QuestionAccordion from './questions/QuestionAccordion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import QuestionBankList from './question-bank/QuestionBankList';
 
 interface EditQuestionsListProps {
   contestId: string;
@@ -25,6 +27,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
+  const [showQuestionBank, setShowQuestionBank] = useState(false);
 
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', contestId],
@@ -92,17 +95,18 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     }
   };
 
-  const handleAddQuestion = async () => {
+  const handleAddFromBank = async (bankQuestions: any[]) => {
     try {
-      // First get the questionnaire id
-      const { data: questionnaire, error: questionnaireError } = await supabase
+      // First get or create the questionnaire
+      let questionnaireId;
+      const { data: existingQuestionnaire, error: questionnaireError } = await supabase
         .from('questionnaires')
         .select('id')
         .eq('contest_id', contestId)
         .single();
       
       if (questionnaireError) {
-        // If no questionnaire exists, create one
+        // Create new questionnaire if none exists
         const { data: newQuestionnaire, error: createError } = await supabase
           .from('questionnaires')
           .insert([{
@@ -113,45 +117,39 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           .single();
         
         if (createError) throw createError;
-        
-        const { error } = await supabase
-          .from('questions')
-          .insert([{
-            questionnaire_id: newQuestionnaire.id,
-            question_text: "Nouvelle question",
-            options: ["Option 1", "Option 2", "Option 3", "Option 4"],
-            correct_answer: "Option 1",
-            type: 'multiple_choice'
-          }]);
-
-        if (error) throw error;
+        questionnaireId = newQuestionnaire.id;
       } else {
-        // If questionnaire exists, add question to it
-        const { error } = await supabase
-          .from('questions')
-          .insert([{
-            questionnaire_id: questionnaire.id,
-            question_text: "Nouvelle question",
-            options: ["Option 1", "Option 2", "Option 3", "Option 4"],
-            correct_answer: "Option 1",
-            type: 'multiple_choice'
-          }]);
-
-        if (error) throw error;
+        questionnaireId = existingQuestionnaire.id;
       }
+
+      // Add selected questions to the questionnaire
+      const questionsToAdd = bankQuestions.map(q => ({
+        questionnaire_id: questionnaireId,
+        question_text: q.question_text,
+        options: q.options,
+        correct_answer: q.correct_answer,
+        article_url: q.article_url,
+        type: 'multiple_choice'
+      }));
+
+      const { error } = await supabase
+        .from('questions')
+        .insert(questionsToAdd);
+
+      if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
       toast({
         title: "Succès",
-        description: "La question a été ajoutée",
+        description: `${bankQuestions.length} questions ont été ajoutées`,
       });
       
-      setIsAddingQuestion(false);
+      setShowQuestionBank(false);
     } catch (error) {
-      console.error('Error adding question:', error);
+      console.error('Error adding questions from bank:', error);
       toast({
         title: "Erreur",
-        description: "Impossible d'ajouter la question",
+        description: "Impossible d'ajouter les questions",
         variant: "destructive",
       });
     }
@@ -165,12 +163,23 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Questions du concours</CardTitle>
-        <Button
-          onClick={handleAddQuestion}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> Ajouter une question
-        </Button>
+        <Dialog open={showQuestionBank} onOpenChange={setShowQuestionBank}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Ajouter des questions
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Sélectionner des questions</DialogTitle>
+            </DialogHeader>
+            <QuestionBankList 
+              questions={[]} 
+              onAddToContest={handleAddFromBank}
+              mode="selection"
+            />
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent>
         <Accordion type="multiple" className="space-y-2">
