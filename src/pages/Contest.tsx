@@ -15,7 +15,7 @@ const Contest = () => {
   const { toast } = useToast();
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
 
-  console.log('Contest ID from params:', id); // Debugging log
+  console.log('Contest ID from params:', id);
 
   const { data: contest, isLoading, error } = useQuery({
     queryKey: ['contest', id],
@@ -27,7 +27,8 @@ const Contest = () => {
 
       console.log('Fetching contest with ID:', id);
       
-      const { data, error } = await supabase
+      // D'abord, récupérons le concours
+      const { data: contestData, error: contestError } = await supabase
         .from('contests')
         .select(`
           *,
@@ -40,36 +41,53 @@ const Contest = () => {
               description,
               shop_url
             )
-          ),
-          questionnaires (
-            id,
-            title,
-            description,
-            questions (
-              id,
-              question_text,
-              options,
-              correct_answer,
-              article_url,
-              order_number
-            )
           )
         `)
         .eq('id', id)
         .single();
       
-      if (error) {
-        console.error('Error fetching contest:', error);
-        throw error;
+      if (contestError) {
+        console.error('Error fetching contest:', contestError);
+        throw contestError;
       }
 
-      if (!data) {
+      if (!contestData) {
         console.error('No contest found with ID:', id);
         throw new Error('Contest not found');
       }
 
-      console.log('Contest data retrieved:', data);
-      return data as ContestType;
+      // Ensuite, récupérons le questionnaire associé
+      const { data: questionnaireData, error: questionnaireError } = await supabase
+        .from('questionnaires')
+        .select(`
+          id,
+          title,
+          description,
+          questions (
+            id,
+            question_text,
+            options,
+            correct_answer,
+            article_url,
+            order_number
+          )
+        `)
+        .eq('contest_id', id)
+        .maybeSingle();
+
+      if (questionnaireError) {
+        console.error('Error fetching questionnaire:', questionnaireError);
+        throw questionnaireError;
+      }
+
+      // Combinons les données
+      const fullContestData = {
+        ...contestData,
+        questionnaires: questionnaireData ? [questionnaireData] : []
+      };
+
+      console.log('Contest data retrieved:', fullContestData);
+      return fullContestData as ContestType;
     },
     enabled: !!id,
     meta: {
