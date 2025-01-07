@@ -29,6 +29,8 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
+      console.log('Fetching questions for contest:', contestId);
+      
       // First get the questionnaire for this contest
       const { data: questionnaire, error: questionnaireError } = await supabase
         .from('questionnaires')
@@ -36,21 +38,32 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         .eq('contest_id', contestId)
         .maybeSingle();
       
-      if (questionnaireError) throw questionnaireError;
+      if (questionnaireError) {
+        console.error('Error fetching questionnaire:', questionnaireError);
+        throw questionnaireError;
+      }
 
       // If no questionnaire exists, return empty array
       if (!questionnaire) {
+        console.log('No questionnaire found for contest:', contestId);
         return [];
       }
+
+      console.log('Found questionnaire:', questionnaire);
 
       // Then get the questions for this questionnaire
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question_text, options, correct_answer, article_url, order_number, type')
+        .select('id, question_text, options, correct_answer, article_url, type')
         .eq('questionnaire_id', questionnaire.id)
-        .order('order_number');
+        .order('created_at');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
+
+      console.log('Fetched questions:', data);
       return data as Question[];
     }
   });
@@ -108,7 +121,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
             question_text: "Nouvelle question",
             options: ["Option 1", "Option 2", "Option 3", "Option 4"],
             correct_answer: "Option 1",
-            order_number: (questions?.length || 0) + 1,
             type: 'multiple_choice'
           }]);
 
@@ -122,7 +134,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
             question_text: "Nouvelle question",
             options: ["Option 1", "Option 2", "Option 3", "Option 4"],
             correct_answer: "Option 1",
-            order_number: (questions?.length || 0) + 1,
             type: 'multiple_choice'
           }]);
 
