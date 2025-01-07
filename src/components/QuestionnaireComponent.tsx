@@ -23,7 +23,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const queryClient = useQueryClient();
   const state = useQuestionnaireState();
   const { data: questions } = useQuestions(contestId);
-  const { handleSubmitAnswer } = useAnswerSubmission(contestId);
+  const { handleSubmitAnswer, isSubmitting: isSubmittingAnswer } = useAnswerSubmission(contestId);
   const currentQuestion = questions?.[state.currentQuestionIndex];
   const { getParticipantFeedback } = useContestAI();
 
@@ -144,7 +144,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           correctAnswer={currentQuestion?.correct_answer}
           hasClickedLink={state.hasClickedLink}
           hasAnswered={state.hasAnswered}
-          isSubmitting={state.isSubmitting}
+          isSubmitting={state.isSubmitting || isSubmittingAnswer}
           onArticleRead={() => state.setHasClickedLink(true)}
           onAnswerSelect={state.setSelectedAnswer}
           onSubmitAnswer={() => handleSubmitAnswer(currentQuestion)}
