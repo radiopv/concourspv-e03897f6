@@ -14,13 +14,30 @@ const ContestsList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
-  const { data: contests, isLoading, error } = useContests();
+  
+  // Optimisation de la requête avec staleTime et cacheTime
+  const { data: contests, isLoading, error, isError } = useContests();
 
+  // Si un concours est sélectionné, afficher le questionnaire
   if (selectedContestId) {
     return <QuestionnaireComponent contestId={selectedContestId} />;
   }
 
-  if (error) {
+  // Affichage du loader pendant le chargement
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-indigo-50 to-white">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto" />
+          <p className="text-gray-600">Chargement des concours...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Gestion des erreurs
+  if (isError || error) {
+    console.error('Error loading contests:', error);
     toast({
       title: "Erreur",
       description: "Impossible de charger les concours. Veuillez réessayer plus tard.",
@@ -46,17 +63,7 @@ const ContestsList = () => {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-indigo-50 to-white">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-600">Chargement des concours...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Gestion du cas où il n'y a pas de concours
   if (!contests || contests.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center p-4">
@@ -78,7 +85,7 @@ const ContestsList = () => {
     );
   }
 
-  // Transform Contest[] to ContestWithParticipantCount[]
+  // Transformation des données pour inclure le nombre de participants
   const contestsWithCount: ContestWithParticipantCount[] = contests.map((contest: Contest) => ({
     ...contest,
     participants: {
