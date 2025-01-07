@@ -7,6 +7,7 @@ interface ParticipantAnswer {
   };
 }
 
+// Update the interface to match the Supabase response structure
 interface AnswerResult {
   answer: string;
   questions: {
@@ -21,7 +22,7 @@ export const calculateFinalScore = async (participantId: string) => {
       .from('participant_answers')
       .select(`
         answer,
-        questions (
+        questions!inner (
           correct_answer
         )
       `)
@@ -37,16 +38,19 @@ export const calculateFinalScore = async (participantId: string) => {
       return 0;
     }
 
+    // Type assertion to ensure the response matches our interface
+    const typedAnswers = answers as unknown as AnswerResult[];
+
     // Count correct answers
-    const correctAnswers = (answers as AnswerResult[]).filter(answer => 
+    const correctAnswers = typedAnswers.filter(answer => 
       answer.questions?.correct_answer === answer.answer
     ).length;
     
     // Calculate percentage
-    const percentage = Math.round((correctAnswers / answers.length) * 100);
+    const percentage = Math.round((correctAnswers / typedAnswers.length) * 100);
 
     console.log('Score calculation:', {
-      totalAnswers: answers.length,
+      totalAnswers: typedAnswers.length,
       correctAnswers,
       percentage
     });
