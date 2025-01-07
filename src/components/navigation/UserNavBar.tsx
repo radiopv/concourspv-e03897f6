@@ -1,89 +1,79 @@
-import { Link } from "react-router-dom";
-import { Trophy, Menu, Settings, LogOut } from "lucide-react";
-import { useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/contexts/AuthContext";
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LogoutButton } from '@/components/auth/LogoutButton';
 
 const UserNavBar = () => {
-  const isMobile = useIsMobile();
-  const [isOpen, setIsOpen] = useState(false);
-  const { user, signOut } = useAuth();
-  const isAdmin = user?.email === "renaudcanuel@me.com";
+  const { user, isAdmin } = useAuth();
+  const location = useLocation();
 
-  const NavLinks = () => (
-    <div className="flex flex-col md:flex-row md:space-x-8 space-y-4 md:space-y-0">
-      <Link
-        to="/"
-        className="text-gray-900 hover:text-gray-600 transition-colors"
-        onClick={() => setIsOpen(false)}
-      >
-        Accueil
-      </Link>
-      <Link
-        to="/contests"
-        className="text-gray-900 hover:text-gray-600 transition-colors"
-        onClick={() => setIsOpen(false)}
-      >
-        Concours
-      </Link>
-      <Link
-        to="/winners"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-        onClick={() => setIsOpen(false)}
-      >
-        <Trophy className="w-4 h-4" />
-        Gagnants
-      </Link>
-      {isAdmin && (
-        <Link
-          to="/admin"
-          className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-          onClick={() => setIsOpen(false)}
-        >
-          <Settings className="w-4 h-4" />
-          Administration
-        </Link>
-      )}
-      <Button
-        variant="ghost"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 p-0 h-auto"
-        onClick={() => {
-          signOut();
-          setIsOpen(false);
-        }}
-      >
-        <LogOut className="w-4 h-4" />
-        Déconnexion
-      </Button>
-    </div>
-  );
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
 
   return (
-    <nav className="bg-white border-b shadow-sm">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between h-16 items-center">
-          <Link to="/" className="text-xl font-bold text-gray-900">
-            Concours
-          </Link>
-          
-          {isMobile ? (
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[80vw] sm:w-[385px]">
-                <div className="flex flex-col space-y-4 mt-8">
-                  <NavLinks />
-                </div>
-              </SheetContent>
-            </Sheet>
-          ) : (
-            <NavLinks />
-          )}
+    <nav className="bg-white shadow-sm">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center space-x-8">
+            <Link 
+              to="/" 
+              className={`text-lg font-semibold ${isActive('/') ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}
+            >
+              Accueil
+            </Link>
+            {user && (
+              <>
+                <Link 
+                  to="/contests" 
+                  className={`text-lg ${isActive('/contests') ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}
+                >
+                  Concours
+                </Link>
+                <Link 
+                  to="/winners" 
+                  className={`text-lg ${isActive('/winners') ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}
+                >
+                  Gagnants
+                </Link>
+                {isAdmin && (
+                  <Link 
+                    to="/admin" 
+                    className={`text-lg ${isActive('/admin') ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}
+                  >
+                    Administration
+                  </Link>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <>
+                <Link 
+                  to="/dashboard" 
+                  className="flex items-center space-x-2"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarFallback>
+                      {user.email?.[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className={`text-sm ${isActive('/dashboard') ? 'text-primary' : 'text-gray-700'}`}>
+                    Mon Profil
+                  </span>
+                </Link>
+                <LogoutButton />
+              </>
+            ) : (
+              <Link to="/login">
+                <Button>Connexion</Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </nav>

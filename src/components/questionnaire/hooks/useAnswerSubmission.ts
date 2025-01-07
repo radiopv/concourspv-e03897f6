@@ -1,72 +1,111 @@
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../../App";
-import { useQuestionnaireState } from '../QuestionnaireState';
-import { ensureParticipantExists } from '../ParticipantManager';
-import { getRandomMessage } from '../messages';
+import { supabase } from "@/App";
+import { useNavigate } from "react-router-dom";
+
+interface Question {
+  id: string;
+  question_text: string;
+  correct_answer?: string;
+}
+
+interface Answer {
+  questionId: string;
+  answer: string;
+}
 
 export const useAnswerSubmission = (contestId: string) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const state = useQuestionnaireState();
+  const navigate = useNavigate();
 
-  const handleSubmitAnswer = async (currentQuestion: any) => {
-    if (!state.selectedAnswer || !currentQuestion) return;
+  const handleSubmitAnswer = async (question: Question | undefined) => {
+    if (!question) return;
 
-    state.setIsSubmitting(true);
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user?.id) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté pour participer",
-          variant: "destructive",
-        });
-        return;
+        throw new Error("User not authenticated");
       }
 
-      const participantId = await ensureParticipantExists(session.session.user.id, contestId);
+      // Get current participant
+      const { data: participant } = await supabase
+        .from('participants')
+        .select('id')
+        .eq('email', session.session.user.email)
+        .maybeSingle();
 
-      const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
-      state.setIsCorrect(isAnswerCorrect);
-      state.setHasAnswered(true);
-      state.setTotalAnswered(prev => prev + 1);
-      if (isAnswerCorrect) {
-        state.setScore(prev => prev + 1);
+      if (!participant) {
+        // Create new participant if doesn't exist
+        const { data: newParticipant, error: participantError } = await supabase
+          .from('participants')
+          .insert({
+            email: session.session.user.email,
+            first_name: session.session.user.user_metadata.first_name || '',
+            last_name: session.session.user.user_metadata.last_name || ''
+          })
+          .select('id')
+          .single();
+
+        if (participantError) throw participantError;
+        
+        // Get current participation or create new one
+        const { data: participation, error: participationError } = await supabase
+          .from('participations')
+          .insert({
+            participant_id: newParticipant.id,
+            contest_id: contestId,
+            attempts: 1,
+            status: 'active'
+          })
+          .select('id, attempts')
+          .single();
+
+        if (participationError) throw participationError;
+
+        return participation;
       }
 
-      const { error } = await supabase
-        .from('participant_answers')
-        .insert([{
-          participant_id: participantId,
-          question_id: currentQuestion.id,
-          answer: state.selectedAnswer
-        }]);
+      // Get current participation or create new one
+      const { data: participation, error: participationError } = await supabase
+        .from('participations')
+        .select('id, attempts')
+        .eq('participant_id', participant.id)
+        .eq('contest_id', contestId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (participationError) throw participationError;
 
-      queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
-      queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
+      if (!participation) {
+        const { data: newParticipation, error: newParticipationError } = await supabase
+          .from('participations')
+          .insert({
+            participant_id: participant.id,
+            contest_id: contestId,
+            attempts: 1,
+            status: 'active'
+          })
+          .select('id, attempts')
+          .single();
 
-      const message = getRandomMessage();
-      toast({
-        title: "Réponse enregistrée",
-        description: message,
-        variant: "default",
-      });
+        if (newParticipationError) throw newParticipationError;
+        return newParticipation;
+      }
 
+      return participation;
     } catch (error) {
       console.error('Error submitting answer:', error);
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la soumission de votre réponse",
         variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la soumission de votre réponse.",
       });
-    } finally {
-      state.setIsSubmitting(false);
+      throw error;
     }
   };
 
-  return { handleSubmitAnswer };
+  return {
+    handleSubmitAnswer,
+    isSubmitting
+  };
 };

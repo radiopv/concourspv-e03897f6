@@ -15,7 +15,6 @@ interface EditContestFormProps {
 const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [uploading, setUploading] = useState(false);
 
   const { data: contest, isLoading } = useQuery({
     queryKey: ['contest', contestId],
@@ -41,10 +40,9 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
     is_new: false,
     has_big_prizes: false,
     shop_url: '',
-    prize_image_url: '',
+    status: '',
   });
 
-  // Update form data when contest data is loaded
   useEffect(() => {
     if (contest) {
       setFormData({
@@ -57,55 +55,10 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
         is_new: contest.is_new || false,
         has_big_prizes: contest.has_big_prizes || false,
         shop_url: contest.shop_url || '',
-        prize_image_url: contest.prize_image_url || '',
+        status: contest.status || '',
       });
     }
   }, [contest]);
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('prizes')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('prizes')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('contests')
-        .update({ prize_image_url: publicUrl })
-        .eq('id', contestId);
-
-      if (updateError) throw updateError;
-
-      setFormData(prev => ({ ...prev, prize_image_url: publicUrl }));
-      queryClient.invalidateQueries({ queryKey: ['contest', contestId] });
-      toast({
-        title: "Succès",
-        description: "L'image a été mise à jour",
-      });
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour l'image",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +75,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
           is_new: formData.is_new,
           has_big_prizes: formData.has_big_prizes,
           shop_url: formData.shop_url,
+          status: formData.status,
         })
         .eq('id', contestId);
 
@@ -161,10 +115,8 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
             <ContestBasicForm
               formData={formData}
               setFormData={setFormData}
-              handleImageUpload={handleImageUpload}
-              uploading={uploading}
             />
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
               Enregistrer les modifications
             </Button>
           </form>

@@ -1,271 +1,132 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../App";
-import { Trophy, RefreshCcw } from "lucide-react";
-import WinnerManager from "./winners/WinnerManager";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+import { Participant, ParticipantStatus } from "@/types/participant";
+import { DrawManagerContent } from "./draw/DrawManagerContent";
 
 interface DrawManagerProps {
   contestId: string;
+  contest: {
+    title: string;
+    participants: Participant[];
+  };
 }
 
-const DrawManager = ({ contestId }: DrawManagerProps) => {
+const DrawManager = ({ contestId, contest }: DrawManagerProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [eligibleParticipants, setEligibleParticipants] = useState<Participant[]>([]);
+  const [requiredScore, setRequiredScore] = useState(70);
   const { toast } = useToast();
-  const [isDrawing, setIsDrawing] = useState(false);
-  const queryClient = useQueryClient();
 
-  const { data: contest } = useQuery({
-    queryKey: ['contest-draw', contestId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contests')
-        .select(`
-          *,
-          participants(
+  useEffect(() => {
+    const fetchEligibleParticipants = async () => {
+      try {
+        setIsLoading(true);
+        console.log("Fetching eligible participants for contest:", contestId);
+        
+        const { data: settings } = await supabase
+          .from('settings')
+          .select('required_percentage')
+          .single();
+
+        if (settings?.required_percentage) {
+          setRequiredScore(settings.required_percentage);
+        }
+
+        // Calculate scores for participants based on their responses
+        const { data: responses } = await supabase
+          .from('responses')
+          .select(`
+            participant_id,
+            question_id,
+            answer_text,
+            questions!inner (
+              correct_answer
+            )
+          `)
+          .eq('contest_id', contestId);
+
+        if (!responses) return;
+
+        // Group responses by participant
+        const participantScores = responses.reduce((acc, response) => {
+          const participantId = response.participant_id;
+          if (!acc[participantId]) {
+            acc[participantId] = {
+              correct: 0,
+              total: 0
+            };
+          }
+          
+          const isCorrect = response.answer_text === response.questions.correct_answer;
+          acc[participantId].correct += isCorrect ? 1 : 0;
+          acc[participantId].total += 1;
+          
+          return acc;
+        }, {} as Record<string, { correct: number; total: number }>);
+
+        // Fetch participants with calculated scores
+        const { data: participantsData } = await supabase
+          .from('participants')
+          .select(`
             id,
             first_name,
             last_name,
             email,
-            score,
-            status,
-            facebook_profile_url,
-            profile_image_url
-          )
-        `)
-        .eq('id', contestId)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!contestId
-  });
+            created_at,
+            updated_at
+          `)
+          .in('id', Object.keys(participantScores));
 
-  const resetAndRedraw = async () => {
-    try {
-      setIsDrawing(true);
-      
-      // Reset current winner status
-      const currentWinner = contest?.participants?.find(p => p.status === 'winner');
-      if (currentWinner) {
-        const { error: resetError } = await supabase
-          .from('participants')
-          .update({ status: 'completed' })
-          .eq('id', currentWinner.id);
+        if (!participantsData) return;
 
-        if (resetError) throw resetError;
+        // Add scores to participants
+        const participantsWithScores: Participant[] = participantsData.map(p => ({
+          ...p,
+          score: participantScores[p.id] 
+            ? Math.round((participantScores[p.id].correct / participantScores[p.id].total) * 100)
+            : 0,
+          status: 'completed' as ParticipantStatus
+        }));
 
-        // Delete from draw history
-        const { error: historyError } = await supabase
-          .from('draw_history')
-          .delete()
-          .eq('participant_id', currentWinner.id);
+        // Filter eligible participants
+        const eligible = participantsWithScores.filter(p => (p.score || 0) >= requiredScore);
+        setEligibleParticipants(eligible);
 
-        if (historyError) throw historyError;
-      }
-
-      // Get eligible participants for new draw
-      const { data: eligibleParticipants, error } = await supabase
-        .from('participants')
-        .select('*')
-        .eq('contest_id', contestId)
-        .gte('score', 70)
-        .neq('status', 'winner');
-
-      if (error) throw error;
-
-      if (!eligibleParticipants?.length) {
+      } catch (error) {
+        console.error('Error fetching eligible participants:', error);
         toast({
-          title: "Impossible d'effectuer le tirage",
-          description: "Aucun participant éligible trouvé",
           variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de récupérer la liste des participants éligibles.",
         });
-        return;
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      // Select new winner
-      const newWinner = eligibleParticipants[Math.floor(Math.random() * eligibleParticipants.length)];
-
-      // Update new winner status
-      const { error: updateError } = await supabase
-        .from('participants')
-        .update({ status: 'winner' })
-        .eq('id', newWinner.id);
-
-      if (updateError) throw updateError;
-
-      // Add to draw history
-      const { error: historyError } = await supabase
-        .from('draw_history')
-        .insert([{
-          contest_id: contestId,
-          participant_id: newWinner.id,
-        }]);
-
-      if (historyError) throw historyError;
-
-      await queryClient.invalidateQueries({ queryKey: ['contest-draw', contestId] });
-      await queryClient.invalidateQueries({ queryKey: ['contests'] });
-
-      toast({
-        title: "Nouveau tirage effectué !",
-        description: `Le nouveau gagnant est ${newWinner.first_name} ${newWinner.last_name}`,
-      });
-    } catch (error) {
-      console.error('Error during redraw:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'effectuer le nouveau tirage",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDrawing(false);
+    if (contestId) {
+      fetchEligibleParticipants();
     }
-  };
+  }, [contestId, requiredScore, toast]);
 
-  const performDraw = async () => {
-    try {
-      setIsDrawing(true);
-      const { data: eligibleParticipants, error } = await supabase
-        .from('participants')
-        .select('*')
-        .eq('contest_id', contestId)
-        .gte('score', 70)
-        .neq('status', 'winner');
-
-      if (error) throw error;
-
-      if (!eligibleParticipants?.length) {
-        toast({
-          title: "Impossible d'effectuer le tirage",
-          description: "Aucun participant éligible trouvé",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const randomWinner = eligibleParticipants[Math.floor(Math.random() * eligibleParticipants.length)];
-
-      const { error: updateError } = await supabase
-        .from('participants')
-        .update({ status: 'winner' })
-        .eq('id', randomWinner.id);
-
-      if (updateError) throw updateError;
-
-      const { error: historyError } = await supabase
-        .from('draw_history')
-        .insert([{
-          contest_id: contestId,
-          participant_id: randomWinner.id,
-        }]);
-
-      if (historyError) throw historyError;
-
-      await queryClient.invalidateQueries({ queryKey: ['contest-draw', contestId] });
-      await queryClient.invalidateQueries({ queryKey: ['contests'] });
-
-      toast({
-        title: "Tirage effectué !",
-        description: `Le gagnant est ${randomWinner.first_name} ${randomWinner.last_name}`,
-      });
-    } catch (error) {
-      console.error('Error during draw:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'effectuer le tirage",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDrawing(false);
-    }
-  };
-
-  const currentWinner = contest?.participants?.find(p => p.status === 'winner');
-  const canPerformDraw = contest?.draw_date && new Date(contest.draw_date) <= new Date();
-
-  if (!contestId) {
+  if (isLoading) {
     return (
-      <div className="p-4 text-center">
-        <p className="text-gray-600">Aucun concours sélectionné</p>
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Tirage au sort</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {currentWinner ? (
-            <div className="space-y-4">
-              <WinnerManager
-                contestId={contestId}
-                winner={currentWinner}
-                onWinnerDeleted={() => {
-                  queryClient.invalidateQueries({ queryKey: ['contest-draw', contestId] });
-                }}
-              />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    <RefreshCcw className="w-4 h-4 mr-2" />
-                    Refaire le tirage
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Refaire le tirage ?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Cette action va supprimer le gagnant actuel et effectuer un nouveau tirage.
-                      Cette action est irréversible.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={resetAndRedraw}>
-                      Continuer
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          ) : canPerformDraw ? (
-            <div className="space-y-4">
-              <Button 
-                onClick={performDraw} 
-                disabled={isDrawing}
-                className="w-full"
-              >
-                <Trophy className="w-4 h-4 mr-2" />
-                {isDrawing ? 'Tirage en cours...' : 'Effectuer le tirage'}
-              </Button>
-            </div>
-          ) : (
-            <p className="text-gray-600">
-              Le tirage au sort n'est pas encore disponible.
-              {contest?.draw_date && (
-                <span> Il sera possible le {new Date(contest.draw_date).toLocaleDateString()}</span>
-              )}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <DrawManagerContent
+        contestId={contestId}
+        contest={contest}
+        eligibleParticipants={eligibleParticipants}
+        requiredScore={requiredScore}
+      />
     </div>
   );
 };

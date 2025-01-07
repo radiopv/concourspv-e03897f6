@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
-import { Trophy, Users, Target, Award } from "lucide-react";
+import { Trophy, Users, Target, Award, Star, Share2, Camera, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
   const navigate = useNavigate();
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ['home-stats'],
     queryFn: async () => {
       const [contestsResponse, participantsResponse, prizesResponse] = await Promise.all([
@@ -60,101 +60,176 @@ const Index = () => {
             </Button>
           </div>
         </motion.div>
+      </div>
 
-        {/* Statistics Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16"
-        >
+      {/* Statistics Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16"
+      >
+        <Card className="bg-white/50 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <Trophy className="w-12 h-12 mx-auto text-amber-500 mb-2" />
+            <CardTitle className="text-2xl">{isLoading ? "..." : stats?.contests || 0}</CardTitle>
+            <p className="text-gray-600">Concours Actifs</p>
+          </CardHeader>
+        </Card>
+
+        <Card className="bg-white/50 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <Users className="w-12 h-12 mx-auto text-indigo-500 mb-2" />
+            <CardTitle className="text-2xl">{isLoading ? "..." : stats?.participants || 0}</CardTitle>
+            <p className="text-gray-600">Participants</p>
+          </CardHeader>
+        </Card>
+
+        <Card className="bg-white/50 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <Award className="w-12 h-12 mx-auto text-green-500 mb-2" />
+            <CardTitle className="text-2xl">{isLoading ? "..." : stats?.prizes || 0}</CardTitle>
+            <p className="text-gray-600">Prix à Gagner</p>
+          </CardHeader>
+        </Card>
+      </motion.div>
+
+      {/* Points System Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        className="container mx-auto px-4 py-16"
+      >
+        <h2 className="text-3xl font-bold text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+          Gagnez des Points et Multipliez vos Chances !
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
-              <Trophy className="w-12 h-12 mx-auto text-amber-500 mb-2" />
-              <CardTitle className="text-2xl">{stats?.contests || 0}</CardTitle>
-              <p className="text-gray-600">Concours Actifs</p>
+              <Target className="w-12 h-12 mx-auto text-blue-500 mb-2" />
+              <CardTitle className="text-xl">Bonnes Réponses</CardTitle>
+              <p className="text-gray-600 mt-2">1 point par bonne réponse</p>
             </CardHeader>
           </Card>
 
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
-              <Users className="w-12 h-12 mx-auto text-indigo-500 mb-2" />
-              <CardTitle className="text-2xl">{stats?.participants || 0}</CardTitle>
-              <p className="text-gray-600">Participants</p>
+              <Share2 className="w-12 h-12 mx-auto text-green-500 mb-2" />
+              <CardTitle className="text-xl">Partage Social</CardTitle>
+              <p className="text-gray-600 mt-2">+5 points par partage</p>
             </CardHeader>
           </Card>
 
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
-              <Award className="w-12 h-12 mx-auto text-green-500 mb-2" />
-              <CardTitle className="text-2xl">{stats?.prizes || 0}</CardTitle>
-              <p className="text-gray-600">Prix à Gagner</p>
+              <Camera className="w-12 h-12 mx-auto text-purple-500 mb-2" />
+              <CardTitle className="text-xl">Photo de Profil</CardTitle>
+              <p className="text-gray-600 mt-2">+10 points bonus</p>
             </CardHeader>
           </Card>
-        </motion.div>
 
-        {/* Features Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="bg-white p-8 rounded-xl shadow-lg"
-          >
-            <div className="text-indigo-600 text-4xl mb-4">🎯</div>
-            <h3 className="text-xl font-semibold mb-3">Participation Simple</h3>
-            <p className="text-gray-600">
-              Inscrivez-vous en quelques clics et commencez à participer immédiatement à nos concours thématiques.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="bg-white p-8 rounded-xl shadow-lg"
-          >
-            <div className="text-indigo-600 text-4xl mb-4">🎁</div>
-            <h3 className="text-xl font-semibold mb-3">Prix Exceptionnels</h3>
-            <p className="text-gray-600">
-              Des récompenses uniques et des prix exclusifs à gagner pour les participants qualifiés.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="bg-white p-8 rounded-xl shadow-lg"
-          >
-            <div className="text-indigo-600 text-4xl mb-4">🏆</div>
-            <h3 className="text-xl font-semibold mb-3">Tirages Équitables</h3>
-            <p className="text-gray-600">
-              Un système de tirage au sort transparent parmi tous les participants qualifiés.
-            </p>
-          </motion.div>
+          <Card className="bg-white/50 backdrop-blur-sm">
+            <CardHeader className="text-center">
+              <MessageSquare className="w-12 h-12 mx-auto text-amber-500 mb-2" />
+              <CardTitle className="text-xl">Témoignage</CardTitle>
+              <p className="text-gray-600 mt-2">+15 points bonus</p>
+            </CardHeader>
+          </Card>
         </div>
 
-        {/* Call to Action */}
+        <div className="mt-12 text-center">
+          <h3 className="text-2xl font-semibold mb-4">Paliers de Récompense</h3>
+          <div className="flex flex-wrap justify-center gap-6 mt-6">
+            <Card className="bg-white/50 backdrop-blur-sm w-64">
+              <CardHeader className="text-center">
+                <Star className="w-8 h-8 mx-auto text-yellow-500 mb-2" />
+                <CardTitle>25 Points</CardTitle>
+                <p className="text-gray-600">+1 participation bonus</p>
+              </CardHeader>
+            </Card>
+
+            <Card className="bg-white/50 backdrop-blur-sm w-64">
+              <CardHeader className="text-center">
+                <Star className="w-8 h-8 mx-auto text-yellow-500 mb-2" />
+                <CardTitle>50 Points</CardTitle>
+                <p className="text-gray-600">+3 participations bonus</p>
+              </CardHeader>
+            </Card>
+
+            <Card className="bg-white/50 backdrop-blur-sm w-64">
+              <CardHeader className="text-center">
+                <Star className="w-8 h-8 mx-auto text-yellow-500 mb-2" />
+                <CardTitle>100 Points</CardTitle>
+                <p className="text-gray-600">+7 participations bonus</p>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Features Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1 }}
-          className="text-center mt-20 bg-gradient-to-r from-indigo-100 to-purple-100 p-12 rounded-2xl"
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="bg-white p-8 rounded-xl shadow-lg"
         >
-          <h2 className="text-3xl font-bold mb-4">Prêt à Relever le Défi ?</h2>
-          <p className="text-lg text-gray-600 mb-8">
-            Rejoignez notre communauté et participez à des concours passionnants dès aujourd'hui !
+          <div className="text-indigo-600 text-4xl mb-4">🎯</div>
+          <h3 className="text-xl font-semibold mb-3">Participation Simple</h3>
+          <p className="text-gray-600">
+            Inscrivez-vous en quelques clics et commencez à participer immédiatement à nos concours thématiques.
           </p>
-          <Button 
-            onClick={() => navigate("/register")}
-            size="lg"
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-          >
-            Commencer l'aventure
-          </Button>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="bg-white p-8 rounded-xl shadow-lg"
+        >
+          <div className="text-indigo-600 text-4xl mb-4">🎁</div>
+          <h3 className="text-xl font-semibold mb-3">Prix Exceptionnels</h3>
+          <p className="text-gray-600">
+            Des récompenses uniques et des prix exclusifs à gagner pour les participants qualifiés.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="bg-white p-8 rounded-xl shadow-lg"
+        >
+          <div className="text-indigo-600 text-4xl mb-4">🏆</div>
+          <h3 className="text-xl font-semibold mb-3">Tirages Équitables</h3>
+          <p className="text-gray-600">
+            Un système de tirage au sort transparent parmi tous les participants qualifiés.
+          </p>
         </motion.div>
       </div>
+
+      {/* Call to Action */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 1 }}
+        className="text-center mt-20 bg-gradient-to-r from-indigo-100 to-purple-100 p-12 rounded-2xl"
+      >
+        <h2 className="text-3xl font-bold mb-4">Prêt à Relever le Défi ?</h2>
+        <p className="text-lg text-gray-600 mb-8">
+          Rejoignez notre communauté et participez à des concours passionnants dès aujourd'hui !
+        </p>
+        <Button 
+          onClick={() => navigate("/register")}
+          size="lg"
+          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+        >
+          Commencer l'aventure
+        </Button>
+      </motion.div>
     </div>
   );
 };

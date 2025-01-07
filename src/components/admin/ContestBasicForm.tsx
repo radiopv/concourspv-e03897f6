@@ -1,9 +1,15 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ContestBasicFormProps {
   formData: {
@@ -15,15 +21,12 @@ interface ContestBasicFormProps {
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
-    shop_url?: string;
-    prize_image_url?: string;
+    status?: string;
   };
   setFormData: (data: any) => void;
-  handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  uploading: boolean;
 }
 
-const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading }: ContestBasicFormProps) => {
+const ContestBasicForm = ({ formData, setFormData }: ContestBasicFormProps) => {
   return (
     <div className="space-y-4">
       <div>
@@ -46,32 +49,20 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
       </div>
 
       <div>
-        <Label htmlFor="shop_url">Lien vers la boutique</Label>
-        <Input
-          id="shop_url"
-          type="url"
-          value={formData.shop_url}
-          onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
-          placeholder="https://..."
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="prize_image">Image du prix</Label>
-        <Input
-          id="prize_image"
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          disabled={uploading}
-        />
-        {formData.prize_image_url && (
-          <img 
-            src={formData.prize_image_url} 
-            alt="Prix du concours" 
-            className="mt-2 max-w-xs rounded-lg"
-          />
-        )}
+        <Label htmlFor="status">Statut</Label>
+        <Select
+          value={formData.status}
+          onValueChange={(value) => setFormData({ ...formData, status: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Sélectionnez un statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="draft">Brouillon</SelectItem>
+            <SelectItem value="active">Actif</SelectItem>
+            <SelectItem value="archived">Archivé</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>

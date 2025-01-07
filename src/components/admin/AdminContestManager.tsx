@@ -1,162 +1,158 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import ExcelImportForm from "./ExcelImportForm";
-import { useQueryClient } from "@tanstack/react-query";
-import CreateTestContest from "./test/CreateTestContest";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { useParams, useNavigate } from 'react-router-dom';
+import ContestBasicForm from './ContestBasicForm';
+import ContestPrizeManager from './ContestPrizeManager';
+import EditQuestionsList from './EditQuestionsList';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminContestManager = () => {
-  const [newContest, setNewContest] = useState({
-    title: "",
-    description: "",
-    start_date: "",
-    end_date: "",
-  });
-  const [createdContestId, setCreatedContestId] = useState<string | null>(null);
+  const { contestId } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const [uploading, setUploading] = useState(false);
 
-  const handleCreateContest = async () => {
-    if (isSubmitting) return;
-    
-    try {
-      setIsSubmitting(true);
-
-      if (!newContest.title || !newContest.start_date || !newContest.end_date) {
-        toast({
-          title: "Erreur",
-          description: "Veuillez remplir tous les champs obligatoires (titre, date de début et date de fin)",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.access_token) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté pour créer un concours",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data: contest, error: contestError } = await supabase
-        .from('contests')
-        .insert([{
-          title: newContest.title,
-          description: newContest.description || null,
-          start_date: newContest.start_date,
-          end_date: newContest.end_date,
-          status: 'draft'
-        }])
-        .select()
-        .single();
-
-      if (contestError) {
-        console.error('Error creating contest:', contestError);
-        throw contestError;
-      }
-
-      if (!contest) {
-        throw new Error('No contest was created');
-      }
-
-      setCreatedContestId(contest.id);
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin-contests'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] }),
-        queryClient.invalidateQueries({ queryKey: ['contests'] })
-      ]);
-
-      toast({
-        title: "Succès",
-        description: "Le concours a été créé avec succès",
-      });
-
-      setNewContest({
-        title: "",
-        description: "",
-        start_date: "",
-        end_date: "",
-      });
-    } catch (error) {
-      console.error('Error creating contest:', error);
-      toast({
-        title: "Erreur",
-        description: "Erreur lors de la création du concours",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const defaultFormData = {
+    title: '',
+    description: '',
+    start_date: '',
+    end_date: '',
+    draw_date: '',
+    is_featured: false,
+    is_new: false,
+    has_big_prizes: false,
+    shop_url: '',
+    status: 'draft'
   };
 
+  const [formData, setFormData] = useState(defaultFormData);
+
+  const { data: contest, isLoading } = useQuery({
+    queryKey: ['contest', contestId],
+    queryFn: async () => {
+      if (!contestId) return null;
+      
+      const { data, error } = await supabase
+        .from('contests')
+        .select('*')
+        .eq('id', contestId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contestId
+  });
+
+  useEffect(() => {
+    if (contest) {
+      setFormData(contest);
+    }
+  }, [contest]);
+
+  const contestMutation = useMutation({
+    mutationFn: async (data: any) => {
+      if (contestId) {
+        const { error } = await supabase
+          .from('contests')
+          .update(data)
+          .eq('id', contestId);
+        
+        if (error) throw error;
+      } else {
+        const { data: newContest, error } = await supabase
+          .from('contests')
+          .insert([data])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        return newContest;
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+      toast({
+        title: "Succès",
+        description: contestId ? "Le concours a été mis à jour" : "Le concours a été créé",
+      });
+      if (!contestId && data) {
+        navigate(`/admin/contests/${data.id}`);
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue",
+        variant: "destructive",
+      });
+      console.error('Error:', error);
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    contestMutation.mutate(formData);
+  };
+
+  if (isLoading) {
+    return <div>Chargement...</div>;
+  }
+
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Créer un nouveau concours</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="title">Titre *</Label>
-          <Input
-            id="title"
-            value={newContest.title}
-            onChange={(e) => setNewContest({ ...newContest, title: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={newContest.description}
-            onChange={(e) => setNewContest({ ...newContest, description: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="start_date">Date de début *</Label>
-          <Input
-            id="start_date"
-            type="date"
-            value={newContest.start_date}
-            onChange={(e) => setNewContest({ ...newContest, start_date: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="end_date">Date de fin *</Label>
-          <Input
-            id="end_date"
-            type="date"
-            value={newContest.end_date}
-            onChange={(e) => setNewContest({ ...newContest, end_date: e.target.value })}
-            required
-          />
-        </div>
-        <Button 
-          onClick={handleCreateContest} 
-          className="w-full"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Création en cours...' : 'Créer le concours'}
-        </Button>
-        
-        <div className="pt-4 border-t">
-          <CreateTestContest />
-        </div>
-        
-        <ExcelImportForm contestId={createdContestId || undefined} />
-      </CardContent>
-    </Card>
+    <div className="max-w-4xl mx-auto p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>{contestId ? 'Modifier le concours' : 'Créer un nouveau concours'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="basic" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="basic">Informations</TabsTrigger>
+              {contestId && (
+                <>
+                  <TabsTrigger value="prizes">Prix</TabsTrigger>
+                  <TabsTrigger value="questions">Questions</TabsTrigger>
+                </>
+              )}
+            </TabsList>
+
+            <TabsContent value="basic">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <ContestBasicForm 
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={contestMutation.isPending}
+                >
+                  {contestId ? 'Mettre à jour le concours' : 'Créer le concours'}
+                </Button>
+              </form>
+            </TabsContent>
+
+            {contestId && (
+              <>
+                <TabsContent value="prizes">
+                  <ContestPrizeManager contestId={contestId} />
+                </TabsContent>
+
+                <TabsContent value="questions">
+                  <EditQuestionsList contestId={contestId} />
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
