@@ -1,8 +1,8 @@
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../App";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/App";
 import { Button } from "@/components/ui/button";
 
 export const LogoutButton = () => {
@@ -14,7 +14,9 @@ export const LogoutButton = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",

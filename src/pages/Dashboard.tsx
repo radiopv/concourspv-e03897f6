@@ -8,7 +8,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsCards from "@/components/dashboard/StatsCards";
 import { ExtendedProfileCard } from "@/components/profile/ExtendedProfileCard";
 import QuickActions from "@/components/dashboard/QuickActions";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
@@ -16,83 +16,38 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Rediriger si l'utilisateur n'est pas connecté
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
-
   const { data: userProfile, isLoading, error, refetch } = useQuery({
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // Récupérer le profil existant
-      const { data: existingProfile, error: fetchError } = await supabase
+      console.log("Fetching user profile for ID:", user.id);
+      const { data, error } = await supabase
         .from("members")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error("Erreur lors de la récupération du profil:", fetchError);
-        throw fetchError;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
       }
 
-      if (existingProfile) {
-        return existingProfile;
-      }
-
-      // Si le profil n'existe pas, créer un nouveau profil
-      const { data: userData } = await supabase.auth.getUser();
-      const newProfile = {
-        id: user.id,
-        email: userData.user?.email || "",
-        first_name: userData.user?.user_metadata?.first_name || "",
-        last_name: userData.user?.user_metadata?.last_name || "",
-        role: user.email === "renaudcanuel@me.com" ? "admin" : "user",
-        notifications_enabled: true,
-        share_scores: true,
-        total_points: 0,
-        contests_participated: 0,
-        contests_won: 0
-      };
-
-      const { data: createdProfile, error: createError } = await supabase
-        .from("members")
-        .insert([newProfile])
-        .select()
-        .single();
-
-      if (createError) {
-        console.error("Erreur lors de la création du profil:", createError);
-        toast({
-          title: "Erreur",
-          description: "Impossible de créer votre profil",
-          variant: "destructive",
-        });
-        throw createError;
-      }
-
-      return createdProfile;
+      console.log("Fetched profile:", data);
+      return data;
     },
     enabled: !!user?.id,
   });
 
-  if (!user) {
-    return null;
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!user) {
+      console.log("No user found, redirecting to login");
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   if (error) {
+    console.error("Dashboard error:", error);
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
@@ -105,6 +60,8 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  if (!user) return null;
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">

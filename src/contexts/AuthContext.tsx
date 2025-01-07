@@ -28,8 +28,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("AuthProvider: Initializing");
+    
     // Récupérer la session initiale
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Initial session:", currentSession);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
@@ -69,12 +72,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
           }
 
-          // Ne rediriger que lors de la connexion initiale
+          // Rediriger uniquement lors de la connexion initiale
           if (event === 'SIGNED_IN') {
             if (currentSession.user.email === 'renaudcanuel@me.com') {
               navigate('/admin');
             } else {
-              navigate('/');
+              navigate('/dashboard');
             }
           }
         } else {
