@@ -9,15 +9,30 @@ import Winners from "../../pages/Winners";
 import GlobalSettings from "./GlobalSettings";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../App";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const AdminRoutes = () => {
   const { contestId } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Protect admin routes
+  useEffect(() => {
+    if (!user || user.email !== "renaudcanuel@me.com") {
+      console.log("Unauthorized access attempt to admin routes");
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const { data: contest } = useQuery({
     queryKey: ['contest', contestId],
     queryFn: async () => {
       if (!contestId) return null;
+      console.log("Fetching contest data for:", contestId);
+      
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -34,11 +49,18 @@ const AdminRoutes = () => {
         .eq('id', contestId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching contest:", error);
+        throw error;
+      }
       return data;
     },
     enabled: !!contestId
   });
+
+  if (!user || user.email !== "renaudcanuel@me.com") {
+    return null;
+  }
 
   return (
     <div className="container mx-auto p-4">
