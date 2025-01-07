@@ -9,24 +9,15 @@ import { Accordion } from "@/components/ui/accordion";
 import QuestionAccordion from './questions/QuestionAccordion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import QuestionBankList from './question-bank/QuestionBankList';
+import { Question, QuestionBankItem } from '@/types/question';
 
 interface EditQuestionsListProps {
   contestId: string;
 }
 
-interface Question {
-  id: string;
-  question_text: string;
-  options: string[];
-  correct_answer: string;
-  article_url?: string;
-  type: string;
-}
-
 const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isAddingQuestion, setIsAddingQuestion] = useState(false);
   const [showQuestionBank, setShowQuestionBank] = useState(false);
 
   const { data: questions, isLoading } = useQuery({
@@ -57,9 +48,9 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
       // Then get the questions for this questionnaire
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question_text, options, correct_answer, article_url, type')
+        .select('id, question_text, options, correct_answer, article_url, type, order_number')
         .eq('questionnaire_id', questionnaire.id)
-        .order('created_at');
+        .order('order_number', { ascending: true });
       
       if (error) {
         console.error('Error fetching questions:', error);
@@ -71,31 +62,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     }
   });
 
-  const handleDelete = async (questionId: string) => {
-    try {
-      const { error } = await supabase
-        .from('questions')
-        .delete()
-        .eq('id', questionId);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
-      toast({
-        title: "Succès",
-        description: "La question a été supprimée",
-      });
-    } catch (error) {
-      console.error('Error deleting question:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer la question",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleAddFromBank = async (bankQuestions: any[]) => {
+  const handleAddFromBank = async (bankQuestions: QuestionBankItem[]) => {
     try {
       // First get or create the questionnaire
       let questionnaireId;
@@ -122,14 +89,26 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         questionnaireId = existingQuestionnaire.id;
       }
 
+      // Get the current highest order number
+      const { data: lastQuestion } = await supabase
+        .from('questions')
+        .select('order_number')
+        .eq('questionnaire_id', questionnaireId)
+        .order('order_number', { ascending: false })
+        .limit(1)
+        .single();
+
+      const startOrderNumber = (lastQuestion?.order_number || 0) + 1;
+
       // Add selected questions to the questionnaire
-      const questionsToAdd = bankQuestions.map(q => ({
+      const questionsToAdd = bankQuestions.map((q, index) => ({
         questionnaire_id: questionnaireId,
         question_text: q.question_text,
         options: q.options,
         correct_answer: q.correct_answer,
         article_url: q.article_url,
-        type: 'multiple_choice'
+        type: 'multiple_choice',
+        order_number: startOrderNumber + index
       }));
 
       const { error } = await supabase
@@ -173,11 +152,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
             <DialogHeader>
               <DialogTitle>Sélectionner des questions</DialogTitle>
             </DialogHeader>
-            <QuestionBankList 
-              questions={[]} 
-              onAddToContest={handleAddFromBank}
-              mode="selection"
-            />
+            <QuestionBankList onAddToContest={handleAddFromBank} />
           </DialogContent>
         </Dialog>
       </CardHeader>
@@ -188,7 +163,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
               key={question.id}
               question={question}
               index={index}
-              onDelete={handleDelete}
+              onDelete={() => {}}
               onUpdate={() => queryClient.invalidateQueries({ queryKey: ['questions', contestId] })}
             />
           ))}
