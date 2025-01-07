@@ -8,33 +8,22 @@ import { fr } from "date-fns/locale";
 import { useState } from "react";
 import { Contest as ContestType } from "@/types/contest";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
+import { useToast } from "@/hooks/use-toast";
 
 const Contest = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
 
-  const { data: contest, isLoading } = useQuery({
+  const { data: contest, isLoading, error } = useQuery({
     queryKey: ['contest', id],
     queryFn: async () => {
       if (!id) throw new Error('Contest ID is required');
       
       const { data, error } = await supabase
         .from('contests')
-        .select(`
-          *,
-          questionnaires (
-            id,
-            title,
-            description,
-            questions (
-              id,
-              question_text,
-              options,
-              correct_answer
-            )
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .single();
       
@@ -42,9 +31,22 @@ const Contest = () => {
         console.error('Error fetching contest:', error);
         throw error;
       }
+
+      if (!data) {
+        throw new Error('Contest not found');
+      }
+
       return data as ContestType;
     },
-    enabled: !!id
+    retry: 1,
+    onError: (error) => {
+      console.error('Error in contest query:', error);
+      toast({
+        title: "Erreur",
+        description: "Le concours n'a pas pu être chargé. Veuillez réessayer plus tard.",
+        variant: "destructive",
+      });
+    }
   });
 
   if (isLoading) {
@@ -55,7 +57,7 @@ const Contest = () => {
     );
   }
 
-  if (!contest) {
+  if (error || !contest) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center">
         <Card className="max-w-lg w-full mx-4">
