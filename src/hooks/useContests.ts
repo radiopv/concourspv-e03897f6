@@ -17,7 +17,7 @@ export const useContests = () => {
           is_new,
           has_big_prizes,
           status,
-          new_participants (
+          participants (
             id,
             first_name,
             last_name,
@@ -56,7 +56,7 @@ export const useContests = () => {
         is_new: contest.is_new,
         has_big_prizes: contest.has_big_prizes,
         status: contest.status,
-        participants: contest.new_participants?.map((p: any) => ({
+        participants: contest.participants?.map((p: any) => ({
           id: p.id,
           first_name: p.first_name,
           last_name: p.last_name,

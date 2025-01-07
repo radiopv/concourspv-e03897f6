@@ -185,76 +185,36 @@ export type Database = {
         }
         Relationships: []
       }
-      new_participants: {
-        Row: {
-          attempts: number | null
-          contest_id: string | null
-          created_at: string | null
-          email: string | null
-          first_name: string | null
-          id: string
-          last_name: string | null
-          participation_id: string | null
-          score: number | null
-          status: string | null
-        }
-        Insert: {
-          attempts?: number | null
-          contest_id?: string | null
-          created_at?: string | null
-          email?: string | null
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          participation_id?: string | null
-          score?: number | null
-          status?: string | null
-        }
-        Update: {
-          attempts?: number | null
-          contest_id?: string | null
-          created_at?: string | null
-          email?: string | null
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          participation_id?: string | null
-          score?: number | null
-          status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "new_participants_contest_id_fkey"
-            columns: ["contest_id"]
-            isOneToOne: false
-            referencedRelation: "contests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       participant_answers: {
         Row: {
           answer: string
-          created_at: string
+          created_at: string | null
           id: string
           participant_id: string | null
           question_id: string | null
         }
         Insert: {
           answer: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           participant_id?: string | null
           question_id?: string | null
         }
         Update: {
           answer?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           participant_id?: string | null
           question_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "participant_answers_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "participant_answers_question_id_fkey"
             columns: ["question_id"]
@@ -266,19 +226,19 @@ export type Database = {
       }
       participant_prizes: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
           participant_id: string | null
           prize_id: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           participant_id?: string | null
           prize_id?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           participant_id?: string | null
           prize_id?: string | null
@@ -288,7 +248,7 @@ export type Database = {
             foreignKeyName: "participant_prizes_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "new_participants"
+            referencedRelation: "participants"
             referencedColumns: ["id"]
           },
           {
@@ -303,38 +263,52 @@ export type Database = {
       participants: {
         Row: {
           attempts: number | null
+          completed_at: string | null
           contest_id: string | null
           created_at: string | null
           email: string | null
           first_name: string | null
-          id: number
+          id: string
           last_name: string | null
-          participation_id: number
+          participation_id: string | null
+          score: number | null
           status: string | null
         }
         Insert: {
           attempts?: number | null
+          completed_at?: string | null
           contest_id?: string | null
           created_at?: string | null
           email?: string | null
           first_name?: string | null
-          id?: number
+          id?: string
           last_name?: string | null
-          participation_id?: number
+          participation_id?: string | null
+          score?: number | null
           status?: string | null
         }
         Update: {
           attempts?: number | null
+          completed_at?: string | null
           contest_id?: string | null
           created_at?: string | null
           email?: string | null
           first_name?: string | null
-          id?: number
+          id?: string
           last_name?: string | null
-          participation_id?: number
+          participation_id?: string | null
+          score?: number | null
           status?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "participants_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prize_catalog: {
         Row: {
