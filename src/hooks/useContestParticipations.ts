@@ -27,7 +27,7 @@ export const useContestParticipations = (contestId: string, enabled: boolean = t
           score,
           status,
           completed_at,
-          participant:participants!participant_id (
+          participant:participants!inner (
             id,
             first_name,
             last_name,
@@ -41,8 +41,25 @@ export const useContestParticipations = (contestId: string, enabled: boolean = t
         console.error('Error fetching participations:', error);
         throw error;
       }
+
+      // Vérification et transformation des données
+      const validParticipations = data.map(item => {
+        if (!item.participant) {
+          console.warn(`Participation ${item.id} has no participant data`);
+          return null;
+        }
+        return {
+          ...item,
+          participant: {
+            id: item.participant.id,
+            first_name: item.participant.first_name,
+            last_name: item.participant.last_name,
+            email: item.participant.email
+          }
+        };
+      }).filter((item): item is Participation => item !== null);
       
-      return data as Participation[];
+      return validParticipations;
     },
     enabled
   });
