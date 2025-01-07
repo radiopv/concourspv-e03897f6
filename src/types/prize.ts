@@ -15,7 +15,7 @@ export interface Prize {
 
 export interface PrizeFormData {
   name: string;
-  description: string;
+  description?: string;
   value?: number;
   images?: string[];
   main_image_url?: string;

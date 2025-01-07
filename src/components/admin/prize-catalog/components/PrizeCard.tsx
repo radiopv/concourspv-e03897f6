@@ -1,24 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Archive, Eye, EyeOff, Trash2, Link } from "lucide-react";
+import { Edit, Trash2, Link } from "lucide-react";
 import { Prize } from "@/types/prize";
 
 interface PrizeCardProps {
   prize: Prize;
   onEdit: (prize: Prize) => void;
   onDelete: (id: string) => void;
-  onArchive: (id: string, archived: boolean) => void;
-  onVisibility: (id: string, hidden: boolean) => void;
 }
 
-export const PrizeCard = ({ 
-  prize, 
-  onEdit, 
-  onDelete,
-  onArchive,
-  onVisibility
-}: PrizeCardProps) => {
+export const PrizeCard = ({ prize, onEdit, onDelete }: PrizeCardProps) => {
   return (
     <Card className={`hover:shadow-lg transition-shadow ${prize.is_archived ? 'opacity-60' : ''}`}>
       <CardContent className="pt-6">
@@ -36,24 +28,6 @@ export const PrizeCard = ({
                 onClick={() => onEdit(prize)}
               >
                 <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={() => onArchive(prize.id, !prize.is_archived)}
-              >
-                <Archive className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={() => onVisibility(prize.id, !prize.is_hidden)}
-              >
-                {prize.is_hidden ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
               </Button>
               <Button
                 variant="destructive"
@@ -80,10 +54,9 @@ export const PrizeCard = ({
             <Badge variant="outline">Stock: {prize.stock}</Badge>
           )}
         </div>
-        <div 
-          className="text-sm text-gray-500 mb-2 prose prose-sm"
-          dangerouslySetInnerHTML={{ __html: prize.description || '' }}
-        />
+        {prize.description && (
+          <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
+        )}
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium">
             {prize.value ? `${prize.value} $ CAD` : 'Prix non défini'}

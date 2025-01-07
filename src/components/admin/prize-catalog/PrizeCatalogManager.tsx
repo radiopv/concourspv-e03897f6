@@ -166,54 +166,6 @@ export const PrizeCatalogManager = () => {
     setIsDialogOpen(true);
   };
 
-  const handleArchive = async (id: string, archived: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('prize_catalog')
-        .update({ is_archived: archived })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
-      toast({
-        title: "Succès",
-        description: archived ? "Le prix a été archivé" : "Le prix a été désarchivé",
-      });
-    } catch (error) {
-      console.error("Archive prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de modifier le statut d'archive",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleVisibility = async (id: string, hidden: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('prize_catalog')
-        .update({ is_hidden: hidden })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
-      toast({
-        title: "Succès",
-        description: hidden ? "Le prix a été masqué" : "Le prix a été affiché",
-      });
-    } catch (error) {
-      console.error("Visibility prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de modifier la visibilité",
-        variant: "destructive",
-      });
-    }
-  };
-
   if (isLoading) {
     return <div>Chargement du catalogue...</div>;
   }
@@ -257,8 +209,6 @@ export const PrizeCatalogManager = () => {
             prize={prize}
             onEdit={handleEdit}
             onDelete={(id) => deletePrizeMutation.mutate(id)}
-            onArchive={handleArchive}
-            onVisibility={handleVisibility}
           />
         ))}
       </div>
