@@ -6,11 +6,16 @@ export const useContestQuestions = (contestId: string) => {
     queryKey: ['contest-questions', contestId],
     queryFn: async () => {
       // First get the questionnaire
-      const { data: questionnaire } = await supabase
+      const { data: questionnaire, error: questionnaireError } = await supabase
         .from('questionnaires')
         .select('id')
         .eq('contest_id', contestId)
         .single();
+
+      if (questionnaireError) {
+        console.error('Error fetching questionnaire:', questionnaireError);
+        return [];
+      }
 
       if (!questionnaire) return [];
 
@@ -20,7 +25,11 @@ export const useContestQuestions = (contestId: string) => {
         .select('*')
         .eq('questionnaire_id', questionnaire.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
+      
       return data;
     }
   });
