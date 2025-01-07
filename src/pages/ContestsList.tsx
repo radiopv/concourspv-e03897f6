@@ -14,11 +14,14 @@ const ContestsList = () => {
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
   const { data: contests, error } = useContests();
 
+  console.log("Contests data:", contests); // Debug log
+
   if (selectedContestId) {
     return <QuestionnaireComponent contestId={selectedContestId} />;
   }
 
   if (error) {
+    console.error("Error loading contests:", error); // Debug log
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
         <Card className="max-w-lg mx-auto">
@@ -36,6 +39,7 @@ const ContestsList = () => {
   }
 
   if (!contests || contests.length === 0) {
+    console.log("No contests available"); // Debug log
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
         <Card className="max-w-lg mx-auto">
@@ -60,6 +64,8 @@ const ContestsList = () => {
     }
   }));
 
+  console.log("Processed contests:", contestsWithCount); // Debug log
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-4">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -80,7 +86,8 @@ const ContestsList = () => {
             <ContestCard
               key={contest.id}
               contest={contest}
-              onParticipate={() => setSelectedContestId(contest.id)}
+              onSelect={() => setSelectedContestId(contest.id)}
+              index={index}
             />
           ))}
         </div>
