@@ -23,7 +23,7 @@ const transformParticipants = (participants: any[]): Participant[] => {
     score: participant.score,
     status: participant.status,
     created_at: participant.created_at,
-    participant_prizes: transformParticipantPrizes(participant.participant_prizes || [])
+    participant_prizes: transformParticipantPrizes(participant.prizes || [])
   })) || [];
 };
 
@@ -31,6 +31,7 @@ export const useContests = () => {
   return useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
+      console.log('Fetching contests...');
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -47,7 +48,7 @@ export const useContests = () => {
             score,
             status,
             created_at,
-            participant_prizes (
+            prizes:participant_prizes (
               prize:prizes (
                 catalog_item:prize_catalog (
                   id,
@@ -62,7 +63,12 @@ export const useContests = () => {
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching contests:', error);
+        throw error;
+      }
+
+      console.log('Contests data:', data);
 
       const transformedData: Contest[] = data.map((contest: any) => ({
         id: contest.id,
