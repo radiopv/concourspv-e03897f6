@@ -11,7 +11,14 @@ export const useAnswerSubmission = (contestId: string) => {
   const state = useQuestionnaireState();
 
   const handleSubmitAnswer = async (currentQuestion: any) => {
-    if (!state.selectedAnswer || !currentQuestion) return;
+    if (!state.selectedAnswer || !currentQuestion) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner une réponse",
+        variant: "destructive",
+      });
+      return;
+    }
 
     state.setIsSubmitting(true);
     try {
@@ -26,7 +33,7 @@ export const useAnswerSubmission = (contestId: string) => {
       }
 
       // First ensure the participant exists and get the participation_id
-      console.log('Ensuring participant exists for user:', session.session.user.id);
+      console.log('Getting participation ID for user:', session.session.user.id);
       const participationId = await ensureParticipantExists(session.session.user.id, contestId);
       
       if (!participationId) {
@@ -34,10 +41,10 @@ export const useAnswerSubmission = (contestId: string) => {
         throw new Error("Failed to get participation ID");
       }
 
-      console.log('Got participation ID:', participationId);
+      console.log('Submitting answer with participation ID:', participationId);
 
       // Now submit the answer using the participation_id
-      const { error } = await supabase
+      const { error: submitError } = await supabase
         .from('participant_answers')
         .upsert({
           participant_id: participationId,
@@ -47,9 +54,9 @@ export const useAnswerSubmission = (contestId: string) => {
           onConflict: 'participant_id,question_id'
         });
 
-      if (error) {
-        console.error('Error submitting answer:', error);
-        throw error;
+      if (submitError) {
+        console.error('Error submitting answer:', submitError);
+        throw submitError;
       }
 
       // Update state and show success message
@@ -61,6 +68,7 @@ export const useAnswerSubmission = (contestId: string) => {
         state.setScore(prev => prev + 1);
       }
 
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
       queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
@@ -69,7 +77,6 @@ export const useAnswerSubmission = (contestId: string) => {
       toast({
         title: "Réponse enregistrée",
         description: message,
-        variant: "default",
       });
 
     } catch (error) {

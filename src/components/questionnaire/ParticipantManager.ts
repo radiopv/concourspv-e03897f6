@@ -5,7 +5,6 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
   try {
     console.log('Ensuring participant exists for user:', userId, 'contest:', contestId);
     
-    // First, check if the user exists
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       throw new Error("No session found");
@@ -51,11 +50,15 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
         onConflict: 'id,contest_id'
       })
       .select('participation_id')
-      .single();
+      .maybeSingle();
 
     if (createError) {
       console.error('Error creating participant:', createError);
       throw createError;
+    }
+
+    if (!newParticipant?.participation_id) {
+      throw new Error('Failed to create participant: no participation_id returned');
     }
 
     console.log('Created new participant with ID:', newParticipant.participation_id);
