@@ -13,9 +13,7 @@ import { createClient } from '@supabase/supabase-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "./contexts/AuthContext";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "./hooks/use-toast";
+import AuthenticatedRoute from "./components/auth/AuthenticatedRoute";
 
 const supabaseUrl = 'https://fgnrvnyzyiaqtzsyegzn.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbnJ2bnl6eWlhcXR6c3llZ3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwMjAxMTUsImV4cCI6MjA0ODU5NjExNX0.Mr0AIJs9f9OEEjYUXuHISVfOBNgqfwBy8w5DhKqxo90';
@@ -30,45 +28,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const AuthenticatedRoute = ({ children }: { children: React.ReactNode }) => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      console.log("Checking authentication status");
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error("Auth check error:", error);
-        toast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la vérification de votre session",
-          variant: "destructive"
-        });
-        navigate('/login');
-        return;
-      }
-
-      if (!session) {
-        console.log("No active session found");
-        toast({
-          title: "Session expirée",
-          description: "Veuillez vous reconnecter",
-          variant: "destructive"
-        });
-        navigate('/login');
-      } else {
-        console.log("Active session found for user:", session.user.email);
-      }
-    };
-
-    checkAuth();
-  }, [navigate, toast]);
-
-  return <>{children}</>;
-};
 
 export default function App() {
   console.log("App component rendering");
@@ -117,7 +76,7 @@ export default function App() {
               <Route 
                 path="/admin/*" 
                 element={
-                  <AuthenticatedRoute>
+                  <AuthenticatedRoute requireAdmin>
                     <Admin />
                   </AuthenticatedRoute>
                 } 
