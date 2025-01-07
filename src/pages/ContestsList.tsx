@@ -12,10 +12,10 @@ import { fr } from "date-fns/locale";
 const ContestsList = () => {
   const navigate = useNavigate();
 
-  const { data: contests, isLoading } = useQuery({
+  const { data: contests, isLoading, error } = useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
-      console.log('Fetching contests with prizes...');
+      console.log('Fetching active contests...');
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -46,8 +46,37 @@ const ContestsList = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-4 text-center">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">
+          Une erreur est survenue
+        </h2>
+        <p className="text-gray-600 mb-4">
+          Impossible de charger les concours. Veuillez réessayer plus tard.
+        </p>
+        <Button onClick={() => window.location.reload()}>
+          Réessayer
+        </Button>
+      </div>
+    );
+  }
+
+  if (!contests || contests.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-4 text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          Aucun concours disponible
+        </h2>
+        <p className="text-gray-600">
+          Il n'y a pas de concours actifs pour le moment. Revenez plus tard !
+        </p>
       </div>
     );
   }
@@ -64,7 +93,7 @@ const ContestsList = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contests?.map((contest) => (
+          {contests.map((contest) => (
             <Card 
               key={contest.id} 
               className="hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border-indigo-100"
