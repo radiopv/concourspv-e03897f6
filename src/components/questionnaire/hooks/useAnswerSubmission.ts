@@ -2,7 +2,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../App";
 import { useQuestionnaireState } from '../QuestionnaireState';
-import { ParticipantManager } from '../ParticipantManager';
 import { getRandomMessage } from '../messages';
 
 export const useAnswerSubmission = (contestId: string) => {
@@ -32,30 +31,67 @@ export const useAnswerSubmission = (contestId: string) => {
         return;
       }
 
-      // First ensure the participant exists and get the participation_id
-      console.log('Getting participation ID for user:', session.session.user.id);
-      const participationId = await ParticipantManager.ensureParticipantExists(
-        session.session.user.id, 
-        contestId,
-        session.session.user.email
-      );
-      
-      if (!participationId) {
-        console.error('Failed to get participation ID');
-        throw new Error("Failed to get participation ID");
+      // Get or create participant
+      let { data: participant } = await supabase
+        .from('participants')
+        .select('id')
+        .eq('email', session.session.user.email)
+        .single();
+
+      if (!participant) {
+        const { data: newParticipant } = await supabase
+          .from('participants')
+          .insert({
+            email: session.session.user.email,
+            first_name: session.session.user.email.split('@')[0],
+            last_name: 'Participant'
+          })
+          .select('id')
+          .single();
+        
+        participant = newParticipant;
       }
 
-      console.log('Submitting answer with participation ID:', participationId);
+      if (!participant) {
+        throw new Error("Failed to get or create participant");
+      }
 
-      // Now submit the answer using the participation_id
+      // Get current participation or create new one
+      let { data: participation } = await supabase
+        .from('participations')
+        .select('id, attempts')
+        .eq('participant_id', participant.id)
+        .eq('contest_id', contestId)
+        .order('attempts', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!participation) {
+        const { data: newParticipation } = await supabase
+          .from('participations')
+          .insert({
+            participant_id: participant.id,
+            contest_id: contestId,
+            attempts: 1,
+            status: 'active'
+          })
+          .select('id')
+          .single();
+        
+        participation = newParticipation;
+      }
+
+      if (!participation) {
+        throw new Error("Failed to get or create participation");
+      }
+
+      // Submit the answer
       const { error: submitError } = await supabase
         .from('participant_answers')
-        .upsert({
-          participant_id: participationId,
+        .insert({
+          participant_id: participation.id,
           question_id: currentQuestion.id,
           answer: state.selectedAnswer
-        }, {
-          onConflict: 'participant_id,question_id'
         });
 
       if (submitError) {

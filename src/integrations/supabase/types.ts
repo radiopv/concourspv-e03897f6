@@ -185,82 +185,7 @@ export type Database = {
         }
         Relationships: []
       }
-      participant_answers: {
-        Row: {
-          answer: string
-          created_at: string | null
-          id: string
-          participant_id: string | null
-          question_id: string | null
-        }
-        Insert: {
-          answer: string
-          created_at?: string | null
-          id?: string
-          participant_id?: string | null
-          question_id?: string | null
-        }
-        Update: {
-          answer?: string
-          created_at?: string | null
-          id?: string
-          participant_id?: string | null
-          question_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "participant_answers_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "participant_answers_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      participant_prizes: {
-        Row: {
-          created_at: string | null
-          id: string
-          participant_id: string | null
-          prize_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          participant_id?: string | null
-          prize_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          participant_id?: string | null
-          prize_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "participant_prizes_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "participant_prizes_prize_id_fkey"
-            columns: ["prize_id"]
-            isOneToOne: false
-            referencedRelation: "prizes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      participants: {
+      old_participants: {
         Row: {
           attempts: number | null
           completed_at: string | null
@@ -306,6 +231,159 @@ export type Database = {
             columns: ["contest_id"]
             isOneToOne: false
             referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      participant_answers: {
+        Row: {
+          answer: string
+          created_at: string | null
+          id: string
+          participant_id: string | null
+          question_id: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          id?: string
+          participant_id?: string | null
+          question_id?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          id?: string
+          participant_id?: string | null
+          question_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participant_answers_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "old_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participant_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      participant_prizes: {
+        Row: {
+          created_at: string | null
+          id: string
+          participant_id: string | null
+          prize_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          participant_id?: string | null
+          prize_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          participant_id?: string | null
+          prize_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participant_prizes_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "old_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participant_prizes_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "prizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      participants: {
+        Row: {
+          created_at: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      participations: {
+        Row: {
+          attempts: number | null
+          completed_at: string | null
+          contest_id: string
+          created_at: string | null
+          id: string
+          participant_id: string
+          score: number | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          completed_at?: string | null
+          contest_id: string
+          created_at?: string | null
+          id?: string
+          participant_id: string
+          score?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          completed_at?: string | null
+          contest_id?: string
+          created_at?: string | null
+          id?: string
+          participant_id?: string
+          score?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_participations_contest"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_participations_participant"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
             referencedColumns: ["id"]
           },
         ]

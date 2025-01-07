@@ -61,7 +61,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         if (participant) {
           const { data: participation } = await supabase
             .from('participations')
-            .select('attempts')
+            .select('*')
             .eq('participant_id', participant.id)
             .eq('contest_id', contestId)
             .order('attempts', { ascending: false })
@@ -131,7 +131,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           totalQuestions={questions.length}
           score={state.score}
           totalAnswered={state.totalAnswered}
-          correctAnswers={state.score} // Add this line to fix the build error
+          correctAnswers={state.score}
         />
       </CardHeader>
       <CardContent className="space-y-6">
