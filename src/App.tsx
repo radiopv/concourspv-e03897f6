@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -106,7 +106,6 @@ export default function App() {
                   </AuthenticatedRoute>
                 } 
               />
-              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Layout>
           <Toaster />
