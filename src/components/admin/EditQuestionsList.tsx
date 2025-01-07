@@ -63,7 +63,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           console.log('Using existing questionnaire ID:', questionnaireId);
         }
 
-        // Then get the questions
+        // Then get the questions, excluding the type field for now
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions')
           .select(`
@@ -72,7 +72,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
             options,
             correct_answer,
             article_url,
-            type,
             order_number
           `)
           .eq('questionnaire_id', questionnaireId)
@@ -83,8 +82,14 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           throw questionsError;
         }
 
-        console.log('Fetched questions:', questionsData);
-        return questionsData || [];
+        // Add default type to each question
+        const questionsWithType = questionsData?.map(q => ({
+          ...q,
+          type: 'multiple_choice' // Default type
+        })) || [];
+
+        console.log('Fetched questions:', questionsWithType);
+        return questionsWithType;
       } catch (error) {
         console.error('Error in question fetching process:', error);
         throw error;

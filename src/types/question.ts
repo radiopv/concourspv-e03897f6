@@ -4,7 +4,7 @@ export interface Question {
   options: string[];
   correct_answer: string;
   article_url?: string;
-  type: string;
+  type?: string;
   order_number?: number;
   questionnaire_id: string;
 }
