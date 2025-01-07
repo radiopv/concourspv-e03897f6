@@ -24,6 +24,25 @@ interface Participant {
   participant_answers?: ParticipantAnswer[];
 }
 
+interface ParticipationResponse {
+  id: string;
+  score: number;
+  status: string;
+  participant: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  participant_answers: {
+    question_id: string;
+    answer: string;
+    questions: {
+      correct_answer: string;
+    } | null;
+  }[];
+}
+
 const ParticipantsList = () => {
   const { contestId } = useParams();
   const { toast } = useToast();
@@ -70,7 +89,7 @@ const ParticipantsList = () => {
       }
 
       // Transform the data to match the Participant interface
-      const transformedData: Participant[] = data?.map(participation => ({
+      const transformedData: Participant[] = (data as ParticipationResponse[]).map(participation => ({
         id: participation.participant.id,
         first_name: participation.participant.first_name,
         last_name: participation.participant.last_name,
@@ -84,7 +103,7 @@ const ParticipantsList = () => {
             correct_answer: answer.questions.correct_answer
           } : undefined
         }))
-      })) || [];
+      }));
 
       console.log('Transformed participant data:', transformedData);
       return transformedData;
