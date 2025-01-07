@@ -18,7 +18,14 @@ interface TopParticipant {
   last_name: string;
 }
 
-interface ParticipationWithParticipant {
+interface ContestData {
+  id: string;
+  title: string;
+  end_date: string;
+  participants_count: number;
+}
+
+interface ParticipationData {
   id: string;
   score: number | null;
   participant: {
@@ -33,7 +40,7 @@ const ContestStatsPage = () => {
   const location = useLocation();
   const state = location.state as LocationState;
 
-  const { data: contest } = useQuery({
+  const { data: contest } = useQuery<ContestData>({
     queryKey: ['contest', contestId],
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
@@ -81,7 +88,10 @@ const ContestStatsPage = () => {
 
       if (error) throw error;
 
-      return (data as ParticipationWithParticipant[]).map(p => ({
+      // Ensure data is of the correct type and handle the mapping
+      const participations = data as unknown as ParticipationData[];
+      
+      return participations.map(p => ({
         id: p.participant.id,
         score: p.score || 0,
         first_name: p.participant.first_name,
