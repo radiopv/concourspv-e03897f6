@@ -7,12 +7,17 @@ export class ParticipantManager {
     
     try {
       // First check if participant exists
-      const { data: existingParticipant } = await supabase
+      const { data: existingParticipant, error: checkError } = await supabase
         .from('participants')
         .select('participation_id')
         .eq('id', userId)
         .eq('contest_id', contestId)
         .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking for existing participant:', checkError);
+        throw checkError;
+      }
 
       if (existingParticipant?.participation_id) {
         console.log('Found existing participant:', existingParticipant);
@@ -22,7 +27,7 @@ export class ParticipantManager {
       // If no participant exists, create a new one
       const { data: newParticipant, error: insertError } = await supabase
         .from('participants')
-        .insert([{
+        .insert({
           id: userId,
           contest_id: contestId,
           status: PARTICIPANT_STATUS.PENDING as ParticipantStatus,
@@ -30,17 +35,13 @@ export class ParticipantManager {
           last_name: 'Participant',
           email: userEmail,
           attempts: 0
-        }])
+        })
         .select('participation_id')
-        .maybeSingle();
+        .single();
 
       if (insertError) {
         console.error('Error creating participant:', insertError);
         throw insertError;
-      }
-
-      if (!newParticipant?.participation_id) {
-        throw new Error('Failed to get participation_id');
       }
 
       console.log('Created new participant:', newParticipant);
