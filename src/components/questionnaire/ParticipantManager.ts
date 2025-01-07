@@ -37,18 +37,15 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     console.log('Creating new participant...');
     const { data: newParticipant, error: createError } = await supabase
       .from('participants')
-      .upsert([{
+      .insert([{
         id: userId,
         contest_id: contestId,
         status: PARTICIPANT_STATUS.PENDING as ParticipantStatus,
         first_name: userEmail.split('@')[0],
         last_name: 'Participant',
         email: userEmail,
-        attempts: 0,
-        participation_id: crypto.randomUUID()
-      }], {
-        onConflict: 'id,contest_id'
-      })
+        attempts: 0
+      }])
       .select('participation_id')
       .maybeSingle();
 
