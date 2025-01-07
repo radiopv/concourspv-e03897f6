@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Contest as ContestType } from "@/types/contest";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Loader } from "lucide-react";
 
 const Contest = () => {
@@ -21,6 +21,7 @@ const Contest = () => {
       console.log('Fetching contest with ID:', id);
       if (!id) throw new Error('Contest ID is required');
       
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('contests')
         .select(`
@@ -51,6 +52,7 @@ const Contest = () => {
         `)
         .eq('id', id)
         .eq('status', 'active')
+        .gte('end_date', now)
         .single();
       
       if (error) {
@@ -59,14 +61,14 @@ const Contest = () => {
       }
 
       if (!data) {
-        throw new Error('Contest not found');
+        throw new Error('Contest not found or no longer available');
       }
 
       console.log('Contest data:', data);
       return data as ContestType;
     },
     meta: {
-      errorMessage: "Le concours n'a pas pu être chargé. Veuillez réessayer plus tard."
+      errorMessage: "Le concours n'est plus disponible ou a expiré."
     }
   });
 
@@ -86,17 +88,17 @@ const Contest = () => {
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center">
         <Card className="max-w-lg w-full mx-4">
           <CardHeader>
-            <CardTitle className="text-center text-red-600">Concours non trouvé</CardTitle>
+            <CardTitle className="text-center text-red-600">Concours non disponible</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-center text-gray-600">
-              Le concours que vous recherchez n'existe pas ou n'est plus disponible.
+              Ce concours n'est plus disponible ou a expiré.
             </p>
             <Button 
               className="w-full" 
               onClick={() => navigate('/contests')}
             >
-              Retour aux concours
+              Voir les concours disponibles
             </Button>
           </CardContent>
         </Card>
@@ -140,12 +142,14 @@ const Contest = () => {
                 </div>
               )}
             </div>
-            <Button 
-              className="mt-4" 
-              onClick={() => setShowQuestionnaire(true)}
-            >
-              Participer
-            </Button>
+            {!showQuestionnaire && (
+              <Button 
+                className="mt-4 w-full" 
+                onClick={() => setShowQuestionnaire(true)}
+              >
+                Participer
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
