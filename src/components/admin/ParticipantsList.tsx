@@ -1,12 +1,13 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParticipantsTable } from "./participants/ParticipantsTable";
 import { ParticipantsActions } from "./participants/ParticipantsActions";
 import { useParams } from "react-router-dom";
 
+// Types définis selon la structure Supabase
 interface Participant {
   id: string;
   first_name: string;
@@ -14,12 +15,15 @@ interface Participant {
   email: string;
 }
 
+interface Question {
+  id: string;
+  correct_answer: string;
+}
+
 interface ParticipantAnswer {
   question_id: string;
   answer: string;
-  questions: {
-    correct_answer: string;
-  };
+  questions: Question;
 }
 
 interface ParticipationResponse {
@@ -37,7 +41,7 @@ const ParticipantsList = () => {
   const queryClient = useQueryClient();
 
   const { data: participations, isLoading, error } = useQuery({
-    queryKey: ['participants', contestId],
+    queryKey: ['participations', contestId],
     queryFn: async () => {
       if (!contestId) return [];
 
@@ -48,7 +52,7 @@ const ParticipantsList = () => {
           score,
           status,
           completed_at,
-          participant:participants!inner (
+          participant:participants (
             id,
             first_name,
             last_name,
@@ -58,6 +62,7 @@ const ParticipantsList = () => {
             question_id,
             answer,
             questions (
+              id,
               correct_answer
             )
           )
@@ -68,25 +73,24 @@ const ParticipantsList = () => {
         console.error('Error fetching participations:', error);
         throw error;
       }
-      
+
       if (!data) return [];
 
-      // Transform the data to match ParticipationResponse type
-      const transformedData: ParticipationResponse[] = data.map(item => ({
+      return data.map((item): ParticipationResponse => ({
         id: item.id,
         score: item.score,
         status: item.status,
         completed_at: item.completed_at,
         participant: item.participant,
-        participant_answers: item.participant_answers || []
+        participant_answers: Array.isArray(item.participant_answers) 
+          ? item.participant_answers 
+          : []
       }));
-
-      return transformedData;
     },
     enabled: !!contestId
   });
 
-  const deleteParticipantMutation = useMutation({
+  const deleteParticipationMutation = useMutation({
     mutationFn: async (participationId: string) => {
       const { error } = await supabase
         .from('participations')
@@ -96,13 +100,14 @@ const ParticipantsList = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
+      queryClient.invalidateQueries({ queryKey: ['participations', contestId] });
       toast({
         title: "Succès",
         description: "Le participant a été supprimé",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Delete error:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer le participant",
@@ -158,7 +163,7 @@ const ParticipantsList = () => {
           <ParticipantsTable 
             participants={eligibleParticipants} 
             title="Participants Éligibles (Score ≥ 70%)"
-            onDelete={(id) => deleteParticipantMutation.mutate(id)}
+            onDelete={(id) => deleteParticipationMutation.mutate(id)}
           />
         </TabsContent>
 
@@ -166,7 +171,7 @@ const ParticipantsList = () => {
           <ParticipantsTable 
             participants={ineligibleParticipants} 
             title="Participants Non Éligibles (Score < 70%)"
-            onDelete={(id) => deleteParticipantMutation.mutate(id)}
+            onDelete={(id) => deleteParticipationMutation.mutate(id)}
           />
         </TabsContent>
       </Tabs>
