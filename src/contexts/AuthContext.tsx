@@ -1,95 +1,69 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../App';
-import { useToast } from '@/hooks/use-toast';
+import { Session, User } from '@supabase/supabase-js';
 
 interface AuthContextType {
-  session: Session | null;
   user: User | null;
-  isAdmin: boolean;
+  session: Session | null;
   isLoading: boolean;
-  signOut: () => Promise<void>;
+  isAdmin: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  session: null,
+  isLoading: true,
+  isAdmin: false,
+});
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     console.log('AuthProvider: Initializing');
-    
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Error getting session:', error);
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de récupérer votre session',
-          variant: 'destructive',
-        });
-      } else {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsAdmin(session?.user?.email === 'renaudcanuel@me.com');
-      }
-      setIsLoading(false);
-    });
+    let mounted = true;
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event);
-        if (session?.user) {
-          console.log('Current session:', session.user.email);
-        }
-        
+    const cleanupSubscriptions = () => {
+      console.log('Cleaning up auth subscriptions');
+      supabase.auth.onAuthStateChange(() => {});
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted) {
         setSession(session);
         setUser(session?.user ?? null);
         setIsAdmin(session?.user?.email === 'renaudcanuel@me.com');
         setIsLoading(false);
       }
-    );
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event);
+      if (mounted) {
+        console.log('Current session:', session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsAdmin(session?.user?.email === 'renaudcanuel@me.com');
+        setIsLoading(false);
+      }
+    });
 
     return () => {
-      console.log('Cleaning up auth subscriptions');
+      mounted = false;
       subscription.unsubscribe();
+      cleanupSubscriptions();
     };
-  }, [toast]);
-
-  const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      toast({
-        title: 'Déconnexion réussie',
-        description: 'À bientôt !',
-      });
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de vous déconnecter',
-        variant: 'destructive',
-      });
-    }
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ session, user, isAdmin, isLoading, signOut }}>
+    <AuthContext.Provider value={{ user, session, isLoading, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

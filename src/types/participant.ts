@@ -1,10 +1,11 @@
-export const PARTICIPANT_STATUS = {
-  PENDING: 'pending',
-  COMPLETED: 'completed',
-  WINNER: 'winner'
-} as const;
+export enum PARTICIPANT_STATUS {
+  PENDING = 'pending',
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  WINNER = 'winner'
+}
 
-export type ParticipantStatus = typeof PARTICIPANT_STATUS[keyof typeof PARTICIPANT_STATUS];
+export type ParticipantStatus = PARTICIPANT_STATUS;
 
 export interface Participant {
   id: string;
