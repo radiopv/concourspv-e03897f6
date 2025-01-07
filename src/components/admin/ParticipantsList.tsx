@@ -47,6 +47,7 @@ const ParticipantsList = () => {
           id,
           score,
           status,
+          completed_at,
           participant:participants!inner (
             id,
             first_name,
@@ -70,7 +71,13 @@ const ParticipantsList = () => {
         id: item.id,
         score: item.score,
         status: item.status,
-        participant: item.participant,
+        completed_at: item.completed_at,
+        participant: {
+          id: item.participant.id,
+          first_name: item.participant.first_name,
+          last_name: item.participant.last_name,
+          email: item.participant.email
+        },
         participant_answers: item.participant_answers || []
       }));
 
