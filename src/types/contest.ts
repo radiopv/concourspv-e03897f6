@@ -19,18 +19,10 @@ export interface Contest {
       shop_url?: string;
     };
   }[];
-  questionnaires?: {
+  questions?: {
     id: string;
     title: string;
     description?: string;
-    questions?: {
-      id: string;
-      question_text: string;
-      options?: string[];
-      correct_answer?: string;
-      article_url?: string;
-      order_number?: number;
-    }[];
   }[];
 }
 
