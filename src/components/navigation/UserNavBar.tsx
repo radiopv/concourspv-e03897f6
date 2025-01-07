@@ -1,34 +1,15 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useToast } from '@/hooks/use-toast';
+import { LogoutButton } from '@/components/auth/LogoutButton';
 
 const UserNavBar = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
   const isActive = (path: string) => {
     return location.pathname === path;
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Déconnexion réussie",
-        description: "À bientôt !",
-      });
-      navigate('/login');
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la déconnexion.",
-      });
-    }
   };
 
   return (
@@ -77,12 +58,7 @@ const UserNavBar = () => {
                     Mon Profil
                   </span>
                 </Link>
-                <Button 
-                  variant="outline" 
-                  onClick={handleSignOut}
-                >
-                  Déconnexion
-                </Button>
+                <LogoutButton />
               </>
             ) : (
               <Link to="/login">
