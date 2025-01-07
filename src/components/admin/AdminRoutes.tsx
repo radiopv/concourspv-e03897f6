@@ -1,71 +1,204 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../App';
-import ContestList from './ContestList';
-import ParticipantsList from './ParticipantsList';
-import { useEffect } from 'react';
-import { useToast } from '@/components/ui/use-toast';
-import AdminDashboard from './AdminDashboard';
-import GlobalSettings from './GlobalSettings';
-import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
-import QuestionBank from '@/pages/QuestionBank';
-import { EmailManager } from './EmailManager';
-import AdminContestManager from './AdminContestManager';
-import { useContestQueries } from './hooks/useContestQueries';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { Routes, Route, Link } from "react-router-dom";
+import AdminDashboard from "./AdminDashboard";
+import AdminContestManager from "./AdminContestManager";
+import QuestionBank from "../../pages/QuestionBank";
+import PrizeCatalogManager from "./prize-catalog/PrizeCatalogManager";
+import ParticipantsList from "./ParticipantsList";
+import DrawManager from "./DrawManager";
+import Winners from "../../pages/Winners";
+import GlobalSettings from "./GlobalSettings";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const AdminRoutes = () => {
-  const { toast } = useToast();
+  const { contestId } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { contestsWithCounts, isLoading: contestsLoading } = useContestQueries();
-  const { user, isAdmin, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      toast({
-        title: "Accès refusé",
-        description: "Vous n'avez pas les droits d'accès à cette section.",
-        variant: "destructive",
-      });
-      navigate('/');
-    }
-  }, [isAdmin, authLoading, toast, navigate]);
+    const checkAdminAccess = async () => {
+      console.log("Checking admin access for user:", user?.email);
+      
+      if (!user) {
+        console.log("No user found, redirecting to login");
+        toast({
+          title: "Accès refusé",
+          description: "Veuillez vous connecter",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
 
-  const handleSelectContest = (contestId: string) => {
-    navigate(`/admin/contests/${contestId}`);
-  };
+      if (user.email !== "renaudcanuel@me.com") {
+        console.log("Non-admin user detected, redirecting");
+        toast({
+          title: "Accès refusé",
+          description: "Vous n'avez pas les droits d'administration",
+          variant: "destructive",
+        });
+        navigate('/dashboard');
+        return;
+      }
 
-  if (authLoading || contestsLoading) {
-    return <div>Chargement...</div>;
-  }
+      console.log("Admin access granted");
+    };
 
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
+    checkAdminAccess();
+  }, [user, navigate, toast]);
+
+  const { data: contest, isLoading: isContestLoading } = useQuery({
+    queryKey: ['contest', contestId],
+    queryFn: async () => {
+      if (!contestId) return null;
+      console.log("Fetching contest data for:", contestId);
+      
+      const { data, error } = await supabase
+        .from('contests')
+        .select(`
+          *,
+          participants (
+            id,
+            first_name,
+            last_name,
+            email,
+            score,
+            status
+          )
+        `)
+        .eq('id', contestId)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching contest:", error);
+        throw error;
+      }
+      
+      console.log("Contest data fetched:", data);
+      return data;
+    },
+    enabled: !!contestId && !!user
+  });
+
+  if (!user || user.email !== "renaudcanuel@me.com") {
+    console.log("User not authorized for admin routes");
+    return null;
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<AdminDashboard />} />
-      <Route 
-        path="/contests" 
-        element={
-          <ContestList 
-            contests={contestsWithCounts || []} 
-            onSelectContest={handleSelectContest}
-          />
-        } 
-      />
-      <Route path="/contests/new" element={<AdminContestManager />} />
-      <Route path="/contests/:contestId" element={<AdminContestManager />} />
-      <Route path="/contests/:contestId/participants" element={<ParticipantsList />} />
-      <Route path="/participants" element={<ParticipantsList />} />
-      <Route path="/settings" element={<GlobalSettings />} />
-      <Route path="/prizes" element={<PrizeCatalogManager />} />
-      <Route path="/questions" element={<QuestionBank />} />
-      <Route path="/emails" element={<EmailManager />} />
-      <Route path="*" element={<Navigate to="/admin" replace />} />
-    </Routes>
+    <div className="container mx-auto p-4">
+      <nav className="mb-8">
+        <ul className="flex space-x-4 overflow-x-auto pb-4">
+          <li>
+            <Link
+              to="/admin"
+              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+            >
+              Tableau de bord
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/admin/contests"
+              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+            >
+              Concours
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/admin/questions"
+              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+            >
+              Banque de questions
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/admin/prizes"
+              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+            >
+              Catalogue des prix
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/admin/settings"
+              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+            >
+              Paramètres
+            </Link>
+          </li>
+          {contestId && (
+            <>
+              <li>
+                <Link
+                  to={`/admin/contests/${contestId}/participants`}
+                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+                >
+                  Participants
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to={`/admin/contests/${contestId}/draw`}
+                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+                >
+                  Tirage
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to={`/admin/contests/${contestId}/winners`}
+                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+                >
+                  Gagnants
+                </Link>
+              </li>
+            </>
+          )}
+        </ul>
+      </nav>
+
+      <Routes>
+        <Route index element={<AdminDashboard />} />
+        <Route path="contests" element={<AdminContestManager />} />
+        <Route path="questions" element={<QuestionBank />} />
+        <Route path="prizes" element={<PrizeCatalogManager />} />
+        <Route path="settings" element={<GlobalSettings />} />
+        <Route 
+          path="contests/:contestId/participants" 
+          element={<ParticipantsList />} 
+        />
+        <Route 
+          path="contests/:contestId/draw" 
+          element={
+            isContestLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : contest ? (
+              <DrawManager contestId={contestId || ''} contest={contest} />
+            ) : (
+              <div className="text-center p-4 text-gray-500">
+                Aucune donnée de concours disponible
+              </div>
+            )
+          } 
+        />
+        <Route 
+          path="contests/:contestId/winners" 
+          element={<Winners />} 
+        />
+      </Routes>
+    </div>
   );
 };
 

@@ -47,10 +47,6 @@ const AuthenticatedRoute = ({ children, requireAdmin = false }: AuthenticatedRou
     );
   }
 
-  if (requireAdmin && !isAdmin) {
-    return null;
-  }
-
   return <>{children}</>;
 };
 

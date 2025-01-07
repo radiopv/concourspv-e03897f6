@@ -67,7 +67,9 @@ const QuestionBank = () => {
               {isLoading ? (
                 <div>Chargement...</div>
               ) : (
-                <QuestionBankList mode="manage" />
+                <QuestionBankList 
+                  questions={filteredQuestions || []} 
+                />
               )}
             </CardContent>
           </Card>
