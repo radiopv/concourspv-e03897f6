@@ -1,5 +1,4 @@
-import { Users, Percent } from "lucide-react";
-import { calculateWinningChance } from "../../../utils/contestCalculations";
+import { Users, Trophy } from "lucide-react";
 
 interface ParticipationStatsProps {
   participantsCount: number;
@@ -11,7 +10,7 @@ const ParticipationStats = ({ participantsCount }: ParticipationStatsProps) => {
       <div className="bg-white/50 p-4 rounded-lg">
         <p className="font-medium flex items-center gap-1 mb-1">
           <Users className="w-4 h-4 text-indigo-600" />
-          Participants éligibles
+          Participants
         </p>
         <p className="text-2xl font-bold text-indigo-600">
           {participantsCount}
@@ -19,11 +18,11 @@ const ParticipationStats = ({ participantsCount }: ParticipationStatsProps) => {
       </div>
       <div className="bg-white/50 p-4 rounded-lg">
         <p className="font-medium flex items-center gap-1 mb-1">
-          <Percent className="w-4 h-4 text-green-600" />
-          Chances de gagner
+          <Trophy className="w-4 h-4 text-amber-600" />
+          Lots à gagner
         </p>
-        <p className="text-2xl font-bold text-green-600">
-          {calculateWinningChance(participantsCount)}%
+        <p className="text-lg font-medium text-amber-600">
+          Tentez votre chance !
         </p>
       </div>
     </div>
