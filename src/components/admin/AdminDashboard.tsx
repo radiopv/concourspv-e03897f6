@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 const AdminDashboard = () => {
   const [isNewContestOpen, setIsNewContestOpen] = useState(false);
+  const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: contests, isLoading } = useQuery({
@@ -40,6 +41,11 @@ const AdminDashboard = () => {
     },
     enabled: true
   });
+
+  const handleSelectContest = (id: string) => {
+    setSelectedContestId(id);
+    setIsNewContestOpen(true);
+  };
 
   if (isLoading) {
     return <div>Chargement...</div>;
@@ -113,12 +119,13 @@ const AdminDashboard = () => {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-2">
-            <AdminContestManager />
+            <AdminContestManager contestId={selectedContestId} />
           </CollapsibleContent>
         </Collapsible>
 
         <ContestList 
           contests={contests || []} 
+          onSelectContest={handleSelectContest}
         />
       </div>
     </div>
