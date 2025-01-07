@@ -34,9 +34,14 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
         .from('questionnaires')
         .select('id')
         .eq('contest_id', contestId)
-        .single();
+        .maybeSingle();
       
       if (questionnaireError) throw questionnaireError;
+
+      // If no questionnaire exists, return empty array
+      if (!questionnaire) {
+        return [];
+      }
 
       // Then get the questions for this questionnaire
       const { data, error } = await supabase

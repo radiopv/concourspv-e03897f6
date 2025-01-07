@@ -44,7 +44,7 @@ const ParticipantsList = () => {
           id,
           score,
           status,
-          participants (
+          participant:participants (
             id,
             first_name,
             last_name,
@@ -64,14 +64,14 @@ const ParticipantsList = () => {
 
       // Transform the data to match the expected format
       const transformedData = data?.map(participation => ({
-        id: participation.participants.id,
-        first_name: participation.participants.first_name,
-        last_name: participation.participants.last_name,
-        email: participation.participants.email,
+        id: participation.participant.id,
+        first_name: participation.participant.first_name,
+        last_name: participation.participant.last_name,
+        email: participation.participant.email,
         score: participation.score,
         status: participation.status,
         participant_answers: participation.participant_answers
-      })) as Participant[];
+      }));
 
       return transformedData || [];
     }
