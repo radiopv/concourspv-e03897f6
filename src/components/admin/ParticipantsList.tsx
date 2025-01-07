@@ -72,7 +72,16 @@ const ParticipantsList = () => {
         throw error;
       }
 
-      return (data || []) as ParticipationResponse[];
+      // Ensure proper typing of the response
+      const typedData = (data || []).map((item): ParticipationResponse => ({
+        id: item.id,
+        score: item.score,
+        status: item.status,
+        participant: item.participant,
+        participant_answers: item.participant_answers || []
+      }));
+
+      return typedData;
     }
   });
 
