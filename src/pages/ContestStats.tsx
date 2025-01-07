@@ -18,6 +18,16 @@ interface TopParticipant {
   last_name: string;
 }
 
+interface ParticipationData {
+  id: string;
+  score: number | null;
+  participant: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  };
+}
+
 const ContestStatsPage = () => {
   const { id: contestId } = useParams<{ id: string }>();
   const location = useLocation();
@@ -73,7 +83,7 @@ const ContestStatsPage = () => {
 
       if (error) throw error;
 
-      return (data || []).map(p => ({
+      return (data as ParticipationData[]).map(p => ({
         id: p.participant.id,
         score: p.score || 0,
         first_name: p.participant.first_name,
