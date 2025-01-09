@@ -5,14 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2, Plus, Upload, Link as LinkIcon } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
+import { Plus, Edit, Trash2, Image } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -52,16 +53,22 @@ const PrizeCatalogManager = () => {
     image_url: '',
     shop_url: '',
   });
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
+      console.log('Fetching prize catalog...');
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching prize catalog:', error);
+        throw error;
+      }
+      console.log('Prize catalog data:', data);
       return data;
     }
   });
@@ -77,19 +84,16 @@ const PrizeCatalogManager = () => {
         throw new Error('Le fichier doit être une image');
       }
 
-      // Generate a unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('prizes')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('prizes')
         .getPublicUrl(filePath);
@@ -117,6 +121,105 @@ const PrizeCatalogManager = () => {
     setFormData({ ...formData, image_url: publicUrl });
   };
 
+  const addPrizeMutation = useMutation({
+    mutationFn: async (data: PrizeFormData) => {
+      console.log("Adding prize:", data);
+      const { error } = await supabase
+        .from('prize_catalog')
+        .insert([data]);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      setFormData({
+        name: '',
+        description: '',
+        value: '',
+        image_url: '',
+        shop_url: '',
+      });
+      setDialogOpen(false);
+      toast({
+        title: "Succès",
+        description: "Le prix a été ajouté au catalogue",
+      });
+    },
+    onError: (error) => {
+      console.error("Add prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le prix",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updatePrizeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: PrizeFormData }) => {
+      console.log("Updating prize:", id, data);
+      const { error } = await supabase
+        .from('prize_catalog')
+        .update(data)
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      setEditingPrize(null);
+      setDialogOpen(false);
+      toast({
+        title: "Succès",
+        description: "Le prix a été mis à jour",
+      });
+    },
+    onError: (error) => {
+      console.error("Update prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le prix",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deletePrizeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      console.log("Deleting prize:", id);
+      const { error } = await supabase
+        .from('prize_catalog')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été supprimé du catalogue",
+      });
+    },
+    onError: (error) => {
+      console.error("Delete prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le prix",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingPrize) {
+      updatePrizeMutation.mutate({ id: editingPrize.id, data: formData });
+    } else {
+      addPrizeMutation.mutate(formData);
+    }
+  };
+
   const handleEdit = (prize: any) => {
     setEditingPrize(prize);
     setFormData({
@@ -126,72 +229,7 @@ const PrizeCatalogManager = () => {
       image_url: prize.image_url || '',
       shop_url: prize.shop_url || '',
     });
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('prize_catalog')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
-      toast({
-        title: "Succès",
-        description: "Le prix a été supprimé du catalogue",
-      });
-    } catch (error) {
-      console.error("Delete prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le prix",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingPrize) {
-        const { error } = await supabase
-          .from('prize_catalog')
-          .update(formData)
-          .eq('id', editingPrize.id);
-        
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('prize_catalog')
-          .insert([formData]);
-        
-        if (error) throw error;
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
-      setFormData({
-        name: '',
-        description: '',
-        value: '',
-        image_url: '',
-        shop_url: '',
-      });
-      setEditingPrize(null);
-      
-      toast({
-        title: "Succès",
-        description: editingPrize ? "Le prix a été mis à jour" : "Le prix a été ajouté au catalogue",
-      });
-    } catch (error) {
-      console.error("Submit prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de sauvegarder le prix",
-        variant: "destructive",
-      });
-    }
+    setDialogOpen(true);
   };
 
   if (isLoading) {
@@ -200,9 +238,18 @@ const PrizeCatalogManager = () => {
 
   return (
     <div className="space-y-6">
-      <Dialog>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
-          <Button className="w-full">
+          <Button className="w-full" onClick={() => {
+            setEditingPrize(null);
+            setFormData({
+              name: '',
+              description: '',
+              value: '',
+              image_url: '',
+              shop_url: '',
+            });
+          }}>
             <Plus className="w-4 h-4 mr-2" />
             Ajouter un prix au catalogue
           </Button>
@@ -212,6 +259,9 @@ const PrizeCatalogManager = () => {
             <DialogTitle>
               {editingPrize ? 'Modifier le prix' : 'Ajouter un prix au catalogue'}
             </DialogTitle>
+            <DialogDescription>
+              Remplissez les informations du prix et ajoutez une image.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -316,7 +366,7 @@ const PrizeCatalogManager = () => {
         {prizes?.map((prize) => (
           <Card key={prize.id} className="hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
-              {prize.image_url && (
+              {prize.image_url ? (
                 <div className="aspect-video relative mb-4">
                   <img
                     src={prize.image_url}
@@ -334,7 +384,27 @@ const PrizeCatalogManager = () => {
                     <Button
                       variant="destructive"
                       size="icon"
-                      onClick={() => handleDelete(prize.id)}
+                      onClick={() => deletePrizeMutation.mutate(prize.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="aspect-video relative mb-4 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <Image className="h-12 w-12 text-gray-400" />
+                  <div className="absolute top-2 right-2 space-x-2">
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => handleEdit(prize)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => deletePrizeMutation.mutate(prize.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -342,10 +412,9 @@ const PrizeCatalogManager = () => {
                 </div>
               )}
               <h3 className="font-semibold mb-2">{prize.name}</h3>
-              <div 
-                className="text-sm text-gray-500 mb-2 prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: prize.description || '' }}
-              />
+              {prize.description && (
+                <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">
                   {prize.value ? `${prize.value}€` : 'Prix non défini'}
@@ -357,7 +426,7 @@ const PrizeCatalogManager = () => {
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800"
                   >
-                    <LinkIcon className="h-4 w-4" />
+                    Voir le produit
                   </a>
                 )}
               </div>
