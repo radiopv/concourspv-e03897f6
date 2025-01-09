@@ -1,13 +1,13 @@
-import { useState } from "react";
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../App";
-import { useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { ExternalLink, Link, Pencil, Save, X } from "lucide-react";
+import { ExternalLink, Link, Pencil, Save, X, Archive } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface Question {
   id: string;
@@ -15,20 +15,36 @@ interface Question {
   options: string[];
   correct_answer: string;
   article_url?: string;
-  status: 'available' | 'used';
+  status: 'available' | 'used' | 'archived';
+  assigned_contest?: {
+    id: string;
+    title: string;
+  };
 }
 
-interface QuestionBankListProps {
-  questions: Question[];
-}
-
-const QuestionBankList = ({ questions }: QuestionBankListProps) => {
+const QuestionBankList = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [selectedContestId, setSelectedContestId] = useState<string>("");
   const [editingUrl, setEditingUrl] = useState<string | null>(null);
   const [newUrl, setNewUrl] = useState<string>("");
+
+  const { data: questions } = useQuery({
+    queryKey: ['question-bank'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('question_bank')
+        .select(`
+          *,
+          assigned_contest:contests(id, title)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Question[];
+    }
+  });
 
   const { data: contests } = useQuery({
     queryKey: ['active-contests'],
@@ -71,7 +87,7 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
     }
   };
 
-  const handleAddToContest = async () => {
+  const handleAssignToContest = async () => {
     if (!selectedContestId || selectedQuestions.length === 0) {
       toast({
         title: "Erreur",
@@ -82,82 +98,37 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
     }
 
     try {
-      console.log("Début de l'ajout des questions au concours:", selectedContestId);
-      console.log("Questions sélectionnées:", selectedQuestions);
+      // Mettre à jour le statut des questions dans la banque
+      const { error: updateError } = await supabase
+        .from('question_bank')
+        .update({ 
+          status: 'used',
+          contest_id: selectedContestId 
+        })
+        .in('id', selectedQuestions);
 
-      // Vérifier que le concours existe
-      const { data: contestCheck, error: contestError } = await supabase
-        .from('contests')
-        .select('id')
-        .eq('id', selectedContestId)
-        .single();
+      if (updateError) throw updateError;
 
-      if (contestError || !contestCheck) {
-        console.error("Erreur lors de la vérification du concours:", contestError);
-        throw new Error("Le concours sélectionné n'existe pas");
-      }
-
-      // Récupérer le dernier numéro d'ordre
-      const { data: existingQuestions, error: orderError } = await supabase
-        .from('questions')
-        .select('order_number')
-        .eq('contest_id', selectedContestId)
-        .order('order_number', { ascending: false })
-        .limit(1);
-
-      if (orderError) {
-        console.error("Erreur lors de la récupération du dernier numéro d'ordre:", orderError);
-        throw orderError;
-      }
-
-      const startOrderNumber = (existingQuestions?.[0]?.order_number || 0) + 1;
-      console.log("Numéro d'ordre de départ:", startOrderNumber);
-
-      // Préparer les questions à insérer
-      const selectedQuestionsData = questions
-        .filter(q => selectedQuestions.includes(q.id))
+      // Ajouter les questions au concours
+      const questionsToAdd = questions
+        ?.filter(q => selectedQuestions.includes(q.id))
         .map((q, index) => ({
           contest_id: selectedContestId,
           question_text: q.question_text,
           options: q.options,
           correct_answer: q.correct_answer,
           article_url: q.article_url,
-          order_number: startOrderNumber + index,
-          type: 'multiple_choice'
+          order_number: index + 1
         }));
 
-      console.log("Questions préparées pour l'insertion:", selectedQuestionsData);
-
-      // Insérer les questions
       const { error: insertError } = await supabase
         .from('questions')
-        .insert(selectedQuestionsData);
+        .insert(questionsToAdd);
 
-      if (insertError) {
-        console.error("Erreur lors de l'insertion des questions:", insertError);
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
-      console.log("Questions insérées avec succès");
-
-      // Mettre à jour le statut des questions dans la banque
-      const { error: updateError } = await supabase
-        .from('question_bank')
-        .update({ status: 'used' })
-        .in('id', selectedQuestions);
-
-      if (updateError) {
-        console.error("Erreur lors de la mise à jour du statut des questions:", updateError);
-        throw updateError;
-      }
-
-      console.log("Statut des questions mis à jour avec succès");
-
-      // Rafraîchir les données
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['question-bank'] }),
-        queryClient.invalidateQueries({ queryKey: ['questions', selectedContestId] })
-      ]);
+      await queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      await queryClient.invalidateQueries({ queryKey: ['questions', selectedContestId] });
 
       toast({
         title: "Succès",
@@ -165,11 +136,35 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
       });
 
       setSelectedQuestions([]);
+      setSelectedContestId("");
     } catch (error) {
-      console.error('Erreur complète:', error);
       toast({
         title: "Erreur",
         description: "Erreur lors de l'ajout des questions au concours",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleArchive = async (questionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('question_bank')
+        .update({ status: 'archived' })
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      
+      toast({
+        title: "Succès",
+        description: "La question a été archivée",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'archiver la question",
         variant: "destructive",
       });
     }
@@ -191,22 +186,32 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
           </SelectContent>
         </Select>
         <Button 
-          onClick={handleAddToContest}
+          onClick={handleAssignToContest}
           disabled={!selectedContestId || selectedQuestions.length === 0}
         >
           Ajouter au concours ({selectedQuestions.length} sélectionnée{selectedQuestions.length > 1 ? 's' : ''})
         </Button>
       </div>
 
-      {questions.map((question) => (
+      {questions?.map((question) => (
         <Card key={question.id} className={`
           ${selectedQuestions.includes(question.id) ? 'border-primary' : ''}
-          ${question.status === 'used' ? 'opacity-50' : ''}
+          ${question.status === 'archived' ? 'opacity-50' : ''}
         `}>
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 space-y-4">
-                <p className="font-medium">{question.question_text}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{question.question_text}</p>
+                  {question.status === 'used' && question.assigned_contest && (
+                    <Badge variant="secondary">
+                      Utilisée dans: {question.assigned_contest.title}
+                    </Badge>
+                  )}
+                  {question.status === 'archived' && (
+                    <Badge variant="outline">Archivée</Badge>
+                  )}
+                </div>
                 <ul className="mt-2 space-y-1">
                   {question.options.map((option, index) => (
                     <li key={index} className={option === question.correct_answer ? "text-green-600" : ""}>
@@ -271,19 +276,31 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
                   )}
                 </div>
               </div>
-              <Button
-                variant="outline"
-                disabled={question.status === 'used'}
-                onClick={() => {
-                  if (selectedQuestions.includes(question.id)) {
-                    setSelectedQuestions(prev => prev.filter(id => id !== question.id));
-                  } else {
-                    setSelectedQuestions(prev => [...prev, question.id]);
-                  }
-                }}
-              >
-                {selectedQuestions.includes(question.id) ? 'Désélectionner' : 'Sélectionner'}
-              </Button>
+              <div className="flex flex-col gap-2">
+                {question.status === 'available' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (selectedQuestions.includes(question.id)) {
+                        setSelectedQuestions(prev => prev.filter(id => id !== question.id));
+                      } else {
+                        setSelectedQuestions(prev => [...prev, question.id]);
+                      }
+                    }}
+                  >
+                    {selectedQuestions.includes(question.id) ? 'Désélectionner' : 'Sélectionner'}
+                  </Button>
+                )}
+                {question.status !== 'archived' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleArchive(question.id)}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Archiver
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
