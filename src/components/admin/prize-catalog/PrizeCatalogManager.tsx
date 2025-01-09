@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Award, DollarSign, Image, Link as LinkIcon, Edit, Trash2, Plus } from 'lucide-react';
+import { Award, DollarSign, Image, Link as LinkIcon, Edit, Trash2, Plus, Upload } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -16,15 +16,21 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const PLACEHOLDER_IMAGES = [
+  'photo-1649972904349-6e44c42644a7',
+  'photo-1488590528505-98d2b5aba04b',
+  'photo-1518770660439-4636190af475',
+  'photo-1461749280684-dccba630e2f6',
+  'photo-1486312338219-ce68d2c6f44d',
+  'photo-1581091226825-a6a2a5aee158'
+];
 
 interface PrizeFormData {
   name: string;
@@ -39,8 +45,6 @@ const PrizeCatalogManager = () => {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [editingPrize, setEditingPrize] = useState<any>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [prizeToDelete, setPrizeToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState<PrizeFormData>({
     name: '',
     description: '',
@@ -52,14 +56,12 @@ const PrizeCatalogManager = () => {
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
-      console.log('Fetching prize catalog...');
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
         .order('name');
       
       if (error) throw error;
-      console.log('Prize catalog data:', data);
       return data;
     }
   });
@@ -70,16 +72,24 @@ const PrizeCatalogManager = () => {
       const file = event.target.files?.[0];
       if (!file) return;
 
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Le fichier doit être une image');
+      }
+
+      // Generate a unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
+      // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('prizes')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('prizes')
         .getPublicUrl(filePath);
@@ -102,14 +112,16 @@ const PrizeCatalogManager = () => {
     }
   };
 
+  const handlePlaceholderSelect = (imageId: string) => {
+    const publicUrl = `https://images.unsplash.com/${imageId}?auto=format&fit=crop&w=800&q=80`;
+    setFormData({ ...formData, image_url: publicUrl });
+  };
+
   const addPrizeMutation = useMutation({
     mutationFn: async (data: PrizeFormData) => {
       const { error } = await supabase
         .from('prize_catalog')
-        .insert([{
-          ...data,
-          value: data.value === '' ? null : data.value
-        }]);
+        .insert([data]);
       
       if (error) throw error;
     },
@@ -141,10 +153,7 @@ const PrizeCatalogManager = () => {
     mutationFn: async ({ id, data }: { id: string; data: PrizeFormData }) => {
       const { error } = await supabase
         .from('prize_catalog')
-        .update({
-          ...data,
-          value: data.value === '' ? null : data.value
-        })
+        .update(data)
         .eq('id', id);
       
       if (error) throw error;
@@ -178,8 +187,6 @@ const PrizeCatalogManager = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
-      setShowDeleteDialog(false);
-      setPrizeToDelete(null);
       toast({
         title: "Succès",
         description: "Le prix a été supprimé du catalogue",
@@ -195,37 +202,6 @@ const PrizeCatalogManager = () => {
     }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingPrize) {
-      updatePrizeMutation.mutate({ id: editingPrize.id, data: formData });
-    } else {
-      addPrizeMutation.mutate(formData);
-    }
-  };
-
-  const handleEdit = (prize: any) => {
-    setEditingPrize(prize);
-    setFormData({
-      name: prize.name,
-      description: prize.description || '',
-      value: prize.value || '',
-      image_url: prize.image_url || '',
-      shop_url: prize.shop_url || '',
-    });
-  };
-
-  const handleDelete = (prizeId: string) => {
-    setPrizeToDelete(prizeId);
-    setShowDeleteDialog(true);
-  };
-
-  const confirmDelete = () => {
-    if (prizeToDelete) {
-      deletePrizeMutation.mutate(prizeToDelete);
-    }
-  };
-
   if (isLoading) {
     return <div>Chargement du catalogue...</div>;
   }
@@ -239,13 +215,13 @@ const PrizeCatalogManager = () => {
             Ajouter un prix au catalogue
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {editingPrize ? 'Modifier le prix' : 'Ajouter un prix au catalogue'}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-4">
             <div>
               <Label htmlFor="name">Nom du prix</Label>
               <Input
@@ -287,27 +263,57 @@ const PrizeCatalogManager = () => {
               />
             </div>
 
-            <div>
-              <Label htmlFor="image">Image du prix</Label>
-              <Input
-                id="image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploading}
-              />
-              {formData.image_url && (
-                <div className="mt-2">
-                  <img
-                    src={formData.image_url}
-                    alt="Aperçu"
-                    className="w-32 h-32 object-cover rounded"
+            <div className="space-y-4">
+              <Label>Image du prix</Label>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-2 block">Télécharger une image</Label>
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
                   />
+                </div>
+                
+                <div>
+                  <Label className="mb-2 block">Ou choisir une image prédéfinie</Label>
+                  <Select onValueChange={handlePlaceholderSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une image" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PLACEHOLDER_IMAGES.map((imageId) => (
+                        <SelectItem key={imageId} value={imageId}>
+                          Image {PLACEHOLDER_IMAGES.indexOf(imageId) + 1}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {formData.image_url && (
+                <div className="mt-4">
+                  <Label>Aperçu</Label>
+                  <div className="mt-2 relative aspect-video">
+                    <img
+                      src={formData.image_url}
+                      alt="Aperçu"
+                      className="rounded-lg object-cover w-full h-full"
+                    />
+                  </div>
                 </div>
               )}
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={uploading}
+            >
               {editingPrize ? 'Mettre à jour' : 'Ajouter au catalogue'}
             </Button>
           </form>
@@ -319,7 +325,7 @@ const PrizeCatalogManager = () => {
           <Card key={prize.id} className="hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
               {prize.image_url && (
-                <div className="aspect-square relative mb-4">
+                <div className="aspect-video relative mb-4">
                   <img
                     src={prize.image_url}
                     alt={prize.name}
@@ -367,21 +373,6 @@ const PrizeCatalogManager = () => {
           </Card>
         ))}
       </div>
-
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action ne peut pas être annulée. Le prix sera définitivement supprimé du catalogue.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Supprimer</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
