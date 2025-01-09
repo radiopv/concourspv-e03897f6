@@ -46,7 +46,10 @@ export const useContest = (contestId: string | undefined) => {
   return useQuery({
     queryKey: ['contest', contestId],
     queryFn: async () => {
-      if (!contestId) throw new Error('Contest ID is required');
+      if (!contestId) {
+        console.error('No contest ID provided');
+        throw new Error('Contest ID is required');
+      }
       
       console.log('Fetching contest with ID:', contestId);
 
@@ -72,7 +75,7 @@ export const useContest = (contestId: string | undefined) => {
           )
         `)
         .eq('id', contestId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching contest:', error);
@@ -80,6 +83,7 @@ export const useContest = (contestId: string | undefined) => {
       }
 
       if (!data) {
+        console.error('No contest found with ID:', contestId);
         throw new Error('Contest not found');
       }
 
@@ -87,5 +91,6 @@ export const useContest = (contestId: string | undefined) => {
       return data as unknown as Contest;
     },
     enabled: !!contestId,
+    retry: false,
   });
 };
