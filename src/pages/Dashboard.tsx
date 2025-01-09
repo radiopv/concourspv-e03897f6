@@ -23,7 +23,7 @@ const Dashboard = () => {
     email: '',
   });
 
-  // Amélioration de la mise en cache avec staleTime et cacheTime
+  // Updated query configuration to use gcTime instead of cacheTime
   const { data: profileData, isLoading: isLoadingProfile, refetch } = useQuery({
     queryKey: ['user-profile', user?.id],
     queryFn: async () => {
@@ -47,7 +47,7 @@ const Dashboard = () => {
     enabled: !!user,
     retry: 1,
     staleTime: 300000, // 5 minutes
-    cacheTime: 3600000, // 1 hour
+    gcTime: 3600000, // 1 hour (previously cacheTime)
   });
 
   const { data: stats, isLoading: isLoadingStats } = useQuery({
@@ -74,7 +74,7 @@ const Dashboard = () => {
     enabled: !!user,
     retry: 1,
     staleTime: 300000, // 5 minutes
-    cacheTime: 3600000, // 1 hour
+    gcTime: 3600000, // 1 hour (previously cacheTime)
   });
 
   const initializeUserData = async (userId: string) => {
