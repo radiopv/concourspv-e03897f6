@@ -30,19 +30,15 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      // 1. Check if user exists in auth system first
-      const { data: { users }, error: authCheckError } = await supabase.auth.admin.listUsers({
-        filters: {
-          email: values.email
-        }
+      // 1. Check if user exists in auth system using signIn
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: "dummy-password", // We use a dummy password just to check if the account exists
       });
 
-      if (authCheckError) {
-        console.error("Erreur lors de la vérification de l'utilisateur:", authCheckError);
-        throw authCheckError;
-      }
-
-      if (users && users.length > 0) {
+      // If there's no error or the error is not "Invalid login credentials",
+      // it means the user exists
+      if (!signInError || signInError.message !== "Invalid login credentials") {
         toast({
           title: "Email déjà utilisé",
           description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
