@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "../../../App";
-import { ExternalLink, Pencil, Save, Trash } from "lucide-react";
+import { ExternalLink, Save, Trash } from "lucide-react";
 
 interface Question {
   id: string;
@@ -48,7 +48,8 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
         title: "Succès",
         description: "Question mise à jour",
       });
-      onUpdate();
+      
+      await onUpdate();
     } catch (error) {
       toast({
         title: "Erreur",

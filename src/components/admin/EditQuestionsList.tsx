@@ -48,7 +48,9 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['contests'] });
+      
       toast({
         title: "Succès",
         description: "La question a été supprimée",
@@ -72,12 +74,15 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           question_text: "Nouvelle question",
           options: ["Option 1", "Option 2", "Option 3", "Option 4"],
           correct_answer: "Option 1",
-          order_number: (questions?.length || 0) + 1
+          order_number: (questions?.length || 0) + 1,
+          type: 'multiple_choice'
         }]);
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['contests'] });
+      
       toast({
         title: "Succès",
         description: "La question a été ajoutée",
@@ -117,7 +122,10 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
               question={question}
               index={index}
               onDelete={handleDelete}
-              onUpdate={() => queryClient.invalidateQueries({ queryKey: ['questions', contestId] })}
+              onUpdate={async () => {
+                await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+                await queryClient.invalidateQueries({ queryKey: ['contests'] });
+              }}
             />
           ))}
         </Accordion>
