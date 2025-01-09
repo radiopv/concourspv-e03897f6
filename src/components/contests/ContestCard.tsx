@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { CustomBadge } from "@/components/ui/custom-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
@@ -11,14 +11,6 @@ import ContestStats from "./ContestStats";
 import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
 import ParticipationStats from "./contest-card/ParticipationStats";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { useState } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface ContestCardProps {
   contest: {
@@ -34,8 +26,6 @@ interface ContestCardProps {
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
-  const [showParticipants, setShowParticipants] = useState(false);
-
   const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
     queryFn: async () => {
@@ -52,21 +42,6 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         .eq('contest_id', contest.id);
       return prizesData || [];
     },
-  });
-
-  const { data: participants } = useQuery({
-    queryKey: ['contest-participants', contest.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('participants')
-        .select('*')
-        .eq('contest_id', contest.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: showParticipants
   });
 
   const { data: settings } = useQuery({
@@ -151,15 +126,6 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             />
 
             <Button 
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowParticipants(true)}
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Voir les participants
-            </Button>
-
-            <Button 
               onClick={() => onSelect(contest.id)}
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
               disabled={remainingAttempts <= 0}
@@ -169,47 +135,6 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           </div>
         </CardContent>
       </Card>
-
-      <Dialog open={showParticipants} onOpenChange={setShowParticipants}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Participants au concours</DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Prénom</TableHead>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Date de participation</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {participants?.map((participant) => (
-                  <TableRow key={participant.id}>
-                    <TableCell>{participant.first_name}</TableCell>
-                    <TableCell>{participant.last_name}</TableCell>
-                    <TableCell>{participant.score}%</TableCell>
-                    <TableCell>
-                      <CustomBadge variant={participant.status === 'WINNER' ? "success" : "secondary"}>
-                        {participant.status === 'WINNER' ? 'Gagnant' : 'Participant'}
-                      </CustomBadge>
-                    </TableCell>
-                    <TableCell>
-                      {participant.completed_at 
-                        ? new Date(participant.completed_at).toLocaleDateString('fr-FR')
-                        : "N/A"
-                      }
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </DialogContent>
-      </Dialog>
     </motion.div>
   );
 };
