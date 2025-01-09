@@ -18,7 +18,6 @@ const Admin = () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           setIsAuthenticated(false);
-          navigate('/login');
           return;
         }
 
