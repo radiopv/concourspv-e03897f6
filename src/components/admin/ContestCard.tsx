@@ -14,8 +14,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Plus, Trash2 } from "lucide-react";
 
 interface ContestCardProps {
@@ -50,7 +48,6 @@ const ContestCard = ({
   onSelect,
   onEdit,
 }: ContestCardProps) => {
-  const [showParticipants, setShowParticipants] = useState(false);
   const [showAddQuestion, setShowAddQuestion] = useState(false);
   const [newQuestion, setNewQuestion] = useState({
     question_text: "",
@@ -60,6 +57,20 @@ const ContestCard = ({
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: questions } = useQuery({
+    queryKey: ['questions', contest.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('contest_id', contest.id)
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const handleAddQuestion = async () => {
     try {
@@ -99,7 +110,6 @@ const ContestCard = ({
 
       setShowAddQuestion(false);
       queryClient.invalidateQueries({ queryKey: ['questions', contest.id] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
     } catch (error) {
       console.error('Error adding question:', error);
       toast({
@@ -124,6 +134,7 @@ const ContestCard = ({
         description: "Question supprimée avec succès"
       });
 
+      // Invalider le cache pour recharger les questions
       queryClient.invalidateQueries({ queryKey: ['questions', contest.id] });
       queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
     } catch (error) {
@@ -135,20 +146,6 @@ const ContestCard = ({
       });
     }
   };
-
-  const { data: questions } = useQuery({
-    queryKey: ['questions', contest.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('contest_id', contest.id)
-        .order('created_at', { ascending: true });
-      
-      if (error) throw error;
-      return data;
-    }
-  });
 
   return (
     <Card className={`hover:shadow-lg transition-shadow ${contest.status === 'archived' ? 'opacity-60' : ''}`}>
