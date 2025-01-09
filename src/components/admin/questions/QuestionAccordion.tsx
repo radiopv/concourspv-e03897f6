@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "../../../App";
+import { ExternalLink, Pencil, Save, Trash } from "lucide-react";
 
 interface Question {
   id: string;
@@ -81,25 +82,32 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
 
           <div>
             <label className="text-sm font-medium">URL de l'article</label>
-            <Input
-              value={formData.article_url}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                article_url: e.target.value
-              }))}
-              placeholder="https://..."
-            />
+            <div className="flex gap-2">
+              <Input
+                value={formData.article_url}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  article_url: e.target.value
+                }))}
+                placeholder="https://..."
+              />
+              {formData.article_url && (
+                <a 
+                  href={formData.article_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              )}
+            </div>
           </div>
 
-          {formData.options.map((option, optionIndex) => (
-            <div key={optionIndex}>
-              <label className="text-sm font-medium">
-                Option {optionIndex + 1} 
-                {option === formData.correct_answer && (
-                  <span className="text-green-600 ml-2">(Réponse correcte)</span>
-                )}
-              </label>
-              <div className="flex gap-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Options de réponse</label>
+            {formData.options.map((option, optionIndex) => (
+              <div key={optionIndex} className="flex gap-2">
                 <Input
                   value={option}
                   onChange={(e) => {
@@ -110,26 +118,36 @@ const QuestionAccordion = ({ question, index, onDelete, onUpdate }: QuestionAcco
                       options: newOptions
                     }));
                   }}
+                  className={option === formData.correct_answer ? "border-green-500" : ""}
                 />
                 <Button
-                  variant="outline"
+                  variant={option === formData.correct_answer ? "default" : "outline"}
                   onClick={() => setFormData(prev => ({
                     ...prev,
                     correct_answer: option
                   }))}
-                  className={option === formData.correct_answer ? "bg-green-50" : ""}
+                  className="min-w-[120px]"
                 >
-                  ✓
+                  {option === formData.correct_answer ? "Correcte ✓" : "Marquer correcte"}
                 </Button>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
           <div className="flex justify-between pt-4">
-            <Button variant="outline" onClick={() => onDelete(question.id)}>
+            <Button 
+              variant="destructive" 
+              onClick={() => onDelete(question.id)}
+              className="flex items-center gap-2"
+            >
+              <Trash className="w-4 h-4" />
               Supprimer
             </Button>
-            <Button onClick={handleSave}>
+            <Button 
+              onClick={handleSave}
+              className="flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" />
               Enregistrer
             </Button>
           </div>
