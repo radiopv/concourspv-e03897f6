@@ -6,6 +6,8 @@ import { supabase } from "../../../App";
 import { useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { ExternalLink, Link, Pencil, Save, X } from "lucide-react";
 
 interface Question {
   id: string;
@@ -25,6 +27,8 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
   const queryClient = useQueryClient();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [selectedContestId, setSelectedContestId] = useState<string>("");
+  const [editingUrl, setEditingUrl] = useState<string | null>(null);
+  const [newUrl, setNewUrl] = useState<string>("");
 
   const { data: contests } = useQuery({
     queryKey: ['active-contests'],
@@ -39,6 +43,33 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
       return data;
     }
   });
+
+  const handleUrlEdit = async (questionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('question_bank')
+        .update({ article_url: newUrl })
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      
+      toast({
+        title: "Succès",
+        description: "L'URL de l'article a été mise à jour",
+      });
+
+      setEditingUrl(null);
+      setNewUrl("");
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour l'URL",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAddToContest = async () => {
     if (!selectedContestId || selectedQuestions.length === 0) {
@@ -174,7 +205,7 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
         `}>
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
+              <div className="flex-1 space-y-4">
                 <p className="font-medium">{question.question_text}</p>
                 <ul className="mt-2 space-y-1">
                   {question.options.map((option, index) => (
@@ -183,6 +214,62 @@ const QuestionBankList = ({ questions }: QuestionBankListProps) => {
                     </li>
                   ))}
                 </ul>
+                <div className="flex items-center gap-2">
+                  <Link className="h-4 w-4 text-gray-500" />
+                  {editingUrl === question.id ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <Input
+                        value={newUrl}
+                        onChange={(e) => setNewUrl(e.target.value)}
+                        placeholder="https://..."
+                        className="flex-1"
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleUrlEdit(question.id)}
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditingUrl(null);
+                          setNewUrl("");
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 flex-1">
+                      {question.article_url ? (
+                        <a
+                          href={question.article_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-1"
+                        >
+                          {question.article_url}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : (
+                        <span className="text-gray-500 italic">Aucun article lié</span>
+                      )}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditingUrl(question.id);
+                          setNewUrl(question.article_url || "");
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
               <Button
                 variant="outline"
