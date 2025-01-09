@@ -47,6 +47,47 @@ export const calculateExtraParticipations = (points: number): number => {
   return Math.floor(points / 25);
 };
 
+export const initializeUserPoints = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('user_points')
+    .insert({
+      user_id: userId,
+      total_points: 0,
+      current_streak: 0,
+      best_streak: 0,
+      current_rank: 'BEGINNER',
+      extra_participations: 0,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const getUserPoints = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('user_points')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // If no points record exists, initialize one
+        return await initializeUserPoints(userId);
+      }
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error getting user points:', error);
+    throw error;
+  }
+};
+
 export const awardPoints = async (
   userId: string,
   points: number,
@@ -98,22 +139,6 @@ export const awardPoints = async (
     return { success: true, newTotalPoints, streak };
   } catch (error) {
     console.error('Error awarding points:', error);
-    throw error;
-  }
-};
-
-export const getUserPoints = async (userId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('user_points')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error getting user points:', error);
     throw error;
   }
 };
