@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 import ContestStats from "./ContestStats";
 import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
