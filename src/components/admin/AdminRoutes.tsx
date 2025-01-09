@@ -91,7 +91,7 @@ const AdminRoutes = () => {
         <Route index element={<AdminDashboard />} />
         <Route path="contests" element={<AdminContestManager />} />
         <Route path="questions" element={<QuestionBank />} />
-        <Route path="prizes" element={<PrizeCatalogManager />} />
+        <Route path="prizes" element={<PrizeCatalogManager contestId={contestId || ''} />} />
         <Route path="settings" element={<GlobalSettings />} />
         <Route 
           path="contests/:contestId/participants" 
@@ -103,7 +103,7 @@ const AdminRoutes = () => {
         />
         <Route 
           path="contests/:contestId/winners" 
-          element={<Winners />} 
+          element={<Winners contests={[]} onClaimPrize={() => {}} showAll={true} />} 
         />
       </Routes>
     </div>

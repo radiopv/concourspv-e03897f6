@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useNavigate } from "react-router-dom";
 
 interface AdminAuthProps {
   onAuthenticated: () => void;
@@ -10,40 +11,49 @@ interface AdminAuthProps {
 
 const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
   const { toast } = useToast();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from('admin_settings')
-        .select('admin_password')
+      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) throw signInError;
+
+      if (!session?.user) {
+        throw new Error("No user session found");
+      }
+
+      const { data: member, error: memberError } = await supabase
+        .from('members')
+        .select('role')
+        .eq('id', session.user.id)
         .single();
 
-      if (error) throw error;
+      if (memberError) throw memberError;
 
-      if (data.admin_password === password) {
-        localStorage.setItem('isAdminAuthenticated', 'true');
-        onAuthenticated();
-        toast({
-          title: "Succès",
-          description: "Authentification réussie",
-        });
-      } else {
-        toast({
-          title: "Erreur",
-          description: "Mot de passe incorrect",
-          variant: "destructive",
-        });
+      if (member?.role !== 'admin') {
+        throw new Error("Unauthorized: Admin access required");
       }
+
+      onAuthenticated();
+      toast({
+        title: "Succès",
+        description: "Authentification réussie",
+      });
     } catch (error) {
       console.error('Error:', error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
         variant: "destructive",
       });
     } finally {
@@ -60,10 +70,19 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email administrateur"
+              className="w-full"
+            />
+          </div>
+          <div>
+            <Input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mot de passe administrateur"
+              placeholder="Mot de passe"
               className="w-full"
             />
           </div>
