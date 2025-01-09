@@ -15,6 +15,8 @@ const Contest = () => {
 
   const { data: contest, isLoading, error } = useContest(id);
 
+  console.log("Contest data:", contest); // Debug log
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center">
@@ -26,7 +28,12 @@ const Contest = () => {
     );
   }
 
-  if (error || !contest) {
+  // Check if contest exists and is active
+  const isContestAvailable = contest && 
+    contest.status === 'active' && 
+    new Date(contest.end_date) > new Date();
+
+  if (error || !isContestAvailable) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center">
         <Card className="max-w-lg w-full mx-4">
@@ -35,7 +42,9 @@ const Contest = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-center text-gray-600">
-              Ce concours n'est plus disponible ou a expiré.
+              {!contest ? "Ce concours n'existe pas." :
+               contest.status !== 'active' ? "Ce concours n'est pas encore actif." :
+               "Ce concours est terminé."}
             </p>
             <Button 
               className="w-full" 
@@ -109,7 +118,7 @@ const Contest = () => {
               <Card className="bg-yellow-50 border-yellow-200">
                 <CardContent className="p-4">
                   <p className="text-yellow-800">
-                    Ce concours n'est pas encore disponible. Revenez plus tard.
+                    Ce concours n'a pas encore de questions. Revenez plus tard.
                   </p>
                 </CardContent>
               </Card>
