@@ -5,7 +5,12 @@ export const calculateFinalScore = async (participantId: string) => {
     // Récupérer toutes les réponses du participant
     const { data: answers, error: answersError } = await supabase
       .from('participant_answers')
-      .select('is_correct')
+      .select(`
+        is_correct,
+        questions (
+          correct_answer
+        )
+      `)
       .eq('participant_id', participantId);
 
     if (answersError) throw answersError;

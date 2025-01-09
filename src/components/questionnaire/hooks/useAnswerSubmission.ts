@@ -40,7 +40,8 @@ export const useAnswerSubmission = (contestId: string) => {
         .insert([{
           participant_id: participantId,
           question_id: currentQuestion.id,
-          answer: state.selectedAnswer
+          answer: state.selectedAnswer,
+          is_correct: isAnswerCorrect
         }]);
 
       if (error) throw error;
