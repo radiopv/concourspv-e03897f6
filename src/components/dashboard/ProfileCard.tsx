@@ -17,6 +17,7 @@ interface ProfileCardProps {
   formData: {
     first_name: string;
     last_name: string;
+    email: string;
   };
   setFormData: (data: any) => void;
   setIsEditing: (editing: boolean) => void;
@@ -37,19 +38,28 @@ const ProfileCard = ({
 
   const handleSaveProfile = async () => {
     try {
-      const { error } = await supabase
+      // Mise à jour de l'email dans auth
+      const { error: authError } = await supabase.auth.updateUser({
+        email: formData.email,
+      });
+
+      if (authError) throw authError;
+
+      // Mise à jour du profil dans la base de données
+      const { error: dbError } = await supabase
         .from("members")
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
+          email: formData.email,
         })
         .eq("id", userId);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
       toast({
         title: "Profil mis à jour",
-        description: "Vos informations ont été enregistrées avec succès.",
+        description: "Vos informations ont été enregistrées avec succès. Si vous avez modifié votre email, veuillez vérifier votre boîte de réception pour confirmer le changement.",
       });
       
       setIsEditing(false);
@@ -95,9 +105,10 @@ const ProfileCard = ({
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              value={userProfile?.email || ""}
-              disabled
-              className="bg-gray-50"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              disabled={!isEditing}
             />
           </div>
           <div className="flex justify-end gap-4">

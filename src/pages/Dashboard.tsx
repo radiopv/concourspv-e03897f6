@@ -15,6 +15,7 @@ const Dashboard = () => {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
+    email: "",
   });
 
   const { data: userProfile, isLoading, error, refetch } = useQuery({
@@ -91,6 +92,7 @@ const Dashboard = () => {
       setFormData({
         first_name: userProfile.first_name || "",
         last_name: userProfile.last_name || "",
+        email: userProfile.email || "",
       });
     }
   }, [userProfile]);
