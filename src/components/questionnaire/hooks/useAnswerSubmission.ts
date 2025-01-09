@@ -47,18 +47,23 @@ export const useAnswerSubmission = (contestId: string) => {
         await ensureParticipantExists(session.session.user.id, contestId);
 
       // Vérifier si la question a déjà été répondue correctement
-      const { data: existingAnswer } = await supabase
+      const { data: existingAnswers, error: answersError } = await supabase
         .from('participant_answers')
-        .select('is_correct')
+        .select('*')
         .eq('participant_id', participationId)
         .eq('question_id', currentQuestion.id)
-        .eq('is_correct', true)
-        .single();
+        .maybeSingle();
 
+      if (answersError) {
+        console.error('Error checking existing answers:', answersError);
+        throw answersError;
+      }
+
+      const currentAttempt = participant?.attempts || 0;
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
 
       // N'attribuer des points que si la réponse est correcte ET n'a pas déjà été correctement répondue
-      if (isAnswerCorrect && !existingAnswer?.is_correct) {
+      if (isAnswerCorrect && !existingAnswers?.is_correct) {
         const currentStreak = state.getCurrentStreak();
         let pointsToAward = 1;
 
@@ -82,7 +87,7 @@ export const useAnswerSubmission = (contestId: string) => {
           question_id: currentQuestion.id,
           answer: state.selectedAnswer,
           is_correct: isAnswerCorrect,
-          attempt_number: participant?.attempts || 0
+          attempt_number: currentAttempt
         }]);
 
       if (insertError) throw insertError;
@@ -94,6 +99,7 @@ export const useAnswerSubmission = (contestId: string) => {
       
       if (isAnswerCorrect) {
         state.setScore(prev => prev + 1);
+        state.incrementStreak();
       } else {
         state.resetStreak();
       }
