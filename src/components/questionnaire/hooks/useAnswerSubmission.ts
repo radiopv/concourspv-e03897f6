@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuestionnaireState } from '../QuestionnaireState';
 import { ensureParticipantExists } from '../ParticipantManager';
 import { getRandomMessage } from '../messages';
+
 import { awardPoints } from '../../../services/pointsService';
 
 export const useAnswerSubmission = (contestId: string) => {
