@@ -42,7 +42,19 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           throw new Error("User not authenticated");
         }
 
-        const finalScore = await calculateFinalScore(session.session.user.id);
+        const { data: participant } = await supabase
+          .from('participants')
+          .select('participation_id')
+          .eq('contest_id', contestId)
+          .eq('id', session.session.user.id)
+          .single();
+
+        if (!participant?.participation_id) {
+          throw new Error("Participant not found");
+        }
+
+        const finalScore = await calculateFinalScore(participant.participation_id);
+        console.log('Final score calculated:', finalScore);
         
         // Mettre à jour le score et le statut du participant
         const { error: updateError } = await supabase
@@ -58,14 +70,14 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         if (updateError) throw updateError;
 
         // Mettre à jour le nombre de tentatives
-        const { data: participant } = await supabase
+        const { data: participantData } = await supabase
           .from('participants')
           .select('attempts')
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id)
           .single();
 
-        const newAttempts = (participant?.attempts || 0) + 1;
+        const newAttempts = (participantData?.attempts || 0) + 1;
 
         await supabase
           .from('participants')
@@ -87,10 +99,8 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           duration: 5000,
         });
 
-        // Rediriger vers la page des statistiques avec le score
-        navigate(`/contests/${contestId}/stats`, { 
-          state: { finalScore }
-        });
+        // Rediriger vers la page principale
+        navigate('/contests');
 
       } catch (error) {
         console.error('Error completing questionnaire:', error);
