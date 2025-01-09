@@ -1,102 +1,53 @@
+import React from 'react';
 import { Link } from "react-router-dom";
-import { Menu, Settings, LogOut, User } from "lucide-react";
-import { useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import UserPoints from "./UserPoints";
 
 const UserNavBar = () => {
-  const isMobile = useIsMobile();
-  const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
-  const isAdmin = user?.email === "renaudcanuel@me.com";
-
-  const NavLinks = () => (
-    <div className="flex flex-col md:flex-row md:space-x-8 space-y-4 md:space-y-0">
-      <Link
-        to="/"
-        className="text-gray-900 hover:text-gray-600 transition-colors"
-        onClick={() => setIsOpen(false)}
-      >
-        Accueil
-      </Link>
-      <Link
-        to="/contests"
-        className="text-gray-900 hover:text-gray-600 transition-colors"
-        onClick={() => setIsOpen(false)}
-      >
-        Concours
-      </Link>
-      {isAdmin && (
-        <Link
-          to="/admin"
-          className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-          onClick={() => setIsOpen(false)}
-        >
-          <Settings className="w-4 h-4" />
-          Administration
-        </Link>
-      )}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2 p-0 h-auto">
-            <User className="w-4 h-4" />
-            Profil
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem asChild>
-            <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
-              <User className="w-4 h-4" />
-              Mon profil
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-red-600 cursor-pointer"
-            onClick={() => {
-              signOut();
-              setIsOpen(false);
-            }}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Déconnexion
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
 
   return (
-    <nav className="bg-white border-b shadow-sm">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between h-16 items-center">
-          <Link to="/" className="text-xl font-bold text-gray-900">
-            Concours
-          </Link>
+    <nav className="bg-white shadow-sm">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center space-x-4">
+            <Link to="/" className="text-xl font-bold text-indigo-600">
+              Concours
+            </Link>
+            <Link to="/contests" className="text-gray-600 hover:text-gray-900">
+              Participer
+            </Link>
+            <Link to="/winners" className="text-gray-600 hover:text-gray-900">
+              Gagnants
+            </Link>
+            <Link to="/points" className="text-gray-600 hover:text-gray-900">
+              Points & Rangs
+            </Link>
+          </div>
           
-          {isMobile ? (
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <>
+                <UserPoints />
+                <Link to="/dashboard">
+                  <Button variant="outline">Mon compte</Button>
+                </Link>
+                <Button variant="ghost" onClick={signOut}>
+                  Déconnexion
                 </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[80vw] sm:w-[385px]">
-                <div className="flex flex-col space-y-4 mt-8">
-                  <NavLinks />
-                </div>
-              </SheetContent>
-            </Sheet>
-          ) : (
-            <NavLinks />
-          )}
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="outline">Connexion</Button>
+                </Link>
+                <Link to="/register">
+                  <Button>Inscription</Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </nav>

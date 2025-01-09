@@ -10,6 +10,7 @@ interface QuestionnaireState {
   isCorrect: boolean | null;
   isSubmitting: boolean;
   participationId: string | null;
+  streak: number;
   setCurrentQuestionIndex: (index: number | ((prev: number) => number)) => void;
   setSelectedAnswer: (answer: string) => void;
   setScore: (score: number | ((prev: number) => number)) => void;
@@ -19,9 +20,12 @@ interface QuestionnaireState {
   setIsCorrect: (correct: boolean | null) => void;
   setIsSubmitting: (submitting: boolean) => void;
   setParticipationId: (id: string | null) => void;
+  getCurrentStreak: () => number;
+  incrementStreak: () => void;
+  resetStreak: () => void;
 }
 
-export const useQuestionnaireState = create<QuestionnaireState>((set) => ({
+export const useQuestionnaireState = create<QuestionnaireState>((set, get) => ({
   currentQuestionIndex: 0,
   selectedAnswer: "",
   score: 0,
@@ -31,6 +35,7 @@ export const useQuestionnaireState = create<QuestionnaireState>((set) => ({
   isCorrect: null,
   isSubmitting: false,
   participationId: null,
+  streak: 0,
   setCurrentQuestionIndex: (index) => set((state) => ({
     currentQuestionIndex: typeof index === 'function' ? index(state.currentQuestionIndex) : index
   })),
@@ -45,5 +50,8 @@ export const useQuestionnaireState = create<QuestionnaireState>((set) => ({
   setHasAnswered: (answered) => set({ hasAnswered: answered }),
   setIsCorrect: (correct) => set({ isCorrect: correct }),
   setIsSubmitting: (submitting) => set({ isSubmitting: submitting }),
-  setParticipationId: (id) => set({ participationId: id })
+  setParticipationId: (id) => set({ participationId: id }),
+  getCurrentStreak: () => get().streak,
+  incrementStreak: () => set((state) => ({ streak: state.streak + 1 })),
+  resetStreak: () => set({ streak: 0 })
 }));

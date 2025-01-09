@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";

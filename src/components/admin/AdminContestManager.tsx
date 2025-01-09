@@ -1,162 +1,34 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../App";
-import ExcelImportForm from "./ExcelImportForm";
-import { useQueryClient } from "@tanstack/react-query";
-import CreateTestContest from "./test/CreateTestContest";
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from "@/lib/supabase";
+import ContestList from './ContestList';
 
 const AdminContestManager = () => {
-  const [newContest, setNewContest] = useState({
-    title: "",
-    description: "",
-    start_date: "",
-    end_date: "",
-  });
-  const [createdContestId, setCreatedContestId] = useState<string | null>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
 
-  const handleCreateContest = async () => {
-    if (isSubmitting) return;
-    
-    try {
-      setIsSubmitting(true);
-
-      if (!newContest.title || !newContest.start_date || !newContest.end_date) {
-        toast({
-          title: "Erreur",
-          description: "Veuillez remplir tous les champs obligatoires (titre, date de début et date de fin)",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.access_token) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté pour créer un concours",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data: contest, error: contestError } = await supabase
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['contests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('contests')
-        .insert([{
-          title: newContest.title,
-          description: newContest.description || null,
-          start_date: newContest.start_date,
-          end_date: newContest.end_date,
-          status: 'draft'
-        }])
-        .select()
-        .single();
+        .select('*');
 
-      if (contestError) {
-        console.error('Error creating contest:', contestError);
-        throw contestError;
-      }
+      if (error) throw error;
+      return data;
+    },
+  });
 
-      if (!contest) {
-        throw new Error('No contest was created');
-      }
-
-      setCreatedContestId(contest.id);
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin-contests'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] }),
-        queryClient.invalidateQueries({ queryKey: ['contests'] })
-      ]);
-
-      toast({
-        title: "Succès",
-        description: "Le concours a été créé avec succès",
-      });
-
-      setNewContest({
-        title: "",
-        description: "",
-        start_date: "",
-        end_date: "",
-      });
-    } catch (error) {
-      console.error('Error creating contest:', error);
-      toast({
-        title: "Erreur",
-        description: "Erreur lors de la création du concours",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error loading contests: {error.message}</div>;
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Créer un nouveau concours</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="title">Titre *</Label>
-          <Input
-            id="title"
-            value={newContest.title}
-            onChange={(e) => setNewContest({ ...newContest, title: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={newContest.description}
-            onChange={(e) => setNewContest({ ...newContest, description: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="start_date">Date de début *</Label>
-          <Input
-            id="start_date"
-            type="date"
-            value={newContest.start_date}
-            onChange={(e) => setNewContest({ ...newContest, start_date: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="end_date">Date de fin *</Label>
-          <Input
-            id="end_date"
-            type="date"
-            value={newContest.end_date}
-            onChange={(e) => setNewContest({ ...newContest, end_date: e.target.value })}
-            required
-          />
-        </div>
-        <Button 
-          onClick={handleCreateContest} 
-          className="w-full"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Création en cours...' : 'Créer le concours'}
-        </Button>
-        
-        <div className="pt-4 border-t">
-          <CreateTestContest />
-        </div>
-        
-        <ExcelImportForm contestId={createdContestId || undefined} />
-      </CardContent>
-    </Card>
+    <div>
+      <h1>Admin Contest Manager</h1>
+      <ContestList 
+        contests={data} 
+        onSelectContest={setSelectedContestId}
+      />
+    </div>
   );
 };
 
