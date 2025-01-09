@@ -23,26 +23,33 @@ const Dashboard = () => {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // Récupère toutes les participations de l'utilisateur
+      console.log("Récupération du profil pour l'utilisateur:", user.id);
+
+      // Récupère toutes les participations de l'utilisateur avec les détails des concours
       const { data: participationStats, error: participationError } = await supabase
         .from('participants')
         .select(`
           *,
           contests (
+            id,
             title,
             status
           )
         `)
         .eq('id', user.id);
 
-      if (participationError) throw participationError;
+      if (participationError) {
+        console.error("Erreur lors de la récupération des participations:", participationError);
+        throw participationError;
+      }
 
       console.log("Participations trouvées:", participationStats);
 
+      // Calcule les statistiques
       const stats = {
         contests_participated: participationStats?.length || 0,
         total_points: participationStats?.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0,
-        contests_won: participationStats?.filter(p => p.status === 'winner').length || 0,
+        contests_won: participationStats?.filter(p => p.status === 'WINNER').length || 0,
       };
 
       console.log("Statistiques calculées:", stats);
@@ -54,7 +61,10 @@ const Dashboard = () => {
         .eq("id", user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Erreur lors de la récupération du profil:", profileError);
+        throw profileError;
+      }
 
       if (existingProfile) {
         return {
@@ -63,6 +73,7 @@ const Dashboard = () => {
         };
       }
 
+      // Si le profil n'existe pas, crée un nouveau profil
       const { data: userData } = await supabase.auth.getUser();
       const newProfile = {
         id: user.id,
@@ -80,7 +91,10 @@ const Dashboard = () => {
         .select()
         .single();
 
-      if (createError) throw createError;
+      if (createError) {
+        console.error("Erreur lors de la création du profil:", createError);
+        throw createError;
+      }
 
       return createdProfile;
     },
