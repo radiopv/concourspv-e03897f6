@@ -12,24 +12,21 @@ import ContestPrizes from "./contest-card/ContestPrizes";
 import ParticipationStats from "./contest-card/ParticipationStats";
 
 // Types pour les données brutes de l'API
+interface PrizeCatalogItem {
+  name: string;
+  image_url: string;
+  shop_url: string;
+  value: number;
+}
+
 interface RawPrizeData {
   catalog_item_id: string;
-  prize_catalog: {
-    name: string;
-    image_url: string;
-    shop_url: string;
-    value: number;
-  };
+  prize_catalog: PrizeCatalogItem;
 }
 
 // Type pour le format final des prix
 interface Prize {
-  prize_catalog: {
-    name: string;
-    image_url: string;
-    shop_url: string;
-    value: number;
-  };
+  prize_catalog: PrizeCatalogItem;
 }
 
 interface ContestCardProps {
