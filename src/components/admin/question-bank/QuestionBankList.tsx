@@ -30,7 +30,7 @@ const QuestionBankList = () => {
   const [editingUrl, setEditingUrl] = useState<string | null>(null);
   const [newUrl, setNewUrl] = useState<string>("");
 
-  const { data: questions } = useQuery({
+  const { data: questions, refetch: refetchQuestions } = useQuery({
     queryKey: ['question-bank'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -69,7 +69,7 @@ const QuestionBankList = () => {
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      await refetchQuestions();
       
       toast({
         title: "Succès",
@@ -112,13 +112,12 @@ const QuestionBankList = () => {
       // Ajouter les questions au concours
       const questionsToAdd = questions
         ?.filter(q => selectedQuestions.includes(q.id))
-        .map((q, index) => ({
+        .map(q => ({
           contest_id: selectedContestId,
           question_text: q.question_text,
           options: q.options,
           correct_answer: q.correct_answer,
-          article_url: q.article_url,
-          order_number: index + 1
+          article_url: q.article_url
         }));
 
       const { error: insertError } = await supabase
@@ -127,7 +126,8 @@ const QuestionBankList = () => {
 
       if (insertError) throw insertError;
 
-      await queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      // Rafraîchir les données
+      await refetchQuestions();
       await queryClient.invalidateQueries({ queryKey: ['questions', selectedContestId] });
 
       toast({
@@ -138,6 +138,7 @@ const QuestionBankList = () => {
       setSelectedQuestions([]);
       setSelectedContestId("");
     } catch (error) {
+      console.error('Error assigning questions:', error);
       toast({
         title: "Erreur",
         description: "Erreur lors de l'ajout des questions au concours",
@@ -155,7 +156,7 @@ const QuestionBankList = () => {
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      await refetchQuestions();
       
       toast({
         title: "Succès",
