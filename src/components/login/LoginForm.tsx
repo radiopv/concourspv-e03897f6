@@ -51,12 +51,15 @@ export const LoginForm = () => {
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
+      console.log("Tentative de connexion avec:", values.email); // Debug log
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
       if (error) {
+        console.error("Erreur de connexion:", error); // Debug log
         let errorMessage = "Email ou mot de passe incorrect.";
         
         if (error.message.includes("Email not confirmed")) {
@@ -70,6 +73,8 @@ export const LoginForm = () => {
         });
         return;
       }
+
+      console.log("Réponse de connexion:", data); // Debug log
 
       if (data?.user) {
         toast({
