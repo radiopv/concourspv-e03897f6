@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "../../../App";
+import { supabase } from "@/lib/supabase";
 
 export const useAttempts = (contestId: string) => {
   const navigate = useNavigate();
