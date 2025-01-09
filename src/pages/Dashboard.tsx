@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsCards from "@/components/dashboard/StatsCards";
@@ -29,13 +29,14 @@ const Dashboard = () => {
         .select('*')
         .eq('id', user.id)
         .single();
+      
       if (error) throw error;
       return data;
     },
     enabled: !!user,
   });
 
-  const { data: statsData } = useQuery({
+  const { data: stats } = useQuery({
     queryKey: ['user-stats', user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -44,11 +45,12 @@ const Dashboard = () => {
         .select('total_points, contests_participated, contests_won')
         .eq('id', user.id)
         .single();
+      
       if (error) throw error;
       return {
-        totalPoints: data.total_points || 0,
-        contestsParticipated: data.contests_participated || 0,
-        contestsWon: data.contests_won || 0,
+        contests_participated: data?.contests_participated || 0,
+        total_points: data?.total_points || 0,
+        contests_won: data?.contests_won || 0,
       };
     },
     enabled: !!user,
@@ -72,7 +74,11 @@ const Dashboard = () => {
   return (
     <div className="container mx-auto p-4">
       <DashboardHeader />
-      <StatsCards stats={statsData || { totalPoints: 0, contestsParticipated: 0, contestsWon: 0 }} />
+      <StatsCards stats={stats || {
+        contests_participated: 0,
+        total_points: 0,
+        contests_won: 0,
+      }} />
       <PointsOverview />
       <QuickActions />
       <ProfileCard 
