@@ -33,7 +33,8 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
         first_name: userEmail.split('@')[0],
         last_name: 'Participant',
         email: userEmail,
-        attempts: 0
+        attempts: 0,
+        score: 0
       }])
       .select('participation_id')
       .single();
