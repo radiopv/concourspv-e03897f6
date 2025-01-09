@@ -67,7 +67,8 @@ export const useContest = (contestId: string | undefined) => {
           questions:questionnaires (
             id,
             title,
-            description
+            description,
+            questions (*)
           )
         `)
         .eq('id', contestId)
