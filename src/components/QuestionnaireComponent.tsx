@@ -44,7 +44,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
         const { data: participant } = await supabase
           .from('participants')
-          .select('participation_id')
+          .select('participation_id, score')
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id)
           .single();
@@ -53,8 +53,9 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           throw new Error("Participant not found");
         }
 
-        const finalScore = await calculateFinalScore(participant.participation_id);
-        console.log('Final score calculated:', finalScore);
+        // Calculer le nouveau score
+        const newScore = await calculateFinalScore(participant.participation_id);
+        const finalScore = Math.max(newScore, participant.score || 0);
         
         // Mettre à jour le score et le statut du participant
         const { error: updateError } = await supabase
@@ -89,17 +90,20 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         await queryClient.invalidateQueries({ queryKey: ['contests'] });
         await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
 
+        const message = finalScore === 100 
+          ? "Félicitations ! Vous avez obtenu un score parfait ! 🎉"
+          : `Votre meilleur score est maintenant de ${finalScore}%. ${
+              finalScore >= 70 
+                ? "Vous êtes éligible pour le tirage au sort !" 
+                : "Continuez à participer pour améliorer vos chances !"
+            }`;
+
         toast({
-          title: "Questionnaire terminé ! 🎉",
-          description: `Votre score final est de ${finalScore}%. ${
-            finalScore >= 70 
-              ? "Félicitations ! Vous êtes éligible pour le tirage au sort !" 
-              : "Continuez à participer pour améliorer vos chances !"
-          }`,
+          title: "Questionnaire terminé !",
+          description: message,
           duration: 5000,
         });
 
-        // Attendre un court instant pour que le toast soit visible
         setTimeout(() => {
           navigate('/contests');
         }, 1000);
