@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { RegisterForm } from "@/components/register/RegisterForm";
 import { Trophy, Bell, Share2, Camera } from "lucide-react";
 import { useRegisterForm } from "@/components/register/useRegisterForm";
+import { Button } from "@/components/ui/button";
 
 const Register = () => {
   const { form, handleRegistration } = useRegisterForm();
@@ -77,6 +78,12 @@ const Register = () => {
 
         <div className="bg-white p-8 rounded-lg shadow-lg">
           <RegisterForm form={form} />
+          <Button 
+            onClick={form.handleSubmit(handleRegistration)}
+            className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-purple-600"
+          >
+            S'inscrire
+          </Button>
         </div>
       </motion.div>
     </div>
