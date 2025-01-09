@@ -1,8 +1,11 @@
 import { supabase } from "../../App";
+import { Participant } from "../../types/database";
 
-export const ensureParticipantExists = async (userId: string, contestId: string) => {
+export const ensureParticipantExists = async (userId: string, contestId: string): Promise<string> => {
   try {
-    // Check if user already participates in this contest
+    console.log('Checking participant existence for user:', userId, 'contest:', contestId);
+    
+    // Vérifie si l'utilisateur participe déjà à ce concours
     const { data: existingParticipant, error: fetchError } = await supabase
       .from('participants')
       .select('participation_id, attempts')
@@ -20,14 +23,14 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
       return existingParticipant.participation_id;
     }
 
-    // Get user's email from auth session
+    // Récupère l'email de l'utilisateur depuis la session auth
     const { data: { session } } = await supabase.auth.getSession();
     const userEmail = session?.user?.email || 'anonymous@user.com';
 
-    // Generate a new UUID for participation_id
+    // Génère un nouveau UUID pour participation_id
     const participation_id = crypto.randomUUID();
 
-    // Create new participation entry
+    // Crée une nouvelle participation
     const { data: newParticipant, error: insertError } = await supabase
       .from('participants')
       .insert([{
@@ -57,7 +60,7 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
   }
 };
 
-export const getParticipantStats = async (userId: string) => {
+export const getParticipantStats = async (userId: string): Promise<Participant[]> => {
   const { data, error } = await supabase
     .from('participants')
     .select(`
