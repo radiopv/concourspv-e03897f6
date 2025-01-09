@@ -12,6 +12,16 @@ import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
 import ParticipationStats from "./contest-card/ParticipationStats";
 
+interface Prize {
+  catalog_item_id: string;
+  prize_catalog: {
+    name: string;
+    image_url: string;
+    shop_url: string;
+    value: number;
+  };
+}
+
 interface ContestCardProps {
   contest: {
     id: string;
@@ -43,7 +53,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         `)
         .eq('contest_id', contest.id);
       console.log('Prizes data:', prizesData);
-      return prizesData || [];
+      return (prizesData || []) as Prize[];
     },
   });
 
