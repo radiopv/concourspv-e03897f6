@@ -65,11 +65,7 @@ const AdminRoutes = () => {
           <Route path="/" element={<AdminDashboard />} />
           <Route 
             path="/contests/*" 
-            element={
-              <AdminContestManager 
-                onContestSelect={setSelectedContestId}
-              />
-            } 
+            element={<AdminContestManager onContestSelect={setSelectedContestId} />} 
           />
           <Route 
             path="/contest/:contestId/prizes" 
