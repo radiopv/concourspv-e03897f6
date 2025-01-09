@@ -82,6 +82,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     ? settings.default_attempts - (userParticipation?.attempts || 0)
     : 0;
 
+  // Get the main prize from the first item in the prizes array
   const mainPrize = prizes?.[0]?.prize_catalog;
 
   return (
