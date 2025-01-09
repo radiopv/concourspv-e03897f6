@@ -27,6 +27,27 @@ export const useAnswerSubmission = (contestId: string) => {
 
       const participantId = await ensureParticipantExists(session.session.user.id, contestId);
 
+      // Vérifier si une réponse existe déjà pour cette question
+      const { data: existingAnswer } = await supabase
+        .from('participant_answers')
+        .select('*')
+        .eq('participant_id', participantId)
+        .eq('question_id', currentQuestion.id)
+        .single();
+
+      if (existingAnswer) {
+        console.log('Answer already exists:', existingAnswer);
+        // Si une réponse existe déjà, on met à jour le state sans insérer
+        const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
+        state.setIsCorrect(isAnswerCorrect);
+        state.setHasAnswered(true);
+        state.setTotalAnswered(prev => prev + 1);
+        if (isAnswerCorrect) {
+          state.setScore(prev => prev + 1);
+        }
+        return;
+      }
+
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
       state.setIsCorrect(isAnswerCorrect);
       state.setHasAnswered(true);
@@ -35,6 +56,7 @@ export const useAnswerSubmission = (contestId: string) => {
         state.setScore(prev => prev + 1);
       }
 
+      // Insérer la nouvelle réponse seulement si elle n'existe pas
       const { error } = await supabase
         .from('participant_answers')
         .insert([{
@@ -44,7 +66,10 @@ export const useAnswerSubmission = (contestId: string) => {
           is_correct: isAnswerCorrect
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error submitting answer:', error);
+        throw error;
+      }
 
       queryClient.invalidateQueries({ queryKey: ['contests'] });
       queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
