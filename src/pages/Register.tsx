@@ -1,8 +1,11 @@
 import { motion } from "framer-motion";
 import { RegisterForm } from "@/components/register/RegisterForm";
 import { Trophy, Bell, Share2, Camera } from "lucide-react";
+import { useRegisterForm } from "@/components/register/useRegisterForm";
 
 const Register = () => {
+  const { form, handleRegistration } = useRegisterForm();
+
   return (
     <div className="container max-w-4xl mx-auto px-4 py-8">
       <motion.div
@@ -73,7 +76,7 @@ const Register = () => {
         </div>
 
         <div className="bg-white p-8 rounded-lg shadow-lg">
-          <RegisterForm />
+          <RegisterForm form={form} />
         </div>
       </motion.div>
     </div>
