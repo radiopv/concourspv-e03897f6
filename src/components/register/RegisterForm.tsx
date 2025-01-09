@@ -32,6 +32,8 @@ const RegisterForm = () => {
 
   const initializeUserData = async (userId: string, userData: z.infer<typeof registerSchema>) => {
     try {
+      console.log('Initializing user data for:', userId);
+      
       // Create member record
       const { error: memberError } = await supabase
         .from('members')
@@ -45,7 +47,10 @@ const RegisterForm = () => {
           contests_won: 0,
         });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Error creating member:', memberError);
+        throw memberError;
+      }
 
       // Initialize user points
       const { error: pointsError } = await supabase
@@ -59,7 +64,12 @@ const RegisterForm = () => {
           extra_participations: 0,
         });
 
-      if (pointsError) throw pointsError;
+      if (pointsError) {
+        console.error('Error initializing user points:', pointsError);
+        throw pointsError;
+      }
+
+      console.log('User data initialized successfully');
 
     } catch (error) {
       console.error('Error initializing user data:', error);

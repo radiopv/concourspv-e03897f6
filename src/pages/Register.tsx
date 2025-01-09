@@ -1,12 +1,8 @@
 import { motion } from "framer-motion";
-import { RegisterForm } from "@/components/register/RegisterForm";
+import RegisterForm from "@/components/register/RegisterForm";
 import { Trophy, Bell, Share2, Camera } from "lucide-react";
-import { useRegisterForm } from "@/components/register/useRegisterForm";
-import { Button } from "@/components/ui/button";
 
 const Register = () => {
-  const { form, handleRegistration } = useRegisterForm();
-
   return (
     <div className="container max-w-4xl mx-auto px-4 py-8">
       <motion.div
@@ -77,13 +73,7 @@ const Register = () => {
         </div>
 
         <div className="bg-white p-8 rounded-lg shadow-lg">
-          <RegisterForm form={form} />
-          <Button 
-            onClick={form.handleSubmit(handleRegistration)}
-            className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-purple-600"
-          >
-            S'inscrire
-          </Button>
+          <RegisterForm />
         </div>
       </motion.div>
     </div>
