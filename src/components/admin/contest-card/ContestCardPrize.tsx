@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import PrizeCatalogSelector from './prize/PrizeCatalogSelector';
 import PrizeDisplay from './prize/PrizeDisplay';
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../../App";
+import { supabase } from "../../../lib/supabase";
 
 interface ContestCardPrizeProps {
   contestId: string;

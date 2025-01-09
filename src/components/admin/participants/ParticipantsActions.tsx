@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../../App";
+import { supabase } from "@/lib/supabase";
 
 interface ParticipantsActionsProps {
   participants: any[];

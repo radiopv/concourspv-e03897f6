@@ -1,6 +1,6 @@
-import { supabase } from "../../../App";
 import { QueryClient } from "@tanstack/react-query";
 import { PARTICIPANT_STATUS } from "@/types/participant";
+import { supabase } from "@/lib/supabase";
 
 export const drawService = {
   async endContestAndDraw(contestId: string, queryClient: QueryClient) {

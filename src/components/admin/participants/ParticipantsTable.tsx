@@ -16,7 +16,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../../App";
+import { supabase } from "@/lib/supabase";
 
 interface ParticipantsTableProps {
   participants: any[];

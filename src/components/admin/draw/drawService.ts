@@ -1,4 +1,5 @@
-import { supabase } from "../../../App";
+// ... keep existing code
+import { supabase } from "@/lib/supabase";
 
 export const drawService = {
   async performDraw(contestId: string) {
