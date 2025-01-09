@@ -42,16 +42,28 @@ const ProfileCard = ({
       console.log("Email actuel:", userProfile.email);
       console.log("Nouvel email:", formData.email);
 
-      // Mise à jour de l'email dans auth
-      const { data: authData, error: authError } = await supabase.auth.updateUser({
-        email: formData.email,
-      });
+      // Si l'email n'a pas changé, ne pas tenter de le mettre à jour
+      if (formData.email !== userProfile.email) {
+        // Mise à jour de l'email dans auth
+        const { data: authData, error: authError } = await supabase.auth.updateUser({
+          email: formData.email,
+        });
 
-      console.log("Réponse de updateUser:", { authData, authError });
+        console.log("Réponse de updateUser:", { authData, authError });
 
-      if (authError) {
-        console.error("Erreur lors de la mise à jour de l'email:", authError);
-        throw authError;
+        if (authError) {
+          // Vérifier si l'erreur est due à un email déjà existant
+          if (authError.message.includes("email_exists") || authError.message.includes("already been registered")) {
+            toast({
+              variant: "destructive",
+              title: "Email déjà utilisé",
+              description: "Cette adresse email est déjà associée à un autre compte.",
+            });
+            return;
+          }
+          console.error("Erreur lors de la mise à jour de l'email:", authError);
+          throw authError;
+        }
       }
 
       // Mise à jour du profil dans la base de données
@@ -60,7 +72,8 @@ const ProfileCard = ({
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
-          email: formData.email,
+          // Ne mettre à jour l'email que s'il a changé
+          ...(formData.email !== userProfile.email ? { email: formData.email } : {})
         })
         .eq("id", userId)
         .select();
@@ -74,7 +87,9 @@ const ProfileCard = ({
 
       toast({
         title: "Profil mis à jour",
-        description: "Vos informations ont été enregistrées avec succès. Si vous avez modifié votre email, veuillez vérifier votre boîte de réception pour confirmer le changement.",
+        description: formData.email !== userProfile.email 
+          ? "Vos informations ont été enregistrées avec succès. Si vous avez modifié votre email, veuillez vérifier votre boîte de réception pour confirmer le changement."
+          : "Vos informations ont été enregistrées avec succès.",
       });
       
       setIsEditing(false);
