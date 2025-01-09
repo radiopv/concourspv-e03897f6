@@ -25,7 +25,8 @@ export const useContests = () => {
           questions:questionnaires (
             id,
             title,
-            description
+            description,
+            questions (*)
           )
         `)
         .eq('status', 'active')
@@ -55,6 +56,19 @@ export const useContest = (contestId: string | undefined) => {
       console.log('Fetching contest with ID:', contestId);
       const now = new Date().toISOString();
 
+      // Première requête pour vérifier si le concours existe
+      const { data: contestExists, error: existsError } = await supabase
+        .from('contests')
+        .select('id')
+        .eq('id', contestId)
+        .single();
+
+      if (existsError || !contestExists) {
+        console.error('Contest does not exist:', contestId);
+        throw new Error('Contest not found');
+      }
+
+      // Si le concours existe, récupérer toutes ses données
       const { data, error } = await supabase
         .from('contests')
         .select(`
