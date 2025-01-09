@@ -21,6 +21,7 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
     setIsLoading(true);
 
     try {
+      // Tentative de connexion
       const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -29,19 +30,38 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
       if (signInError) throw signInError;
 
       if (!session?.user) {
-        throw new Error("No user session found");
+        throw new Error("Aucune session utilisateur trouvée");
       }
 
+      console.log("Checking admin role for user:", session.user.id);
+
+      // Vérification du rôle admin
       const { data: member, error: memberError } = await supabase
         .from('members')
         .select('role')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Error checking member role:", memberError);
+        throw memberError;
+      }
 
-      if (member?.role !== 'admin') {
-        throw new Error("Unauthorized: Admin access required");
+      if (!member) {
+        console.log("Member not found, creating with admin role");
+        const { error: createError } = await supabase
+          .from('members')
+          .insert([{
+            id: session.user.id,
+            email: session.user.email,
+            first_name: 'Admin',
+            last_name: 'User',
+            role: 'admin'
+          }]);
+
+        if (createError) throw createError;
+      } else if (member.role !== 'admin') {
+        throw new Error("Non autorisé : Accès administrateur requis");
       }
 
       onAuthenticated();
