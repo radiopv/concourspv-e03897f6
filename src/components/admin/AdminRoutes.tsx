@@ -8,90 +8,67 @@ import DrawManager from "./DrawManager";
 import Winners from "../../pages/Winners";
 import GlobalSettings from "./GlobalSettings";
 import { useParams } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const AdminRoutes = () => {
   const { contestId } = useParams();
 
+  const menuItems = [
+    { path: "/admin", label: "Tableau de bord" },
+    { path: "/admin/contests", label: "Concours" },
+    { path: "/admin/questions", label: "Questions" },
+    { path: "/admin/prizes", label: "Prix" },
+    { path: "/admin/settings", label: "Paramètres" },
+  ];
+
+  const contestMenuItems = contestId ? [
+    { path: `/admin/contests/${contestId}/participants`, label: "Participants" },
+    { path: `/admin/contests/${contestId}/draw`, label: "Tirage" },
+    { path: `/admin/contests/${contestId}/winners`, label: "Gagnants" },
+  ] : [];
+
   return (
     <div className="container mx-auto p-4">
-      <nav className="mb-8">
-        <ul className="flex space-x-4 overflow-x-auto pb-4">
-          <li>
-            <Link
-              to="/admin"
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-            >
-              Tableau de bord
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/admin/contests"
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-            >
-              Concours
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/admin/questions"
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-            >
-              Banque de questions
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/admin/prizes"
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-            >
-              Catalogue des prix
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/admin/settings"
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-            >
-              Paramètres
-            </Link>
-          </li>
-          {contestId && (
-            <>
-              <li>
-                <Link
-                  to={`/admin/contests/${contestId}/participants`}
-                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-                >
-                  Participants
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to={`/admin/contests/${contestId}/draw`}
-                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-                >
-                  Tirage
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to={`/admin/contests/${contestId}/winners`}
-                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-                >
-                  Gagnants
-                </Link>
-              </li>
-            </>
-          )}
-        </ul>
+      <nav className="mb-8 bg-white shadow rounded-lg">
+        <div className="overflow-x-auto">
+          <div className="flex space-x-1 p-2">
+            {menuItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                  "hover:bg-primary/10 hover:text-primary",
+                  "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                  "whitespace-nowrap"
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+            {contestMenuItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                  "hover:bg-secondary/10 hover:text-secondary",
+                  "focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2",
+                  "whitespace-nowrap"
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </nav>
 
       <Routes>
         <Route index element={<AdminDashboard />} />
         <Route path="contests" element={<AdminContestManager />} />
         <Route path="questions" element={<QuestionBank />} />
-        <Route path="prizes" element={<PrizeCatalogManager contestId={contestId || ''} />} />
+        <Route path="prizes" element={<PrizeCatalogManager />} />
         <Route path="settings" element={<GlobalSettings />} />
         <Route 
           path="contests/:contestId/participants" 
@@ -99,11 +76,11 @@ const AdminRoutes = () => {
         />
         <Route 
           path="contests/:contestId/draw" 
-          element={<DrawManager contestId={contestId || ''} />} 
+          element={<DrawManager />} 
         />
         <Route 
           path="contests/:contestId/winners" 
-          element={<Winners contests={[]} onClaimPrize={() => {}} showAll={true} />} 
+          element={<Winners />} 
         />
       </Routes>
     </div>
