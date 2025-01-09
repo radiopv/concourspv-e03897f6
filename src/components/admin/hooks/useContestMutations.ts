@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { ContestStatus, ContestStatusUpdate } from "@/types/contest";
 
 export const useContestMutations = () => {
   const { toast } = useToast();
@@ -42,7 +43,7 @@ export const useContestMutations = () => {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('contests')
-        .update({ status: 'archived' })
+        .update({ status: 'archived' as ContestStatus })
         .eq('id', id);
       
       if (error) throw error;
@@ -93,11 +94,7 @@ export const useContestMutations = () => {
   const statusUpdateMutation = useMutation({
     mutationFn: async ({ id, updates }: { 
       id: string; 
-      updates: { 
-        is_new?: boolean; 
-        has_big_prizes?: boolean;
-        status?: 'draft' | 'active' | 'archived';
-      } 
+      updates: ContestStatusUpdate;
     }) => {
       const { error } = await supabase
         .from('contests')

@@ -1,13 +1,12 @@
 import React from "react";
 import ContestCard from "../ContestCard";
 import { useContestMutations } from "../hooks/useContestMutations";
+import { Contest, ContestStatus, ContestStatusUpdate } from "@/types/contest";
 
 interface ContestListGridProps {
-  contests: any[];
+  contests: Contest[];
   onSelectContest: (id: string) => void;
 }
-
-type ContestStatus = 'draft' | 'active' | 'archived';
 
 const ContestListGrid: React.FC<ContestListGridProps> = ({ contests, onSelectContest }) => {
   const { 
@@ -35,7 +34,7 @@ const ContestListGrid: React.FC<ContestListGridProps> = ({ contests, onSelectCon
           onDelete={(id) => deleteMutation.mutate(id)}
           onArchive={(id) => archiveMutation.mutate(id)}
           onFeatureToggle={(id, featured) => featureToggleMutation.mutate({ id, featured })}
-          onStatusUpdate={(id, updates: { is_new?: boolean; has_big_prizes?: boolean; status?: ContestStatus }) => 
+          onStatusUpdate={(id, updates: ContestStatusUpdate) => 
             statusUpdateMutation.mutate({ id, updates })}
           onEdit={(id) => onSelectContest(id)}
         />
