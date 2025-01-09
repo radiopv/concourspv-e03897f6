@@ -1,9 +1,8 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
-import { CustomBadge } from "@/components/ui/custom-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, ExternalLink } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
@@ -12,8 +11,19 @@ import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
 import ParticipationStats from "./contest-card/ParticipationStats";
 
-interface Prize {
+// Types pour les données brutes de l'API
+interface RawPrizeData {
   catalog_item_id: string;
+  prize_catalog: {
+    name: string;
+    image_url: string;
+    shop_url: string;
+    value: number;
+  };
+}
+
+// Type pour le format final des prix
+interface Prize {
   prize_catalog: {
     name: string;
     image_url: string;
@@ -40,7 +50,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     queryKey: ['contest-prizes', contest.id],
     queryFn: async () => {
       console.log('Fetching prizes for contest:', contest.id);
-      const { data: prizesData } = await supabase
+      const { data: prizesData, error } = await supabase
         .from('prizes')
         .select(`
           catalog_item_id,
@@ -52,8 +62,16 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           )
         `)
         .eq('contest_id', contest.id);
-      console.log('Prizes data:', prizesData);
-      return (prizesData || []) as Prize[];
+
+      if (error) throw error;
+      
+      // Transformation des données pour correspondre au type Prize[]
+      const transformedPrizes: Prize[] = (prizesData || []).map((item: RawPrizeData) => ({
+        prize_catalog: item.prize_catalog
+      }));
+
+      console.log('Prizes data:', transformedPrizes);
+      return transformedPrizes;
     },
   });
 
