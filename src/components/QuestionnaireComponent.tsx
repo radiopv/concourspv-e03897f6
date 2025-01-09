@@ -86,8 +86,8 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           .eq('id', session.session.user.id);
 
         // Invalider les requêtes pour forcer le rafraîchissement des données
-        queryClient.invalidateQueries({ queryKey: ['contests'] });
-        queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
+        await queryClient.invalidateQueries({ queryKey: ['contests'] });
+        await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
 
         toast({
           title: "Questionnaire terminé ! 🎉",
@@ -99,8 +99,10 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           duration: 5000,
         });
 
-        // Rediriger vers la page principale
-        navigate('/contests');
+        // Attendre un court instant pour que le toast soit visible
+        setTimeout(() => {
+          navigate('/contests');
+        }, 1000);
 
       } catch (error) {
         console.error('Error completing questionnaire:', error);
