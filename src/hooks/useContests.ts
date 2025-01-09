@@ -37,6 +37,7 @@ export const useContests = () => {
         throw error;
       }
 
+      console.log('Fetched contests:', data);
       return data as unknown as Contest[];
     },
   });
@@ -75,6 +76,8 @@ export const useContest = (contestId: string | undefined) => {
           )
         `)
         .eq('id', contestId)
+        .eq('status', 'active')
+        .gte('end_date', new Date().toISOString())
         .maybeSingle();
 
       if (error) {
