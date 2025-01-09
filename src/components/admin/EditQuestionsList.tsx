@@ -28,13 +28,19 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
+      console.log('Fetching questions for contest:', contestId);
       const { data, error } = await supabase
         .from('questions')
         .select('id, question_text, options, correct_answer, article_url, order_number')
         .eq('contest_id', contestId)
         .order('order_number');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
+
+      console.log('Questions data:', data);
       return data as Question[];
     }
   });

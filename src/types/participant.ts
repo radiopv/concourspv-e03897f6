@@ -12,7 +12,8 @@ export interface Participant {
   last_name: string;
   email: string;
   score: number;
-  status: ParticipantStatus | null;
+  status: ParticipantStatus;
   contest_id: string;
   completed_at?: string;
+  attempts: number;
 }
