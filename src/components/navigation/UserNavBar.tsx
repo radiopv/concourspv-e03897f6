@@ -1,10 +1,16 @@
 import { Link } from "react-router-dom";
-import { Trophy, Menu, Settings, LogOut } from "lucide-react";
+import { Trophy, Menu, Settings, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const UserNavBar = () => {
   const isMobile = useIsMobile();
@@ -46,17 +52,32 @@ const UserNavBar = () => {
           Administration
         </Link>
       )}
-      <Button
-        variant="ghost"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2 p-0 h-auto"
-        onClick={() => {
-          signOut();
-          setIsOpen(false);
-        }}
-      >
-        <LogOut className="w-4 h-4" />
-        Déconnexion
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="flex items-center gap-2 p-0 h-auto">
+            <User className="w-4 h-4" />
+            Profil
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem asChild>
+            <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
+              <User className="w-4 h-4" />
+              Mon profil
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-red-600 cursor-pointer"
+            onClick={() => {
+              signOut();
+              setIsOpen(false);
+            }}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Déconnexion
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 
