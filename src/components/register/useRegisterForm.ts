@@ -30,18 +30,19 @@ export const useRegisterForm = () => {
 
   const handleRegistration = async (values: z.infer<typeof formSchema>) => {
     try {
-      // 1. Vérifier si l'email existe déjà
-      const { data: existingUsers, error: emailCheckError } = await supabase
-        .from('members')
-        .select('email')
-        .eq('email', values.email);
+      // 1. Check if user exists in auth system first
+      const { data: { users }, error: authCheckError } = await supabase.auth.admin.listUsers({
+        filters: {
+          email: values.email
+        }
+      });
 
-      if (emailCheckError) {
-        console.error("Erreur lors de la vérification de l'email:", emailCheckError);
-        throw emailCheckError;
+      if (authCheckError) {
+        console.error("Erreur lors de la vérification de l'utilisateur:", authCheckError);
+        throw authCheckError;
       }
 
-      if (existingUsers && existingUsers.length > 0) {
+      if (users && users.length > 0) {
         toast({
           title: "Email déjà utilisé",
           description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
@@ -56,7 +57,33 @@ export const useRegisterForm = () => {
         return;
       }
 
-      // 2. Créer le compte d'authentification
+      // 2. Check if email exists in members table
+      const { data: existingMembers, error: memberCheckError } = await supabase
+        .from('members')
+        .select('email')
+        .eq('email', values.email);
+
+      if (memberCheckError) {
+        console.error("Erreur lors de la vérification du membre:", memberCheckError);
+        throw memberCheckError;
+      }
+
+      if (existingMembers && existingMembers.length > 0) {
+        toast({
+          title: "Email déjà utilisé",
+          description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
+          variant: "destructive",
+        });
+        navigate("/login", { 
+          state: { 
+            email: values.email,
+            message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
+          }
+        });
+        return;
+      }
+
+      // 3. Create auth account
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -68,13 +95,29 @@ export const useRegisterForm = () => {
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        if (signUpError.message.includes("User already registered")) {
+          toast({
+            title: "Email déjà utilisé",
+            description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
+            variant: "destructive",
+          });
+          navigate("/login", { 
+            state: { 
+              email: values.email,
+              message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
+            }
+          });
+          return;
+        }
+        throw signUpError;
+      }
 
       if (!authData.user) {
         throw new Error("Erreur lors de la création du compte");
       }
 
-      // 3. Créer le profil dans la table members
+      // 4. Create member profile
       const { error: profileError } = await supabase
         .from('members')
         .insert([
@@ -112,6 +155,23 @@ export const useRegisterForm = () => {
 
     } catch (error: any) {
       console.error("Erreur lors de l'inscription:", error);
+      
+      // Handle specific error cases
+      if (error.message?.includes("User already registered")) {
+        toast({
+          variant: "destructive",
+          title: "Email déjà utilisé",
+          description: "Un compte existe déjà avec cet email. Veuillez vous connecter.",
+        });
+        navigate("/login", { 
+          state: { 
+            email: values.email,
+            message: "Utilisez vos identifiants pour vous connecter ou cliquez sur 'Mot de passe oublié' si nécessaire."
+          }
+        });
+        return;
+      }
+
       toast({
         variant: "destructive",
         title: "Erreur",
