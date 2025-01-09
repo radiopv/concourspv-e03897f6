@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Trophy, Menu, Settings, LogOut, User } from "lucide-react";
+import { Menu, Settings, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -33,14 +33,6 @@ const UserNavBar = () => {
         onClick={() => setIsOpen(false)}
       >
         Concours
-      </Link>
-      <Link
-        to="/winners"
-        className="text-gray-900 hover:text-gray-600 transition-colors flex items-center gap-2"
-        onClick={() => setIsOpen(false)}
-      >
-        <Trophy className="w-4 h-4" />
-        Gagnants
       </Link>
       {isAdmin && (
         <Link

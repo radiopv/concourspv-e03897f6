@@ -1,4 +1,4 @@
-import { Home, Trophy, Settings, User } from "lucide-react";
+import { Home, Settings, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -23,7 +23,7 @@ const MobileNavBar = () => {
           to="/contests" 
           className="flex flex-col items-center text-gray-600 hover:text-gray-900"
         >
-          <Trophy className="h-6 w-6" />
+          <Settings className="h-6 w-6" />
           <span className="text-xs mt-1">Concours</span>
         </Link>
 
