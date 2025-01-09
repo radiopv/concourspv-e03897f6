@@ -47,12 +47,19 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
   // Update form data when contest data is loaded
   useEffect(() => {
     if (contest) {
+      // Format dates to YYYY-MM-DD for input type="date"
+      const formatDate = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+      };
+
       setFormData({
         title: contest.title || '',
         description: contest.description || '',
-        start_date: contest.start_date || '',
-        end_date: contest.end_date || '',
-        draw_date: contest.draw_date || '',
+        start_date: formatDate(contest.start_date),
+        end_date: formatDate(contest.end_date),
+        draw_date: formatDate(contest.draw_date),
         is_featured: contest.is_featured || false,
         is_new: contest.is_new || false,
         has_big_prizes: contest.has_big_prizes || false,
