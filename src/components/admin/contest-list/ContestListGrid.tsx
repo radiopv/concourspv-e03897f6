@@ -7,6 +7,8 @@ interface ContestListGridProps {
   onSelectContest: (id: string) => void;
 }
 
+type ContestStatus = 'draft' | 'active' | 'archived';
+
 const ContestListGrid: React.FC<ContestListGridProps> = ({ contests, onSelectContest }) => {
   const { 
     deleteMutation,
@@ -33,7 +35,8 @@ const ContestListGrid: React.FC<ContestListGridProps> = ({ contests, onSelectCon
           onDelete={(id) => deleteMutation.mutate(id)}
           onArchive={(id) => archiveMutation.mutate(id)}
           onFeatureToggle={(id, featured) => featureToggleMutation.mutate({ id, featured })}
-          onStatusUpdate={(id, updates) => statusUpdateMutation.mutate({ id, updates })}
+          onStatusUpdate={(id, updates: { is_new?: boolean; has_big_prizes?: boolean; status?: ContestStatus }) => 
+            statusUpdateMutation.mutate({ id, updates })}
           onEdit={(id) => onSelectContest(id)}
         />
       ))}
