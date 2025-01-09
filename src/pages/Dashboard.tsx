@@ -9,6 +9,7 @@ import PointsOverview from "@/components/dashboard/PointsOverview";
 import QuickActions from "@/components/dashboard/QuickActions";
 import ProfileCard from "@/components/dashboard/ProfileCard";
 import { initializeUserPoints } from "@/services/pointsService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -97,7 +98,7 @@ const Dashboard = () => {
     retry: 1,
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['user-stats', user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -129,29 +130,53 @@ const Dashboard = () => {
     }
   }, [profileData]);
 
-  if (loading || isLoadingProfile) {
-    return <div>Loading...</div>;
+  if (!user) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Veuillez vous connecter pour accéder à votre tableau de bord
+        </h1>
+      </div>
+    );
   }
+
+  const isLoading = loading || isLoadingProfile || isLoadingStats;
 
   return (
     <div className="container mx-auto p-4">
       <DashboardHeader />
-      <StatsCards stats={stats || {
-        contests_participated: 0,
-        total_points: 0,
-        contests_won: 0,
-      }} />
-      <PointsOverview />
-      <QuickActions />
-      <ProfileCard 
-        userProfile={profileData}
-        isEditing={isEditing}
-        formData={formData}
-        setFormData={setFormData}
-        setIsEditing={setIsEditing}
-        userId={user?.id || ''}
-        refetch={refetch}
-      />
+      
+      {isLoading ? (
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+          </div>
+          <Skeleton className="h-64" />
+          <Skeleton className="h-48" />
+          <Skeleton className="h-96" />
+        </div>
+      ) : (
+        <>
+          <StatsCards stats={stats || {
+            contests_participated: 0,
+            total_points: 0,
+            contests_won: 0,
+          }} />
+          <PointsOverview />
+          <QuickActions />
+          <ProfileCard 
+            userProfile={profileData}
+            isEditing={isEditing}
+            formData={formData}
+            setFormData={setFormData}
+            setIsEditing={setIsEditing}
+            userId={user.id}
+            refetch={refetch}
+          />
+        </>
+      )}
     </div>
   );
 };
