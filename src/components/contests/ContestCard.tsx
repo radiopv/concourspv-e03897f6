@@ -29,6 +29,11 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   // Find winner if contest has one
   const winner = contest.participants?.find(p => p.status === PARTICIPANT_STATUS.WINNER);
 
+  const handleParticipate = () => {
+    console.log('Participating in contest:', contest);
+    onSelect(contest.id);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -66,7 +71,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
 
           <div className="mt-auto pt-4">
             <Button 
-              onClick={() => onSelect(contest.id)}
+              onClick={handleParticipate}
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
               Participer
