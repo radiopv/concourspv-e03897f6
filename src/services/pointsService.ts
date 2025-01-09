@@ -1,4 +1,4 @@
-import { supabase } from "../App";
+import { supabase } from "@/lib/supabase";
 import { Rank, UserRank } from "../types/points";
 
 export const RANKS: UserRank[] = [

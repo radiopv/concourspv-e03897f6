@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import ContestList from './ContestList';
 
 const AdminContestManager = () => {
-  const [contests, setContests] = useState([]);
+  const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['contests'],
@@ -24,7 +24,10 @@ const AdminContestManager = () => {
   return (
     <div>
       <h1>Admin Contest Manager</h1>
-      <ContestList contests={data} />
+      <ContestList 
+        contests={data} 
+        onSelectContest={setSelectedContestId}
+      />
     </div>
   );
 };

@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import ContestList from "./ContestList";
 import ParticipantsList from "./ParticipantsList";
 
 const AdminDashboard = () => {
+  const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
   const { data: contests, isLoading } = useQuery({
     queryKey: ['admin-contests'],
     queryFn: async () => {
@@ -25,7 +26,10 @@ const AdminDashboard = () => {
   return (
     <div>
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      <ContestList contests={contests} />
+      <ContestList 
+        contests={contests} 
+        onSelectContest={setSelectedContestId}
+      />
       <ParticipantsList />
     </div>
   );
