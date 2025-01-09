@@ -1,10 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../App";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export const usePrizeMutations = (contestId?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const invalidateQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+  };
 
   const addPrizeToCatalog = useMutation({
     mutationFn: async (data: any) => {
@@ -16,7 +20,7 @@ export const usePrizeMutations = (contestId?: string) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      invalidateQueries();
       toast({
         title: "Succès",
         description: "Le prix a été ajouté au catalogue",
@@ -43,7 +47,7 @@ export const usePrizeMutations = (contestId?: string) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      invalidateQueries();
       if (contestId) {
         queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
       }
@@ -73,7 +77,7 @@ export const usePrizeMutations = (contestId?: string) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      invalidateQueries();
       toast({
         title: "Succès",
         description: "Le prix a été supprimé du catalogue",

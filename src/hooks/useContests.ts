@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../App";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
 export const useContests = () => {
   const { toast } = useToast();
