@@ -1,4 +1,4 @@
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 import { Participant } from "../../types/database";
 
 export const ensureParticipantExists = async (userId: string, contestId: string): Promise<string> => {
