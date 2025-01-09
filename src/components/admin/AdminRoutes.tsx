@@ -7,6 +7,7 @@ import AdminContestManager from './AdminContestManager';
 import ContentValidator from './ContentValidator';
 import GlobalSettings from './GlobalSettings';
 import QuestionBank from '@/pages/QuestionBank';
+import UserManager from './users/UserManager';
 import { Button } from '../ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -52,6 +53,12 @@ const AdminRoutes = () => {
             </Button>
             <Button
               variant="ghost"
+              onClick={() => navigate('/admin/users')}
+            >
+              Utilisateurs
+            </Button>
+            <Button
+              variant="ghost"
               onClick={() => navigate('/admin/settings')}
             >
               Paramètres
@@ -86,6 +93,7 @@ const AdminRoutes = () => {
           <Route path="/content" element={<ContentValidator />} />
           <Route path="/settings" element={<GlobalSettings />} />
           <Route path="/questions" element={<QuestionBank />} />
+          <Route path="/users" element={<UserManager />} />
         </Routes>
       </div>
     </div>
