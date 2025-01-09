@@ -1,4 +1,4 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, useParams } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import AdminContestManager from "./AdminContestManager";
 import QuestionBank from "../../pages/QuestionBank";
@@ -7,8 +7,8 @@ import ParticipantsList from "./ParticipantsList";
 import DrawManager from "./DrawManager";
 import Winners from "../../pages/Winners";
 import GlobalSettings from "./GlobalSettings";
-import { useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import ContestPrizeManager from "./ContestPrizeManager";
 
 const AdminRoutes = () => {
   const { contestId } = useParams<{ contestId: string }>();
@@ -73,6 +73,10 @@ const AdminRoutes = () => {
         <Route 
           path="contests/:contestId/participants" 
           element={<ParticipantsList />} 
+        />
+        <Route 
+          path="contests/:contestId/prizes" 
+          element={contestId ? <ContestPrizeManager contestId={contestId} /> : null} 
         />
         <Route 
           path="contests/:contestId/draw" 

@@ -8,7 +8,7 @@ interface RegisterFormFieldsProps {
   form: UseFormReturn<any>;
 }
 
-export const RegisterFormFields = ({ form }: RegisterFormFieldsProps) => {
+const RegisterForm: React.FC<RegisterFormFieldsProps> = ({ form }) => {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -93,3 +93,5 @@ export const RegisterFormFields = ({ form }: RegisterFormFieldsProps) => {
     </>
   );
 };
+
+export { RegisterForm };

@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../../App";
+import { supabase } from "@/lib/supabase";
+
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Minus } from "lucide-react";
@@ -129,3 +130,4 @@ const AddQuestionForm = () => {
 };
 
 export default AddQuestionForm;
+

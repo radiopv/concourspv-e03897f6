@@ -4,8 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 
 interface Winner {
-  first_name: string;
-  last_name: string;
+  id: string;
+  participants: {
+    first_name: string;
+    last_name: string;
+  };
   score: number;
   updated_at: string;
   prize_claimed: boolean;
@@ -19,33 +22,17 @@ interface Winner {
   }[];
 }
 
-const WinnersList = () => {
-  const { data: winners, isLoading } = useQuery({
-    queryKey: ['winners'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('winners')
-        .select(`
-          *,
-          participants (
-            first_name,
-            last_name
-          )
-        `);
+interface WinnersListProps {
+  winners: Winner[];
+  onClaimPrize?: (winner: Winner) => void;
+  showAll?: boolean;
+}
 
-      if (error) throw error;
-      return data as Winner[];
-    }
-  });
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
+const WinnersList: React.FC<WinnersListProps> = ({ winners, onClaimPrize, showAll }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Winners List</CardTitle>
+        <CardTitle>Liste des gagnants</CardTitle>
       </CardHeader>
       <CardContent>
         <ul>

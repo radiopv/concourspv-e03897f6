@@ -52,14 +52,7 @@ const Winners = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Gagnants des concours</h1>
-      <WinnersList 
-        winners={winners}
-        onClaimPrize={(winner) => {
-          // Implement prize claiming logic here
-          console.log('Claiming prize for winner:', winner);
-        }}
-        showAll={true}
-      />
+      <WinnersList winners={winners} />
     </div>
   );
 };
