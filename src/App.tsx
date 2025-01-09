@@ -14,6 +14,7 @@ import WinnersList from "@/pages/WinnersList";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Admin from "@/pages/Admin";
+import Home from "@/pages/Home";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +25,7 @@ function App() {
         <AuthProvider>
           <Layout>
             <Routes>
-              <Route path="/" element={<ContestsList />} />
+              <Route path="/" element={<Home />} />
               <Route path="/contests" element={<ContestsList />} />
               <Route path="/contest/:id" element={<Contest />} />
               <Route path="/dashboard" element={<Dashboard />} />
