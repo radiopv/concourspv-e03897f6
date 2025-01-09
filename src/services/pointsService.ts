@@ -48,25 +48,37 @@ export const calculateExtraParticipations = (points: number): number => {
 };
 
 export const initializeUserPoints = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('user_points')
-    .insert({
-      user_id: userId,
-      total_points: 0,
-      current_streak: 0,
-      best_streak: 0,
-      current_rank: 'BEGINNER',
-      extra_participations: 0,
-    })
-    .select()
-    .single();
+  console.log('Initializing user points for:', userId);
+  try {
+    const { data, error } = await supabase
+      .from('user_points')
+      .insert({
+        user_id: userId,
+        total_points: 0,
+        current_streak: 0,
+        best_streak: 0,
+        current_rank: 'BEGINNER',
+        extra_participations: 0,
+      })
+      .select()
+      .single();
 
-  if (error) throw error;
-  return data;
+    if (error) {
+      console.error('Error initializing user points:', error);
+      throw error;
+    }
+
+    console.log('User points initialized successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in initializeUserPoints:', error);
+    throw error;
+  }
 };
 
 export const getUserPoints = async (userId: string) => {
   try {
+    console.log('Getting user points for:', userId);
     const { data, error } = await supabase
       .from('user_points')
       .select('*')
@@ -75,15 +87,17 @@ export const getUserPoints = async (userId: string) => {
 
     if (error) {
       if (error.code === 'PGRST116') {
-        // If no points record exists, initialize one
+        console.log('No points record found, initializing...');
         return await initializeUserPoints(userId);
       }
+      console.error('Error getting user points:', error);
       throw error;
     }
 
+    console.log('User points retrieved successfully:', data);
     return data;
   } catch (error) {
-    console.error('Error getting user points:', error);
+    console.error('Error in getUserPoints:', error);
     throw error;
   }
 };
