@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/App";
+import { supabase } from "@/lib/supabase";
+
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
