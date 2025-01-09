@@ -8,6 +8,10 @@ interface ContestListHeaderProps {
   onContestSelect: (id: string) => void;
 }
 
+interface CreateTestContestProps {
+  onContestCreated: (id: string) => void;
+}
+
 const ContestListHeader: React.FC<ContestListHeaderProps> = ({ onContestSelect }) => {
   return (
     <div className="flex justify-between items-center mb-6">
@@ -29,7 +33,7 @@ const ContestListHeader: React.FC<ContestListHeaderProps> = ({ onContestSelect }
           <DialogHeader>
             <DialogTitle>Créer un nouveau concours</DialogTitle>
           </DialogHeader>
-          <CreateTestContest onContestCreated={(id) => onContestSelect(id)} />
+          <CreateTestContest onContestCreated={onContestSelect} />
         </DialogContent>
       </Dialog>
     </div>
