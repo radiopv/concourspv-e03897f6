@@ -22,26 +22,38 @@ const Dashboard = () => {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data: participationStats } = await supabase
+      // Récupère toutes les participations de l'utilisateur
+      const { data: participationStats, error: participationError } = await supabase
         .from('participants')
-        .select('score, status')
+        .select(`
+          *,
+          contests (
+            title,
+            status
+          )
+        `)
         .eq('id', user.id);
 
-      const stats = participationStats?.reduce((acc, curr) => ({
-        contests_participated: acc.contests_participated + 1,
-        total_points: acc.total_points + (curr.score || 0),
-        contests_won: acc.contests_won + (curr.status === 'winner' ? 1 : 0),
-      }), {
-        contests_participated: 0,
-        total_points: 0,
-        contests_won: 0,
-      });
+      if (participationError) throw participationError;
 
-      const { data: existingProfile } = await supabase
+      console.log("Participations trouvées:", participationStats);
+
+      const stats = {
+        contests_participated: participationStats?.length || 0,
+        total_points: participationStats?.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0,
+        contests_won: participationStats?.filter(p => p.status === 'winner').length || 0,
+      };
+
+      console.log("Statistiques calculées:", stats);
+
+      // Récupère le profil de l'utilisateur
+      const { data: existingProfile, error: profileError } = await supabase
         .from("members")
         .select("*")
         .eq("id", user.id)
         .single();
+
+      if (profileError) throw profileError;
 
       if (existingProfile) {
         return {
