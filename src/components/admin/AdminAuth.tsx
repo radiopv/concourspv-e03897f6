@@ -27,7 +27,25 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
         password
       });
 
-      if (signInError) throw signInError;
+      if (signInError) {
+        // Si la connexion échoue, on essaie de créer le compte
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (signUpError) throw signUpError;
+        
+        if (!signUpData.session) {
+          toast({
+            title: "Vérifiez vos emails",
+            description: "Un email de confirmation vous a été envoyé.",
+          });
+          return;
+        }
+
+        session = signUpData.session;
+      }
 
       if (!session?.user) {
         throw new Error("Aucune session utilisateur trouvée");
