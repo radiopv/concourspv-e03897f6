@@ -64,8 +64,13 @@ export const getParticipantStats = async (userId: string): Promise<Participant[]
   const { data, error } = await supabase
     .from('participants')
     .select(`
+      participation_id,
+      id,
       contest_id,
       status,
+      first_name,
+      last_name,
+      email,
       attempts,
       score,
       completed_at,
@@ -76,5 +81,20 @@ export const getParticipantStats = async (userId: string): Promise<Participant[]
     .eq('id', userId);
 
   if (error) throw error;
-  return data;
+  
+  // Transform the data to match the Participant interface
+  const participants: Participant[] = data.map(item => ({
+    participation_id: item.participation_id,
+    id: item.id,
+    contest_id: item.contest_id,
+    status: item.status,
+    first_name: item.first_name,
+    last_name: item.last_name,
+    email: item.email,
+    attempts: item.attempts,
+    score: item.score,
+    completed_at: item.completed_at
+  }));
+
+  return participants;
 };
