@@ -11,7 +11,7 @@ import { useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const AdminRoutes = () => {
-  const { contestId } = useParams();
+  const { contestId } = useParams<{ contestId: string }>();
 
   const menuItems = [
     { path: "/admin", label: "Tableau de bord" },
@@ -76,7 +76,7 @@ const AdminRoutes = () => {
         />
         <Route 
           path="contests/:contestId/draw" 
-          element={<DrawManager />} 
+          element={contestId ? <DrawManager contestId={contestId} /> : null} 
         />
         <Route 
           path="contests/:contestId/winners" 

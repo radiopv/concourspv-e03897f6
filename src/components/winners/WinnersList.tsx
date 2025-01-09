@@ -1,65 +1,62 @@
-import { Button } from "@/components/ui/button";
-import { Gift } from "lucide-react";
-import WinnerDisplay from "./WinnerDisplay";
+import React from 'react';
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
 
 interface Winner {
-  id: string;
   first_name: string;
   last_name: string;
-  email: string;
   score: number;
-  status: string;
-  contest: {
-    id: string;
-    title: string;
-  };
-  participant_prizes: Array<{
-    prize: {
-      id: string;
-      catalog_item: {
-        name: string;
-        value: number;
-        image_url: string;
-      };
+  updated_at: string;
+  prize_claimed: boolean;
+  prize_claimed_at?: string;
+  prize?: {
+    catalog_item: {
+      name: string;
+      value: string;
+      image_url: string;
     };
-  }>;
+  }[];
 }
 
-interface WinnersListProps {
-  winners: Winner[];
-  onClaimPrize: (winner: Winner) => void;
-  showAll: boolean;
-}
+const WinnersList = () => {
+  const { data: winners, isLoading } = useQuery({
+    queryKey: ['winners'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('winners')
+        .select(`
+          *,
+          participants (
+            first_name,
+            last_name
+          )
+        `);
 
-const WinnersList = ({ winners, onClaimPrize, showAll }: WinnersListProps) => {
-  const filteredWinners = showAll ? winners : winners.filter(w => !w.participant_prizes?.length);
+      if (error) throw error;
+      return data as Winner[];
+    }
+  });
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {filteredWinners.map((winner) => (
-        <div key={winner.id} className="space-y-4">
-          <WinnerDisplay 
-            winner={winner} 
-            contestTitle={winner.contest?.title || 'Concours'} 
-          />
-          {(!winner.participant_prizes?.length) && (
-            <Button 
-              className="w-full" 
-              variant="outline"
-              onClick={() => onClaimPrize(winner)}
-            >
-              <Gift className="w-4 h-4 mr-2" />
-              Réclamer le prix
-            </Button>
-          )}
-        </div>
-      ))}
-      {filteredWinners.length === 0 && (
-        <div className="col-span-full text-center py-8 text-gray-500">
-          Aucun gagnant à afficher
-        </div>
-      )}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Winners List</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul>
+          {winners?.map((winner) => (
+            <li key={winner.id}>
+              {winner.participants.first_name} {winner.participants.last_name} - Score: {winner.score}
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 };
 

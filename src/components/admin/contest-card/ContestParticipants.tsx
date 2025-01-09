@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../../App";
+import { supabase } from "@/lib/supabase";
 import {
   Table,
   TableBody,
@@ -76,3 +76,4 @@ const ContestParticipants = ({ contestId }: ContestParticipantsProps) => {
 };
 
 export default ContestParticipants;
+

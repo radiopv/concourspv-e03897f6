@@ -41,7 +41,7 @@ const QuestionBank = () => {
           </div>
         </CardContent>
       </Card>
-      <QuestionBankList questions={questions} />
+      <QuestionBankList />
     </div>
   );
 };

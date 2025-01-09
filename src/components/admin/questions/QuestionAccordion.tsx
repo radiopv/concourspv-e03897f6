@@ -12,10 +12,12 @@ interface QuestionAccordionProps {
     correct_answer: string;
     article_url?: string;
   };
+  index: number;
   onDelete: (id: string) => void;
+  onUpdate: () => Promise<void>;
 }
 
-const QuestionAccordion: React.FC<QuestionAccordionProps> = ({ question, onDelete }) => {
+const QuestionAccordion: React.FC<QuestionAccordionProps> = ({ question, index, onDelete, onUpdate }) => {
   const { toast } = useToast();
 
   const handleDelete = async () => {

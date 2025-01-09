@@ -1,27 +1,95 @@
-import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { ProfilePhotoUpload } from "./ProfilePhotoUpload";
-import { NotificationPreferences } from "./NotificationPreferences";
-import { RegisterFormFields } from "./RegisterFormFields";
-import { useRegisterForm } from "./useRegisterForm";
+import React from 'react';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { UseFormReturn } from "react-hook-form";
+import ProfilePhotoUpload from "./ProfilePhotoUpload";
 
-export const RegisterForm = () => {
-  const { form, handleRegistration } = useRegisterForm();
+interface RegisterFormFieldsProps {
+  form: UseFormReturn<any>;
+}
 
+export const RegisterFormFields = ({ form }: RegisterFormFieldsProps) => {
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleRegistration)} className="space-y-6">
-        <RegisterFormFields form={form} />
-        <ProfilePhotoUpload />
-        <NotificationPreferences />
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FormField
+          control={form.control}
+          name="firstName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Prénom</FormLabel>
+              <FormControl>
+                <Input placeholder="Jean" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <Button
-          type="submit"
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
-        >
-          S'inscrire
-        </Button>
-      </form>
-    </Form>
+        <FormField
+          control={form.control}
+          name="lastName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nom</FormLabel>
+              <FormControl>
+                <Input placeholder="Dupont" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <FormField
+        control={form.control}
+        name="email"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Email</FormLabel>
+            <FormControl>
+              <Input type="email" placeholder="jean.dupont@example.com" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="password"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Mot de passe</FormLabel>
+            <FormControl>
+              <Input type="password" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="phoneNumber"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Numéro de téléphone (optionnel)</FormLabel>
+            <FormControl>
+              <Input 
+                type="tel" 
+                placeholder="123-456-7890"
+                pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                title="Format requis: XXX-XXX-XXXX"
+                {...field} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <ProfilePhotoUpload />
+    </>
   );
 };
