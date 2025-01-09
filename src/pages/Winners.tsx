@@ -22,14 +22,14 @@ const Winners = () => {
 
       const contestsWithWinners = await Promise.all(
         contestsData.map(async (contest) => {
+          // Mise à jour de la requête pour utiliser la bonne relation
           const { data: winners, error: winnersError } = await supabase
             .from('participants')
             .select(`
               *,
-              participant_prizes!participant_id (
-                prizes!prize_id (
-                  id,
-                  catalog_item:prize_catalog!catalog_item_id (
+              prizes:participant_prizes(
+                prize:prizes(
+                  catalog_item:prize_catalog(
                     id,
                     name,
                     value,
@@ -46,11 +46,11 @@ const Winners = () => {
             throw winnersError;
           }
 
-          // Transform the data structure to match what the components expect
+          // Transformation des données pour correspondre à la structure attendue
           const transformedWinners = winners.map(winner => ({
             ...winner,
-            prize: winner.participant_prizes?.[0]?.prizes ? 
-              [{ catalog_item: winner.participant_prizes[0].prizes.catalog_item }] : 
+            prize: winner.prizes?.[0]?.prize ? 
+              [{ catalog_item: winner.prizes[0].prize.catalog_item }] : 
               undefined
           }));
 
