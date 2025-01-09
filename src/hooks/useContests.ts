@@ -53,6 +53,7 @@ export const useContest = (contestId: string | undefined) => {
       }
       
       console.log('Fetching contest with ID:', contestId);
+      const now = new Date().toISOString();
 
       const { data, error } = await supabase
         .from('contests')
@@ -77,8 +78,8 @@ export const useContest = (contestId: string | undefined) => {
         `)
         .eq('id', contestId)
         .eq('status', 'active')
-        .gte('end_date', new Date().toISOString())
-        .maybeSingle();
+        .gte('end_date', now)
+        .single();
 
       if (error) {
         console.error('Error fetching contest:', error);
@@ -94,6 +95,5 @@ export const useContest = (contestId: string | undefined) => {
       return data as unknown as Contest;
     },
     enabled: !!contestId,
-    retry: false,
   });
 };
