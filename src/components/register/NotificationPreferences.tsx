@@ -17,11 +17,6 @@ export const NotificationPreferences = () => {
         </div>
         
         <div className="flex items-center justify-between">
-          <Label htmlFor="sms-notif">Notifications par SMS</Label>
-          <Switch id="sms-notif" />
-        </div>
-        
-        <div className="flex items-center justify-between">
           <Label htmlFor="new-contests">Nouveaux concours</Label>
           <Switch id="new-contests" defaultChecked />
         </div>

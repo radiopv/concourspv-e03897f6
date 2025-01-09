@@ -74,7 +74,13 @@ export const RegisterFormFields = ({ form }: RegisterFormFieldsProps) => {
           <FormItem>
             <FormLabel>Numéro de téléphone (optionnel)</FormLabel>
             <FormControl>
-              <Input type="tel" placeholder="+33 6 12 34 56 78" {...field} />
+              <Input 
+                type="tel" 
+                placeholder="123-456-7890"
+                pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                title="Format requis: XXX-XXX-XXXX"
+                {...field} 
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
