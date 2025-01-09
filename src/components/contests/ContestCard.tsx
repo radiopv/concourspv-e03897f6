@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useNavigate } from 'react-router-dom';
 
 interface ContestCardProps {
   contest: {
@@ -29,12 +30,13 @@ interface ContestCardProps {
     has_big_prizes: boolean;
     participants?: { count: number };
   };
-  onSelect: (id: string) => void;
+  onSelect?: (id: string) => void;
   index: number;
 }
 
-const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
+const ContestCard = ({ contest, index }: ContestCardProps) => {
   const [showParticipants, setShowParticipants] = useState(false);
+  const navigate = useNavigate();
 
   const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
@@ -104,6 +106,15 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     ? settings.default_attempts - (userParticipation?.attempts || 0)
     : 0;
 
+  const handleParticipate = () => {
+    if (contest.id) {
+      console.log("Navigating to contest with ID:", contest.id);
+      navigate(`/contest/${contest.id}`);
+    } else {
+      console.error("No contest ID available");
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -160,7 +171,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             </Button>
 
             <Button 
-              onClick={() => onSelect(contest.id)}
+              onClick={handleParticipate}
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
               disabled={remainingAttempts <= 0}
             >
