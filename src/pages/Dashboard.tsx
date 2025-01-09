@@ -22,30 +22,66 @@ const Dashboard = () => {
     email: '',
   });
 
+  // Fonction pour créer un nouveau membre si nécessaire
+  const initializeMember = async (userId: string, userEmail: string) => {
+    console.log('Initializing member for user:', userId);
+    const { data: existingMember, error: checkError } = await supabase
+      .from('members')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('Error checking member:', checkError);
+      return null;
+    }
+
+    if (!existingMember) {
+      console.log('Member not found, creating new member...');
+      const { data: newMember, error: createError } = await supabase
+        .from('members')
+        .insert([
+          {
+            id: userId,
+            email: userEmail,
+            total_points: 0,
+            contests_participated: 0,
+            contests_won: 0,
+          },
+        ])
+        .select()
+        .maybeSingle();
+
+      if (createError) {
+        console.error('Error creating member:', createError);
+        return null;
+      }
+
+      return newMember;
+    }
+
+    return existingMember;
+  };
+
   const { data: profileData, isLoading: isLoadingProfile, refetch } = useQuery({
     queryKey: ['user-profile', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user?.id || !user?.email) return null;
       
       console.log('Fetching user profile data...');
       
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching profile data:', error);
-        throw error;
+      // Initialiser ou récupérer le membre
+      const member = await initializeMember(user.id, user.email);
+      if (!member) {
+        throw new Error('Unable to initialize or fetch member data');
       }
 
       // Initialize user points if needed
       await initializeUserPoints(user.id);
       
-      return data;
+      return member;
     },
-    enabled: !!user,
+    enabled: !!user?.id && !!user?.email,
     retry: 1,
     staleTime: 300000, // 5 minutes
     gcTime: 3600000, // 1 hour
@@ -54,25 +90,27 @@ const Dashboard = () => {
   const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['user-stats', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user?.id) return null;
       console.log('Fetching user stats...');
+      
       const { data, error } = await supabase
         .from('members')
         .select('total_points, contests_participated, contests_won')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching stats:', error);
         throw error;
       }
+
       return {
         contests_participated: data?.contests_participated || 0,
         total_points: data?.total_points || 0,
         contests_won: data?.contests_won || 0,
       };
     },
-    enabled: !!user,
+    enabled: !!user?.id,
     retry: 1,
     staleTime: 300000, // 5 minutes
     gcTime: 3600000, // 1 hour
