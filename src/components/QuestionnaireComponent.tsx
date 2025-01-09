@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../App";
 import { useQuestions } from './questionnaire/useQuestions';
 import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
-import { calculateFinalScore, completeQuestionnaire } from './questionnaire/QuestionnaireManager';
+import { calculateFinalScore } from './questionnaire/QuestionnaireManager';
 import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
 import QuestionDisplay from './questionnaire/QuestionDisplay';
 import { useAttempts } from './questionnaire/hooks/useAttempts';
@@ -43,14 +43,27 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         }
 
         const finalScore = await calculateFinalScore(session.session.user.id);
-        await completeQuestionnaire(session.session.user.id, finalScore);
+        
+        // Mettre à jour le score et le statut du participant
+        const { error: updateError } = await supabase
+          .from('participants')
+          .update({ 
+            score: finalScore,
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('contest_id', contestId)
+          .eq('id', session.session.user.id);
 
+        if (updateError) throw updateError;
+
+        // Mettre à jour le nombre de tentatives
         const { data: participant } = await supabase
           .from('participants')
           .select('attempts')
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id)
-          .maybeSingle();
+          .single();
 
         const newAttempts = (participant?.attempts || 0) + 1;
 
@@ -59,6 +72,10 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           .update({ attempts: newAttempts })
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id);
+
+        // Invalider les requêtes pour forcer le rafraîchissement des données
+        queryClient.invalidateQueries({ queryKey: ['contests'] });
+        queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
 
         toast({
           title: "Questionnaire terminé ! 🎉",
@@ -70,10 +87,9 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           duration: 5000,
         });
 
+        // Rediriger vers la page des statistiques avec le score
         navigate(`/contests/${contestId}/stats`, { 
-          state: { 
-            finalScore: finalScore
-          }
+          state: { finalScore }
         });
 
       } catch (error) {
