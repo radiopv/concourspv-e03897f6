@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +23,60 @@ const Dashboard = () => {
     email: '',
   });
 
-  // Initialize user data if it doesn't exist
+  // Amélioration de la mise en cache avec staleTime et cacheTime
+  const { data: profileData, isLoading: isLoadingProfile, refetch } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      console.log('Fetching user profile data...');
+      await initializeUserData(user.id);
+      
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching profile data:', error);
+        throw error;
+      }
+      return data;
+    },
+    enabled: !!user,
+    retry: 1,
+    staleTime: 300000, // 5 minutes
+    cacheTime: 3600000, // 1 hour
+  });
+
+  const { data: stats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['user-stats', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      console.log('Fetching user stats...');
+      const { data, error } = await supabase
+        .from('members')
+        .select('total_points, contests_participated, contests_won')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching stats:', error);
+        throw error;
+      }
+      return {
+        contests_participated: data?.contests_participated || 0,
+        total_points: data?.total_points || 0,
+        contests_won: data?.contests_won || 0,
+      };
+    },
+    enabled: !!user,
+    retry: 1,
+    staleTime: 300000, // 5 minutes
+    cacheTime: 3600000, // 1 hour
+  });
+
   const initializeUserData = async (userId: string) => {
     try {
       console.log('Checking and initializing user data if needed...');
@@ -77,48 +131,6 @@ const Dashboard = () => {
     }
   };
 
-  const { data: profileData, isLoading: isLoadingProfile, refetch } = useQuery({
-    queryKey: ['user-profile', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      
-      // Try to initialize user data if needed
-      await initializeUserData(user.id);
-      
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-    retry: 1,
-  });
-
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['user-stats', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data, error } = await supabase
-        .from('members')
-        .select('total_points, contests_participated, contests_won')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) throw error;
-      return {
-        contests_participated: data?.contests_participated || 0,
-        total_points: data?.total_points || 0,
-        contests_won: data?.contests_won || 0,
-      };
-    },
-    enabled: !!user,
-    retry: 1,
-  });
-
   useEffect(() => {
     if (profileData) {
       setFormData({
@@ -133,6 +145,11 @@ const Dashboard = () => {
   if (!user) {
     return (
       <div className="text-center py-12">
+        <Helmet>
+          <title>Connexion requise | Tableau de bord</title>
+          <meta name="description" content="Connectez-vous pour accéder à votre tableau de bord personnel et suivre vos performances dans les concours." />
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <h1 className="text-2xl font-bold text-gray-900">
           Veuillez vous connecter pour accéder à votre tableau de bord
         </h1>
@@ -144,10 +161,16 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto p-4">
+      <Helmet>
+        <title>Tableau de bord | {formData.first_name} {formData.last_name}</title>
+        <meta name="description" content="Gérez vos concours, suivez vos points et consultez vos statistiques de participation." />
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
+      
       <DashboardHeader />
       
       {isLoading ? (
-        <div className="space-y-8">
+        <div className="space-y-8" role="status" aria-label="Chargement du tableau de bord">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Skeleton className="h-32" />
             <Skeleton className="h-32" />
