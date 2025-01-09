@@ -116,38 +116,14 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             </p>
           )}
 
-          {mainPrize && (
-            <div className="mb-6 space-y-4">
+          {mainPrize && mainPrize.image_url && (
+            <div className="mb-6">
               <div className="relative aspect-video rounded-lg overflow-hidden">
-                {mainPrize.image_url && (
-                  <img
-                    src={mainPrize.image_url}
-                    alt={mainPrize.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold text-lg">{mainPrize.name}</h3>
-                {mainPrize.value && (
-                  <p className="text-green-600 font-semibold">
-                    Valeur: {mainPrize.value.toLocaleString('fr-CA', { 
-                      style: 'currency', 
-                      currency: 'CAD' 
-                    })}
-                  </p>
-                )}
-                {mainPrize.shop_url && (
-                  <a
-                    href={mainPrize.shop_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    Voir sur la boutique
-                    <ExternalLink className="w-4 h-4 ml-1" />
-                  </a>
-                )}
+                <img
+                  src={mainPrize.image_url}
+                  alt={mainPrize.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
           )}
