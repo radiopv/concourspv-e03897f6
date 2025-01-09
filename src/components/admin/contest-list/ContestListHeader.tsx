@@ -1,44 +1,37 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Database } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import AdminContestManager from "../AdminContestManager";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import CreateTestContest from "../test/CreateTestContest";
 
-const ContestListHeader = () => {
-  const [isNewContestOpen, setIsNewContestOpen] = useState(false);
-  const isMobile = useIsMobile();
+interface ContestListHeaderProps {
+  onContestSelect: (id: string) => void;
+}
 
+const ContestListHeader: React.FC<ContestListHeaderProps> = ({ onContestSelect }) => {
   return (
-    <div className="space-y-6">
-      <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-center justify-between'} mb-8`}>
-        <h2 className="text-3xl font-bold tracking-tight">Concours</h2>
-        <div className={`flex ${isMobile ? 'flex-col' : ''} gap-4`}>
-          <Link to="/admin/question-bank" className={isMobile ? 'w-full' : ''}>
-            <Button 
-              variant="outline" 
-              className={`flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
-            >
-              <Database className="w-4 h-4" />
-              Banque de Questions
-            </Button>
-          </Link>
-          <Button 
-            className={`flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
-            onClick={() => setIsNewContestOpen(!isNewContestOpen)}
-          >
-            <Plus className="w-4 h-4" />
-            Nouveau Concours
-          </Button>
-        </div>
+    <div className="flex justify-between items-center mb-6">
+      <div>
+        <h2 className="text-2xl font-bold">Gestion des concours</h2>
+        <p className="text-muted-foreground">
+          Créez et gérez vos concours
+        </p>
       </div>
-
-      {isNewContestOpen && (
-        <Card className="w-full p-6">
-          <AdminContestManager />
-        </Card>
-      )}
+      
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau concours
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Créer un nouveau concours</DialogTitle>
+          </DialogHeader>
+          <CreateTestContest onContestCreated={(id) => onContestSelect(id)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,58 +1,27 @@
-import React from 'react';
-import ContestCard from '../ContestCard';
-
-type ContestStatus = 'draft' | 'active' | 'archived';
+import React from "react";
+import ContestCard from "../ContestCard";
 
 interface ContestListGridProps {
-  contests: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    status: ContestStatus;
-    start_date: string;
-    end_date: string;
-    draw_date: string;
-    is_featured: boolean;
-    is_new: boolean;
-    has_big_prizes: boolean;
-    participants?: { count: number };
-    questions?: { count: number };
-  }>;
-  onDelete: (id: string) => void;
-  onArchive: (id: string) => void;
-  onFeatureToggle: (id: string, featured: boolean) => void;
-  onStatusUpdate: (id: string, updates: { 
-    is_new?: boolean; 
-    has_big_prizes?: boolean; 
-    status?: ContestStatus 
-  }) => void;
-  onSelect: (id: string) => void;
-  onEdit: (id: string) => void;
-  editingContestId: string | null;
+  contests: any[];
+  onSelectContest: (id: string) => void;
 }
 
-const ContestListGrid = ({
-  contests,
-  onDelete,
-  onArchive,
-  onFeatureToggle,
-  onStatusUpdate,
-  onSelect,
-  onEdit,
-  editingContestId
-}: ContestListGridProps) => {
+const ContestListGrid: React.FC<ContestListGridProps> = ({ contests, onSelectContest }) => {
+  if (!contests || contests.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Aucun concours trouvé</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {contests.map((contest) => (
         <ContestCard
           key={contest.id}
           contest={contest}
-          onDelete={onDelete}
-          onArchive={onArchive}
-          onFeatureToggle={onFeatureToggle}
-          onStatusUpdate={onStatusUpdate}
-          onSelect={onSelect}
-          onEdit={onEdit}
+          onSelect={() => onSelectContest(contest.id)}
         />
       ))}
     </div>
