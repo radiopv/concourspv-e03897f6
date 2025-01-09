@@ -1,92 +1,97 @@
-import { Routes, Route, Link, useParams } from "react-router-dom";
-import AdminDashboard from "./AdminDashboard";
-import AdminContestManager from "./AdminContestManager";
-import QuestionBank from "../../pages/QuestionBank";
-import PrizeCatalogManager from "./prize-catalog/PrizeCatalogManager";
-import ParticipantsList from "./ParticipantsList";
-import DrawManager from "./DrawManager";
-import Winners from "../../pages/Winners";
-import GlobalSettings from "./GlobalSettings";
-import { cn } from "@/lib/utils";
-import ContestPrizeManager from "./ContestPrizeManager";
+import React, { useState } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import AdminDashboard from './AdminDashboard';
+import ContestPrizeManager from './ContestPrizeManager';
+import DrawManager from './DrawManager';
+import AdminContestManager from './AdminContestManager';
+import ContentValidator from './ContentValidator';
+import GlobalSettings from './GlobalSettings';
+import QuestionBank from '@/pages/QuestionBank';
+import { Button } from '../ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const AdminRoutes = () => {
-  const { contestId } = useParams<{ contestId: string }>();
+  const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const menuItems = [
-    { path: "/admin", label: "Tableau de bord" },
-    { path: "/admin/contests", label: "Concours" },
-    { path: "/admin/questions", label: "Questions" },
-    { path: "/admin/prizes", label: "Prix" },
-    { path: "/admin/settings", label: "Paramètres" },
-  ];
-
-  const contestMenuItems = contestId ? [
-    { path: `/admin/contests/${contestId}/participants`, label: "Participants" },
-    { path: `/admin/contests/${contestId}/draw`, label: "Tirage" },
-    { path: `/admin/contests/${contestId}/winners`, label: "Gagnants" },
-  ] : [];
+  if (!user) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">Accès non autorisé</h2>
+        <p className="mb-4">Vous devez être connecté pour accéder à l'administration.</p>
+        <Button onClick={() => navigate('/login')}>
+          Se connecter
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-4">
-      <nav className="mb-8 bg-white shadow rounded-lg">
-        <div className="overflow-x-auto">
-          <div className="flex space-x-1 p-2">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                  "hover:bg-primary/10 hover:text-primary",
-                  "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                  "whitespace-nowrap"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-            {contestMenuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                  "hover:bg-secondary/10 hover:text-secondary",
-                  "focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2",
-                  "whitespace-nowrap"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+    <div className="space-y-6">
+      <div className="bg-white shadow">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center space-x-4 overflow-x-auto py-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin')}
+            >
+              Dashboard
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin/contests')}
+            >
+              Concours
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin/questions')}
+            >
+              Questions
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin/settings')}
+            >
+              Paramètres
+            </Button>
           </div>
         </div>
-      </nav>
+      </div>
 
-      <Routes>
-        <Route index element={<AdminDashboard />} />
-        <Route path="contests" element={<AdminContestManager />} />
-        <Route path="questions" element={<QuestionBank />} />
-        <Route path="prizes" element={<PrizeCatalogManager />} />
-        <Route path="settings" element={<GlobalSettings />} />
-        <Route 
-          path="contests/:contestId/participants" 
-          element={<ParticipantsList />} 
-        />
-        <Route 
-          path="contests/:contestId/prizes" 
-          element={contestId ? <ContestPrizeManager contestId={contestId} /> : null} 
-        />
-        <Route 
-          path="contests/:contestId/draw" 
-          element={contestId ? <DrawManager contestId={contestId} /> : null} 
-        />
-        <Route 
-          path="contests/:contestId/winners" 
-          element={<Winners />} 
-        />
-      </Routes>
+      <div className="container mx-auto px-4">
+        <Routes>
+          <Route path="/" element={<AdminDashboard />} />
+          <Route 
+            path="/contests/*" 
+            element={
+              <AdminContestManager 
+                onContestSelect={setSelectedContestId}
+              />
+            } 
+          />
+          <Route 
+            path="/contest/:contestId/prizes" 
+            element={
+              <ContestPrizeManager 
+                contestId={selectedContestId || ''} 
+              />
+            } 
+          />
+          <Route 
+            path="/contest/:contestId/draw" 
+            element={
+              <DrawManager 
+                contestId={selectedContestId || ''} 
+              />
+            } 
+          />
+          <Route path="/content" element={<ContentValidator />} />
+          <Route path="/settings" element={<GlobalSettings />} />
+          <Route path="/questions" element={<QuestionBank />} />
+        </Routes>
+      </div>
     </div>
   );
 };

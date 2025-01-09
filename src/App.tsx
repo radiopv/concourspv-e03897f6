@@ -11,6 +11,9 @@ import ContestsList from "@/pages/ContestsList";
 import Dashboard from "@/pages/Dashboard";
 import Contest from "@/pages/Contest";
 import WinnersList from "@/pages/WinnersList";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import Admin from "@/pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +30,9 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/winners" element={<WinnersList />} />
               <Route path="/points" element={<PointsSystem />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/admin/*" element={<Admin />} />
             </Routes>
           </Layout>
           <Toaster />
