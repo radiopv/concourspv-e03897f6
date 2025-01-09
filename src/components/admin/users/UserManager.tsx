@@ -21,12 +21,25 @@ const UserManager = () => {
   const { data: users, isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, get all members
+      const { data: members, error: membersError } = await supabase
         .from('members')
-        .select('*, user_points(*)');
+        .select('*');
       
-      if (error) throw error;
-      return data;
+      if (membersError) throw membersError;
+
+      // Then, get their points
+      const { data: points, error: pointsError } = await supabase
+        .from('user_points')
+        .select('*');
+
+      if (pointsError) throw pointsError;
+
+      // Combine the data
+      return members.map(member => ({
+        ...member,
+        user_points: points.filter(p => p.user_id === member.id)
+      }));
     }
   });
 
