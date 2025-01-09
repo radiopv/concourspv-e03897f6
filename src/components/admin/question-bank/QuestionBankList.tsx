@@ -117,7 +117,8 @@ const QuestionBankList = () => {
           question_text: q.question_text,
           options: q.options,
           correct_answer: q.correct_answer,
-          article_url: q.article_url
+          article_url: q.article_url,
+          type: 'multiple_choice'
         }));
 
       const { error: insertError } = await supabase

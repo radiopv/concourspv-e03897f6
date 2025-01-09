@@ -122,19 +122,17 @@ const ContestCard = ({
         .delete()
         .eq('id', questionId);
 
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Succès",
-        description: "Question supprimée avec succès"
-      });
+      if (error) throw error;
 
       // Recharger les questions immédiatement
       await refetch();
       // Mettre à jour le compteur de questions dans la liste des concours
       await queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
+
+      toast({
+        title: "Succès",
+        description: "Question supprimée avec succès"
+      });
     } catch (error) {
       console.error('Error deleting question:', error);
       toast({
