@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { Award, DollarSign, Image, Link as LinkIcon, Edit, Trash2, Plus, Upload } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { Edit, Trash2, Plus, Upload, Link as LinkIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -117,15 +117,59 @@ const PrizeCatalogManager = () => {
     setFormData({ ...formData, image_url: publicUrl });
   };
 
-  const addPrizeMutation = useMutation({
-    mutationFn: async (data: PrizeFormData) => {
+  const handleEdit = (prize: any) => {
+    setEditingPrize(prize);
+    setFormData({
+      name: prize.name,
+      description: prize.description || '',
+      value: prize.value || '',
+      image_url: prize.image_url || '',
+      shop_url: prize.shop_url || '',
+    });
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
       const { error } = await supabase
         .from('prize_catalog')
-        .insert([data]);
+        .delete()
+        .eq('id', id);
       
       if (error) throw error;
-    },
-    onSuccess: () => {
+      
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été supprimé du catalogue",
+      });
+    } catch (error) {
+      console.error("Delete prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le prix",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingPrize) {
+        const { error } = await supabase
+          .from('prize_catalog')
+          .update(formData)
+          .eq('id', editingPrize.id);
+        
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('prize_catalog')
+          .insert([formData]);
+        
+        if (error) throw error;
+      }
+
       queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
       setFormData({
         name: '',
@@ -134,73 +178,21 @@ const PrizeCatalogManager = () => {
         image_url: '',
         shop_url: '',
       });
-      toast({
-        title: "Succès",
-        description: "Le prix a été ajouté au catalogue",
-      });
-    },
-    onError: (error) => {
-      console.error("Add prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le prix",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const updatePrizeMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: PrizeFormData }) => {
-      const { error } = await supabase
-        .from('prize_catalog')
-        .update(data)
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
       setEditingPrize(null);
-      toast({
-        title: "Succès",
-        description: "Le prix a été mis à jour",
-      });
-    },
-    onError: (error) => {
-      console.error("Update prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le prix",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const deletePrizeMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('prize_catalog')
-        .delete()
-        .eq('id', id);
       
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
       toast({
         title: "Succès",
-        description: "Le prix a été supprimé du catalogue",
+        description: editingPrize ? "Le prix a été mis à jour" : "Le prix a été ajouté au catalogue",
       });
-    },
-    onError: (error) => {
-      console.error("Delete prize error:", error);
+    } catch (error) {
+      console.error("Submit prize error:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer le prix",
+        description: "Impossible de sauvegarder le prix",
         variant: "destructive",
       });
     }
-  });
+  };
 
   if (isLoading) {
     return <div>Chargement du catalogue...</div>;
@@ -221,7 +213,7 @@ const PrizeCatalogManager = () => {
               {editingPrize ? 'Modifier le prix' : 'Ajouter un prix au catalogue'}
             </DialogTitle>
           </DialogHeader>
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="name">Nom du prix</Label>
               <Input
