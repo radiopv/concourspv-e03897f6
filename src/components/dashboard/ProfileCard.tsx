@@ -38,24 +38,39 @@ const ProfileCard = ({
 
   const handleSaveProfile = async () => {
     try {
+      console.log("Début de la mise à jour du profil...");
+      console.log("Email actuel:", userProfile.email);
+      console.log("Nouvel email:", formData.email);
+
       // Mise à jour de l'email dans auth
-      const { error: authError } = await supabase.auth.updateUser({
+      const { data: authData, error: authError } = await supabase.auth.updateUser({
         email: formData.email,
       });
 
-      if (authError) throw authError;
+      console.log("Réponse de updateUser:", { authData, authError });
+
+      if (authError) {
+        console.error("Erreur lors de la mise à jour de l'email:", authError);
+        throw authError;
+      }
 
       // Mise à jour du profil dans la base de données
-      const { error: dbError } = await supabase
+      const { data: dbData, error: dbError } = await supabase
         .from("members")
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
           email: formData.email,
         })
-        .eq("id", userId);
+        .eq("id", userId)
+        .select();
 
-      if (dbError) throw dbError;
+      console.log("Réponse de la mise à jour DB:", { dbData, dbError });
+
+      if (dbError) {
+        console.error("Erreur lors de la mise à jour du profil:", dbError);
+        throw dbError;
+      }
 
       toast({
         title: "Profil mis à jour",
@@ -65,10 +80,11 @@ const ProfileCard = ({
       setIsEditing(false);
       refetch();
     } catch (error) {
+      console.error("Erreur complète:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de mettre à jour votre profil.",
+        description: "Impossible de mettre à jour votre profil. Veuillez réessayer.",
       });
     }
   };
