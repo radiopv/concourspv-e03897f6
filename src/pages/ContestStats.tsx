@@ -1,4 +1,4 @@
-import { useParams, useLocation, Navigate } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from "@/components/ui/card";
 import { Trophy } from "lucide-react";
@@ -12,22 +12,17 @@ interface LocationState {
 }
 
 const ContestStatsPage = () => {
-  const { contestId } = useParams<{ contestId: string }>();
+  const { id } = useParams();
   const location = useLocation();
   const state = location.state as LocationState;
 
-  // Rediriger si pas de contestId
-  if (!contestId) {
-    return <Navigate to="/contests" replace />;
-  }
-
-  const { data: contest, isLoading: isLoadingContest } = useQuery({
-    queryKey: ['contest', contestId],
+  const { data: contest } = useQuery({
+    queryKey: ['contest', id],
     queryFn: async () => {
       const { data: contestData, error: contestError } = await supabase
         .from('contests')
         .select('*')
-        .eq('id', contestId)
+        .eq('id', id)
         .single();
       
       if (contestError) throw contestError;
@@ -35,18 +30,17 @@ const ContestStatsPage = () => {
       const { count: participantsCount } = await supabase
         .from('participants')
         .select('*', { count: 'exact', head: true })
-        .eq('contest_id', contestId);
+        .eq('contest_id', id);
 
       return {
         ...contestData,
         participants_count: participantsCount || 0
       };
-    },
-    enabled: !!contestId
+    }
   });
 
-  const { data: topParticipants, isLoading: isLoadingTop } = useQuery({
-    queryKey: ['top-participants', contestId],
+  const { data: topParticipants } = useQuery({
+    queryKey: ['top-participants', id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('participants')
@@ -56,29 +50,28 @@ const ContestStatsPage = () => {
           first_name,
           last_name
         `)
-        .eq('contest_id', contestId)
+        .eq('contest_id', id)
         .order('score', { ascending: false })
         .limit(10);
 
       if (error) throw error;
       return data;
-    },
-    enabled: !!contestId
+    }
   });
 
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['contest-stats', contestId],
+  const { data: stats } = useQuery({
+    queryKey: ['contest-stats', id],
     queryFn: async () => {
       const { count: qualifiedCount } = await supabase
         .from('participants')
         .select('*', { count: 'exact', head: true })
-        .eq('contest_id', contestId)
+        .eq('contest_id', id)
         .gte('score', 70);
 
       const { data: scores } = await supabase
         .from('participants')
         .select('score')
-        .eq('contest_id', contestId);
+        .eq('contest_id', id);
 
       const average = scores && scores.length > 0
         ? scores.reduce((acc, curr) => acc + (curr.score || 0), 0) / scores.length
@@ -88,30 +81,13 @@ const ContestStatsPage = () => {
         qualifiedCount: qualifiedCount || 0,
         averageScore: Math.round(average)
       };
-    },
-    enabled: !!contestId
+    }
   });
-
-  if (isLoadingContest || isLoadingTop || isLoadingStats) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
 
   if (!contest || !stats) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
-        <div className="container mx-auto px-4">
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-center text-gray-600">
-                Ce concours n'existe pas ou n'est plus disponible.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }

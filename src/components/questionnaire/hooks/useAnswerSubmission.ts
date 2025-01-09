@@ -4,7 +4,6 @@ import { supabase } from "../../../App";
 import { useQuestionnaireState } from '../QuestionnaireState';
 import { ensureParticipantExists } from '../ParticipantManager';
 import { getRandomMessage } from '../messages';
-import { awardPoints } from '../../../services/pointsService';
 
 export const useAnswerSubmission = (contestId: string) => {
   const { toast } = useToast();
@@ -26,6 +25,7 @@ export const useAnswerSubmission = (contestId: string) => {
         return;
       }
 
+      // Récupérer les informations du participant
       const { data: participant } = await supabase
         .from('participants')
         .select('participation_id, attempts')
@@ -33,9 +33,11 @@ export const useAnswerSubmission = (contestId: string) => {
         .eq('contest_id', contestId)
         .single();
 
+      // Si le participant n'existe pas encore, on le crée
       const participationId = participant?.participation_id || 
         await ensureParticipantExists(session.session.user.id, contestId);
 
+      // Vérifier si une réponse existe déjà pour cette question dans la tentative actuelle
       const { data: existingAnswer } = await supabase
         .from('participant_answers')
         .select('*')
@@ -47,6 +49,7 @@ export const useAnswerSubmission = (contestId: string) => {
 
       if (existingAnswer) {
         console.log('Answer already exists for current attempt:', existingAnswer);
+        // Mettre à jour le state sans insérer de nouvelle réponse
         state.setIsCorrect(isAnswerCorrect);
         state.setHasAnswered(true);
         state.setTotalAnswered(prev => prev + 1);
@@ -62,27 +65,9 @@ export const useAnswerSubmission = (contestId: string) => {
       state.setTotalAnswered(prev => prev + 1);
       if (isAnswerCorrect) {
         state.setScore(prev => prev + 1);
-        
-        // Calculer les points et le streak
-        const currentStreak = state.getCurrentStreak();
-        let pointsToAward = 1; // Point de base
-
-        // Bonus pour 10 bonnes réponses consécutives
-        if (currentStreak > 0 && currentStreak % 10 === 0) {
-          pointsToAward += 5; // Bonus de 5 points
-        }
-
-        // Attribuer les points
-        await awardPoints(
-          session.session.user.id,
-          pointsToAward,
-          contestId,
-          currentStreak
-        );
-      } else {
-        state.resetStreak();
       }
 
+      // Insérer la nouvelle réponse
       const { error: insertError } = await supabase
         .from('participant_answers')
         .insert([{
@@ -93,12 +78,14 @@ export const useAnswerSubmission = (contestId: string) => {
           attempt_number: participant?.attempts || 0
         }]);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error submitting answer:', insertError);
+        throw insertError;
+      }
 
-      await queryClient.invalidateQueries({ queryKey: ['contests'] });
-      await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
-      await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
-      await queryClient.invalidateQueries({ queryKey: ['user-points'] });
+      queryClient.invalidateQueries({ queryKey: ['contests'] });
+      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
 
       const message = getRandomMessage();
       toast({

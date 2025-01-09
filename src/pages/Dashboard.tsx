@@ -44,22 +44,12 @@ const Dashboard = () => {
       }
 
       console.log("Participations trouvées:", participationStats);
-      
-      // Log détaillé des statuts de participation
-      if (participationStats) {
-        participationStats.forEach(p => {
-          console.log("Participation status:", p.status, "pour le concours:", p.contest_id);
-        });
-      }
 
       // Calcule les statistiques
       const stats = {
         contests_participated: participationStats?.length || 0,
         total_points: participationStats?.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0,
-        contests_won: participationStats?.filter(p => 
-          p.status?.toUpperCase() === 'WINNER' || 
-          p.status?.toUpperCase() === 'COMPLETED'
-        ).length || 0,
+        contests_won: participationStats?.filter(p => p.status === 'WINNER').length || 0,
       };
 
       console.log("Statistiques calculées:", stats);

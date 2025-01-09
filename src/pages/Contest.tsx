@@ -1,8 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../App";
 import { Button } from "@/components/ui/button";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { useState, useEffect } from "react";
@@ -158,4 +157,3 @@ const Contest = () => {
 };
 
 export default Contest;
-

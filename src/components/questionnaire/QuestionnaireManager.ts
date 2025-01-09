@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../App";
 
 export const calculateFinalScore = async (participantId: string) => {
   try {

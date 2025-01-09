@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { AlertCircle, CheckCircle, Clock, FileText, Link2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../App";
 
 interface ValidationResult {
   url: string;
