@@ -110,6 +110,8 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log('Submitting form data:', formData);
+      
       const { error } = await supabase
         .from('contests')
         .update({
@@ -125,10 +127,13 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
         })
         .eq('id', contestId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating contest:', error);
+        throw error;
+      }
 
-      queryClient.invalidateQueries({ queryKey: ['contests'] });
-      queryClient.invalidateQueries({ queryKey: ['contest', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['contests'] });
+      await queryClient.invalidateQueries({ queryKey: ['contest', contestId] });
       
       toast({
         title: "Succès",
