@@ -44,28 +44,33 @@ const Dashboard = () => {
         return existingMember;
       }
 
-      // Extract user metadata for names if available
+      // Get user metadata for names
       const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-      const userMetadata = authUser?.user_metadata || {};
       
-      // If no member exists, create one with default values
-      console.log('Member not found, creating new member...');
+      if (userError) {
+        console.error('Error getting user metadata:', userError);
+        throw userError;
+      }
+
+      const userMetadata = authUser?.user_metadata || {};
+      const defaultData = {
+        id: userId,
+        email: userEmail,
+        first_name: userMetadata.first_name || 'New',
+        last_name: userMetadata.last_name || 'Member',
+        total_points: 0,
+        contests_participated: 0,
+        contests_won: 0,
+        notifications_enabled: true,
+        share_scores: true,
+      };
+      
+      // Create new member with all required fields
+      console.log('Creating new member with data:', defaultData);
       const { data: newMember, error: createError } = await supabase
         .from('members')
-        .insert([
-          {
-            id: userId,
-            email: userEmail,
-            first_name: userMetadata.first_name || 'New',
-            last_name: userMetadata.last_name || 'Member',
-            total_points: 0,
-            contests_participated: 0,
-            contests_won: 0,
-            notifications_enabled: true,
-            share_scores: true,
-          },
-        ])
-        .select('*')
+        .insert([defaultData])
+        .select()
         .maybeSingle();
 
       if (createError) {
