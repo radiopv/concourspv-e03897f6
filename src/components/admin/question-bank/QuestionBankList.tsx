@@ -109,27 +109,31 @@ const QuestionBankList = () => {
 
       if (updateError) throw updateError;
 
+      // Récupérer les questions sélectionnées
+      const selectedQuestionsData = questions?.filter(q => selectedQuestions.includes(q.id));
+
+      if (!selectedQuestionsData) {
+        throw new Error("Impossible de trouver les questions sélectionnées");
+      }
+
       // Ajouter les questions au concours
-      const questionsToAdd = questions
-        ?.filter(q => selectedQuestions.includes(q.id))
-        .map(q => ({
+      const { error: insertError } = await supabase
+        .from('questions')
+        .insert(selectedQuestionsData.map(q => ({
           contest_id: selectedContestId,
           question_text: q.question_text,
           options: q.options,
           correct_answer: q.correct_answer,
           article_url: q.article_url,
           type: 'multiple_choice'
-        }));
-
-      const { error: insertError } = await supabase
-        .from('questions')
-        .insert(questionsToAdd);
+        })));
 
       if (insertError) throw insertError;
 
       // Rafraîchir les données
       await refetchQuestions();
       await queryClient.invalidateQueries({ queryKey: ['questions', selectedContestId] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
 
       toast({
         title: "Succès",

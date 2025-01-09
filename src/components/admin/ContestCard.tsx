@@ -104,7 +104,7 @@ const ContestCard = ({
 
       setShowAddQuestion(false);
       await refetch();
-      await queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
     } catch (error) {
       console.error('Error adding question:', error);
       toast({
@@ -124,10 +124,8 @@ const ContestCard = ({
 
       if (error) throw error;
 
-      // Recharger les questions immédiatement
       await refetch();
-      // Mettre à jour le compteur de questions dans la liste des concours
-      await queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
 
       toast({
         title: "Succès",
