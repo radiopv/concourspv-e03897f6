@@ -24,19 +24,27 @@ const Dashboard = () => {
 
   // Fonction pour créer un nouveau membre si nécessaire
   const initializeMember = async (userId: string, userEmail: string) => {
-    console.log('Initializing member for user:', userId);
-    const { data: existingMember, error: checkError } = await supabase
-      .from('members')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
+    try {
+      console.log('Initializing member for user:', userId);
+      
+      // First, check if member exists
+      const { data: existingMember, error: checkError } = await supabase
+        .from('members')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
-    if (checkError) {
-      console.error('Error checking member:', checkError);
-      return null;
-    }
+      if (checkError) {
+        console.error('Error checking member:', checkError);
+        throw checkError;
+      }
 
-    if (!existingMember) {
+      if (existingMember) {
+        console.log('Member found:', existingMember);
+        return existingMember;
+      }
+
+      // If no member exists, create one
       console.log('Member not found, creating new member...');
       const { data: newMember, error: createError } = await supabase
         .from('members')
@@ -49,18 +57,24 @@ const Dashboard = () => {
             contests_won: 0,
           },
         ])
-        .select()
+        .select('*')
         .maybeSingle();
 
       if (createError) {
         console.error('Error creating member:', createError);
-        return null;
+        throw createError;
       }
 
-      return newMember;
-    }
+      if (!newMember) {
+        throw new Error('Failed to create new member');
+      }
 
-    return existingMember;
+      console.log('New member created:', newMember);
+      return newMember;
+    } catch (error) {
+      console.error('Error in initializeMember:', error);
+      throw error;
+    }
   };
 
   const { data: profileData, isLoading: isLoadingProfile, refetch } = useQuery({
@@ -72,10 +86,7 @@ const Dashboard = () => {
       
       // Initialiser ou récupérer le membre
       const member = await initializeMember(user.id, user.email);
-      if (!member) {
-        throw new Error('Unable to initialize or fetch member data');
-      }
-
+      
       // Initialize user points if needed
       await initializeUserPoints(user.id);
       
