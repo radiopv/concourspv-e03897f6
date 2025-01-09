@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import ContestCardHeader from './contest-card/ContestCardHeader';
-import ContestCardStats from './contest-card/ContestCardStats';
-import ContestCardToggles from './contest-card/ContestCardToggles';
-import ContestCardBadges from './contest-card/ContestCardBadges';
-import ContestCardPrize from './contest-card/ContestCardPrize';
-import ContestStatusBadge from './contest-card/ContestStatusBadge';
-import ContestDrawSection from './contest-card/ContestDrawSection';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -58,7 +52,7 @@ const ContestCard = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: questions } = useQuery({
+  const { data: questions, refetch } = useQuery({
     queryKey: ['questions', contest.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -109,7 +103,8 @@ const ContestCard = ({
       });
 
       setShowAddQuestion(false);
-      queryClient.invalidateQueries({ queryKey: ['questions', contest.id] });
+      await refetch();
+      await queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
     } catch (error) {
       console.error('Error adding question:', error);
       toast({
@@ -127,16 +122,19 @@ const ContestCard = ({
         .delete()
         .eq('id', questionId);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       toast({
         title: "Succès",
         description: "Question supprimée avec succès"
       });
 
-      // Invalider le cache pour recharger les questions
-      queryClient.invalidateQueries({ queryKey: ['questions', contest.id] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
+      // Recharger les questions immédiatement
+      await refetch();
+      // Mettre à jour le compteur de questions dans la liste des concours
+      await queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
     } catch (error) {
       console.error('Error deleting question:', error);
       toast({
