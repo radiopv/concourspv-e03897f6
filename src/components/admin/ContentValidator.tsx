@@ -2,31 +2,42 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { AlertCircle, CheckCircle, Clock, FileText, Link2 } from "lucide-react";
 import { supabase } from "../../App";
-import { validateLinks } from "./validators/LinkValidator";
-import { validateContentQuality } from "./validators/ContentQualityValidator";
-import { ValidationResultDisplay } from "./validators/ValidationResultDisplay";
 
-export const checkUrl = async (url: string): Promise<{ isValid: boolean; error?: string }> => {
-  try {
-    const response = await fetch(url, { 
-      mode: 'no-cors',
-      method: 'HEAD'
-    });
-    return { isValid: true };
-  } catch (error) {
-    return { 
-      isValid: false, 
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
-    };
-  }
-};
+interface ValidationResult {
+  url: string;
+  status: 'success' | 'error' | 'warning';
+  message: string;
+  type: 'link' | 'content' | 'seo';
+  details?: string;
+}
 
 const ContentValidator = () => {
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<ValidationResult[]>([]);
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
+
+  const checkUrl = async (url: string): Promise<{ isValid: boolean; error?: string }> => {
+    try {
+      // Use no-cors mode to avoid CORS issues
+      const response = await fetch(url, { 
+        mode: 'no-cors',
+        method: 'HEAD' // Only fetch headers, not the full content
+      });
+      
+      // If we get here with no-cors, the resource exists but we can't access its content
+      return { isValid: true };
+    } catch (error) {
+      // Even with no-cors, if the resource doesn't exist we'll get here
+      return { 
+        isValid: false, 
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  };
 
   const validateContent = async () => {
     setIsValidating(true);
@@ -48,30 +59,77 @@ const ContentValidator = () => {
 
       if (contestsError) throw contestsError;
 
-      let allResults = [];
+      const newResults: ValidationResult[] = [];
 
-      // Validate each contest
+      // Vérifier chaque concours
       for (const contest of contests || []) {
-        // Content quality validation
-        const contentResults = validateContentQuality(contest);
-        allResults.push(...contentResults);
+        // Vérifier le contenu du concours
+        if (!contest.title || contest.title.length < 5) {
+          newResults.push({
+            url: `/contests/${contest.id}`,
+            status: 'warning',
+            message: "Titre du concours trop court",
+            type: 'content'
+          });
+        }
 
-        // Link validation for questions
-        const linksToCheck = contest.questions
-          ?.filter(q => q.article_url)
-          .map(q => ({
-            url: q.article_url!,
-            details: `Question ID: ${q.id}`
-          })) || [];
+        if (!contest.description || contest.description.length < 50) {
+          newResults.push({
+            url: `/contests/${contest.id}`,
+            status: 'warning',
+            message: "Description du concours insuffisante",
+            type: 'content'
+          });
+        }
 
-        const linkResults = await validateLinks(linksToCheck);
-        allResults.push(...linkResults);
+        // Vérifier les questions et leurs liens
+        for (const question of contest.questions || []) {
+          if (question.article_url) {
+            try {
+              const { isValid, error } = await checkUrl(question.article_url);
+              
+              if (isValid) {
+                newResults.push({
+                  url: question.article_url,
+                  status: 'success',
+                  message: "Lien accessible",
+                  type: 'link',
+                  details: `Question ID: ${question.id}`
+                });
+              } else {
+                newResults.push({
+                  url: question.article_url,
+                  status: 'warning',
+                  message: `Lien potentiellement inaccessible (${error || 'raison inconnue'})`,
+                  type: 'link',
+                  details: `Question ID: ${question.id}`
+                });
+              }
+            } catch (error) {
+              newResults.push({
+                url: question.article_url,
+                status: 'error',
+                message: "Erreur lors de la vérification du lien",
+                type: 'link',
+                details: `Question ID: ${question.id}`
+              });
+            }
+          } else {
+            newResults.push({
+              url: `/questions/${question.id}`,
+              status: 'warning',
+              message: "Question sans lien d'article",
+              type: 'content',
+              details: `Question ID: ${question.id}`
+            });
+          }
+        }
       }
 
-      setResults(allResults);
+      setResults(newResults);
       toast({
         title: "Validation terminée",
-        description: `${allResults.length} éléments analysés`,
+        description: `${newResults.length} éléments analysés`,
       });
     } catch (error) {
       console.error("Erreur lors de la validation:", error);
@@ -82,6 +140,28 @@ const ContentValidator = () => {
       });
     } finally {
       setIsValidating(false);
+    }
+  };
+
+  const getStatusIcon = (status: ValidationResult['status']) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'error':
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case 'warning':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+    }
+  };
+
+  const getTypeIcon = (type: ValidationResult['type']) => {
+    switch (type) {
+      case 'link':
+        return <Link2 className="w-4 h-4" />;
+      case 'content':
+        return <FileText className="w-4 h-4" />;
+      case 'seo':
+        return <FileText className="w-4 h-4" />;
     }
   };
 
@@ -101,7 +181,31 @@ const ContentValidator = () => {
       <CardContent>
         <ScrollArea className="h-[400px] w-full">
           {results.length > 0 ? (
-            <ValidationResultDisplay results={results} />
+            <div className="space-y-4">
+              {results.map((result, index) => (
+                <div 
+                  key={index}
+                  className="flex items-start gap-4 p-4 border rounded-lg"
+                >
+                  <div className="flex-shrink-0">
+                    {getStatusIcon(result.status)}
+                  </div>
+                  <div className="flex-grow">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        {getTypeIcon(result.type)}
+                        {result.type}
+                      </Badge>
+                      <span className="text-sm font-medium">{result.message}</span>
+                    </div>
+                    <p className="text-sm text-gray-500 break-all">{result.url}</p>
+                    {result.details && (
+                      <p className="text-sm text-gray-400 mt-1">{result.details}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="text-center text-gray-500 py-8">
               {isValidating ? (

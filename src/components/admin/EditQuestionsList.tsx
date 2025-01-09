@@ -1,80 +1,113 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, ChevronDown, ChevronUp } from "lucide-react";
-import { Accordion } from "@/components/ui/accordion";
-import QuestionAccordion from './questions/QuestionAccordion';
-import { QuestionBankList } from './question-bank/QuestionBankList';
+import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../App";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useQuestionnaireQuestions } from './hooks/useQuestionnaireQuestions';
-import { useQuestionBankActions } from './hooks/useQuestionBankActions';
+import { Plus } from "lucide-react";
+import { Accordion } from "@/components/ui/accordion";
+import QuestionAccordion from './questions/QuestionAccordion';
 
 interface EditQuestionsListProps {
   contestId: string;
 }
 
-const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
-  const queryClient = useQueryClient();
-  const { data: questions = [], isLoading, error } = useQuestionnaireQuestions(contestId);
-  const { isOpen, setIsOpen, handleAddFromBank } = useQuestionBankActions(contestId);
+interface Question {
+  id: string;
+  question_text: string;
+  options: string[];
+  correct_answer: string;
+  article_url?: string;
+}
 
-  // Fetch question bank items
-  const { data: bankQuestions = [] } = useQuery({
-    queryKey: ['question-bank'],
+const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isAddingQuestion, setIsAddingQuestion] = useState(false);
+
+  const { data: questions, isLoading } = useQuery({
+    queryKey: ['questions', contestId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('question_bank')
-        .select('*')
-        .eq('status', 'available');
+        .from('questions')
+        .select('id, question_text, options, correct_answer, article_url, order_number')
+        .eq('contest_id', contestId)
+        .order('order_number');
       
       if (error) throw error;
-      return data;
+      return data as Question[];
     }
   });
 
+  const handleDelete = async (questionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('questions')
+        .delete()
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      toast({
+        title: "Succès",
+        description: "La question a été supprimée",
+      });
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la question",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddQuestion = async () => {
+    try {
+      const { error } = await supabase
+        .from('questions')
+        .insert([{
+          contest_id: contestId,
+          question_text: "Nouvelle question",
+          options: ["Option 1", "Option 2", "Option 3", "Option 4"],
+          correct_answer: "Option 1",
+          order_number: (questions?.length || 0) + 1
+        }]);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      toast({
+        title: "Succès",
+        description: "La question a été ajoutée",
+      });
+      
+      setIsAddingQuestion(false);
+    } catch (error) {
+      console.error('Error adding question:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter la question",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return <div>Chargement des questions...</div>;
-  }
-
-  if (error) {
-    console.error('Error loading questions:', error);
-    return (
-      <div className="text-red-500">
-        Une erreur est survenue lors du chargement des questions. 
-        Veuillez réessayer plus tard.
-      </div>
-    );
   }
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Questions du concours</CardTitle>
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <CollapsibleTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Ajouter des questions
-              {isOpen ? (
-                <ChevronUp className="w-4 h-4 ml-2" />
-              ) : (
-                <ChevronDown className="w-4 h-4 ml-2" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4">
-            <Card>
-              <CardContent className="pt-4">
-                <QuestionBankList 
-                  questions={bankQuestions}
-                  onAddToContest={handleAddFromBank}
-                />
-              </CardContent>
-            </Card>
-          </CollapsibleContent>
-        </Collapsible>
+        <Button
+          onClick={handleAddQuestion}
+          className="flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" /> Ajouter une question
+        </Button>
       </CardHeader>
       <CardContent>
         <Accordion type="multiple" className="space-y-2">
@@ -83,7 +116,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
               key={question.id}
               question={question}
               index={index}
-              onDelete={() => {}}
+              onDelete={handleDelete}
               onUpdate={() => queryClient.invalidateQueries({ queryKey: ['questions', contestId] })}
             />
           ))}

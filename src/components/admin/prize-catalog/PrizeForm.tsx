@@ -1,23 +1,21 @@
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, X } from 'lucide-react';
-
-interface PrizeFormData {
-  name: string;
-  description: string;
-  value: string;
-  image_url: string;
-  shop_url: string;
-}
+import { Check, X } from "lucide-react";
 
 interface PrizeFormProps {
-  formData: PrizeFormData;
+  formData: {
+    name: string;
+    description: string;
+    value: string;
+    image_url: string;
+    shop_url: string;
+  };
   onFormChange: (field: string, value: string) => void;
   onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onCancelEdit: () => void;
-  onSaveEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
   uploading: boolean;
 }
 
@@ -25,18 +23,18 @@ export const PrizeForm = ({
   formData,
   onFormChange,
   onImageUpload,
-  onCancelEdit,
-  onSaveEdit,
-  uploading
+  onCancel,
+  onSave,
+  uploading,
 }: PrizeFormProps) => {
   return (
-    <form className="space-y-4">
+    <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
       <div>
         <Label htmlFor="name">Nom du prix</Label>
         <Input
           id="name"
           value={formData.name}
-          onChange={(e) => onFormChange('name', e.target.value)}
+          onChange={(e) => onFormChange("name", e.target.value)}
           required
         />
       </div>
@@ -46,18 +44,18 @@ export const PrizeForm = ({
         <Textarea
           id="description"
           value={formData.description}
-          onChange={(e) => onFormChange('description', e.target.value)}
+          onChange={(e) => onFormChange("description", e.target.value)}
         />
       </div>
 
       <div>
-        <Label htmlFor="value">Valeur ($ CAD)</Label>
+        <Label htmlFor="value">Valeur (€)</Label>
         <Input
           id="value"
           type="number"
           step="0.01"
           value={formData.value}
-          onChange={(e) => onFormChange('value', e.target.value)}
+          onChange={(e) => onFormChange("value", e.target.value)}
         />
       </div>
 
@@ -67,8 +65,7 @@ export const PrizeForm = ({
           id="shop_url"
           type="url"
           value={formData.shop_url}
-          onChange={(e) => onFormChange('shop_url', e.target.value)}
-          placeholder="https://..."
+          onChange={(e) => onFormChange("shop_url", e.target.value)}
         />
       </div>
 
@@ -96,14 +93,14 @@ export const PrizeForm = ({
         <Button
           type="button"
           variant="outline"
-          onClick={onCancelEdit}
+          onClick={onCancel}
         >
           <X className="w-4 h-4 mr-2" />
           Annuler
         </Button>
         <Button
           type="button"
-          onClick={onSaveEdit}
+          onClick={onSave}
         >
           <Check className="w-4 h-4 mr-2" />
           Enregistrer

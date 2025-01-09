@@ -1,110 +1,74 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../App";
-import type { Contest } from "../types/contest";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export const useContests = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   return useQuery({
-    queryKey: ['contests'],
+    queryKey: ['active-contests'],
     queryFn: async () => {
-      const now = new Date().toISOString();
+      const { data: { session } } = await supabase.auth.getSession();
       
-      const { data, error } = await supabase
-        .from('contests')
-        .select(`
-          *,
-          prizes (
-            id,
-            catalog_item:prize_catalog (
-              name,
-              value,
-              image_url,
-              description,
-              shop_url
-            )
-          ),
-          questions:questionnaires (
-            id,
-            title,
-            description,
-            questions (*)
-          )
-        `)
-        .eq('status', 'active')
-        .gte('end_date', now)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching contests:', error);
-        throw error;
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Non connecté",
+          description: "Veuillez vous connecter pour voir les concours.",
+        });
+        navigate('/login');
+        return [];
       }
 
-      console.log('Fetched contests:', data);
-      return data as Contest[];
-    },
-  });
-};
+      // First get user's winning participations
+      const { data: winningContests } = await supabase
+        .from('participants')
+        .select('contest_id')
+        .eq('id', session.user.id)
+        .eq('status', 'WINNER');
 
-export const useContest = (contestId: string | undefined) => {
-  return useQuery({
-    queryKey: ['contest', contestId],
-    queryFn: async () => {
-      if (!contestId) {
-        throw new Error('Contest ID is required');
-      }
+      const winningContestIds = winningContests?.map(p => p.contest_id) || [];
+      console.log('Winning contest IDs:', winningContestIds);
 
-      console.log('Fetching contest with ID:', contestId);
-
-      // Requête simple et directe
-      const { data, error } = await supabase
+      // Get contests excluding the ones the user has won
+      const { data: contests, error: contestsError } = await supabase
         .from('contests')
         .select('*')
-        .eq('id', contestId)
-        .single();
+        .not('id', 'in', `(${winningContestIds.join(',')})`)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching contest:', error);
-        throw error;
+      if (contestsError) {
+        console.error('Error fetching contests:', contestsError);
+        throw contestsError;
       }
 
-      console.log('Fetched contest data:', data);
+      // For each contest, count participants
+      const contestsWithCounts = await Promise.all(contests.map(async (contest) => {
+        const { count: participantsCount } = await supabase
+          .from('participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('contest_id', contest.id);
 
-      if (!data) {
-        throw new Error('Contest not found');
-      }
+        const { count: questionsCount } = await supabase
+          .from('questions')
+          .select('*', { count: 'exact', head: true })
+          .eq('contest_id', contest.id);
 
-      // Si on a trouvé le concours, on fait une deuxième requête pour obtenir toutes les relations
-      const { data: fullData, error: fullError } = await supabase
-        .from('contests')
-        .select(`
-          *,
-          prizes (
-            id,
-            catalog_item:prize_catalog (
-              name,
-              value,
-              image_url,
-              description,
-              shop_url
-            )
-          ),
-          questions:questionnaires (
-            id,
-            title,
-            description,
-            questions (*)
-          )
-        `)
-        .eq('id', contestId)
-        .single();
+        return {
+          ...contest,
+          participants: { count: participantsCount || 0 },
+          questions: { count: questionsCount || 0 }
+        };
+      }));
 
-      if (fullError) {
-        console.error('Error fetching full contest data:', fullError);
-        throw fullError;
-      }
-
-      console.log('Fetched full contest data:', fullData);
-      return fullData as Contest;
+      return contestsWithCounts || [];
     },
-    enabled: !!contestId,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchInterval: 300000, // 5 minutes
+    staleTime: 300000, // 5 minutes
   });
 };

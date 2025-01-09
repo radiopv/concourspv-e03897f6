@@ -1,11 +1,10 @@
-export enum PARTICIPANT_STATUS {
-  PENDING = 'pending',
-  ACTIVE = 'active',
-  COMPLETED = 'completed',
-  WINNER = 'winner'
-}
+export const PARTICIPANT_STATUS = {
+  PENDING: 'pending',
+  COMPLETED: 'completed',
+  WINNER: 'winner'
+} as const;
 
-export type ParticipantStatus = PARTICIPANT_STATUS;
+export type ParticipantStatus = typeof PARTICIPANT_STATUS[keyof typeof PARTICIPANT_STATUS];
 
 export interface Participant {
   id: string;
@@ -13,14 +12,7 @@ export interface Participant {
   last_name: string;
   email: string;
   score: number;
-  status?: ParticipantStatus;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ParticipationWithResponses extends Participant {
-  responses: {
-    question_id: string;
-    answer_text: string;
-  }[];
+  status: ParticipantStatus | null;
+  contest_id: string;
+  completed_at?: string;
 }

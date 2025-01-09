@@ -1,62 +1,53 @@
+import { Home, Trophy, Settings, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 
 const MobileNavBar = () => {
-  const { isAdmin } = useAuth();
+  const { user, signOut } = useAuth();
+  const isAdmin = user?.email === "renaudcanuel@me.com";
+
+  if (!user) return null;
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-6 w-6" />
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 px-4 z-50">
+      <div className="flex justify-around items-center">
+        <Link 
+          to="/" 
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
+        >
+          <Home className="h-6 w-6" />
+          <span className="text-xs mt-1">Accueil</span>
+        </Link>
+        
+        <Link 
+          to="/contests" 
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
+        >
+          <Trophy className="h-6 w-6" />
+          <span className="text-xs mt-1">Concours</span>
+        </Link>
+
+        {isAdmin && (
+          <Link 
+            to="/admin" 
+            className="flex flex-col items-center text-gray-600 hover:text-gray-900"
+          >
+            <Settings className="h-6 w-6" />
+            <span className="text-xs mt-1">Admin</span>
+          </Link>
+        )}
+
+        <Button
+          variant="ghost"
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900 h-auto p-0"
+          onClick={signOut}
+        >
+          <LogOut className="h-6 w-6" />
+          <span className="text-xs mt-1">Déconnexion</span>
         </Button>
-      </SheetTrigger>
-      <SheetContent side="left">
-        <SheetHeader>
-          <SheetTitle>Menu</SheetTitle>
-        </SheetHeader>
-        <div className="flex flex-col space-y-4 mt-4">
-          <Link
-            to="/"
-            className="text-sm font-medium text-gray-900 hover:text-gray-700"
-          >
-            Accueil
-          </Link>
-          
-          <Link
-            to="/contests"
-            className="text-sm font-medium text-gray-900 hover:text-gray-700"
-          >
-            Concours
-          </Link>
-
-          <Link
-            to="/winners"
-            className="text-sm font-medium text-gray-900 hover:text-gray-700"
-          >
-            Gagnants
-          </Link>
-
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="text-sm font-medium text-gray-900 hover:text-gray-700"
-            >
-              Administration
-            </Link>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+    </div>
   );
 };
 

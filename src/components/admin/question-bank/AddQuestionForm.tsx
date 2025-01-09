@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "../../../App";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Minus } from "lucide-react";
 
 const AddQuestionForm = () => {
   const { toast } = useToast();

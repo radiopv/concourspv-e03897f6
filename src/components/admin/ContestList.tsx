@@ -1,14 +1,38 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useContestMutations } from './hooks/useContestMutations';
-import { useContestQueries } from './hooks/useContestQueries';
-import ContestCard from './ContestCard';
+import React, { useState } from 'react';
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import EditContestForm from './EditContestForm';
+import { useToast } from "@/components/ui/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import ContestListHeader from './contest-list/ContestListHeader';
-import { Skeleton } from "@/components/ui/skeleton";
+import ContestListGrid from './contest-list/ContestListGrid';
+import { useContestQueries } from './hooks/useContestQueries';
+import { useContestMutations } from './hooks/useContestMutations';
 
-const ContestList = () => {
-  const navigate = useNavigate();
-  const { contests, isLoading, error } = useContestQueries();
+type ContestStatus = 'draft' | 'active' | 'archived';
+
+interface ContestListProps {
+  contests: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    status: ContestStatus;
+    start_date: string;
+    end_date: string;
+    draw_date: string;
+    is_featured: boolean;
+    is_new: boolean;
+    has_big_prizes: boolean;
+    participants?: { count: number };
+    questions?: { count: number };
+  }>;
+  onSelectContest: (id: string) => void;
+}
+
+const ContestList = ({ contests, onSelectContest }: ContestListProps) => {
+  const [editingContestId, setEditingContestId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  
+  const { contestsWithCounts, isLoading } = useContestQueries();
   const { 
     deleteMutation,
     archiveMutation,
@@ -16,75 +40,43 @@ const ContestList = () => {
     statusUpdateMutation 
   } = useContestMutations();
 
-  const handleDelete = (id: string) => {
-    console.log('Deleting contest:', id);
-    deleteMutation.mutate(id);
-  };
-
-  const handleArchive = (id: string) => {
-    console.log('Archiving contest:', id);
-    archiveMutation.mutate(id);
-  };
-
-  const handleFeatureToggle = (id: string, featured: boolean) => {
-    console.log('Toggling feature status:', { id, featured });
-    featureToggleMutation.mutate({ id, featured });
-  };
-
-  const handleStatusUpdate = (id: string, updates: any) => {
-    console.log('Updating contest status:', { id, updates });
-    statusUpdateMutation.mutate({ id, updates });
-  };
-
-  const handleSelect = (id: string) => {
-    console.log('Selecting contest:', id);
-    navigate(`/admin/contests/${id}`);
-  };
-
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <ContestListHeader />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-[300px] w-full" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-red-500">Une erreur est survenue lors du chargement des concours.</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-8">
       <ContestListHeader />
       
-      {!contests?.length ? (
-        <div className="text-center py-8">
-          <p className="text-gray-500">Aucun concours n'a été créé.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contests.map((contest) => (
-            <ContestCard
-              key={contest.id}
-              contest={contest}
-              onDelete={handleDelete}
-              onArchive={handleArchive}
-              onFeatureToggle={handleFeatureToggle}
-              onStatusUpdate={handleStatusUpdate}
-              onSelect={handleSelect}
-              onEdit={handleSelect}
+      <ContestListGrid
+        contests={contestsWithCounts || contests}
+        onDelete={(id) => deleteMutation.mutate(id)}
+        onArchive={(id) => archiveMutation.mutate(id)}
+        onFeatureToggle={(id, featured) => featureToggleMutation.mutate({ id, featured })}
+        onStatusUpdate={(id, updates) => statusUpdateMutation.mutate({ id, updates })}
+        onSelect={onSelectContest}
+        onEdit={setEditingContestId}
+        editingContestId={editingContestId}
+      />
+
+      {editingContestId && (
+        <Collapsible open={true} onOpenChange={() => setEditingContestId(null)}>
+          <CollapsibleContent className="p-4 bg-white rounded-lg shadow mt-4">
+            <EditContestForm
+              contestId={editingContestId}
+              onClose={() => {
+                setEditingContestId(null);
+                queryClient.invalidateQueries({ queryKey: ['contests'] });
+                queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+                queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
+              }}
             />
-          ))}
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );

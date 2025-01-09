@@ -1,12 +1,11 @@
-import React from 'react';
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, X } from 'lucide-react';
+import { Check, X } from "lucide-react";
 
 interface PrizeEditFormProps {
-  formData: {
+  editForm: {
     name: string;
     description: string;
     value: string;
@@ -15,18 +14,18 @@ interface PrizeEditFormProps {
   };
   onFormChange: (field: string, value: string) => void;
   onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onCancelEdit: () => void;
-  onSaveEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
   uploading: boolean;
 }
 
-const PrizeEditForm = ({
-  formData,
+export const PrizeEditForm = ({
+  editForm,
   onFormChange,
   onImageUpload,
-  onCancelEdit,
-  onSaveEdit,
-  uploading
+  onCancel,
+  onSave,
+  uploading,
 }: PrizeEditFormProps) => {
   return (
     <form className="space-y-4">
@@ -34,9 +33,8 @@ const PrizeEditForm = ({
         <Label htmlFor="name">Nom du prix</Label>
         <Input
           id="name"
-          value={formData.name}
-          onChange={(e) => onFormChange('name', e.target.value)}
-          required
+          value={editForm.name}
+          onChange={(e) => onFormChange("name", e.target.value)}
         />
       </div>
 
@@ -44,8 +42,8 @@ const PrizeEditForm = ({
         <Label htmlFor="description">Description</Label>
         <Textarea
           id="description"
-          value={formData.description}
-          onChange={(e) => onFormChange('description', e.target.value)}
+          value={editForm.description}
+          onChange={(e) => onFormChange("description", e.target.value)}
         />
       </div>
 
@@ -55,8 +53,8 @@ const PrizeEditForm = ({
           id="value"
           type="number"
           step="0.01"
-          value={formData.value}
-          onChange={(e) => onFormChange('value', e.target.value)}
+          value={editForm.value}
+          onChange={(e) => onFormChange("value", e.target.value)}
         />
       </div>
 
@@ -65,9 +63,8 @@ const PrizeEditForm = ({
         <Input
           id="shop_url"
           type="url"
-          value={formData.shop_url}
-          onChange={(e) => onFormChange('shop_url', e.target.value)}
-          placeholder="https://..."
+          value={editForm.shop_url}
+          onChange={(e) => onFormChange("shop_url", e.target.value)}
         />
       </div>
 
@@ -80,10 +77,10 @@ const PrizeEditForm = ({
           onChange={onImageUpload}
           disabled={uploading}
         />
-        {formData.image_url && (
+        {editForm.image_url && (
           <div className="mt-2">
             <img
-              src={formData.image_url}
+              src={editForm.image_url}
               alt="Aperçu"
               className="w-32 h-32 object-cover rounded"
             />
@@ -95,14 +92,14 @@ const PrizeEditForm = ({
         <Button
           type="button"
           variant="outline"
-          onClick={onCancelEdit}
+          onClick={onCancel}
         >
           <X className="w-4 h-4 mr-2" />
           Annuler
         </Button>
         <Button
           type="button"
-          onClick={onSaveEdit}
+          onClick={onSave}
         >
           <Check className="w-4 h-4 mr-2" />
           Enregistrer
@@ -111,5 +108,3 @@ const PrizeEditForm = ({
     </form>
   );
 };
-
-export default PrizeEditForm;

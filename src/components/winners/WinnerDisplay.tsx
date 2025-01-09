@@ -1,15 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Gift } from "lucide-react";
+import { Trophy, Gift, Medal, User } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface WinnerDisplayProps {
   winner: {
     first_name: string;
     last_name: string;
     score: number;
-    created_at: string;
+    updated_at: string;
+    prize_claimed: boolean;
+    prize_claimed_at?: string;
     prize?: Array<{
       catalog_item: {
         name: string;
@@ -23,58 +24,59 @@ interface WinnerDisplayProps {
 
 const WinnerDisplay = ({ winner, contestTitle }: WinnerDisplayProps) => {
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-gradient-to-r from-amber-50 to-amber-100">
-      <CardHeader className="border-b border-amber-200/50">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <CardHeader className="bg-gradient-to-r from-amber-100 to-amber-200">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-12 w-12 bg-amber-200">
-              <AvatarFallback className="bg-amber-100 text-amber-700">
-                {winner.first_name[0]}{winner.last_name[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="flex items-center gap-2 text-amber-900">
-                <Trophy className="w-5 h-5 text-amber-600" />
-                <span>{winner.first_name} {winner.last_name}</span>
-              </CardTitle>
-              <p className="text-sm text-amber-700 mt-1">Score: {winner.score}%</p>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-amber-600" />
+            <span>{winner.first_name} {winner.last_name}</span>
+          </CardTitle>
+          <span className="text-amber-700 font-semibold">{winner.score}%</span>
         </div>
       </CardHeader>
       <CardContent className="pt-6 space-y-4">
-        <div className="text-gray-700">
-          <p className="font-medium text-lg">{contestTitle}</p>
-          <p className="text-sm text-gray-500">
-            Gagné le {format(new Date(winner.created_at), 'dd MMMM yyyy', { locale: fr })}
-          </p>
+        <div className="text-gray-600">
+          <p className="font-medium">Concours gagné</p>
+          <p>{contestTitle}</p>
         </div>
 
         {winner.prize?.[0]?.catalog_item && (
-          <div className="space-y-4 bg-white p-4 rounded-lg shadow-sm">
-            <p className="font-medium flex items-center gap-2 text-purple-700">
-              <Gift className="w-5 h-5" />
+          <div className="space-y-2">
+            <p className="font-medium flex items-center gap-2">
+              <Gift className="w-4 h-4 text-purple-500" />
               Prix remporté
             </p>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="aspect-square relative rounded-lg overflow-hidden shadow-md">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="aspect-video relative rounded-lg overflow-hidden">
                 <img 
                   src={winner.prize[0].catalog_item.image_url} 
                   alt={winner.prize[0].catalog_item.name}
-                  className="object-cover w-full h-full hover:scale-105 transition-transform"
+                  className="object-cover w-full h-full"
                 />
               </div>
-              <div className="space-y-2 flex flex-col justify-center">
-                <h3 className="font-semibold text-lg text-gray-900">
-                  {winner.prize[0].catalog_item.name}
-                </h3>
-                <p className="text-purple-600 font-medium text-lg">
+              <div className="space-y-2">
+                <p className="font-semibold">{winner.prize[0].catalog_item.name}</p>
+                <p className="text-purple-600 font-medium">
                   Valeur: {winner.prize[0].catalog_item.value}€
                 </p>
               </div>
             </div>
           </div>
         )}
+
+        <div className="pt-4 border-t">
+          <p className="text-sm text-gray-500">
+            Date du tirage: {format(new Date(winner.updated_at), 'dd MMMM yyyy', { locale: fr })}
+          </p>
+          {winner.prize_claimed && (
+            <div className="mt-2 flex items-center gap-2 text-green-600">
+              <Medal className="w-4 h-4" />
+              <span className="text-sm">
+                Prix réclamé le {format(new Date(winner.prize_claimed_at!), 'dd/MM/yyyy')}
+              </span>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

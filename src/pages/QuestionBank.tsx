@@ -1,51 +1,95 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../App';
-import { QuestionBankList } from '@/components/admin/question-bank/QuestionBankList';
-import AddQuestionForm from '@/components/admin/question-bank/AddQuestionForm';
-
-export interface QuestionBankItem {
-  id: string;
-  question_text: string;
-  options: string[];
-  correct_answer: string;
-  article_url?: string;
-  status: 'available' | 'used';
-}
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "../App";
+import QuestionBankImport from "../components/admin/question-bank/QuestionBankImport";
+import QuestionBankList from "../components/admin/question-bank/QuestionBankList";
+import AddQuestionForm from "../components/admin/question-bank/AddQuestionForm";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const QuestionBank = () => {
-  const [isAddingQuestion, setIsAddingQuestion] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
 
-  const { data: questions = [], isLoading } = useQuery({
+  const { data: questions, isLoading } = useQuery({
     queryKey: ['question-bank'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('question_bank')
         .select('*')
         .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching question bank:', error);
-        throw error;
-      }
-
-      return data as QuestionBankItem[];
+      
+      if (error) throw error;
+      return data;
     }
   });
 
-  if (isLoading) {
-    return <div>Chargement de la banque de questions...</div>;
-  }
+  const filteredQuestions = questions?.filter(q => 
+    q.question_text.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Banque de Questions</h1>
+    <div className="container mx-auto p-4 space-y-6">
+      <div className="flex items-center gap-4 mb-6">
+        <Link to="/admin">
+          <Button variant="outline" size="icon">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold">Banque de Questions</h1>
       </div>
 
-      <AddQuestionForm />
-      
-      <QuestionBankList questions={questions} />
+      <Tabs defaultValue="list" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="list">Liste des questions</TabsTrigger>
+          <TabsTrigger value="add">Ajouter une question</TabsTrigger>
+          <TabsTrigger value="import">Importer des questions</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="list">
+          <Card>
+            <CardHeader>
+              <CardTitle>Liste des questions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                placeholder="Rechercher une question..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="mb-4"
+              />
+              
+              {isLoading ? (
+                <div>Chargement...</div>
+              ) : (
+                <QuestionBankList 
+                  questions={filteredQuestions || []} 
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="add">
+          <AddQuestionForm />
+        </TabsContent>
+
+        <TabsContent value="import">
+          <Card>
+            <CardHeader>
+              <CardTitle>Importer des Questions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <QuestionBankImport />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

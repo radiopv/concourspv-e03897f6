@@ -5,10 +5,9 @@ import WinnersList from "@/components/winners/WinnersList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WinnerClaimDialog from "@/components/winners/WinnerClaimDialog";
 import { useState } from "react";
-import { Contest, Participant } from "@/types/contest";
 
 const Winners = () => {
-  const [selectedWinner, setSelectedWinner] = useState<Participant | null>(null);
+  const [selectedWinner, setSelectedWinner] = useState<any>(null);
 
   const { data: contests, isLoading } = useQuery({
     queryKey: ['contests-with-winners'],
@@ -16,63 +15,54 @@ const Winners = () => {
       console.log('Fetching contests with winners...');
       const { data: contestsData, error: contestsError } = await supabase
         .from('contests')
-        .select(`
-          id,
-          title,
-          description,
-          is_new,
-          has_big_prizes,
-          status,
-          participations!inner (
-            id,
-            score,
-            status,
-            created_at,
-            participant:participants (
-              id,
-              first_name,
-              last_name,
-              email
-            ),
-            participant_prizes (
-              prize:prizes (
-                catalog_item:prize_catalog (
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (contestsError) throw contestsError;
+
+      const contestsWithWinners = await Promise.all(
+        contestsData.map(async (contest) => {
+          const { data: winners, error: winnersError } = await supabase
+            .from('participants')
+            .select(`
+              *,
+              participant_prizes!participant_id (
+                prizes!prize_id (
                   id,
-                  name,
-                  value,
-                  image_url
+                  catalog_item:prize_catalog!catalog_item_id (
+                    id,
+                    name,
+                    value,
+                    image_url
+                  )
                 )
               )
-            )
-          )
-        `)
-        .eq('participations.status', 'winner');
+            `)
+            .eq('contest_id', contest.id)
+            .eq('status', 'WINNER');
 
-      if (contestsError) {
-        console.error('Error fetching contests:', contestsError);
-        throw contestsError;
-      }
+          if (winnersError) {
+            console.error('Error fetching winners:', winnersError);
+            throw winnersError;
+          }
 
-      return contestsData.map((contest: any) => ({
-        id: contest.id,
-        title: contest.title,
-        description: contest.description,
-        is_new: contest.is_new,
-        has_big_prizes: contest.has_big_prizes,
-        status: contest.status,
-        participants: contest.participations.map((p: any) => ({
-          id: p.participant.id,
-          first_name: p.participant.first_name,
-          last_name: p.participant.last_name,
-          email: p.participant.email,
-          score: p.score,
-          status: p.status,
-          created_at: p.created_at,
-          prizes: p.participant_prizes?.map((pp: any) => ({
-            catalog_item: pp.prize.catalog_item
-          })) || []
-        }))
-      }));
+          // Transform the data structure to match what the components expect
+          const transformedWinners = winners.map(winner => ({
+            ...winner,
+            prize: winner.participant_prizes?.[0]?.prizes ? 
+              [{ catalog_item: winner.participant_prizes[0].prizes.catalog_item }] : 
+              undefined
+          }));
+
+          console.log('Winners for contest:', contest.id, transformedWinners);
+          return {
+            ...contest,
+            participants: transformedWinners
+          };
+        })
+      );
+
+      return contestsWithWinners;
     }
   });
 
