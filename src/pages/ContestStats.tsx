@@ -1,164 +1,137 @@
-import { useParams, useLocation, Navigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent } from "@/components/ui/card";
-import { Trophy } from "lucide-react";
-import { supabase } from "../App";
-import ContestStats from '@/components/contest/ContestStats';
-import TopParticipantsList from '@/components/contest/TopParticipantsList';
-import ContestGeneralStats from '@/components/contest/ContestGeneralStats';
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { useQuery } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 
-interface LocationState {
-  finalScore?: number;
-}
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
-const ContestStatsPage = () => {
-  const { contestId } = useParams<{ contestId: string }>();
-  const location = useLocation();
-  const state = location.state as LocationState;
+const ContestStats = () => {
+  const { contestId } = useParams();
 
-  // Rediriger si pas de contestId
-  if (!contestId) {
-    return <Navigate to="/contests" replace />;
-  }
-
-  const { data: contest, isLoading: isLoadingContest } = useQuery({
-    queryKey: ['contest', contestId],
-    queryFn: async () => {
-      const { data: contestData, error: contestError } = await supabase
-        .from('contests')
-        .select('*')
-        .eq('id', contestId)
-        .single();
-      
-      if (contestError) throw contestError;
-
-      const { count: participantsCount } = await supabase
-        .from('participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('contest_id', contestId);
-
-      return {
-        ...contestData,
-        participants_count: participantsCount || 0
-      };
-    },
-    enabled: !!contestId
-  });
-
-  const { data: topParticipants, isLoading: isLoadingTop } = useQuery({
-    queryKey: ['top-participants', contestId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('participants')
-        .select(`
-          id,
-          score,
-          first_name,
-          last_name
-        `)
-        .eq('contest_id', contestId)
-        .order('score', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!contestId
-  });
-
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ['contest-stats', contestId],
     queryFn: async () => {
-      const { count: qualifiedCount } = await supabase
-        .from('participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('contest_id', contestId)
-        .gte('score', 70);
-
-      const { data: scores } = await supabase
+      const { data: participants, error } = await supabase
         .from('participants')
         .select('score')
-        .eq('contest_id', contestId);
+        .eq('contest_id', contestId)
+        .not('score', 'is', null);
 
-      const average = scores && scores.length > 0
-        ? scores.reduce((acc, curr) => acc + (curr.score || 0), 0) / scores.length
-        : 0;
+      if (error) throw error;
+
+      // Initialize score ranges
+      const scoreRanges = {
+        '0-20': 0,
+        '21-40': 0,
+        '41-60': 0,
+        '61-80': 0,
+        '81-100': 0,
+      };
+
+      // Count participants in each score range
+      participants?.forEach(participant => {
+        const score = participant.score;
+        if (score <= 20) scoreRanges['0-20']++;
+        else if (score <= 40) scoreRanges['21-40']++;
+        else if (score <= 60) scoreRanges['41-60']++;
+        else if (score <= 80) scoreRanges['61-80']++;
+        else scoreRanges['81-100']++;
+      });
 
       return {
-        qualifiedCount: qualifiedCount || 0,
-        averageScore: Math.round(average)
+        scoreDistribution: scoreRanges,
+        totalParticipants: participants?.length || 0,
+        averageScore: participants?.reduce((acc, curr) => acc + (curr.score || 0), 0) / (participants?.length || 1),
       };
     },
-    enabled: !!contestId
   });
 
-  if (isLoadingContest || isLoadingTop || isLoadingStats) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
+  const chartData = {
+    labels: Object.keys(stats?.scoreDistribution || {}),
+    datasets: [
+      {
+        label: 'Nombre de participants',
+        data: Object.values(stats?.scoreDistribution || {}),
+        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
 
-  if (!contest || !stats) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
-        <div className="container mx-auto px-4">
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-center text-gray-600">
-                Ce concours n'existe pas ou n'est plus disponible.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Distribution des scores',
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
+  };
+
+  if (isLoading) {
+    return <div>Chargement des statistiques...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {state?.finalScore && (
-            <Card className="bg-gradient-to-r from-amber-100 to-amber-200 border-none">
-              <CardContent className="p-6 text-center">
-                <Trophy className="w-16 h-16 text-amber-600 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-amber-900 mb-2">
-                  Félicitations !
-                </h2>
-                <p className="text-amber-800">
-                  Votre score final est de {state.finalScore}% !
-                  {state.finalScore >= 70 && (
-                    <span className="block mt-2 font-medium">
-                      Vous êtes éligible pour le tirage au sort ! 🎉
-                    </span>
-                  )}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          <ContestStats
-            participantsCount={contest.participants_count}
-            successPercentage={Math.round((stats.qualifiedCount / (contest.participants_count || 1)) * 100)}
-            timeLeft=""
-            endDate={contest.end_date}
-          />
-
-          {topParticipants && (
-            <TopParticipantsList participants={topParticipants} />
-          )}
-
-          <ContestGeneralStats
-            averageScore={stats.averageScore}
-            qualifiedCount={stats.qualifiedCount}
-            totalParticipants={contest.participants_count}
-          />
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Statistiques du concours</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-2">Total des participants</h3>
+          <p className="text-3xl font-bold">{stats?.totalParticipants}</p>
+        </Card>
+        
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-2">Score moyen</h3>
+          <p className="text-3xl font-bold">{stats?.averageScore.toFixed(1)}%</p>
+        </Card>
+        
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-2">Participants qualifiés</h3>
+          <p className="text-3xl font-bold">
+            {Object.entries(stats?.scoreDistribution || {})
+              .filter(([range]) => parseInt(range.split('-')[0]) >= 70)
+              .reduce((acc, [_, count]) => acc + count, 0)}
+          </p>
+        </Card>
       </div>
+
+      <Card className="p-6">
+        <Bar data={chartData} options={options} />
+      </Card>
     </div>
   );
 };
 
-export default ContestStatsPage;
+export default ContestStats;

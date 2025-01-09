@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../App";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParticipantsTable } from "./participants/ParticipantsTable";
 import { ParticipantsActions } from "./participants/ParticipantsActions";
