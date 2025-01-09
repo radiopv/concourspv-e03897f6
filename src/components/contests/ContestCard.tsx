@@ -11,7 +11,6 @@ import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
 import ParticipationStats from "./contest-card/ParticipationStats";
 
-// Types pour les données brutes de l'API
 interface PrizeCatalogItem {
   name: string;
   image_url: string;
@@ -24,7 +23,6 @@ interface RawPrizeData {
   prize_catalog: PrizeCatalogItem;
 }
 
-// Type pour le format final des prix
 interface Prize {
   prize_catalog: PrizeCatalogItem;
 }
@@ -62,13 +60,9 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
 
       if (error) throw error;
       
-      // Transformation des données pour correspondre au type Prize[]
-      const transformedPrizes: Prize[] = (prizesData || []).map((item: RawPrizeData) => ({
+      return prizesData?.map((item: any) => ({
         prize_catalog: item.prize_catalog
-      }));
-
-      console.log('Prizes data:', transformedPrizes);
-      return transformedPrizes;
+      })) || [];
     },
   });
 
@@ -107,7 +101,6 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     ? settings.default_attempts - (userParticipation?.attempts || 0)
     : 0;
 
-  // Get the main prize from the first item in the prizes array
   const mainPrize = prizes?.[0]?.prize_catalog;
 
   return (
