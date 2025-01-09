@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { CustomBadge } from "@/components/ui/custom-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy } from "lucide-react";
+import { Trophy, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../App";
@@ -29,6 +29,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
     queryFn: async () => {
+      console.log('Fetching prizes for contest:', contest.id);
       const { data: prizesData } = await supabase
         .from('prizes')
         .select(`
@@ -36,10 +37,12 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           prize_catalog (
             name,
             image_url,
-            shop_url
+            shop_url,
+            value
           )
         `)
         .eq('contest_id', contest.id);
+      console.log('Prizes data:', prizesData);
       return prizesData || [];
     },
   });
@@ -79,6 +82,8 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     ? settings.default_attempts - (userParticipation?.attempts || 0)
     : 0;
 
+  const mainPrize = prizes?.[0]?.prize_catalog;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -108,6 +113,42 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             <p className="text-gray-600 mb-6">
               {contest.description}
             </p>
+          )}
+
+          {mainPrize && (
+            <div className="mb-6 space-y-4">
+              <div className="relative aspect-video rounded-lg overflow-hidden">
+                {mainPrize.image_url && (
+                  <img
+                    src={mainPrize.image_url}
+                    alt={mainPrize.name}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-semibold text-lg">{mainPrize.name}</h3>
+                {mainPrize.value && (
+                  <p className="text-green-600 font-semibold">
+                    Valeur: {mainPrize.value.toLocaleString('fr-CA', { 
+                      style: 'currency', 
+                      currency: 'CAD' 
+                    })}
+                  </p>
+                )}
+                {mainPrize.shop_url && (
+                  <a
+                    href={mainPrize.shop_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    Voir sur la boutique
+                    <ExternalLink className="w-4 h-4 ml-1" />
+                  </a>
+                )}
+              </div>
+            </div>
           )}
           
           <ContestStats contestId={contest.id} />
