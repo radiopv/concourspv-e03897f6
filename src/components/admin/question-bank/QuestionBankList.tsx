@@ -60,6 +60,57 @@ const QuestionBankList = () => {
     }
   });
 
+  const handleUrlEdit = async (questionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('question_bank')
+        .update({ article_url: newUrl })
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      await refetchQuestions();
+      setEditingUrl(null);
+      setNewUrl("");
+
+      toast({
+        title: "Succès",
+        description: "L'URL de l'article a été mise à jour",
+      });
+    } catch (error) {
+      console.error('Error updating article URL:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour l'URL",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleArchive = async (questionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('question_bank')
+        .update({ status: 'archived' })
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      await refetchQuestions();
+      toast({
+        title: "Succès",
+        description: "La question a été archivée",
+      });
+    } catch (error) {
+      console.error('Error archiving question:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'archiver la question",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAssignToContest = async () => {
     if (!selectedContestId || selectedQuestions.length === 0) {
       toast({
