@@ -44,7 +44,11 @@ const Dashboard = () => {
         return existingMember;
       }
 
-      // If no member exists, create one
+      // Extract user metadata for names if available
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      const userMetadata = authUser?.user_metadata || {};
+      
+      // If no member exists, create one with default values
       console.log('Member not found, creating new member...');
       const { data: newMember, error: createError } = await supabase
         .from('members')
@@ -52,9 +56,13 @@ const Dashboard = () => {
           {
             id: userId,
             email: userEmail,
+            first_name: userMetadata.first_name || 'New',
+            last_name: userMetadata.last_name || 'Member',
             total_points: 0,
             contests_participated: 0,
             contests_won: 0,
+            notifications_enabled: true,
+            share_scores: true,
           },
         ])
         .select('*')
