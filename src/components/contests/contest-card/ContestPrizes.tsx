@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 interface ContestPrizesProps {
   prizes: Array<{
-    prize_catalog: {
+    catalog_item: {
       name: string;
       image_url: string;
       shop_url: string;
@@ -23,22 +23,22 @@ const ContestPrizes = ({ prizes }: ContestPrizesProps) => {
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {prizes.map((prize, idx) => (
-          prize.prize_catalog && (
+          prize.catalog_item && (
             <div key={idx} className="relative group overflow-hidden rounded-lg border border-gray-200">
-              {prize.prize_catalog.image_url && (
+              {prize.catalog_item.image_url && (
                 <div className="aspect-video relative">
                   <img
-                    src={prize.prize_catalog.image_url}
-                    alt={prize.prize_catalog.name}
+                    src={prize.catalog_item.image_url}
+                    alt={prize.catalog_item.name}
                     className="w-full h-full object-cover transform transition-transform group-hover:scale-105"
                   />
                 </div>
               )}
               <div className="p-3 bg-white/80 space-y-2">
-                <p className="font-medium text-purple-700">{prize.prize_catalog.name}</p>
-                {prize.prize_catalog.shop_url && (
+                <p className="font-medium text-purple-700">{prize.catalog_item.name}</p>
+                {prize.catalog_item.shop_url && (
                   <a
-                    href={prize.prize_catalog.shop_url}
+                    href={prize.catalog_item.shop_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center text-sm text-purple-600 hover:text-purple-800 transition-colors"
