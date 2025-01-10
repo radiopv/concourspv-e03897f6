@@ -28,6 +28,21 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
   useAttempts(contestId);
 
+  // Récupérer les paramètres globaux
+  const { data: settings } = useQuery({
+    queryKey: ['global-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) throw error;
+      return data?.[0];
+    }
+  });
+
   // Vérifier si le participant a déjà complété le quiz
   const { data: participant } = useQuery({
     queryKey: ['participant-status', contestId],
@@ -53,12 +68,13 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         state: {
           score: participant.score,
           totalQuestions: questions?.length || 0,
-          contestId: contestId
+          contestId: contestId,
+          requiredPercentage: settings?.required_percentage || 90
         }
       });
       return;
     }
-  }, [participant, navigate, questions?.length, contestId]);
+  }, [participant, navigate, questions?.length, contestId, settings]);
 
   useEffect(() => {
     const initializeParticipant = async () => {
@@ -172,7 +188,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           throw new Error("User not authenticated");
         }
 
-        // Récupérer d'abord le participant
         const { data: participant, error: participantError } = await supabase
           .from('participants')
           .select('participation_id, attempts')
@@ -187,11 +202,9 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
         console.log('Participant found:', participant);
 
-        // Calculer le score final
         const finalScore = await calculateFinalScore(participant.participation_id);
         console.log('Final score calculated:', finalScore);
 
-        // Mettre à jour le score et le statut du participant
         const { error: updateError } = await supabase
           .from('participants')
           .update({ 
@@ -208,19 +221,18 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           throw updateError;
         }
 
-        // Invalider les requêtes pour forcer le rafraîchissement des données
         await queryClient.invalidateQueries({ queryKey: ['contests'] });
         await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
         await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
 
         console.log('Quiz completed successfully');
 
-        // Rediriger vers la page de complétion avec les statistiques
         navigate('/quiz-completion', {
           state: {
             score: finalScore,
             totalQuestions: questions?.length || 0,
-            contestId: contestId
+            contestId: contestId,
+            requiredPercentage: settings?.required_percentage || 90
           }
         });
 
@@ -279,5 +291,3 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     </Card>
   );
 };
-
-export default QuestionnaireComponent;

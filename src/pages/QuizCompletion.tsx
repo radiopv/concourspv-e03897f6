@@ -9,20 +9,21 @@ import { Helmet } from 'react-helmet';
 const QuizCompletion = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { score, totalQuestions, contestId } = location.state || { 
+  const { score, totalQuestions, contestId, requiredPercentage = 90 } = location.state || { 
     score: 0, 
     totalQuestions: 0,
-    contestId: null 
+    contestId: null,
+    requiredPercentage: 90
   };
 
-  // Ensure score is a number and calculate percentage correctly
+  // S'assurer que le score est un nombre
   const numericScore = typeof score === 'number' ? score : 0;
   const numericTotalQuestions = typeof totalQuestions === 'number' ? totalQuestions : 0;
   
-  // Calculate correct answers based on the score percentage
+  // Calculer le nombre de bonnes réponses
   const correctAnswers = Math.round((numericScore / 100) * numericTotalQuestions);
   
-  const isQualified = numericScore >= 70;
+  const isQualified = numericScore >= requiredPercentage;
 
   const handleRetry = () => {
     if (!contestId) {
@@ -51,7 +52,7 @@ const QuizCompletion = () => {
         <p className="text-xl text-gray-600">
           {isQualified 
             ? "Vous êtes qualifié pour le tirage au sort !"
-            : "Vous n'avez pas obtenu le score minimum requis pour vous qualifier."}
+            : `Le score minimum requis est de ${requiredPercentage}%. N'hésitez pas à réessayer !`}
         </p>
       </motion.div>
 
@@ -124,7 +125,7 @@ const QuizCompletion = () => {
         <p className="text-lg text-gray-600">
           {isQualified 
             ? "Bravo ! Vous êtes qualifié pour le tirage au sort !"
-            : "Le score minimum requis est de 70%. N'hésitez pas à réessayer !"}
+            : `Le score minimum requis est de ${requiredPercentage}%. N'hésitez pas à réessayer !`}
         </p>
         <div className="space-x-4">
           {!isQualified && (
