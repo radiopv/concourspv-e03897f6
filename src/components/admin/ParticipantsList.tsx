@@ -66,15 +66,15 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
     },
     onError: () => {
       toast({
+        variant: "destructive",
         title: "Erreur",
         description: "Impossible de supprimer le participant",
-        variant: "destructive",
       });
     }
   });
 
   if (isLoading) {
-    return <div>Chargement des participants...</div>;
+    return <div className="p-4">Chargement des participants...</div>;
   }
 
   const getStatusBadge = (status: string | null, score: number | null) => {
@@ -88,53 +88,58 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Liste des participants</h2>
-        <span className="text-sm text-gray-500">
+    <div className="space-y-6 mt-8 bg-white rounded-lg shadow-sm">
+      <div className="flex justify-between items-center p-6 border-b">
+        <h2 className="text-2xl font-bold text-gray-800">Liste des participants</h2>
+        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
           {participants?.length || 0} participants
         </span>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nom</TableHead>
-            <TableHead>Prénom</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Date d'inscription</TableHead>
-            <TableHead>Tentatives</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {participants?.map((participant) => (
-            <TableRow key={participant.id}>
-              <TableCell>{participant.last_name}</TableCell>
-              <TableCell>{participant.first_name}</TableCell>
-              <TableCell>{participant.email}</TableCell>
-              <TableCell>
-                {participant.created_at && 
-                  format(new Date(participant.created_at), 'dd MMMM yyyy', { locale: fr })}
-              </TableCell>
-              <TableCell>{participant.attempts || 0}</TableCell>
-              <TableCell>
-                {getStatusBadge(participant.status, participant.score)}
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => deleteParticipantMutation.mutate(participant.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="p-6">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold">Nom</TableHead>
+                <TableHead className="font-semibold">Prénom</TableHead>
+                <TableHead className="font-semibold">Email</TableHead>
+                <TableHead className="font-semibold">Date d'inscription</TableHead>
+                <TableHead className="font-semibold">Tentatives</TableHead>
+                <TableHead className="font-semibold">Statut</TableHead>
+                <TableHead className="font-semibold">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {participants?.map((participant) => (
+                <TableRow key={participant.id} className="hover:bg-gray-50">
+                  <TableCell className="py-4">{participant.last_name}</TableCell>
+                  <TableCell className="py-4">{participant.first_name}</TableCell>
+                  <TableCell className="py-4">{participant.email}</TableCell>
+                  <TableCell className="py-4">
+                    {participant.created_at && 
+                      format(new Date(participant.created_at), 'dd MMMM yyyy', { locale: fr })}
+                  </TableCell>
+                  <TableCell className="py-4">{participant.attempts || 0}</TableCell>
+                  <TableCell className="py-4">
+                    {getStatusBadge(participant.status, participant.score)}
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteParticipantMutation.mutate(participant.id)}
+                      className="hover:bg-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 };
