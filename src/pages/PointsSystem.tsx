@@ -14,7 +14,6 @@ interface UserStats {
 }
 
 const PointsSystem = () => {
-  // Fetch user statistics
   const { data: stats } = useQuery<UserStats>({
     queryKey: ['user-stats'],
     queryFn: async () => {
@@ -46,145 +45,107 @@ const PointsSystem = () => {
     }
   });
 
-  // Fetch top participants
-  const { data: topParticipants } = useQuery({
-    queryKey: ['top-participants'],
-    queryFn: async () => {
-      // First, get top user_points
-      const { data: pointsData, error: pointsError } = await supabase
-        .from('user_points')
-        .select('user_id, total_points')
-        .order('total_points', { ascending: false })
-        .limit(10);
-
-      if (pointsError) throw pointsError;
-
-      if (!pointsData?.length) return [];
-
-      // Then, get the corresponding member details
-      const { data: membersData, error: membersError } = await supabase
-        .from('members')
-        .select('id, first_name, last_name')
-        .in('id', pointsData.map(p => p.user_id));
-
-      if (membersError) throw membersError;
-
-      // Combine the data
-      return pointsData.map(points => {
-        const member = membersData.find(m => m.id === points.user_id);
-        return {
-          id: points.user_id,
-          first_name: member?.first_name || 'Unknown',
-          last_name: member?.last_name || 'User',
-          score: points.total_points
-        };
-      });
-    }
-  });
-
-  // ... keep existing code (JSX for rendering the points system UI)
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
+    <div className="min-h-screen py-12">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            <h1 className="page-title">
               Système de Points
             </h1>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-amber-800/80">
               Découvrez comment gagner des points et débloquer des avantages exclusifs !
             </p>
           </div>
 
           {/* Statistiques des membres */}
           {stats && (
-            <Card>
+            <Card className="tropical-card">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-6 h-6 text-blue-500" />
+                <CardTitle className="flex items-center gap-2 text-amber-800">
+                  <Users className="w-6 h-6 text-amber-500" />
                   Statistiques de la communauté
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-3">
-                <div className="p-4 bg-white rounded-lg border">
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-blue-500" />
+                <div className="warm-gradient p-4 rounded-lg border border-amber-100">
+                  <h3 className="font-semibold mb-2 flex items-center gap-2 text-amber-800">
+                    <Users className="w-5 h-5 text-amber-500" />
                     Membres actifs
                   </h3>
-                  <p className="text-2xl font-bold">{stats.totalUsers}</p>
+                  <p className="text-2xl font-bold text-amber-900">{stats.totalUsers}</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border">
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-500" />
+                <div className="warm-gradient p-4 rounded-lg border border-amber-100">
+                  <h3 className="font-semibold mb-2 flex items-center gap-2 text-amber-800">
+                    <Star className="w-5 h-5 text-amber-500" />
                     Points moyens
                   </h3>
-                  <p className="text-2xl font-bold">{Math.round(stats.averagePoints)}</p>
+                  <p className="text-2xl font-bold text-amber-900">{Math.round(stats.averagePoints)}</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border">
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <Award className="w-5 h-5 text-purple-500" />
+                <div className="warm-gradient p-4 rounded-lg border border-amber-100">
+                  <h3 className="font-semibold mb-2 flex items-center gap-2 text-amber-800">
+                    <Award className="w-5 h-5 text-amber-500" />
                     Rang le plus commun
                   </h3>
-                  <p className="text-2xl font-bold">{stats.mostCommonRank}</p>
+                  <p className="text-2xl font-bold text-amber-900">{stats.mostCommonRank}</p>
                 </div>
               </CardContent>
             </Card>
           )}
 
           {/* Top 10 des participants */}
-          {topParticipants && (
-            <TopParticipantsList participants={topParticipants} />
-          )}
+          <div className="content-section">
+            {topParticipants && <TopParticipantsList participants={topParticipants} />}
+          </div>
 
-          <Card>
+          <Card className="tropical-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-amber-800">
                 <Trophy className="w-6 h-6 text-amber-500" />
                 Comment gagner des points
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="p-4 bg-white rounded-lg border">
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-500" />
+                <div className="warm-gradient p-4 rounded-lg border border-amber-100">
+                  <h3 className="font-semibold mb-2 flex items-center gap-2 text-amber-800">
+                    <Star className="w-5 h-5 text-amber-500" />
                     Points de base
                   </h3>
-                  <p className="text-gray-600">1 point par bonne réponse</p>
+                  <p className="text-amber-800">1 point par bonne réponse</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border">
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-green-500" />
+                <div className="warm-gradient p-4 rounded-lg border border-amber-100">
+                  <h3 className="font-semibold mb-2 flex items-center gap-2 text-amber-800">
+                    <TrendingUp className="w-5 h-5 text-amber-500" />
                     Points bonus
                   </h3>
-                  <p className="text-gray-600">5 points bonus pour 10 bonnes réponses consécutives</p>
+                  <p className="text-amber-800">5 points bonus pour 10 bonnes réponses consécutives</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="tropical-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="w-6 h-6 text-purple-500" />
+              <CardTitle className="flex items-center gap-2 text-amber-800">
+                <Award className="w-6 h-6 text-amber-500" />
                 Rangs et Avantages
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
                 {RANKS.map((rank) => (
-                  <div key={rank.rank} className="p-4 bg-white rounded-lg border">
+                  <div key={rank.rank} className="warm-gradient p-4 rounded-lg border border-amber-100">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold flex items-center gap-2">
+                      <h3 className="font-semibold flex items-center gap-2 text-amber-800">
                         <span className="text-2xl">{rank.badge}</span>
                         {rank.rank}
                       </h3>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-amber-700">
                         {rank.minPoints} - {rank.maxPoints === Infinity ? "∞" : rank.maxPoints} points
                       </span>
                     </div>
-                    <ul className="list-disc list-inside text-gray-600 space-y-1">
+                    <ul className="list-disc list-inside text-amber-800 space-y-1">
                       {rank.benefits.map((benefit, index) => (
                         <li key={index}>{benefit}</li>
                       ))}
@@ -195,19 +156,19 @@ const PointsSystem = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="tropical-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gift className="w-6 h-6 text-pink-500" />
+              <CardTitle className="flex items-center gap-2 text-amber-800">
+                <Gift className="w-6 h-6 text-amber-500" />
                 Participations Supplémentaires
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">
+              <p className="text-amber-800 mb-4">
                 Tous les 25 points cumulés, vous gagnez 2 participations supplémentaires aux concours !
               </p>
-              <div className="bg-indigo-50 p-4 rounded-lg">
-                <p className="text-sm text-indigo-600">
+              <div className="warm-gradient p-4 rounded-lg border border-amber-100">
+                <p className="text-sm text-amber-800">
                   Exemple : avec 75 points, vous aurez gagné 6 participations supplémentaires.
                 </p>
               </div>
