@@ -9,6 +9,7 @@ import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,15 +20,12 @@ const Layout = ({ children }: LayoutProps) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isAdmin, setIsAdmin] = React.useState(false);
   const { toast } = useToast();
 
-  React.useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
+  const { data: isAdmin = false } = useQuery({
+    queryKey: ['admin-status', user?.id],
+    queryFn: async () => {
+      if (!user) return false;
 
       console.log('Checking admin rights for:', user.email);
 
@@ -44,26 +42,25 @@ const Layout = ({ children }: LayoutProps) => {
           title: "Erreur",
           description: "Impossible de vérifier vos droits d'administrateur",
         });
-        setIsAdmin(false);
-        return;
+        return false;
       }
 
       console.log('Member data:', memberData);
-      const isUserAdmin = memberData?.role === 'admin';
-      setIsAdmin(isUserAdmin);
+      return memberData?.role === 'admin';
+    },
+    enabled: !!user?.id
+  });
 
-      if (!isUserAdmin && location.pathname.startsWith('/admin')) {
-        toast({
-          variant: "destructive",
-          title: "Accès refusé",
-          description: "Vous n'avez pas les droits d'administrateur",
-        });
-        navigate('/');
-      }
-    };
-
-    checkAdminRole();
-  }, [user, location.pathname, navigate, toast]);
+  React.useEffect(() => {
+    if (!isAdmin && location.pathname.startsWith('/admin')) {
+      toast({
+        variant: "destructive",
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits d'administrateur",
+      });
+      navigate('/');
+    }
+  }, [isAdmin, location.pathname, navigate, toast]);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
 
