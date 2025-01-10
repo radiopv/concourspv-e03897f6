@@ -4,7 +4,7 @@ import UserNavBar from './navigation/UserNavBar';
 import MobileNavBar from './navigation/MobileNavBar';
 import { Toaster } from './ui/toaster';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Grid, Users, Settings, Database, Edit, Gift, BookOpen } from 'lucide-react';
+import { Grid, Users, Settings, Database, Edit, Gift, BookOpen, Trophy } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -72,6 +72,7 @@ const Layout = ({ children }: LayoutProps) => {
     { icon: Edit, label: 'Concours', path: '/admin/contests' },
     { icon: BookOpen, label: 'Questions', path: '/admin/questions' },
     { icon: Gift, label: 'Prix', path: '/admin/prizes' },
+    { icon: Trophy, label: 'Gagnants', path: '/admin/winners' },
     { icon: Users, label: 'Utilisateurs', path: '/admin/users' },
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];

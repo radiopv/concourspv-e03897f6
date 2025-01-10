@@ -6,6 +6,7 @@ import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import QuestionBankManager from './question-bank/QuestionBankManager';
 import GlobalSettings from './GlobalSettings';
 import UserManager from './users/UserManager';
+import AdminWinnersList from './winners/WinnersList';
 
 const AdminRoutes = () => {
   return (
@@ -17,6 +18,7 @@ const AdminRoutes = () => {
       <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
       <Route path="/settings" element={<GlobalSettings />} />
       <Route path="/users" element={<UserManager />} />
+      <Route path="/winners" element={<AdminWinnersList />} />
     </Routes>
   );
 };

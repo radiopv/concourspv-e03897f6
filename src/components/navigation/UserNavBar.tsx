@@ -31,9 +31,6 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               <Link to="/contests" className="text-white hover:text-amber-100">
                 Concours
               </Link>
-              <Link to="/winners" className="text-white hover:text-amber-100">
-                Gagnants
-              </Link>
               <Link to="/points" className="text-white hover:text-amber-100">
                 Points
               </Link>
@@ -43,11 +40,6 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                   Instructions
                 </span>
               </Link>
-              {isAdmin && (
-                <Link to="/admin" className="text-white hover:text-amber-100 font-semibold">
-                  Administration
-                </Link>
-              )}
             </div>
           </div>
 
