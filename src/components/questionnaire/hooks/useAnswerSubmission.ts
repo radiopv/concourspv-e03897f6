@@ -39,7 +39,18 @@ export const useAnswerSubmission = (contestId: string) => {
       const currentAttempt = participant?.attempts || 0;
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
 
-      // Insérer la nouvelle réponse avec le numéro de tentative actuel
+      // Vérifier si cette question a déjà été répondue correctement dans une tentative précédente
+      const { data: previousAnswers } = await supabase
+        .from('participant_answers')
+        .select('is_correct')
+        .eq('participant_id', participationId)
+        .eq('question_id', currentQuestion.id)
+        .eq('is_correct', true)
+        .lt('attempt_number', currentAttempt);
+
+      const isFirstCorrectAnswer = !previousAnswers || previousAnswers.length === 0;
+
+      // Insérer la nouvelle réponse
       const { error: insertError } = await supabase
         .from('participant_answers')
         .upsert([{
@@ -59,7 +70,7 @@ export const useAnswerSubmission = (contestId: string) => {
       state.setHasAnswered(true);
       state.setTotalAnswered(prev => prev + 1);
       
-      if (isAnswerCorrect) {
+      if (isAnswerCorrect && isFirstCorrectAnswer) {
         state.setScore(prev => prev + 1);
         
         const currentStreak = state.getCurrentStreak();
@@ -75,8 +86,25 @@ export const useAnswerSubmission = (contestId: string) => {
           contestId,
           currentStreak
         );
+
+        toast({
+          title: "Bravo !",
+          description: "Vous avez gagné un point pour cette nouvelle bonne réponse !",
+          variant: "default",
+        });
+      } else if (isAnswerCorrect) {
+        toast({
+          title: "Bonne réponse !",
+          description: "Vous aviez déjà répondu correctement à cette question.",
+          variant: "default",
+        });
       } else {
         state.resetStreak();
+        toast({
+          title: "Pas tout à fait...",
+          description: "Essayez encore, vous pouvez y arriver !",
+          variant: "destructive",
+        });
       }
 
       await queryClient.invalidateQueries({ queryKey: ['contests'] });
