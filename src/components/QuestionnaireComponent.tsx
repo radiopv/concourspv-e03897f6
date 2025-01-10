@@ -291,3 +291,5 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     </Card>
   );
 };
+
+export default QuestionnaireComponent;
