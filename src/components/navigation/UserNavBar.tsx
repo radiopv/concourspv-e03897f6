@@ -18,9 +18,6 @@ const UserNavBar = () => {
             <Link to="/contests" className="text-gray-600 hover:text-gray-900">
               Participer
             </Link>
-            <Link to="/winners" className="text-gray-600 hover:text-gray-900">
-              Gagnants
-            </Link>
             <Link to="/points" className="text-gray-600 hover:text-gray-900">
               Points & Rangs
             </Link>
