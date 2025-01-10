@@ -26,30 +26,28 @@ interface ContestCardProps {
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
-  const { data: prizes, isLoading: isPrizesLoading } = useQuery({
-    queryKey: ['contest-prizes', contest.id],
-    queryFn: async () => {
-      console.log('Fetching prizes for contest:', contest.id);
-      const { data: prizesData, error } = await supabase
-        .from('prizes')
-        .select(`
-          catalog_item_id,
-          prize_catalog (
-            name,
-            image_url,
-            shop_url,
-            value
-          )
-        `)
-        .eq('contest_id', contest.id);
 
-      if (error) throw error;
-      
-      return prizesData?.map((item: any) => ({
-        prize_catalog: item.prize_catalog
-      })) || [];
-    },
-  });
+const { data: prizes, isLoading: isPrizesLoading } = useQuery({
+  queryKey: ['contest-prizes', contest.id],
+  queryFn: async () => {
+    console.log('Fetching prizes for contest:', contest.id);
+    const { data: prizesData, error } = await supabase
+      .from('prizes')
+      .select(`
+        *,
+        catalog_item:prize_catalog(
+          name,
+          image_url,
+          shop_url,
+          value
+        )
+      `)
+      .eq('contest_id', contest.id);
+
+    if (error) throw error;
+    return prizesData || [];
+  },
+});
 
   const { data: settings, isLoading: isSettingsLoading } = useQuery({
     queryKey: ['global-settings'],
