@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Award, Star, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserPoints } from "@/services/pointsService";
+import { getUserPoints, getPointHistory } from "@/services/pointsService";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { RANKS } from "@/types/points";
