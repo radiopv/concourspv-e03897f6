@@ -12,7 +12,15 @@ export const useAnswerSubmission = (contestId: string) => {
   const state = useQuestionnaireState();
 
   const handleSubmitAnswer = async (currentQuestion: any) => {
-    if (!state.selectedAnswer || !currentQuestion) return;
+    if (!state.selectedAnswer || !currentQuestion) {
+      console.log('No answer selected or no current question');
+      return;
+    }
+
+    console.log('Submitting answer:', {
+      selectedAnswer: state.selectedAnswer,
+      correctAnswer: currentQuestion.correct_answer
+    });
 
     state.setIsSubmitting(true);
     try {
@@ -33,6 +41,8 @@ export const useAnswerSubmission = (contestId: string) => {
         .eq('id', session.session.user.id)
         .eq('contest_id', contestId)
         .single();
+
+      console.log('Participant data:', participant);
 
       if (participant?.score === 100) {
         toast({
@@ -59,8 +69,17 @@ export const useAnswerSubmission = (contestId: string) => {
         throw answersError;
       }
 
+      console.log('Existing answers:', existingAnswers);
+
       const currentAttempt = participant?.attempts || 0;
-      const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
+      // Assurez-vous que la comparaison est sensible à la casse
+      const isAnswerCorrect = state.selectedAnswer.trim() === currentQuestion.correct_answer.trim();
+
+      console.log('Answer validation:', {
+        isCorrect: isAnswerCorrect,
+        selectedAnswer: state.selectedAnswer.trim(),
+        correctAnswer: currentQuestion.correct_answer.trim()
+      });
 
       // N'attribuer des points que si la réponse est correcte ET n'a pas déjà été correctement répondue
       if (isAnswerCorrect && !existingAnswers?.is_correct) {
@@ -90,7 +109,10 @@ export const useAnswerSubmission = (contestId: string) => {
           attempt_number: currentAttempt
         }]);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error inserting answer:', insertError);
+        throw insertError;
+      }
 
       // Mettre à jour le state
       state.setIsCorrect(isAnswerCorrect);
@@ -100,8 +122,10 @@ export const useAnswerSubmission = (contestId: string) => {
       if (isAnswerCorrect) {
         state.setScore(prev => prev + 1);
         state.incrementStreak();
+        console.log('Streak incremented');
       } else {
         state.resetStreak();
+        console.log('Streak reset');
       }
 
       await queryClient.invalidateQueries({ queryKey: ['contests'] });
@@ -111,9 +135,9 @@ export const useAnswerSubmission = (contestId: string) => {
 
       const message = getRandomMessage();
       toast({
-        title: "Réponse enregistrée",
+        title: isAnswerCorrect ? "Bonne réponse !" : "Mauvaise réponse",
         description: message,
-        variant: "default",
+        variant: isAnswerCorrect ? "default" : "destructive",
       });
 
     } catch (error) {
