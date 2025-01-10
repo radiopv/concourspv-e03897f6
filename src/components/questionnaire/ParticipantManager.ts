@@ -5,12 +5,13 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
   try {
     console.log('Checking participant existence for user:', userId, 'contest:', contestId);
     
-    // First check if participant exists
+    // First check if participant exists - using select() instead of single()
     const { data: existingParticipants, error: fetchError } = await supabase
       .from('participants')
       .select('participation_id, attempts')
       .eq('id', userId)
-      .eq('contest_id', contestId);
+      .eq('contest_id', contestId)
+      .limit(1); // Limit to 1 result to avoid 406 error
 
     if (fetchError) {
       console.error('Error checking participant:', fetchError);
@@ -28,22 +29,40 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     const userEmail = session?.user?.email || 'anonymous@user.com';
 
     // Generate a new UUID for participation_id
-    const participation_id = crypto.randomUUID();
+    let participation_id = crypto.randomUUID();
+    let retryCount = 0;
+    const maxRetries = 3;
 
-    // Check if participation_id already exists to avoid duplicate key error
-    const { data: existingParticipationId } = await supabase
-      .from('participants')
-      .select('participation_id')
-      .eq('participation_id', participation_id)
-      .single();
+    // Keep trying until we get a unique participation_id or max retries reached
+    while (retryCount < maxRetries) {
+      // Check if participation_id already exists
+      const { data: existingId, error: idCheckError } = await supabase
+        .from('participants')
+        .select('participation_id')
+        .eq('participation_id', participation_id)
+        .limit(1);
 
-    if (existingParticipationId) {
-      // If by rare chance we get a duplicate UUID, generate a new one
+      if (idCheckError) {
+        console.error('Error checking participation_id:', idCheckError);
+        throw idCheckError;
+      }
+
+      // If no existing ID found, we can use this one
+      if (!existingId || existingId.length === 0) {
+        break;
+      }
+
+      // Generate a new UUID and try again
       console.log('Duplicate participation_id found, generating new one');
-      return ensureParticipantExists(userId, contestId);
+      participation_id = crypto.randomUUID();
+      retryCount++;
     }
 
-    // Create new participant
+    if (retryCount >= maxRetries) {
+      throw new Error('Failed to generate unique participation_id after maximum retries');
+    }
+
+    // Create new participant with the unique participation_id
     const { data: newParticipant, error: insertError } = await supabase
       .from('participants')
       .insert([{
