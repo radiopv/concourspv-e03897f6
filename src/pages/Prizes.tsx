@@ -23,16 +23,19 @@ const PrizesPage = () => {
       if (error) throw error;
 
       // Transform the data to match the Prize type
-      const transformedPrizes = data?.map(item => ({
-        prize_catalog: {
-          id: item.prize_catalog[0]?.id || "",
-          name: item.prize_catalog[0]?.name || "",
-          description: item.prize_catalog[0]?.description,
-          image_url: item.prize_catalog[0]?.image_url,
-          value: item.prize_catalog[0]?.value,
-          shop_url: item.prize_catalog[0]?.shop_url
-        }
-      })) || [];
+      const transformedPrizes = data?.map(item => {
+        const catalogItem = item.prize_catalog[0];
+        if (!catalogItem) return null;
+        
+        return {
+          id: catalogItem.id,
+          name: catalogItem.name,
+          description: catalogItem.description,
+          image_url: catalogItem.image_url,
+          value: catalogItem.value,
+          shop_url: catalogItem.shop_url
+        };
+      }).filter((prize): prize is Prize => prize !== null) || [];
 
       return transformedPrizes;
     },
