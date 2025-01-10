@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
-import { Plus, Trash2, RotateCcw } from "lucide-react";
+import { Plus, Trash2, RotateCcw, Gift } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Contest } from "@/types/contest";
+import PrizeCatalogDisplay from './prize-catalog/PrizeCatalogDisplay';
 
 interface ContestCardProps {
   contest: Contest;
@@ -32,12 +33,7 @@ const ContestCard = ({
   onEdit,
 }: ContestCardProps) => {
   const [showAddQuestion, setShowAddQuestion] = useState(false);
-  const [newQuestion, setNewQuestion] = useState({
-    question_text: "",
-    options: ["", "", "", ""],
-    correct_answer: "",
-    article_url: ""
-  });
+  const [showPrizes, setShowPrizes] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -52,6 +48,29 @@ const ContestCard = ({
       
       if (error) throw error;
       return data;
+    }
+  });
+
+  const { data: prizes } = useQuery({
+    queryKey: ['contest-prizes', contest.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('prizes')
+        .select(`
+          id,
+          catalog_item:prize_catalog (
+            id,
+            name,
+            description,
+            image_url,
+            shop_url,
+            value
+          )
+        `)
+        .eq('contest_id', contest.id);
+      
+      if (error) throw error;
+      return data?.map(prize => prize.catalog_item) || [];
     }
   });
 
@@ -126,81 +145,6 @@ const ContestCard = ({
         title: "Erreur",
         description: "Impossible de réinitialiser le concours",
         variant: "destructive",
-      });
-    }
-  };
-
-  const handleAddQuestion = async () => {
-    try {
-      if (!newQuestion.question_text || !newQuestion.correct_answer) {
-        toast({
-          title: "Erreur",
-          description: "Veuillez remplir au moins la question et la bonne réponse",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('questions')
-        .insert([{
-          contest_id: contest.id,
-          question_text: newQuestion.question_text,
-          options: newQuestion.options.filter(opt => opt !== ""),
-          correct_answer: newQuestion.correct_answer,
-          article_url: newQuestion.article_url || null,
-          type: 'multiple_choice'
-        }]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succès",
-        description: "Question ajoutée avec succès"
-      });
-
-      setNewQuestion({
-        question_text: "",
-        options: ["", "", "", ""],
-        correct_answer: "",
-        article_url: ""
-      });
-
-      setShowAddQuestion(false);
-      await refetch();
-      await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
-    } catch (error) {
-      console.error('Error adding question:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter la question",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDeleteQuestion = async (questionId: string) => {
-    try {
-      const { error } = await supabase
-        .from('questions')
-        .delete()
-        .eq('id', questionId);
-
-      if (error) throw error;
-
-      await refetch();
-      await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
-
-      toast({
-        title: "Succès",
-        description: "Question supprimée avec succès"
-      });
-    } catch (error) {
-      console.error('Error deleting question:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer la question",
-        variant: "destructive"
       });
     }
   };
@@ -290,23 +234,56 @@ const ContestCard = ({
               </DialogContent>
             </Dialog>
           </div>
-          
-          <div className="space-y-2">
-            {questions?.map((question) => (
-              <div key={question.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                <span className="text-sm truncate flex-1">{question.question_text}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteQuestion(question.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <Gift className="w-4 h-4 text-purple-500" />
+                Prix à gagner ({prizes?.length || 0})
+              </h3>
+              <Dialog open={showPrizes} onOpenChange={setShowPrizes}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="bg-gradient-to-r from-amber-500 to-purple-500 text-white hover:from-amber-600 hover:to-purple-600">
+                    <Plus className="w-4 h-4 mr-1" /> Gérer les prix
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle>Gestion des prix du concours</DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    <PrizeCatalogDisplay prizes={prizes || []} />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            {prizes && prizes.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {prizes.slice(0, 2).map((prize) => (
+                  <div key={prize.id} className="relative group overflow-hidden rounded-lg border border-gray-200">
+                    {prize.image_url && (
+                      <div className="aspect-video relative">
+                        <img
+                          src={prize.image_url}
+                          alt={prize.name}
+                          className="w-full h-full object-cover transform transition-transform group-hover:scale-105"
+                        />
+                        {prize.value && (
+                          <div className="absolute top-2 right-2 bg-amber-500 text-white px-2 py-1 rounded-full text-sm">
+                            {prize.value}€
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="p-2 bg-white/80">
+                      <p className="font-medium text-sm text-purple-700">{prize.name}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-          
+
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm" className="w-full mt-4">
