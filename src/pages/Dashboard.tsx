@@ -41,12 +41,16 @@ const Dashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_points')
-        .select('contests_participated, total_points, contests_won')
+        .select('total_points, current_streak, best_streak')
         .eq('user_id', user?.id)
         .single();
 
       if (error) throw error;
-      return data;
+      return {
+        total_points: data?.total_points || 0,
+        contests_participated: data?.current_streak || 0,
+        contests_won: data?.best_streak || 0
+      };
     },
     enabled: !!user?.id
   });
