@@ -28,7 +28,7 @@ export const PrizeForm = ({
   uploading,
 }: PrizeFormProps) => {
   return (
-    <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+    <form className="space-y-4">
       <div>
         <Label htmlFor="name">Nom du prix</Label>
         <Input
@@ -49,7 +49,7 @@ export const PrizeForm = ({
       </div>
 
       <div>
-        <Label htmlFor="value">Valeur (€)</Label>
+        <Label htmlFor="value">Valeur ($)</Label>
         <Input
           id="value"
           type="number"
