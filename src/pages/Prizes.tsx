@@ -27,14 +27,18 @@ const PrizesPage = () => {
         const catalogItem = item.prize_catalog[0];
         if (!catalogItem) return null;
         
-        return {
-          id: catalogItem.id,
-          name: catalogItem.name,
-          description: catalogItem.description,
-          image_url: catalogItem.image_url,
-          value: catalogItem.value,
-          shop_url: catalogItem.shop_url
+        const prize: Prize = {
+          prize_catalog: {
+            id: catalogItem.id,
+            name: catalogItem.name,
+            description: catalogItem.description,
+            image_url: catalogItem.image_url,
+            value: catalogItem.value,
+            shop_url: catalogItem.shop_url
+          }
         };
+        
+        return prize;
       }).filter((prize): prize is Prize => prize !== null) || [];
 
       return transformedPrizes;
