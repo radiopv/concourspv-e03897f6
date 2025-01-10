@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -44,14 +44,21 @@ const QuestionDisplay = ({
     return words.slice(0, partialLength).join(" ") + "...";
   };
 
-  const handleSubmitClick = () => {
+  const handleSubmitClick = useCallback(() => {
+    console.log('Submit button clicked with state:', {
+      selectedAnswer,
+      hasAnswered,
+      isSubmitting
+    });
+
     if (!selectedAnswer || isSubmitting || hasAnswered) {
       console.log('Submit blocked:', { selectedAnswer, isSubmitting, hasAnswered });
       return;
     }
-    console.log('Submitting answer:', selectedAnswer);
+
+    console.log('Proceeding with answer submission');
     onSubmitAnswer();
-  };
+  }, [selectedAnswer, isSubmitting, hasAnswered, onSubmitAnswer]);
 
   return (
     <div className="space-y-4">

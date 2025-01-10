@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { ExternalLink, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,17 +20,20 @@ const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
     setReadingTimer(0);
   }, [url]);
 
+  const handleTimerComplete = useCallback(() => {
+    onArticleRead();
+  }, [onArticleRead]);
+
   useEffect(() => {
     if (!hasClicked || readingTimer >= READING_TIME) {
       return;
     }
 
     const interval = setInterval(() => {
-      setReadingTimer((prev) => {
+      setReadingTimer(prev => {
         if (prev >= READING_TIME - 1) {
           clearInterval(interval);
-          // Déplacer onArticleRead en dehors du setState
-          setTimeout(onArticleRead, 0);
+          handleTimerComplete();
           return READING_TIME;
         }
         return prev + 1;
@@ -38,12 +41,12 @@ const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [hasClicked, readingTimer, onArticleRead]);
+  }, [hasClicked, readingTimer, handleTimerComplete]);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     setHasClicked(true);
     window.open(url, '_blank');
-  };
+  }, [url]);
 
   return (
     <div className="space-y-4">
