@@ -11,6 +11,7 @@ interface StatsCardsProps {
 }
 
 const StatsCards = ({ stats }: StatsCardsProps) => {
+  // Default values if stats is null or properties are undefined
   const participations = stats?.contests_participated || 0;
   const points = stats?.total_points || 0;
   const wins = stats?.contests_won || 0;
