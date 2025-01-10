@@ -18,6 +18,19 @@ interface ContestCardProps {
   onSelect?: (id: string) => void;
 }
 
+interface PrizeCatalogItem {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  shop_url?: string;
+  value?: number;
+}
+
+interface ContestPrize {
+  catalog_item: PrizeCatalogItem;
+}
+
 const ContestCard: React.FC<ContestCardProps> = ({ 
   contest,
   onDelete,
