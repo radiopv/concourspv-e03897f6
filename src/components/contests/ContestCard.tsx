@@ -57,10 +57,11 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       const { data, error } = await supabase
         .from('settings')
         .select('*')
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
       
       if (error) throw error;
-      return data;
+      return data?.[0] || null;
     }
   });
 
