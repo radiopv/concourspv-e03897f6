@@ -12,11 +12,24 @@ interface CreateContestFormProps {
   onCancel: () => void;
 }
 
+const cubanContestNames = [
+  "La Habana Vieja",
+  "Tropicana",
+  "Buena Vista",
+  "El Malecón",
+  "Varadero",
+  "Santiago de Cuba",
+  "Trinidad Colonial",
+  "Cienfuegos",
+  "Viñales",
+  "Cayo Coco"
+];
+
 const CreateContestForm: React.FC<CreateContestFormProps> = ({ onContestCreated, onCancel }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
-    title: '',
+    title: cubanContestNames[Math.floor(Math.random() * cubanContestNames.length)],
     description: '',
     start_date: '',
     end_date: '',
@@ -27,11 +40,27 @@ const CreateContestForm: React.FC<CreateContestFormProps> = ({ onContestCreated,
     e.preventDefault();
     
     try {
+      // Get the current highest contest number
+      const { data: contests } = await supabase
+        .from('contests')
+        .select('title')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      let nextNumber = 2; // Default starting number
+      if (contests && contests.length > 0) {
+        const lastTitle = contests[0].title;
+        const match = lastTitle.match(/\d+$/);
+        if (match) {
+          nextNumber = parseInt(match[0]) + 1;
+        }
+      }
+
       const { data, error } = await supabase
         .from('contests')
         .insert([
           {
-            title: formData.title,
+            title: `${formData.title} ${nextNumber}`,
             description: formData.description,
             status: 'draft',
             start_date: formData.start_date,

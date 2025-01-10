@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
 
 interface ContestPrizeManagerProps {
   contestId: string;
@@ -19,14 +20,6 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPrize, setEditingPrize] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    value: '',
-    image_url: '',
-    shop_url: '',
-  });
 
   // Query to fetch prizes with catalog information
   const { data: contestPrizes, isLoading } = useQuery({
@@ -50,69 +43,28 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     }
   });
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('prizes')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('prizes')
-        .getPublicUrl(filePath);
-
-      setFormData({ ...formData, image_url: publicUrl });
-      
-      toast({
-        title: "Succès",
-        description: "L'image a été téléchargée",
-      });
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de télécharger l'image",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const addPrizeMutation = useMutation({
     mutationFn: async (catalogItemId: string) => {
       console.log('Adding prize to contest:', { contestId, catalogItemId });
+      
+      // Check if we already have 2 prizes
+      if (contestPrizes && contestPrizes.length >= 2) {
+        throw new Error("Maximum 2 prizes allowed per contest");
+      }
+
       const { error } = await supabase
         .from('prizes')
         .insert([{
           contest_id: contestId,
-          catalog_item_id: catalogItemId
+          catalog_item_id: catalogItemId,
+          is_choice: contestPrizes && contestPrizes.length === 1 // Second prize is automatically marked as choice
         }]);
       
-      if (error) {
-        console.error('Error adding prize:', error);
-        throw error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
       setIsFormOpen(false);
-      setFormData({
-        name: '',
-        description: '',
-        value: '',
-        image_url: '',
-        shop_url: '',
-      });
       toast({
         title: "Succès",
         description: "Le prix a été ajouté au concours",
@@ -122,7 +74,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
       console.error("Add prize error:", error);
       toast({
         title: "Erreur",
-        description: "Impossible d'ajouter le prix",
+        description: error instanceof Error ? error.message : "Impossible d'ajouter le prix",
         variant: "destructive",
       });
     }
@@ -160,100 +112,12 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
 
   return (
     <div className="space-y-6">
-      <Collapsible open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <CollapsibleTrigger asChild>
-          <Button className="w-full">
-            {isFormOpen ? (
-              <X className="w-4 h-4 mr-2" />
-            ) : (
-              <Plus className="w-4 h-4 mr-2" />
-            )}
-            {isFormOpen ? "Fermer le formulaire" : "Ajouter un prix au catalogue"}
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <form className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nom du prix</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="value">Valeur (€)</Label>
-                  <Input
-                    id="value"
-                    type="number"
-                    step="0.01"
-                    value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="shop_url">Lien vers la boutique</Label>
-                  <Input
-                    id="shop_url"
-                    type="url"
-                    value={formData.shop_url}
-                    onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="image">Image du prix</Label>
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                  />
-                  {formData.image_url && (
-                    <div className="mt-2">
-                      <img
-                        src={formData.image_url}
-                        alt="Aperçu"
-                        className="w-32 h-32 object-cover rounded"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    addPrizeMutation.mutate(formData.name);
-                  }}
-                  disabled={uploading}
-                >
-                  {editingPrize ? 'Mettre à jour' : 'Ajouter au catalogue'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </CollapsibleContent>
-      </Collapsible>
+      {(!contestPrizes || contestPrizes.length < 2) && (
+        <PrizeCatalogDialog onSelectPrize={(id) => addPrizeMutation.mutate(id)} />
+      )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {contestPrizes?.map((prize) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {contestPrizes?.map((prize, index) => (
           <Card key={prize.id} className="hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
               {prize.catalog_item?.image_url && (
@@ -265,7 +129,14 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
                   />
                 </div>
               )}
-              <h3 className="font-semibold mb-2">{prize.catalog_item?.name}</h3>
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold">{prize.catalog_item?.name}</h3>
+                {index === 1 && (
+                  <Badge variant="secondary" className="ml-2">
+                    Prix au choix
+                  </Badge>
+                )}
+              </div>
               {prize.catalog_item?.description && (
                 <p className="text-sm text-gray-500 mb-2">{prize.catalog_item.description}</p>
               )}
