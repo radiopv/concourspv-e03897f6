@@ -53,11 +53,9 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           throw new Error("Participant not found");
         }
 
-        // Calculer le nouveau score
         const newScore = await calculateFinalScore(participant.participation_id);
         const finalScore = Math.max(newScore, participant.score || 0);
         
-        // Mettre à jour le score et le statut du participant
         const { error: updateError } = await supabase
           .from('participants')
           .update({ 
@@ -70,7 +68,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
         if (updateError) throw updateError;
 
-        // Mettre à jour le nombre de tentatives
         const { data: participantData } = await supabase
           .from('participants')
           .select('attempts')
@@ -86,7 +83,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id);
 
-        // Invalider les requêtes pour forcer le rafraîchissement des données
         await queryClient.invalidateQueries({ queryKey: ['contests'] });
         await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
 
@@ -144,21 +140,20 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         />
       </CardHeader>
       <CardContent className="space-y-6">
-        <QuestionDisplay
-          questionText={currentQuestion?.question_text || ""}
-          articleUrl={currentQuestion?.article_url}
-          options={currentQuestion?.options || []}
-          selectedAnswer={state.selectedAnswer}
-          correctAnswer={currentQuestion?.correct_answer}
-          hasClickedLink={state.hasClickedLink}
-          hasAnswered={state.hasAnswered}
-          isSubmitting={state.isSubmitting}
-          onArticleRead={() => state.setHasClickedLink(true)}
-          onAnswerSelect={state.setSelectedAnswer}
-          onSubmitAnswer={() => handleSubmitAnswer(currentQuestion)}
-          onNextQuestion={handleNextQuestion}
-          isLastQuestion={state.currentQuestionIndex === questions.length - 1}
-        />
+        {currentQuestion && (
+          <QuestionDisplay
+            question={currentQuestion}
+            selectedAnswer={state.selectedAnswer}
+            hasClickedLink={state.hasClickedLink}
+            hasAnswered={state.hasAnswered}
+            isSubmitting={state.isSubmitting}
+            isLastQuestion={state.currentQuestionIndex === questions.length - 1}
+            onArticleRead={() => state.setHasClickedLink(true)}
+            onAnswerSelect={state.setSelectedAnswer}
+            onSubmitAnswer={() => handleSubmitAnswer(currentQuestion)}
+            onNextQuestion={handleNextQuestion}
+          />
+        )}
       </CardContent>
     </Card>
   );

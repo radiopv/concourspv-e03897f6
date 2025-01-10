@@ -4,47 +4,39 @@ import { ArrowRight } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import ArticleLink from './ArticleLink';
+import AnswerOptions from './AnswerOptions';
 
 interface QuestionDisplayProps {
   question: {
-    id: string;
     question_text: string;
     options: string[];
     article_url?: string;
+    correct_answer?: string;
   };
-  selectedAnswer: string | null;
+  selectedAnswer: string;
+  hasClickedLink: boolean;
+  hasAnswered: boolean;
+  isSubmitting: boolean;
+  isLastQuestion: boolean;
+  onArticleRead: () => void;
   onAnswerSelect: (answer: string) => void;
   onSubmitAnswer: () => void;
-  hasAnswered: boolean;
-  isCorrect?: boolean;
-  isSubmitting: boolean;
-  correctAnswer?: string;
+  onNextQuestion: () => void;
 }
 
-const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
+const QuestionDisplay = ({
   question,
   selectedAnswer,
+  hasClickedLink,
+  hasAnswered,
+  isSubmitting,
+  isLastQuestion,
+  onArticleRead,
   onAnswerSelect,
   onSubmitAnswer,
-  hasAnswered,
-  isCorrect,
-  isSubmitting,
-  correctAnswer,
-}) => {
+  onNextQuestion
+}: QuestionDisplayProps) => {
   const { toast } = useToast();
-
-  const truncateText = (text: string, maxLength: number = 100) => {
-    if (text.length <= maxLength) return text;
-    const words = text.split(" ");
-    let partialLength = 0;
-    for (let i = 0; i < words.length; i++) {
-      partialLength += words[i].length + 1;
-      if (partialLength > maxLength) {
-        return words.slice(0, i).join(" ") + "...";
-      }
-    }
-    return words.slice(0, partialLength).join(" ") + "...";
-  };
 
   const handleSubmitClick = () => {
     if (!selectedAnswer) {
@@ -64,59 +56,57 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
   return (
     <div className="space-y-4">
       {question.article_url && (
-        <ArticleLink url={question.article_url} onArticleRead={() => {}} />
+        <ArticleLink 
+          url={question.article_url} 
+          onArticleRead={onArticleRead} 
+        />
       )}
 
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <h3 className="text-lg font-medium mb-4">{question.question_text}</h3>
 
-        <div className="space-y-3">
-          {question.options.map((option, index) => (
-            <button
-              key={index}
-              onClick={() => !hasAnswered && onAnswerSelect(option)}
-              disabled={hasAnswered}
-              className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                selectedAnswer === option
-                  ? hasAnswered
-                    ? isCorrect
-                      ? "bg-green-100 border-green-500"
-                      : "bg-red-100 border-red-500"
-                    : "bg-blue-100 border-blue-500"
-                  : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-              }`}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
+        <AnswerOptions
+          options={question.options}
+          selectedAnswer={selectedAnswer}
+          correctAnswer={question.correct_answer}
+          hasAnswered={hasAnswered}
+          isDisabled={isSubmitting}
+          onAnswerSelect={onAnswerSelect}
+        />
 
         {hasAnswered && (
-          <Alert className={`mt-4 ${isCorrect ? "bg-green-50" : "bg-red-50"}`}>
+          <Alert className={`mt-4 ${selectedAnswer === question.correct_answer ? "bg-green-50" : "bg-red-50"}`}>
             <AlertDescription>
-              {isCorrect
+              {selectedAnswer === question.correct_answer
                 ? "Bonne réponse ! 🎉"
-                : `La bonne réponse était : ${correctAnswer}`}
+                : `La bonne réponse était : ${question.correct_answer}`}
             </AlertDescription>
           </Alert>
         )}
 
         <div className="mt-6 flex justify-end">
-          <Button
-            onClick={handleSubmitClick}
-            disabled={!selectedAnswer || isSubmitting || hasAnswered}
-            className="bg-blue-500 hover:bg-blue-600"
-          >
-            {isSubmitting ? (
-              "Validation..."
-            ) : hasAnswered ? (
-              "Validé"
-            ) : (
-              <>
-                Valider <ArrowRight className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </Button>
+          {!hasAnswered ? (
+            <Button
+              onClick={handleSubmitClick}
+              disabled={!selectedAnswer || isSubmitting}
+              className="bg-blue-500 hover:bg-blue-600"
+            >
+              {isSubmitting ? (
+                "Validation..."
+              ) : (
+                <>
+                  Valider <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              onClick={onNextQuestion}
+              className="bg-blue-500 hover:bg-blue-600"
+            >
+              {isLastQuestion ? "Terminer" : "Question suivante"} <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
