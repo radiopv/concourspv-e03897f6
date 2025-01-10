@@ -1,15 +1,13 @@
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { motion } from "framer-motion";
+import PrizeTabs from "./PrizeTabs";
+import PrizeForm from "./PrizeForm";
 
 interface PrizeCatalogManagerProps {
   contestId: string | null;
@@ -20,15 +18,9 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    value: '',
-    image_url: '',
-    shop_url: '',
-  });
+  const [editingPrize, setEditingPrize] = useState<any>(null);
 
-  const { data: catalogPrizes, isLoading } = useQuery({
+  const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -61,12 +53,7 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
         .from('prizes')
         .getPublicUrl(filePath);
 
-      setFormData({ ...formData, image_url: publicUrl });
-      
-      toast({
-        title: "Succès",
-        description: "L'image a été téléchargée",
-      });
+      return publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
@@ -74,49 +61,114 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
         description: "Impossible de télécharger l'image",
         variant: "destructive",
       });
+      return null;
     } finally {
       setUploading(false);
     }
   };
 
   const addPrizeMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: any) => {
       const { error } = await supabase
         .from('prize_catalog')
-        .insert([{
-          name: data.name,
-          description: data.description,
-          value: parseFloat(data.value) || null,
-          image_url: data.image_url,
-          shop_url: data.shop_url,
-        }]);
+        .insert([data]);
       
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
       setIsFormOpen(false);
-      setFormData({
-        name: '',
-        description: '',
-        value: '',
-        image_url: '',
-        shop_url: '',
-      });
+      setEditingPrize(null);
       toast({
         title: "Succès",
         description: "Le prix a été ajouté au catalogue",
       });
+    }
+  });
+
+  const updatePrizeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .update(data)
+        .eq('id', id);
+      
+      if (error) throw error;
     },
-    onError: (error) => {
-      console.error("Add prize error:", error);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      setIsFormOpen(false);
+      setEditingPrize(null);
       toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le prix",
-        variant: "destructive",
+        title: "Succès",
+        description: "Le prix a été mis à jour",
       });
     }
   });
+
+  const deletePrizeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été supprimé",
+      });
+    }
+  });
+
+  const archivePrizeMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'archived' }) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .update({ status })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      toast({
+        title: "Succès",
+        description: "Le statut du prix a été mis à jour",
+      });
+    }
+  });
+
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: async ({ id, isVisible }: { id: string; isVisible: boolean }) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .update({ is_visible: isVisible })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      toast({
+        title: "Succès",
+        description: "La visibilité du prix a été mise à jour",
+      });
+    }
+  });
+
+  const handleEdit = (prize: any) => {
+    setEditingPrize(prize);
+    setIsFormOpen(true);
+  };
+
+  const handleCancel = () => {
+    setEditingPrize(null);
+    setIsFormOpen(false);
+  };
 
   if (isLoading) {
     return <div>Chargement du catalogue...</div>;
@@ -126,7 +178,7 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
     <div className="space-y-6">
       <Collapsible open={isFormOpen} onOpenChange={setIsFormOpen}>
         <CollapsibleTrigger asChild>
-          <Button className="w-full bg-gradient-to-r from-amber-500 to-purple-500 text-white hover:from-amber-600 hover:to-purple-600">
+          <Button className="w-full">
             {isFormOpen ? (
               <X className="w-4 h-4 mr-2" />
             ) : (
@@ -136,134 +188,33 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-4">
-          <Card className="bg-gradient-to-br from-purple-50 to-amber-50">
+          <Card>
             <CardContent className="pt-6">
-              <form className="space-y-4" onSubmit={(e) => {
-                e.preventDefault();
-                addPrizeMutation.mutate(formData);
-              }}>
-                <div>
-                  <Label htmlFor="name">Nom du prix</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                    className="bg-white/50"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="bg-white/50"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="value">Valeur (€)</Label>
-                  <Input
-                    id="value"
-                    type="number"
-                    step="0.01"
-                    value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                    className="bg-white/50"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="shop_url">Lien vers la boutique</Label>
-                  <Input
-                    id="shop_url"
-                    type="url"
-                    value={formData.shop_url}
-                    onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
-                    className="bg-white/50"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="image">Image du prix</Label>
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                    className="bg-white/50"
-                  />
-                  {formData.image_url && (
-                    <div className="mt-2">
-                      <img
-                        src={formData.image_url}
-                        alt="Aperçu"
-                        className="w-32 h-32 object-cover rounded"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <Button 
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-amber-500 to-purple-500 text-white hover:from-amber-600 hover:to-purple-600"
-                  disabled={uploading}
-                >
-                  Ajouter au catalogue
-                </Button>
-              </form>
+              <PrizeForm
+                initialData={editingPrize}
+                onSubmit={(data) => {
+                  if (editingPrize) {
+                    updatePrizeMutation.mutate({ id: editingPrize.id, data });
+                  } else {
+                    addPrizeMutation.mutate(data);
+                  }
+                }}
+                onCancel={handleCancel}
+                onImageUpload={handleImageUpload}
+                uploading={uploading}
+              />
             </CardContent>
           </Card>
         </CollapsibleContent>
       </Collapsible>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {catalogPrizes?.map((prize) => (
-          <motion.div
-            key={prize.id}
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <Card className="overflow-hidden bg-gradient-to-br from-purple-50 to-amber-50 hover:shadow-xl transition-shadow">
-              <CardContent className="p-0">
-                {prize.image_url && (
-                  <div className="aspect-video">
-                    <img
-                      src={prize.image_url}
-                      alt={prize.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="p-4">
-                  <h3 className="font-semibold mb-2">{prize.name}</h3>
-                  {prize.description && (
-                    <p className="text-sm text-gray-600 mb-2">{prize.description}</p>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">
-                      {prize.value ? `${prize.value}€` : 'Prix non défini'}
-                    </span>
-                    {prize.shop_url && (
-                      <a
-                        href={prize.shop_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-purple-600 hover:text-purple-800"
-                      >
-                        Voir
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+      <PrizeTabs
+        prizes={prizes || []}
+        onEdit={handleEdit}
+        onDelete={(id) => deletePrizeMutation.mutate(id)}
+        onArchive={(id, status) => archivePrizeMutation.mutate({ id, status })}
+        onVisibilityToggle={(id, isVisible) => toggleVisibilityMutation.mutate({ id, isVisible })}
+      />
     </div>
   );
 };
