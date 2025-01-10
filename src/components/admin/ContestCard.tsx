@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import ParticipantInfo from './participants/ParticipantInfo';
 
 interface ContestCardProps {
@@ -16,8 +16,6 @@ interface ContestCardProps {
     title: string;
     description?: string;
     status?: string;
-    participants_count?: number;
-    questions_count?: number;
   };
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -27,6 +25,43 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch participants count and success rate
+  const { data: participantsData } = useQuery({
+    queryKey: ['contest-participants', contest.id],
+    queryFn: async () => {
+      const { data: participants, error } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('contest_id', contest.id);
+
+      if (error) throw error;
+
+      const completedParticipants = participants?.filter(p => p.status === 'completed') || [];
+      const successfulParticipants = completedParticipants.filter(p => (p.score || 0) >= 90) || [];
+      
+      return {
+        total: participants?.length || 0,
+        successRate: completedParticipants.length > 0 
+          ? Math.round((successfulParticipants.length / completedParticipants.length) * 100) 
+          : 0
+      };
+    }
+  });
+
+  // Fetch questions count
+  const { data: questionsCount } = useQuery({
+    queryKey: ['contest-questions', contest.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('contest_id', contest.id);
+
+      if (error) throw error;
+      return count || 0;
+    }
+  });
 
   const getStatusColor = (status?: string) => {
     switch (status) {
@@ -117,9 +152,20 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">{contest.description}</p>
         <div className="flex flex-col space-y-4">
-          <div className="flex justify-between text-sm">
-            <span>Participants: {contest.participants_count || 0}</span>
-            <span>Questions: {contest.questions_count || 0}</span>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium">Participants:</span>
+              <p>{participantsData?.total || 0}</p>
+              {participantsData?.total > 0 && (
+                <p className="text-xs text-gray-500">
+                  Taux de réussite: {participantsData.successRate}%
+                </p>
+              )}
+            </div>
+            <div>
+              <span className="font-medium">Questions:</span>
+              <p>{questionsCount || 0}</p>
+            </div>
           </div>
           
           {userId && (
