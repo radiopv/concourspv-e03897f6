@@ -44,6 +44,12 @@ const QuestionDisplay = ({
     return words.slice(0, partialLength).join(" ") + "...";
   };
 
+  const handleSubmitClick = React.useCallback(() => {
+    if (!isSubmitting && !hasAnswered) {
+      onSubmitAnswer();
+    }
+  }, [isSubmitting, hasAnswered, onSubmitAnswer]);
+
   return (
     <div className="space-y-4">
       <p className="text-lg font-medium">
@@ -81,8 +87,8 @@ const QuestionDisplay = ({
 
       {!hasAnswered && (hasClickedLink || !articleUrl) && (
         <Button
-          onClick={onSubmitAnswer}
-          disabled={!selectedAnswer || isSubmitting}
+          onClick={handleSubmitClick}
+          disabled={!selectedAnswer || isSubmitting || hasAnswered}
           className="w-full"
         >
           {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
