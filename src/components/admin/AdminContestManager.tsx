@@ -1,15 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/lib/supabase";
 import ContestList from './ContestList';
 
-interface AdminContestManagerProps {
-  onContestSelect: (id: string) => void;
-}
-
-const AdminContestManager: React.FC<AdminContestManagerProps> = ({ onContestSelect }) => {
-  const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
-
+const AdminContestManager = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
@@ -30,7 +24,7 @@ const AdminContestManager: React.FC<AdminContestManagerProps> = ({ onContestSele
       <h1>Admin Contest Manager</h1>
       <ContestList 
         contests={data} 
-        onSelectContest={onContestSelect}
+        onSelectContest={(id) => console.log('Selected contest:', id)}
       />
     </div>
   );

@@ -1,204 +1,235 @@
 import React from 'react';
-import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Plus, Loader, ArrowLeft } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import QuestionBankSelector from './question-bank/QuestionBankSelector';
-import QuestionForm from './questions/QuestionForm';
-import QuestionList from './questions/QuestionList';
-import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { Question } from '@/types/database';
 
-const EditQuestionsList = () => {
-  const { contestId } = useParams();
-  const navigate = useNavigate();
+interface EditQuestionsListProps {
+  contestId?: string;
+}
+
+const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propContestId }) => {
+  const { contestId: urlContestId } = useParams();
+  const finalContestId = propContestId || urlContestId;
   const { toast } = useToast();
-  const [selectedQuestions, setSelectedQuestions] = React.useState<string[]>([]);
+  const queryClient = useQueryClient();
+  const [newQuestion, setNewQuestion] = React.useState({
+    question_text: '',
+    correct_answer: '',
+    options: ['', '', '', ''],
+    article_url: '',
+  });
 
-  const { data: questions, refetch, isLoading } = useQuery({
-    queryKey: ['questions', contestId],
+  const { data: questions, isLoading } = useQuery({
+    queryKey: ['questions', finalContestId],
     queryFn: async () => {
-      if (!contestId) throw new Error('Contest ID is required');
-      
       const { data, error } = await supabase
         .from('questions')
         .select('*')
-        .eq('contest_id', contestId)
-        .order('created_at', { ascending: false });
-      
+        .eq('contest_id', finalContestId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return data as Question[];
+    },
+    enabled: !!finalContestId,
+  });
+
+  const addQuestionMutation = useMutation({
+    mutationFn: async (questionData: Omit<Question, 'id'>) => {
+      const { data, error } = await supabase
+        .from('questions')
+        .insert([{ ...questionData, contest_id: finalContestId }])
+        .select()
+        .single();
+
       if (error) throw error;
       return data;
     },
-    enabled: !!contestId
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['questions', finalContestId] });
+      setNewQuestion({
+        question_text: '',
+        correct_answer: '',
+        options: ['', '', '', ''],
+        article_url: '',
+      });
+      toast({
+        title: 'Question ajoutée',
+        description: 'La question a été ajoutée avec succès.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'ajouter la question.',
+        variant: 'destructive',
+      });
+    },
   });
 
-  const handleAddQuestion = async (formData: any) => {
-    try {
-      const { error } = await supabase
-        .from('questions')
-        .insert([{
-          contest_id: contestId,
-          question_text: formData.question_text,
-          options: formData.options.filter((opt: string) => opt !== ""),
-          correct_answer: formData.correct_answer,
-          article_url: formData.article_url || null,
-          image_url: formData.image_url || null,
-          type: 'multiple_choice'
-        }]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succès",
-        description: "Question ajoutée avec succès",
-      });
-
-      refetch();
-    } catch (error) {
-      console.error('Error adding question:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter la question",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateQuestion = async (questionId: string, updatedData: any) => {
-    try {
-      const { error } = await supabase
-        .from('questions')
-        .update(updatedData)
-        .eq('id', questionId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succès",
-        description: "Question mise à jour avec succès",
-      });
-
-      refetch();
-    } catch (error) {
-      console.error('Error updating question:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour la question",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDelete = async (questionId: string) => {
-    try {
+  const deleteQuestionMutation = useMutation({
+    mutationFn: async (questionId: string) => {
       const { error } = await supabase
         .from('questions')
         .delete()
         .eq('id', questionId);
 
       if (error) throw error;
-
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['questions', finalContestId] });
       toast({
-        title: "Succès",
-        description: "Question supprimée avec succès",
+        title: 'Question supprimée',
+        description: 'La question a été supprimée avec succès.',
       });
-
-      refetch();
-    } catch (error) {
-      console.error('Error deleting question:', error);
+    },
+    onError: (error) => {
       toast({
-        title: "Erreur",
-        description: "Impossible de supprimer la question",
-        variant: "destructive",
+        title: 'Erreur',
+        description: 'Impossible de supprimer la question.',
+        variant: 'destructive',
       });
-    }
+    },
+  });
+
+  const handleOptionChange = (index: number, value: string) => {
+    setNewQuestion(prev => ({
+      ...prev,
+      options: prev.options.map((opt, i) => i === index ? value : opt),
+    }));
   };
 
-  if (!contestId) {
-    return (
-      <div className="p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Erreur</h2>
-        <p className="mb-4">ID du concours manquant</p>
-        <Button onClick={() => navigate('/admin/contests')}>
-          Retour aux concours
-        </Button>
-      </div>
-    );
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!finalContestId) return;
+
+    addQuestionMutation.mutate({
+      question_text: newQuestion.question_text,
+      correct_answer: newQuestion.correct_answer,
+      options: newQuestion.options,
+      article_url: newQuestion.article_url,
+      contest_id: finalContestId,
+    });
+  };
+
+  if (!finalContestId) {
+    return <div>L'ID du concours est requis</div>;
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader className="w-8 h-8 animate-spin" />
-        <span className="ml-2">Chargement des questions...</span>
-      </div>
-    );
+    return <div>Chargement des questions...</div>;
   }
 
   return (
-    <div className="space-y-6 p-4">
-      <div className="flex items-center gap-4 mb-6">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/admin/contests')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Retour aux concours
-        </Button>
-        <h1 className="text-2xl font-bold">Questions du concours</h1>
-      </div>
-
-      <Tabs defaultValue="bank" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="bank">Banque de questions</TabsTrigger>
-          <TabsTrigger value="manual">Ajout manuel</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="bank" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sélectionner des questions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <QuestionBankSelector
-                contestId={contestId}
-                onQuestionSelect={(questionId) => {
-                  setSelectedQuestions([...selectedQuestions, questionId]);
-                  refetch();
-                }}
-                selectedQuestions={selectedQuestions}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Ajouter une question</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="question">Question</Label>
+              <Textarea
+                id="question"
+                value={newQuestion.question_text}
+                onChange={(e) => setNewQuestion(prev => ({ ...prev, question_text: e.target.value }))}
+                required
               />
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
 
-        <TabsContent value="manual">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ajouter une question manuellement</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <QuestionForm onSubmit={handleAddQuestion} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            <div>
+              <Label htmlFor="correct_answer">Réponse correcte</Label>
+              <Input
+                id="correct_answer"
+                value={newQuestion.correct_answer}
+                onChange={(e) => setNewQuestion(prev => ({ ...prev, correct_answer: e.target.value }))}
+                required
+              />
+            </div>
 
-      {questions && questions.length > 0 && (
-        <QuestionList
-          questions={questions}
-          onEdit={handleUpdateQuestion}
-          onDelete={handleDelete}
-        />
-      )}
+            {newQuestion.options.map((option, index) => (
+              <div key={index}>
+                <Label htmlFor={`option-${index}`}>Option {index + 1}</Label>
+                <Input
+                  id={`option-${index}`}
+                  value={option}
+                  onChange={(e) => handleOptionChange(index, e.target.value)}
+                  required
+                />
+              </div>
+            ))}
+
+            <div>
+              <Label htmlFor="article_url">URL de l'article (optionnel)</Label>
+              <Input
+                id="article_url"
+                type="url"
+                value={newQuestion.article_url}
+                onChange={(e) => setNewQuestion(prev => ({ ...prev, article_url: e.target.value }))}
+              />
+            </div>
+
+            <Button type="submit">Ajouter la question</Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Questions existantes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {questions && questions.length > 0 ? (
+            <div className="space-y-4">
+              {questions.map((question) => (
+                <div key={question.id} className="p-4 border rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-medium">{question.question_text}</h3>
+                      <p className="text-sm text-green-600">Réponse correcte: {question.correct_answer}</p>
+                      <div className="mt-2">
+                        <p className="text-sm font-medium">Options:</p>
+                        <ul className="list-disc list-inside">
+                          {question.options.map((option, index) => (
+                            <li key={index} className="text-sm">{option}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      {question.article_url && (
+                        <a
+                          href={question.article_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline mt-2 block"
+                        >
+                          Lien vers l'article
+                        </a>
+                      )}
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteQuestionMutation.mutate(question.id)}
+                    >
+                      Supprimer
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground">Aucune question n'a été ajoutée</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
