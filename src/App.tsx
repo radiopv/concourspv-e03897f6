@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard";
 import Contest from "@/pages/Contest";
 import WinnersList from "@/pages/WinnersList";
 import Instructions from "@/pages/Instructions";
+import QuizCompletion from "@/pages/QuizCompletion";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Admin from "@/pages/Admin";
@@ -31,6 +32,7 @@ function App() {
               <Route path="/winners" element={<WinnersList />} />
               <Route path="/points" element={<PointsSystem />} />
               <Route path="/instructions" element={<Instructions />} />
+              <Route path="/quiz-completion" element={<QuizCompletion />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/admin/*" element={<Admin />} />

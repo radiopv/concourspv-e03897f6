@@ -181,20 +181,13 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
         console.log('Quiz completed successfully');
 
-        toast({
-          title: "Questionnaire terminé ! 🎉",
-          description: `Votre score final est de ${finalScore}%. ${
-            finalScore >= 70 
-              ? "Félicitations ! Vous êtes éligible pour le tirage au sort !" 
-              : "Continuez à participer pour améliorer vos chances !"
-          }`,
-          duration: 5000,
+        // Rediriger vers la page de complétion avec les statistiques
+        navigate('/quiz-completion', {
+          state: {
+            score: state.score,
+            totalQuestions: questions?.length || 0
+          }
         });
-
-        // Redirection après un délai plus long pour assurer la visibilité du toast
-        setTimeout(() => {
-          navigate('/contests');
-        }, 2000);
 
       } catch (error) {
         console.error('Error completing questionnaire:', error);
