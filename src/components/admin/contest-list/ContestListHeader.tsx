@@ -2,17 +2,15 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import CreateTestContest from "../test/CreateTestContest";
+import CreateContestForm from "./CreateContestForm";
 
 interface ContestListHeaderProps {
   onContestSelect: (id: string) => void;
 }
 
-interface CreateTestContestProps {
-  onContestCreated: (id: string) => void;
-}
-
 const ContestListHeader: React.FC<ContestListHeaderProps> = ({ onContestSelect }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+
   return (
     <div className="flex justify-between items-center mb-6">
       <div>
@@ -22,18 +20,24 @@ const ContestListHeader: React.FC<ContestListHeaderProps> = ({ onContestSelect }
         </p>
       </div>
       
-      <Dialog>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button>
             <Plus className="w-4 h-4 mr-2" />
             Nouveau concours
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Créer un nouveau concours</DialogTitle>
           </DialogHeader>
-          <CreateTestContest onContestCreated={onContestSelect} />
+          <CreateContestForm 
+            onContestCreated={(id) => {
+              onContestSelect(id);
+              setIsOpen(false);
+            }}
+            onCancel={() => setIsOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>
