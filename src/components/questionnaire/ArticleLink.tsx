@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -13,22 +13,21 @@ interface ArticleLinkProps {
 const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const handleArticleClick = () => {
+    setCountdown(5);
+
     if (isMobile) {
-      // Sur mobile, d'abord afficher le toast
       toast({
         title: "Lecture de l'article",
         description: "L'article va s'ouvrir dans un nouvel onglet. N'oubliez pas de revenir ici pour répondre à la question ! 📱",
         duration: 5000,
       });
 
-      // Attendre un court instant pour que l'utilisateur puisse lire le message
       setTimeout(() => {
-        // Ouvrir l'article dans un nouvel onglet
         window.open(url, '_blank');
         
-        // Afficher un deuxième toast après quelques secondes
         setTimeout(() => {
           toast({
             title: "Rappel",
@@ -38,12 +37,7 @@ const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
         }, 6000);
       }, 1500);
 
-      // Attendre 5 secondes avant d'activer l'affichage des réponses
-      setTimeout(() => {
-        onArticleRead();
-      }, 5000);
     } else {
-      // Sur desktop, ouvrir dans une popup
       const width = 800;
       const height = 600;
       const left = (window.innerWidth - width) / 2;
@@ -54,25 +48,33 @@ const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
         'Article',
         `width=${width},height=${height},top=${top},left=${left}`
       );
-
-      // Attendre 5 secondes avant d'activer l'affichage des réponses
-      setTimeout(() => {
-        onArticleRead();
-        toast({
-          title: "Question déverrouillée",
-          description: "Vous pouvez maintenant répondre à la question ! 🎯",
-          duration: 3000,
-        });
-      }, 5000);
     }
+
+    // Démarrer le décompte
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          onArticleRead();
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   return (
     <div className="space-y-2">
+      {countdown !== null && (
+        <div className="text-center text-2xl font-bold text-primary mb-4">
+          {countdown}
+        </div>
+      )}
       <Button
         variant={isRead ? "outline" : "default"}
         className="w-full flex items-center justify-center gap-2"
         onClick={handleArticleClick}
+        disabled={countdown !== null}
       >
         <BookOpen className="w-5 h-5" />
         {isRead ? "Relire l'article" : "Lire l'article"}

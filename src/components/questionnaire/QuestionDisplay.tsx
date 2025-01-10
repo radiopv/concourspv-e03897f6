@@ -36,12 +36,6 @@ const QuestionDisplay = ({
   onNextQuestion,
   isLastQuestion
 }: QuestionDisplayProps) => {
-  const getPartialQuestion = (text: string) => {
-    if (!text) return "";
-    const words = text.split(" ");
-    const partialLength = Math.min(5, words.length);
-    return words.slice(0, partialLength).join(" ") + "...";
-  };
 
   return (
     <div className="space-y-4">
@@ -58,7 +52,7 @@ const QuestionDisplay = ({
       )}
 
       <p className="text-lg font-medium">
-        {hasClickedLink ? questionText : getPartialQuestion(questionText)}
+        {questionText}
       </p>
       
       {articleUrl && (
@@ -85,35 +79,23 @@ const QuestionDisplay = ({
             isDisabled={articleUrl && !hasClickedLink}
             onAnswerSelect={onAnswerSelect}
           />
-        </>
-      )}
 
-      {!hasAnswered && (hasClickedLink || !articleUrl) && (
-        <Button
-          onClick={onSubmitAnswer}
-          disabled={!selectedAnswer || (articleUrl && !hasClickedLink) || isSubmitting}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-        >
-          {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
-        </Button>
-      )}
-
-      {hasAnswered && (
-        <Button
-          onClick={onNextQuestion}
-          className="w-full"
-          variant="outline"
-          disabled={isSubmitting}
-        >
-          {isLastQuestion ? (
-            "Terminer le quiz"
-          ) : (
-            <>
-              Question suivante
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </>
+          {!hasAnswered && (
+            <Button
+              onClick={() => {
+                onSubmitAnswer();
+                // Attendre un court instant pour que l'utilisateur voie le résultat
+                setTimeout(() => {
+                  onNextQuestion();
+                }, 1000);
+              }}
+              disabled={!selectedAnswer || (articleUrl && !hasClickedLink) || isSubmitting}
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+            >
+              {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
+            </Button>
           )}
-        </Button>
+        </>
       )}
     </div>
   );
