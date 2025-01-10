@@ -44,40 +44,12 @@ const QuestionDisplay = ({
     return words.slice(0, partialLength).join(" ") + "...";
   };
 
-  // Utilisation d'une référence pour suivre si une soumission est en cours
-  const isSubmittingRef = React.useRef(false);
-
-  const handleSubmitClick = React.useCallback(async () => {
-    console.log('Submit button clicked with state:', {
-      selectedAnswer,
-      hasAnswered,
-      isSubmitting,
-      hasClickedLink,
-      isSubmittingRef: isSubmittingRef.current
-    });
-
-    // Vérifier si une soumission est déjà en cours ou si la réponse a déjà été donnée
-    if (isSubmittingRef.current || hasAnswered || isSubmitting || !selectedAnswer) {
-      console.log('Submit blocked because:', {
-        isSubmittingRef: isSubmittingRef.current,
-        hasAnswered,
-        isSubmitting,
-        selectedAnswer
-      });
+  const handleSubmitClick = () => {
+    if (!selectedAnswer || isSubmitting || hasAnswered) {
       return;
     }
-
-    // Marquer le début de la soumission
-    isSubmittingRef.current = true;
-
-    try {
-      console.log('Conditions met, submitting answer');
-      await onSubmitAnswer();
-    } finally {
-      // Réinitialiser l'état de soumission
-      isSubmittingRef.current = false;
-    }
-  }, [isSubmitting, hasAnswered, onSubmitAnswer, selectedAnswer, hasClickedLink]);
+    onSubmitAnswer();
+  };
 
   return (
     <div className="space-y-4">
@@ -117,7 +89,7 @@ const QuestionDisplay = ({
       {!hasAnswered && (hasClickedLink || !articleUrl) && (
         <Button
           onClick={handleSubmitClick}
-          disabled={!selectedAnswer || isSubmitting || hasAnswered || isSubmittingRef.current}
+          disabled={!selectedAnswer || isSubmitting || hasAnswered}
           className="w-full"
         >
           {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}

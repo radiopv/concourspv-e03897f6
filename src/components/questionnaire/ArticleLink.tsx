@@ -22,18 +22,25 @@ const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
+    
     if (hasClicked && readingTimer < READING_TIME) {
       interval = setInterval(() => {
-        setReadingTimer(prev => {
-          if (prev >= READING_TIME - 1) {
+        setReadingTimer((prev) => {
+          const newValue = prev + 1;
+          if (newValue >= READING_TIME) {
             onArticleRead();
             return READING_TIME;
           }
-          return prev + 1;
+          return newValue;
         });
       }, 1000);
     }
-    return () => clearInterval(interval);
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, [hasClicked, readingTimer, onArticleRead]);
 
   const handleClick = () => {
