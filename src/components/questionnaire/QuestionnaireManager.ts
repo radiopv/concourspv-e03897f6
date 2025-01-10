@@ -28,7 +28,13 @@ export const calculateFinalScore = async (participantId: string) => {
     
     console.log('Correct answers:', correctAnswers, 'Total questions:', totalQuestions);
     
-    // Calculer le pourcentage exact (2 bonnes réponses sur 2 = 100%)
+    // Si toutes les réponses sont correctes, retourner 100%
+    if (correctAnswers === totalQuestions) {
+      console.log('All answers correct, returning 100%');
+      return 100;
+    }
+    
+    // Calculer le pourcentage exact
     const percentage = Math.round((correctAnswers / totalQuestions) * 100);
     console.log('Calculated percentage:', percentage);
     
