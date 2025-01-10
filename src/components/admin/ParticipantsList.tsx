@@ -35,9 +35,7 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
           email,
           created_at,
           completed_at,
-          status,
-          score,
-          attempts
+          status
         `)
         .eq('contest_id', contestId)
         .order('created_at', { ascending: false });
@@ -77,12 +75,9 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
     return <div className="p-4">Chargement des participants...</div>;
   }
 
-  const getStatusBadge = (status: string | null, score: number | null) => {
+  const getStatusBadge = (status: string | null) => {
     if (status === 'completed') {
-      if (score && score >= 90) {
-        return <Badge className="bg-green-500">Réussi ({score}%)</Badge>;
-      }
-      return <Badge className="bg-yellow-500">Complété ({score}%)</Badge>;
+      return <Badge className="bg-yellow-500">Complété</Badge>;
     }
     return <Badge variant="secondary">En cours</Badge>;
   };
@@ -105,7 +100,6 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
                 <TableHead className="font-semibold">Prénom</TableHead>
                 <TableHead className="font-semibold">Email</TableHead>
                 <TableHead className="font-semibold">Date d'inscription</TableHead>
-                <TableHead className="font-semibold">Tentatives</TableHead>
                 <TableHead className="font-semibold">Statut</TableHead>
                 <TableHead className="font-semibold">Actions</TableHead>
               </TableRow>
@@ -120,9 +114,8 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
                     {participant.created_at && 
                       format(new Date(participant.created_at), 'dd MMMM yyyy', { locale: fr })}
                   </TableCell>
-                  <TableCell className="py-4">{participant.attempts || 0}</TableCell>
                   <TableCell className="py-4">
-                    {getStatusBadge(participant.status, participant.score)}
+                    {getStatusBadge(participant.status)}
                   </TableCell>
                   <TableCell className="py-4">
                     <Button
