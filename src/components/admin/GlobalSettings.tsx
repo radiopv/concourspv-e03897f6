@@ -12,7 +12,7 @@ const GlobalSettings = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [defaultAttempts, setDefaultAttempts] = useState<number>(3);
-  const [requiredPercentage, setRequiredPercentage] = useState<number>(70);
+  const [requiredPercentage, setRequiredPercentage] = useState<number>(90);
 
   const { data: settings, isLoading, error } = useQuery({
     queryKey: ['global-settings'],

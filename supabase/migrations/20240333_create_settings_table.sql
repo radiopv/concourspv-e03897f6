@@ -1,14 +1,14 @@
 create table if not exists public.settings (
     id bigint primary key generated always as identity,
     default_attempts integer not null default 3,
-    required_percentage integer not null default 70,
+    required_percentage integer not null default 90,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- Insert default settings
 insert into public.settings (default_attempts, required_percentage)
-values (3, 70);
+values (3, 90);
 
 -- Enable RLS
 alter table public.settings enable row level security;
