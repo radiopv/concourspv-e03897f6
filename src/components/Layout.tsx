@@ -6,7 +6,7 @@ import { Toaster } from './ui/toaster';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Grid, Users, Settings, Database, Edit, Gift } from 'lucide-react';
 import { Button } from './ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -16,6 +16,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const isAdmin = user?.role === 'admin';
 
@@ -27,6 +28,8 @@ const Layout = ({ children }: LayoutProps) => {
     { icon: Users, label: 'Utilisateurs', path: '/admin/users' },
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];
+
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
@@ -40,7 +43,7 @@ const Layout = ({ children }: LayoutProps) => {
               {adminLinks.map((link) => (
                 <Button
                   key={link.path}
-                  variant="ghost"
+                  variant={isAdminRoute && location.pathname === link.path ? "default" : "ghost"}
                   className="flex items-center gap-2 whitespace-nowrap hover:bg-amber-100 transition-colors"
                   onClick={() => navigate(link.path)}
                 >

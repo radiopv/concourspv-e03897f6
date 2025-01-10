@@ -10,9 +10,21 @@ interface ContestCardProps {
     title: string;
     description?: string;
   };
+  onDelete?: (id: string) => void;
+  onArchive?: (id: string) => void;
+  onFeatureToggle?: (id: string, featured: boolean) => void;
+  onStatusUpdate?: (id: string, updates: any) => void;
+  onEdit?: (id: string) => void;
 }
 
-const ContestCard: React.FC<ContestCardProps> = ({ contest }) => {
+const ContestCard: React.FC<ContestCardProps> = ({ 
+  contest,
+  onDelete,
+  onArchive,
+  onFeatureToggle,
+  onStatusUpdate,
+  onEdit
+}) => {
   const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
     queryFn: async () => {
