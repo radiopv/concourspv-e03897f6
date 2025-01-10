@@ -36,27 +36,21 @@ export const useAnswerSubmission = (contestId: string) => {
       const participationId = participant?.participation_id || 
         await ensureParticipantExists(session.session.user.id, contestId);
 
-      // Récupérer le nombre de tentatives actuel
       const currentAttempt = participant?.attempts || 0;
 
-      // Vérifier si une réponse existe déjà pour cette question dans la tentative actuelle
-      const { data: existingAnswers, error: fetchError } = await supabase
+      // Vérifier si une réponse existe déjà
+      const { data: existingAnswers } = await supabase
         .from('participant_answers')
         .select('*')
         .eq('participant_id', participationId)
         .eq('question_id', currentQuestion.id)
         .eq('attempt_number', currentAttempt);
 
-      if (fetchError) {
-        console.error('Error fetching existing answer:', fetchError);
-        throw fetchError;
-      }
-
-      const existingAnswer = existingAnswers?.[0];
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
 
-      if (existingAnswer) {
-        console.log('Answer already exists for current attempt:', existingAnswer);
+      if (existingAnswers && existingAnswers.length > 0) {
+        // Si une réponse existe déjà, mettre à jour le state sans insérer
+        console.log('Answer already exists for current attempt:', existingAnswers[0]);
         state.setIsCorrect(isAnswerCorrect);
         state.setHasAnswered(true);
         state.setTotalAnswered(prev => prev + 1);
@@ -66,10 +60,26 @@ export const useAnswerSubmission = (contestId: string) => {
         return;
       }
 
+      // Si aucune réponse n'existe, insérer la nouvelle réponse
+      const { error: insertError } = await supabase
+        .from('participant_answers')
+        .upsert([{
+          participant_id: participationId,
+          question_id: currentQuestion.id,
+          answer: state.selectedAnswer,
+          is_correct: isAnswerCorrect,
+          attempt_number: currentAttempt
+        }], {
+          onConflict: 'participant_id,question_id,attempt_number'
+        });
+
+      if (insertError) throw insertError;
+
       // Mettre à jour le state
       state.setIsCorrect(isAnswerCorrect);
       state.setHasAnswered(true);
       state.setTotalAnswered(prev => prev + 1);
+      
       if (isAnswerCorrect) {
         state.setScore(prev => prev + 1);
         
@@ -89,19 +99,6 @@ export const useAnswerSubmission = (contestId: string) => {
       } else {
         state.resetStreak();
       }
-
-      // Insérer la nouvelle réponse avec le numéro de tentative
-      const { error: insertError } = await supabase
-        .from('participant_answers')
-        .insert([{
-          participant_id: participationId,
-          question_id: currentQuestion.id,
-          answer: state.selectedAnswer,
-          is_correct: isAnswerCorrect,
-          attempt_number: currentAttempt
-        }]);
-
-      if (insertError) throw insertError;
 
       await queryClient.invalidateQueries({ queryKey: ['contests'] });
       await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
