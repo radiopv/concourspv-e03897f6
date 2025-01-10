@@ -2,7 +2,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useQuestionnaireState } from '../QuestionnaireState';
-import { ensureParticipantExists } from '../ParticipantManager';
 import { getRandomMessage } from '../messages';
 import { awardPoints } from '../../../services/pointsService';
 
@@ -34,46 +33,36 @@ export const useAnswerSubmission = (contestId: string) => {
         .eq('contest_id', contestId)
         .single();
 
-      const participationId = participant?.participation_id || 
-        await ensureParticipantExists(session.session.user.id, contestId);
+      if (!participant?.participation_id) {
+        throw new Error("Participant not found");
+      }
 
-      const currentAttempt = participant?.attempts || 0;
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
-      const isFirstAttempt = currentAttempt === 0;
 
-      console.log('Submitting answer:', {
-        participationId,
-        questionId: currentQuestion.id,
-        answer: state.selectedAnswer,
-        isCorrect: isAnswerCorrect,
-        attemptNumber: currentAttempt,
-        isFirstAttempt
-      });
-
-      // Insérer la nouvelle réponse
+      // Sauvegarder la réponse avec le numéro de tentative
       const { error: insertError } = await supabase
         .from('participant_answers')
         .insert({
-          participant_id: participationId,
+          participant_id: participant.participation_id,
           question_id: currentQuestion.id,
           answer: state.selectedAnswer,
           is_correct: isAnswerCorrect,
-          attempt_number: currentAttempt
+          attempt_number: participant.attempts || 1
         });
 
       if (insertError) {
-        console.error('Erreur lors de l\'insertion de la réponse:', insertError);
+        console.error('Error saving answer:', insertError);
         throw insertError;
       }
 
-      // Mettre à jour le state
+      // Mettre à jour l'état
       state.setIsCorrect(isAnswerCorrect);
       state.setHasAnswered(true);
       state.setTotalAnswered(prev => prev + 1);
       
       if (isAnswerCorrect) {
         // N'attribuer des points que lors de la première tentative
-        if (isFirstAttempt) {
+        if (participant.attempts <= 1) {
           state.setScore(prev => prev + 1);
           state.incrementStreak();
           const currentStreak = state.getCurrentStreak();
@@ -115,7 +104,7 @@ export const useAnswerSubmission = (contestId: string) => {
       });
 
     } catch (error) {
-      console.error('Erreur lors de la soumission de la réponse:', error);
+      console.error('Error submitting answer:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la soumission de votre réponse",
