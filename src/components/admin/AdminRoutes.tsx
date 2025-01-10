@@ -9,7 +9,7 @@ import UserManager from './users/UserManager';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 const AdminRoutes = () => {
   const navigate = useNavigate();

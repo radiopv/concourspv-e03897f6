@@ -1,7 +1,6 @@
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Settings, LogOut, User, Trophy } from 'lucide-react';
 import UserPoints from './UserPoints';
 
@@ -19,75 +18,68 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-lg">
+    <nav className="bg-white shadow-sm">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
-            <Link to="/" className="flex items-center space-x-2 text-white hover:text-amber-100">
-              <Trophy className="h-6 w-6" />
-              <span className="font-bold text-lg">Concours</span>
-            </Link>
-            <div className="hidden md:flex space-x-4">
-              <Link to="/contests" className="text-white hover:text-amber-100">
-                Concours
-              </Link>
-              <Link to="/winners" className="text-white hover:text-amber-100">
-                Gagnants
-              </Link>
-              <Link to="/points" className="text-white hover:text-amber-100">
-                Points
-              </Link>
-              {isAdmin && (
-                <Link to="/admin" className="text-white hover:text-amber-100 font-semibold">
-                  Administration
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <>
-                <UserPoints />
-                <div className="hidden md:flex space-x-2">
-                  <Link to="/dashboard">
-                    <Button variant="ghost" className="text-white hover:text-amber-100">
-                      <User className="h-5 w-5 mr-2" />
-                      Profil
-                    </Button>
-                  </Link>
-                  {isAdmin && (
-                    <Link to="/admin">
-                      <Button variant="ghost" className="text-white hover:text-amber-100">
-                        <Settings className="h-5 w-5 mr-2" />
-                        Admin
-                      </Button>
-                    </Link>
-                  )}
-                  <Button 
-                    variant="ghost" 
-                    className="text-white hover:text-amber-100" 
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="space-x-2">
-                <Link to="/login">
-                  <Button variant="ghost" className="text-white hover:text-amber-100">
-                    Connexion
-                  </Button>
-                </Link>
-                <Link to="/register">
-                  <Button variant="ghost" className="text-white hover:text-amber-100">
-                    Inscription
-                  </Button>
-                </Link>
-              </div>
+            <Button
+              variant="ghost"
+              className="text-lg font-semibold"
+              onClick={() => navigate('/')}
+            >
+              Concours
+            </Button>
+            
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/admin')}
+                className="flex items-center gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Admin
+              </Button>
             )}
           </div>
+
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <UserPoints />
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2"
+              >
+                <User className="w-4 h-4" />
+                Mon compte
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/winners')}
+                className="flex items-center gap-2"
+              >
+                <Trophy className="w-4 h-4" />
+                Gagnants
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Déconnexion
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-4">
+              <Button onClick={() => navigate('/login')}>
+                Se connecter
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/register')}>
+                S'inscrire
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </nav>
