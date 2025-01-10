@@ -3,10 +3,13 @@ import { Home, Settings, User, Shield, Gift, Trophy, Award } from "lucide-react"
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-const MobileNavBar = () => {
+interface MobileNavBarProps {
+  isAdmin: boolean;
+}
+
+const MobileNavBar = ({ isAdmin }: MobileNavBarProps) => {
   const { user } = useAuth();
   const location = useLocation();
-  const isAdmin = user?.role === 'admin';
 
   if (!user) return null;
 

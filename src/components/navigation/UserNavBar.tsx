@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Settings, LogOut, User, Trophy } from 'lucide-react';
 import UserPoints from './UserPoints';
 
-const UserNavBar = () => {
+interface UserNavBarProps {
+  isAdmin: boolean;
+}
+
+const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = user?.role === 'admin';
 
   const handleLogout = async () => {
     await signOut();

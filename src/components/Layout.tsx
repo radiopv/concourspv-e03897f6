@@ -8,6 +8,7 @@ import { Grid, Users, Settings, Database, Edit, Gift } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { useToast } from './ui/use-toast';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,10 +20,16 @@ const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = React.useState(false);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     const checkAdminRole = async () => {
-      if (!user) return;
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      console.log('Checking admin rights for:', user.email);
 
       const { data: memberData, error } = await supabase
         .from('members')
@@ -32,15 +39,31 @@ const Layout = ({ children }: LayoutProps) => {
 
       if (error) {
         console.error('Error checking admin role:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de vérifier vos droits d'administrateur",
+        });
+        setIsAdmin(false);
         return;
       }
 
       console.log('Member data:', memberData);
-      setIsAdmin(memberData?.role === 'admin');
+      const isUserAdmin = memberData?.role === 'admin';
+      setIsAdmin(isUserAdmin);
+
+      if (!isUserAdmin && location.pathname.startsWith('/admin')) {
+        toast({
+          variant: "destructive",
+          title: "Accès refusé",
+          description: "Vous n'avez pas les droits d'administrateur",
+        });
+        navigate('/');
+      }
     };
 
     checkAdminRole();
-  }, [user]);
+  }, [user, location.pathname, navigate, toast]);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
 
@@ -53,17 +76,9 @@ const Layout = ({ children }: LayoutProps) => {
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];
 
-  // If not admin and trying to access admin route, redirect to home
-  React.useEffect(() => {
-    if (!isAdmin && isAdminRoute) {
-      console.log("Redirecting non-admin user from admin route");
-      navigate('/');
-    }
-  }, [isAdmin, isAdminRoute, navigate]);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
-      <UserNavBar />
+      <UserNavBar isAdmin={isAdmin} />
       
       {isAdmin && isAdminRoute && (
         <div className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-md sticky top-0 z-50 border-b border-amber-100/20">
@@ -88,7 +103,7 @@ const Layout = ({ children }: LayoutProps) => {
       <main className={`container mx-auto ${isMobile ? 'px-2 pb-20' : 'px-4'} py-8`}>
         {children}
       </main>
-      {user && <MobileNavBar />}
+      {user && <MobileNavBar isAdmin={isAdmin} />}
       <Toaster />
     </div>
   );
