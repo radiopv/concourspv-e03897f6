@@ -3,38 +3,38 @@ import { Rank, UserRank } from "../types/points";
 
 export const RANKS: UserRank[] = [
   {
-    rank: 'DEBUTANT',
+    rank: 'PIONERO',
     minPoints: 0,
     maxPoints: 24,
     badge: '🌱',
-    benefits: ['Accès aux concours standards']
+    benefits: ['Accès aux concours débutants']
   },
   {
-    rank: 'BRONZE',
+    rank: 'GUAJIRO',
     minPoints: 25,
     maxPoints: 49,
-    badge: '🥉',
-    benefits: ['Participation supplémentaire', 'Accès aux concours Bronze']
+    badge: '🌾',
+    benefits: ['Participation supplémentaire', 'Accès aux concours Guajiro']
   },
   {
-    rank: 'ARGENT',
+    rank: 'HABANERO',
     minPoints: 50,
-    maxPoints: 74,
-    badge: '🥈',
-    benefits: ['2 participations supplémentaires', 'Accès aux concours Argent']
-  },
-  {
-    rank: 'OR',
-    minPoints: 75,
     maxPoints: 99,
-    badge: '🥇',
-    benefits: ['3 participations supplémentaires', 'Accès aux concours Or']
+    badge: '🎭',
+    benefits: ['2 participations supplémentaires', 'Accès aux concours Habanero']
   },
   {
-    rank: 'MAITRE',
+    rank: 'CUBANO',
+    minPoints: 100,
+    maxPoints: 499,
+    badge: '🌴',
+    benefits: ['3 participations supplémentaires', 'Accès aux concours Cubano']
+  },
+  {
+    rank: 'MAXIMO',
     minPoints: 500,
     maxPoints: Infinity,
-    badge: '👑',
+    badge: '⭐',
     benefits: ['Participations illimitées', 'Accès à tous les concours']
   }
 ];
@@ -93,7 +93,6 @@ export const getUserPoints = async (userId: string) => {
   try {
     console.log('Getting user points for:', userId);
     
-    // Utilise maybeSingle() au lieu de single() pour éviter l'erreur 406
     const { data, error } = await supabase
       .from('user_points')
       .select('*')
@@ -105,7 +104,6 @@ export const getUserPoints = async (userId: string) => {
       throw error;
     }
 
-    // Si aucun point n'existe, initialise les points
     if (!data) {
       console.log('No points found, initializing...');
       return await initializeUserPoints(userId);
@@ -128,7 +126,6 @@ export const awardPoints = async (
   try {
     console.log('Awarding points:', { userId, points, contestId, streak });
 
-    // Ajouter les points à l'historique
     const { error: historyError } = await supabase
       .from('point_history')
       .insert([{
@@ -141,7 +138,6 @@ export const awardPoints = async (
 
     if (historyError) throw historyError;
 
-    // Récupère les points actuels de l'utilisateur
     const { data: currentPoints } = await supabase
       .from('user_points')
       .select('total_points, best_streak')
@@ -150,8 +146,8 @@ export const awardPoints = async (
 
     const newTotalPoints = (currentPoints?.total_points || 0) + points;
     const newBestStreak = Math.max(currentPoints?.best_streak || 0, streak);
+    const newRank = calculateRank(newTotalPoints);
 
-    // Met à jour ou crée les points de l'utilisateur
     const { error: updateError } = await supabase
       .from('user_points')
       .upsert({
@@ -159,14 +155,14 @@ export const awardPoints = async (
         total_points: newTotalPoints,
         current_streak: streak,
         best_streak: newBestStreak,
-        current_rank: calculateRank(newTotalPoints).rank,
+        current_rank: newRank.rank,
         extra_participations: calculateExtraParticipations(newTotalPoints)
       });
 
     if (updateError) throw updateError;
 
     console.log('Points awarded successfully');
-    return { success: true, newTotalPoints, streak };
+    return { success: true, newTotalPoints, streak, newRank };
   } catch (error) {
     console.error('Error awarding points:', error);
     throw error;
