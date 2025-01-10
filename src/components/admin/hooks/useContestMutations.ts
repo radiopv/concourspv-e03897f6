@@ -13,6 +13,33 @@ export const useContestMutations = () => {
     queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
   };
 
+  const resetContestMutation = useMutation({
+    mutationFn: async (contestId: string) => {
+      console.log('Resetting contest:', contestId);
+      const { error } = await supabase
+        .from('participants')
+        .delete()
+        .eq('contest_id', contestId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateQueries();
+      toast({
+        title: "Concours réinitialisé",
+        description: "Toutes les participations ont été supprimées",
+      });
+    },
+    onError: (error) => {
+      console.error('Error resetting contest:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de réinitialiser le concours",
+        variant: "destructive",
+      });
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -124,6 +151,7 @@ export const useContestMutations = () => {
     deleteMutation,
     archiveMutation,
     featureToggleMutation,
-    statusUpdateMutation
+    statusUpdateMutation,
+    resetContestMutation
   };
 };

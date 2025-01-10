@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, List } from "lucide-react";
+import { Edit, Trash2, List, RefreshCw } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,18 @@ import { supabase } from "@/lib/supabase";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import ParticipantInfo from './participants/ParticipantInfo';
 import ParticipantsList from './ParticipantsList';
+import { useContestMutations } from './hooks/useContestMutations';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ContestCardProps {
   contest: {
@@ -27,6 +39,7 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showParticipants, setShowParticipants] = React.useState(false);
+  const { resetContestMutation } = useContestMutations();
 
   const { data: participantsData } = useQuery({
     queryKey: ['contest-participants', contest.id],
@@ -128,6 +141,10 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
     getSession();
   }, []);
 
+  const handleReset = () => {
+    resetContestMutation.mutate(contest.id);
+  };
+
   return (
     <Card className="w-full bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b">
@@ -204,6 +221,29 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
               <List className="h-4 w-4 mr-2" />
               Participants
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="hover:bg-red-100"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Réinitialiser
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Réinitialiser le concours ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action supprimera toutes les participations de ce concours. Cette action est irréversible.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleReset}>Réinitialiser</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             {onDelete && (
               <Button
                 variant="destructive"
