@@ -34,6 +34,12 @@ const ContestCard = ({
 }: ContestCardProps) => {
   const [showAddQuestion, setShowAddQuestion] = useState(false);
   const [showPrizes, setShowPrizes] = useState(false);
+  const [questionForm, setQuestionForm] = useState({
+    question_text: '',
+    options: ['', '', '', ''],
+    correct_answer: '',
+    article_url: ''
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -73,6 +79,45 @@ const ContestCard = ({
       return data?.map(prize => prize.catalog_item) || [];
     }
   });
+
+  const handleAddQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase
+        .from('questions')
+        .insert([{
+          question_text: questionForm.question_text,
+          options: questionForm.options,
+          correct_answer: questionForm.correct_answer,
+          article_url: questionForm.article_url,
+          contest_id: contest.id,
+          type: 'multiple_choice'
+        }]);
+
+      if (error) throw error;
+
+      await refetch();
+      setShowAddQuestion(false);
+      setQuestionForm({
+        question_text: '',
+        options: ['', '', '', ''],
+        correct_answer: '',
+        article_url: ''
+      });
+
+      toast({
+        title: "Succès",
+        description: "La question a été ajoutée",
+      });
+    } catch (error) {
+      console.error('Error adding question:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter la question",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleResetContest = async () => {
     try {
@@ -180,23 +225,23 @@ const ContestCard = ({
                   <div>
                     <Label>Question</Label>
                     <Input
-                      value={newQuestion.question_text}
-                      onChange={(e) => setNewQuestion(prev => ({
+                      value={questionForm.question_text}
+                      onChange={(e) => setQuestionForm(prev => ({
                         ...prev,
                         question_text: e.target.value
                       }))}
                       placeholder="Entrez la question..."
                     />
                   </div>
-                  {newQuestion.options.map((option, index) => (
+                  {questionForm.options.map((option, index) => (
                     <div key={index}>
                       <Label>Option {index + 1}</Label>
                       <Input
                         value={option}
                         onChange={(e) => {
-                          const newOptions = [...newQuestion.options];
+                          const newOptions = [...questionForm.options];
                           newOptions[index] = e.target.value;
-                          setNewQuestion(prev => ({
+                          setQuestionForm(prev => ({
                             ...prev,
                             options: newOptions
                           }));
@@ -208,8 +253,8 @@ const ContestCard = ({
                   <div>
                     <Label>Bonne réponse</Label>
                     <Input
-                      value={newQuestion.correct_answer}
-                      onChange={(e) => setNewQuestion(prev => ({
+                      value={questionForm.correct_answer}
+                      onChange={(e) => setQuestionForm(prev => ({
                         ...prev,
                         correct_answer: e.target.value
                       }))}
@@ -219,8 +264,8 @@ const ContestCard = ({
                   <div>
                     <Label>URL de l'article (optionnel)</Label>
                     <Input
-                      value={newQuestion.article_url}
-                      onChange={(e) => setNewQuestion(prev => ({
+                      value={questionForm.article_url}
+                      onChange={(e) => setQuestionForm(prev => ({
                         ...prev,
                         article_url: e.target.value
                       }))}
