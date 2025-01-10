@@ -2,8 +2,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '@/contexts/AuthContext';
-import Dashboard from '../Dashboard';
+import Index from '../Index';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,34 +12,29 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderDashboard = () => {
+const renderIndex = () => {
   return render(
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Dashboard />
-        </AuthProvider>
+        <Index />
       </QueryClientProvider>
     </BrowserRouter>
   );
 };
 
-describe('Dashboard', () => {
+describe('Index Page', () => {
   beforeEach(() => {
-    // Reset QueryClient
     queryClient.clear();
   });
 
-  it('affiche le message de connexion quand non authentifié', () => {
-    renderDashboard();
-    expect(screen.getByText(/Veuillez vous connecter/i)).toBeInTheDocument();
+  it('affiche le titre principal', () => {
+    renderIndex();
+    expect(screen.getByText(/Concours Actifs/i)).toBeInTheDocument();
   });
 
-  it('affiche les skeletons pendant le chargement', () => {
-    renderDashboard();
+  it('affiche le skeleton loader pendant le chargement', () => {
+    renderIndex();
     const loadingSection = screen.getByRole('status');
     expect(loadingSection).toBeInTheDocument();
   });
-
-  // Ajoutez plus de tests selon les besoins
 });

@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
@@ -23,113 +22,123 @@ const Dashboard = () => {
     email: '',
   });
 
-  // Updated query configuration to use gcTime instead of cacheTime
+  // Fonction pour créer un nouveau membre si nécessaire
+  const initializeMember = async (userId: string, userEmail: string) => {
+    try {
+      console.log('Initializing member for user:', userId);
+      
+      // First, check if member exists
+      const { data: existingMember, error: checkError } = await supabase
+        .from('members')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking member:', checkError);
+        throw checkError;
+      }
+
+      if (existingMember) {
+        console.log('Member found:', existingMember);
+        return existingMember;
+      }
+
+      // Get user metadata for names
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error getting user metadata:', userError);
+        throw userError;
+      }
+
+      const userMetadata = authUser?.user_metadata || {};
+      const defaultData = {
+        id: userId,
+        email: userEmail,
+        first_name: userMetadata.first_name || 'New',
+        last_name: userMetadata.last_name || 'Member',
+        total_points: 0,
+        contests_participated: 0,
+        contests_won: 0,
+        notifications_enabled: true,
+        share_scores: true,
+      };
+      
+      // Create new member with all required fields
+      console.log('Creating new member with data:', defaultData);
+      const { data: newMember, error: createError } = await supabase
+        .from('members')
+        .insert([defaultData])
+        .select()
+        .maybeSingle();
+
+      if (createError) {
+        console.error('Error creating member:', createError);
+        throw createError;
+      }
+
+      if (!newMember) {
+        throw new Error('Failed to create new member');
+      }
+
+      console.log('New member created:', newMember);
+      return newMember;
+    } catch (error) {
+      console.error('Error in initializeMember:', error);
+      throw error;
+    }
+  };
+
   const { data: profileData, isLoading: isLoadingProfile, refetch } = useQuery({
     queryKey: ['user-profile', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user?.id || !user?.email) return null;
       
       console.log('Fetching user profile data...');
-      await initializeUserData(user.id);
       
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      // Initialiser ou récupérer le membre
+      const member = await initializeMember(user.id, user.email);
       
-      if (error) {
-        console.error('Error fetching profile data:', error);
-        throw error;
-      }
-      return data;
+      // Initialize user points if needed
+      await initializeUserPoints(user.id);
+      
+      return member;
     },
-    enabled: !!user,
+    enabled: !!user?.id && !!user?.email,
     retry: 1,
     staleTime: 300000, // 5 minutes
-    gcTime: 3600000, // 1 hour (previously cacheTime)
+    gcTime: 3600000, // 1 hour
   });
 
   const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['user-stats', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user?.id) return null;
       console.log('Fetching user stats...');
+      
       const { data, error } = await supabase
         .from('members')
         .select('total_points, contests_participated, contests_won')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching stats:', error);
         throw error;
       }
+
       return {
         contests_participated: data?.contests_participated || 0,
         total_points: data?.total_points || 0,
         contests_won: data?.contests_won || 0,
       };
     },
-    enabled: !!user,
+    enabled: !!user?.id,
     retry: 1,
     staleTime: 300000, // 5 minutes
-    gcTime: 3600000, // 1 hour (previously cacheTime)
+    gcTime: 3600000, // 1 hour
   });
-
-  const initializeUserData = async (userId: string) => {
-    try {
-      console.log('Checking and initializing user data if needed...');
-      
-      // Check if member record exists
-      const { data: memberData, error: memberCheckError } = await supabase
-        .from('members')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (memberCheckError && memberCheckError.code === 'PGRST116') {
-        console.log('Member record not found, creating...');
-        const { error: createMemberError } = await supabase
-          .from('members')
-          .insert({
-            id: userId,
-            first_name: user?.user_metadata?.first_name || '',
-            last_name: user?.user_metadata?.last_name || '',
-            email: user?.email || '',
-            total_points: 0,
-            contests_participated: 0,
-            contests_won: 0,
-          });
-
-        if (createMemberError) {
-          console.error('Error creating member:', createMemberError);
-          throw createMemberError;
-        }
-      }
-
-      // Check if user points record exists
-      const { data: pointsData, error: pointsCheckError } = await supabase
-        .from('user_points')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (pointsCheckError && pointsCheckError.code === 'PGRST116') {
-        console.log('User points record not found, creating...');
-        await initializeUserPoints(userId);
-      }
-
-      console.log('User data initialization complete');
-    } catch (error) {
-      console.error('Error initializing user data:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de l'initialisation de vos données.",
-      });
-    }
-  };
 
   useEffect(() => {
     if (profileData) {
@@ -138,7 +147,6 @@ const Dashboard = () => {
         last_name: profileData.last_name || '',
         email: profileData.email || '',
       });
-      setLoading(false);
     }
   }, [profileData]);
 
@@ -157,7 +165,7 @@ const Dashboard = () => {
     );
   }
 
-  const isLoading = loading || isLoadingProfile || isLoadingStats;
+  const isLoading = isLoadingProfile || isLoadingStats;
 
   return (
     <div className="container mx-auto p-4">
@@ -167,7 +175,7 @@ const Dashboard = () => {
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
       
-      <DashboardHeader />
+      <DashboardHeader firstName={profileData?.first_name} />
       
       {isLoading ? (
         <div className="space-y-8" role="status" aria-label="Chargement du tableau de bord">
@@ -182,22 +190,20 @@ const Dashboard = () => {
         </div>
       ) : (
         <>
-          <StatsCards stats={stats || {
-            contests_participated: 0,
-            total_points: 0,
-            contests_won: 0,
-          }} />
+          <StatsCards stats={stats} />
           <PointsOverview />
           <QuickActions />
-          <ProfileCard 
-            userProfile={profileData}
-            isEditing={isEditing}
-            formData={formData}
-            setFormData={setFormData}
-            setIsEditing={setIsEditing}
-            userId={user.id}
-            refetch={refetch}
-          />
+          {profileData && (
+            <ProfileCard 
+              userProfile={profileData}
+              isEditing={isEditing}
+              formData={formData}
+              setFormData={setFormData}
+              setIsEditing={setIsEditing}
+              userId={user.id}
+              refetch={refetch}
+            />
+          )}
         </>
       )}
     </div>

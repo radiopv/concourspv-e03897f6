@@ -23,6 +23,7 @@ const WinnerClaimDialog = ({ winner, open, onClose }: WinnerClaimDialogProps) =>
 
   const claimMutation = useMutation({
     mutationFn: async () => {
+      // Mise à jour du statut dans la base de données
       const { error } = await supabase
         .from('participants')
         .update({
@@ -35,16 +36,30 @@ const WinnerClaimDialog = ({ winner, open, onClose }: WinnerClaimDialogProps) =>
         .eq('id', winner?.id);
 
       if (error) throw error;
+
+      // Envoi de l'email de confirmation
+      const { error: emailError } = await supabase.functions.invoke('send-winner-email', {
+        body: {
+          winnerEmail: winner.email,
+          winnerName: `${winner.first_name} ${winner.last_name}`,
+          contestTitle: winner.contest?.title || 'Concours',
+          prizeName: winner.prize?.name || 'Prix',
+          shippingAddress: address
+        }
+      });
+
+      if (emailError) throw emailError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests-with-winners'] });
       toast({
         title: "Prix réclamé avec succès",
-        description: "Nous vous contacterons bientôt pour la livraison.",
+        description: "Un email de confirmation vous a été envoyé.",
       });
       onClose();
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error claiming prize:', error);
       toast({
         title: "Erreur",
         description: "Impossible de réclamer le prix. Veuillez réessayer.",

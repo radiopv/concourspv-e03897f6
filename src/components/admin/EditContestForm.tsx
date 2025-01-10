@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EditQuestionsList from './EditQuestionsList';
 import ContestBasicForm from './ContestBasicForm';
+import { Rank } from '@/types/points';
 
 interface EditContestFormProps {
   contestId: string;
@@ -42,6 +43,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
     has_big_prizes: false,
     shop_url: '',
     prize_image_url: '',
+    required_rank: 'PIONERO' as Rank,
   });
 
   // Update form data when contest data is loaded
@@ -65,6 +67,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
         has_big_prizes: contest.has_big_prizes || false,
         shop_url: contest.shop_url || '',
         prize_image_url: contest.prize_image_url || '',
+        required_rank: contest.required_rank || 'PIONERO' as Rank,
       });
     }
   }, [contest]);
@@ -117,8 +120,6 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log('Submitting form data:', formData);
-      
       const { error } = await supabase
         .from('contests')
         .update({
@@ -131,6 +132,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
           is_new: formData.is_new,
           has_big_prizes: formData.has_big_prizes,
           shop_url: formData.shop_url,
+          required_rank: formData.required_rank,
         })
         .eq('id', contestId);
 

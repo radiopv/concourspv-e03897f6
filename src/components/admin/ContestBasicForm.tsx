@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Rank } from '@/types/points';
 
 interface ContestBasicFormProps {
   formData: {
@@ -17,6 +19,7 @@ interface ContestBasicFormProps {
     has_big_prizes: boolean;
     shop_url?: string;
     prize_image_url?: string;
+    required_rank: Rank;
   };
   setFormData: (data: any) => void;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -24,6 +27,8 @@ interface ContestBasicFormProps {
 }
 
 const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading }: ContestBasicFormProps) => {
+  const ranks: Rank[] = ['PIONERO', 'GUAJIRO', 'HABANERO', 'CUBANO', 'MAXIMO'];
+
   return (
     <div className="space-y-4">
       <div>
@@ -43,6 +48,25 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="required_rank">Rang requis</Label>
+        <Select
+          value={formData.required_rank}
+          onValueChange={(value: Rank) => setFormData({ ...formData, required_rank: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Sélectionnez un rang" />
+          </SelectTrigger>
+          <SelectContent>
+            {ranks.map((rank) => (
+              <SelectItem key={rank} value={rank}>
+                {rank}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div>

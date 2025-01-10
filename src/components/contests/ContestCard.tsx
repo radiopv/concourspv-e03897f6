@@ -10,7 +10,11 @@ import ContestStats from "./ContestStats";
 import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
 import ParticipationStats from "./contest-card/ParticipationStats";
+import ContestRankBadge from "./ContestRankBadge";
+import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { Rank, RANKS } from '@/types/points';
 
 interface ContestCardProps {
   contest: {
@@ -19,6 +23,7 @@ interface ContestCardProps {
     description?: string;
     is_new: boolean;
     has_big_prizes: boolean;
+    required_rank: Rank;
     participants?: { count: number };
   };
   onSelect: (id: string) => void;
@@ -26,10 +31,27 @@ interface ContestCardProps {
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const { data: userPoints, isLoading: isUserPointsLoading } = useQuery({
+    queryKey: ['user-points', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_points')
+        .select('current_rank')
+        .eq('user_id', user?.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id
+  });
+
   const { data: prizes, isLoading: isPrizesLoading } = useQuery({
     queryKey: ['contest-prizes', contest.id],
     queryFn: async () => {
-      console.log('Fetching prizes for contest:', contest.id);
       const { data: prizesData, error } = await supabase
         .from('prizes')
         .select(`
@@ -90,6 +112,31 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
 
   const isLoading = isPrizesLoading || isSettingsLoading || isParticipationLoading;
 
+  const handleParticipateClick = () => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter pour participer au concours",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const userRankIndex = RANKS.findIndex(r => r.rank === userPoints?.current_rank);
+    const requiredRankIndex = RANKS.findIndex(r => r.rank === contest.required_rank);
+
+    if (userRankIndex < requiredRankIndex) {
+      toast({
+        title: "Niveau insuffisant",
+        description: `Ce concours nécessite le rang ${contest.required_rank}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    onSelect(contest.id);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -110,16 +157,20 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             >
               {contest.title}
             </CardTitle>
-            {contest.is_new && (
-              <Badge 
-                variant="secondary" 
-                className="bg-blue-500 text-white"
-                aria-label="Nouveau concours"
-              >
-                Nouveau
-              </Badge>
-            )}
+            <ContestRankBadge 
+              requiredRank={contest.required_rank} 
+              userRank={userPoints?.current_rank}
+            />
           </div>
+          {contest.is_new && (
+            <Badge 
+              variant="secondary" 
+              className="bg-blue-500 text-white"
+              aria-label="Nouveau concours"
+            >
+              Nouveau
+            </Badge>
+          )}
           {contest.has_big_prizes && (
             <Badge 
               variant="secondary" 
@@ -176,14 +227,13 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                 />
 
                 <Button 
-                  onClick={() => onSelect(contest.id)}
+                  onClick={handleParticipateClick}
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
-                  disabled={remainingAttempts <= 0}
-                  aria-label={remainingAttempts > 0 ? 
-                    `Participer au concours ${contest.title}` : 
-                    'Plus de tentatives disponibles pour ce concours'}
+                  disabled={!userPoints || RANKS.findIndex(r => r.rank === userPoints.current_rank) < RANKS.findIndex(r => r.rank === contest.required_rank)}
                 >
-                  {remainingAttempts > 0 ? 'Participer' : 'Plus de tentatives disponibles'}
+                  {!userPoints || RANKS.findIndex(r => r.rank === userPoints.current_rank) < RANKS.findIndex(r => r.rank === contest.required_rank) 
+                    ? `Rang ${contest.required_rank} requis` 
+                    : 'Participer'}
                 </Button>
               </div>
             </>

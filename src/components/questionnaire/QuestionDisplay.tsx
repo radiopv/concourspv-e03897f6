@@ -1,99 +1,126 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 import ArticleLink from './ArticleLink';
 import AnswerOptions from './AnswerOptions';
 
 interface QuestionDisplayProps {
-  questionText: string;
-  articleUrl?: string;
-  options: string[];
+  question: {
+    question_text: string;
+    options: string[];
+    article_url?: string;
+    correct_answer?: string;
+  };
   selectedAnswer: string;
-  correctAnswer?: string;
   hasClickedLink: boolean;
   hasAnswered: boolean;
   isSubmitting: boolean;
+  isLastQuestion: boolean;
   onArticleRead: () => void;
   onAnswerSelect: (answer: string) => void;
   onSubmitAnswer: () => void;
   onNextQuestion: () => void;
-  isLastQuestion: boolean;
 }
 
 const QuestionDisplay = ({
-  questionText,
-  articleUrl,
-  options,
+  question,
   selectedAnswer,
-  correctAnswer,
   hasClickedLink,
   hasAnswered,
   isSubmitting,
+  isLastQuestion,
   onArticleRead,
   onAnswerSelect,
   onSubmitAnswer,
-  onNextQuestion,
-  isLastQuestion
+  onNextQuestion
 }: QuestionDisplayProps) => {
-  const getPartialQuestion = (text: string) => {
-    if (!text) return "";
-    const words = text.split(" ");
-    const partialLength = Math.min(5, words.length);
-    return words.slice(0, partialLength).join(" ") + "...";
+  const { toast } = useToast();
+
+  const handleSubmitClick = async () => {
+    if (!selectedAnswer) {
+      toast({
+        title: "Sélectionnez une réponse",
+        description: "Veuillez choisir une réponse avant de valider.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isSubmitting && !hasAnswered) {
+      await onSubmitAnswer();
+    }
   };
+
+  if (!question) {
+    return null;
+  }
 
   return (
     <div className="space-y-4">
-      <p className="text-lg font-medium">
-        {hasClickedLink ? questionText : getPartialQuestion(questionText)}
-      </p>
-      
-      {articleUrl && (
-        <ArticleLink
-          url={articleUrl}
-          onArticleRead={onArticleRead}
-          isRead={hasClickedLink}
-        />
-      )}
-      
-      {(hasClickedLink || !articleUrl) && (
-        <AnswerOptions
-          options={options}
-          selectedAnswer={selectedAnswer}
-          correctAnswer={hasAnswered ? correctAnswer : undefined}
-          hasAnswered={hasAnswered}
-          isDisabled={articleUrl && !hasClickedLink}
-          onAnswerSelect={onAnswerSelect}
+      {question.article_url && (
+        <ArticleLink 
+          url={question.article_url} 
+          onArticleRead={onArticleRead} 
         />
       )}
 
-      {!hasAnswered && (hasClickedLink || !articleUrl) && (
-        <Button
-          onClick={onSubmitAnswer}
-          disabled={!selectedAnswer || (articleUrl && !hasClickedLink) || isSubmitting}
-          className="w-full"
-        >
-          {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
-        </Button>
-      )}
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <h3 className="text-lg font-medium mb-4">{question.question_text}</h3>
 
-      {hasAnswered && (
-        <Button
-          onClick={onNextQuestion}
-          className="w-full"
-          variant="outline"
-          disabled={isSubmitting}
-        >
-          {isLastQuestion ? (
-            "Terminer le quiz"
-          ) : (
-            <>
-              Question suivante
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </>
-          )}
-        </Button>
-      )}
+        {(!question.article_url || hasClickedLink) ? (
+          <>
+            <AnswerOptions
+              options={question.options}
+              selectedAnswer={selectedAnswer}
+              correctAnswer={question.correct_answer}
+              hasAnswered={hasAnswered}
+              isDisabled={isSubmitting}
+              onAnswerSelect={onAnswerSelect}
+            />
+
+            {hasAnswered && (
+              <Alert className={`mt-4 ${selectedAnswer === question.correct_answer ? "bg-green-50" : "bg-red-50"}`}>
+                <AlertDescription>
+                  {selectedAnswer === question.correct_answer
+                    ? "Bonne réponse ! 🎉"
+                    : `La bonne réponse était : ${question.correct_answer}`}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              {!hasAnswered ? (
+                <Button
+                  onClick={handleSubmitClick}
+                  disabled={!selectedAnswer || isSubmitting}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  {isSubmitting ? (
+                    "Validation..."
+                  ) : (
+                    <>
+                      Valider <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={onNextQuestion}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  {isLastQuestion ? "Terminer" : "Question suivante"} <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="text-center p-4">
+            <p className="text-gray-600">Veuillez lire l'article avant de répondre à la question.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
