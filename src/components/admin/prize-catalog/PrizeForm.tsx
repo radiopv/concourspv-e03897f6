@@ -19,7 +19,7 @@ interface PrizeFormProps {
   uploading: boolean;
 }
 
-export const PrizeForm = ({
+const PrizeForm = ({
   formData,
   onFormChange,
   onImageUpload,
@@ -109,3 +109,5 @@ export const PrizeForm = ({
     </form>
   );
 };
+
+export default PrizeForm;

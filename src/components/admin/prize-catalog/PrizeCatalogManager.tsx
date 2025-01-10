@@ -191,16 +191,27 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
           <Card>
             <CardContent className="pt-6">
               <PrizeForm
-                initialData={editingPrize}
-                onSubmit={(data) => {
+                formData={editingPrize || {
+                  name: '',
+                  description: '',
+                  value: '',
+                  image_url: '',
+                  shop_url: '',
+                }}
+                onFormChange={(field, value) => {
                   if (editingPrize) {
-                    updatePrizeMutation.mutate({ id: editingPrize.id, data });
-                  } else {
-                    addPrizeMutation.mutate(data);
+                    setEditingPrize({ ...editingPrize, [field]: value });
                   }
                 }}
-                onCancel={handleCancel}
                 onImageUpload={handleImageUpload}
+                onCancel={handleCancel}
+                onSave={() => {
+                  if (editingPrize) {
+                    updatePrizeMutation.mutate({ id: editingPrize.id, data: editingPrize });
+                  } else {
+                    addPrizeMutation.mutate(editingPrize);
+                  }
+                }}
                 uploading={uploading}
               />
             </CardContent>
