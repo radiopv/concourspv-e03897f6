@@ -24,13 +24,13 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
       <ContestList 
         contests={contests} 
         onSelectContest={setSelectedContestId}
       />
-      <ParticipantsList />
+      {selectedContestId && <ParticipantsList contestId={selectedContestId} />}
     </div>
   );
 };

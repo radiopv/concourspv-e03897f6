@@ -1,24 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ParticipantsTable } from "./participants/ParticipantsTable";
-import { ParticipantsActions } from "./participants/ParticipantsActions";
-import { useParams } from "react-router-dom";
+interface ParticipantsListProps {
+  contestId: string;
+}
 
-const ParticipantsList = () => {
-  const { contestId } = useParams();
+const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  if (!contestId) {
-    return (
-      <div className="p-4 text-center">
-        <p className="text-gray-600">Aucun concours sélectionné</p>
-      </div>
-    );
-  }
 
   const { data: participants, isLoading } = useQuery({
     queryKey: ['participants', contestId],
@@ -26,20 +28,18 @@ const ParticipantsList = () => {
       const { data, error } = await supabase
         .from('participants')
         .select(`
-          *,
-          participant_answers (
-            question_id,
-            answer,
-            questions (
-              correct_answer
-            )
-          )
+          id,
+          first_name,
+          last_name,
+          email,
+          created_at,
+          completed_at,
+          status
         `)
-        .eq('contest_id', contestId);
+        .eq('contest_id', contestId)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
-      console.log("Participants récupérés:", data);
-
       return data;
     },
     enabled: !!contestId
@@ -74,45 +74,52 @@ const ParticipantsList = () => {
     return <div>Chargement des participants...</div>;
   }
 
-  const eligibleParticipants = participants?.filter(p => p.score >= 70) || [];
-  const ineligibleParticipants = participants?.filter(p => p.score < 70) || [];
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Liste des participants</h2>
-        <ParticipantsActions 
-          participants={participants || []} 
-          contestId={contestId} 
-        />
+        <span className="text-sm text-gray-500">
+          {participants?.length || 0} participants
+        </span>
       </div>
 
-      <Tabs defaultValue="eligible" className="w-full">
-        <TabsList>
-          <TabsTrigger value="eligible">
-            Participants Éligibles ({eligibleParticipants.length})
-          </TabsTrigger>
-          <TabsTrigger value="ineligible">
-            Participants Non Éligibles ({ineligibleParticipants.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="eligible">
-          <ParticipantsTable 
-            participants={eligibleParticipants} 
-            title="Participants Éligibles (Score ≥ 70%)"
-            onDelete={(id) => deleteParticipantMutation.mutate(id)}
-          />
-        </TabsContent>
-
-        <TabsContent value="ineligible">
-          <ParticipantsTable 
-            participants={ineligibleParticipants} 
-            title="Participants Non Éligibles (Score < 70%)"
-            onDelete={(id) => deleteParticipantMutation.mutate(id)}
-          />
-        </TabsContent>
-      </Tabs>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nom</TableHead>
+            <TableHead>Prénom</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Date d'inscription</TableHead>
+            <TableHead>Statut</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {participants?.map((participant) => (
+            <TableRow key={participant.id}>
+              <TableCell>{participant.last_name}</TableCell>
+              <TableCell>{participant.first_name}</TableCell>
+              <TableCell>{participant.email}</TableCell>
+              <TableCell>
+                {participant.created_at && 
+                  format(new Date(participant.created_at), 'dd MMMM yyyy', { locale: fr })}
+              </TableCell>
+              <TableCell>
+                {participant.status === 'completed' ? 'Complété' : 'En cours'}
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteParticipantMutation.mutate(participant.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };
