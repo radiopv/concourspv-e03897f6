@@ -38,7 +38,7 @@ const QuestionDisplay = ({
 }: QuestionDisplayProps) => {
   const { toast } = useToast();
 
-  const handleSubmitClick = () => {
+  const handleSubmitClick = async () => {
     if (!selectedAnswer) {
       toast({
         title: "Sélectionnez une réponse",
@@ -49,7 +49,7 @@ const QuestionDisplay = ({
     }
 
     if (!isSubmitting && !hasAnswered) {
-      onSubmitAnswer();
+      await onSubmitAnswer();
     }
   };
 
