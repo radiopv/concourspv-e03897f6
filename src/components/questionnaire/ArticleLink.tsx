@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { BookOpen } from "lucide-react";
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from "@/hooks/use-toast";
 
 interface ArticleLinkProps {
   url: string;
@@ -10,53 +11,64 @@ interface ArticleLinkProps {
 }
 
 const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
-  const [hasClicked, setHasClicked] = useState(false);
-  const [readingTimer, setReadingTimer] = useState<number>(0);
-  const READING_TIME = 5; // 5 seconds minimum reading time
+  const isMobile = useIsMobile();
+  const { toast } = useToast();
 
-  useEffect(() => {
-    setHasClicked(false);
-    setReadingTimer(0);
-  }, [url]);
+  const handleArticleClick = () => {
+    if (isMobile) {
+      // Sur mobile, afficher un toast avec des instructions
+      toast({
+        title: "Lecture de l'article",
+        description: "L'article va s'ouvrir dans un nouvel onglet. N'oubliez pas de revenir ici pour répondre à la question ! 📱",
+        duration: 5000,
+      });
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (hasClicked && readingTimer < READING_TIME) {
-      interval = setInterval(() => {
-        setReadingTimer(prev => {
-          if (prev >= READING_TIME - 1) {
-            onArticleRead();
-            return READING_TIME;
-          }
-          return prev + 1;
+      // Ouvrir l'article dans un nouvel onglet
+      window.open(url, '_blank');
+      
+      // Afficher un deuxième toast après quelques secondes
+      setTimeout(() => {
+        toast({
+          title: "Rappel",
+          description: "Une fois votre lecture terminée, revenez sur cet onglet pour continuer le questionnaire ! 🎯",
+          duration: 5000,
         });
-      }, 1000);
+      }, 6000);
+    } else {
+      // Sur desktop, ouvrir dans une popup
+      const width = 800;
+      const height = 600;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+      
+      window.open(
+        url,
+        'Article',
+        `width=${width},height=${height},top=${top},left=${left}`
+      );
     }
-    return () => clearInterval(interval);
-  }, [hasClicked, readingTimer, onArticleRead]);
-
-  const handleClick = () => {
-    setHasClicked(true);
-    window.open(url, '_blank');
+    
+    onArticleRead();
   };
 
   return (
-    <Button
-      variant="outline"
-      className={cn(
-        "w-full flex items-center justify-center gap-2",
-        isRead && "bg-green-50"
+    <div className="space-y-2">
+      <Button
+        variant={isRead ? "outline" : "default"}
+        className="w-full flex items-center justify-center gap-2"
+        onClick={handleArticleClick}
+      >
+        <BookOpen className="w-5 h-5" />
+        {isRead ? "Relire l'article" : "Lire l'article"}
+        {isMobile && <span className="text-xs">(nouvel onglet)</span>}
+      </Button>
+      {isMobile && !isRead && (
+        <p className="text-sm text-muted-foreground text-center">
+          L'article s'ouvrira dans un nouvel onglet. 
+          N'oubliez pas de revenir ici après votre lecture !
+        </p>
       )}
-      onClick={handleClick}
-      disabled={hasClicked && readingTimer < READING_TIME}
-    >
-      <ExternalLink className="w-4 h-4" />
-      {hasClicked 
-        ? readingTimer < READING_TIME 
-          ? `Veuillez patienter ${READING_TIME - readingTimer} secondes...`
-          : "Article consulté ✓"
-        : "Lire l'article pour afficher la question complète"}
-    </Button>
+    </div>
   );
 };
 
