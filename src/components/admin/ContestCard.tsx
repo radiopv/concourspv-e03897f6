@@ -8,7 +8,7 @@ interface ContestCardProps {
   contest: {
     id: string;
     title: string;
-    description: string;
+    description?: string;
   };
 }
 
@@ -36,35 +36,56 @@ const ContestCard: React.FC<ContestCardProps> = ({ contest }) => {
         id: item.catalog_item?.id || '',
         name: item.catalog_item?.name || '',
         description: item.catalog_item?.description || '',
-        image_url: item.catalog_item?.image_url,
-        shop_url: item.catalog_item?.shop_url,
-        value: item.catalog_item?.value
+        image_url: item.catalog_item?.image_url || '',
+        shop_url: item.catalog_item?.shop_url || '',
+        value: item.catalog_item?.value || 0
       })) as Prize[];
     }
   });
 
   return (
-    <Card>
+    <Card className="bg-gradient-to-br from-amber-50 to-red-50 hover:shadow-xl transition-all duration-300 border-amber-200">
       <CardHeader>
-        <CardTitle>{contest.title}</CardTitle>
+        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-red-600 bg-clip-text text-transparent">
+          {contest.title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <p>{contest.description}</p>
+        <p className="text-gray-700">{contest.description}</p>
         {prizes && prizes.length > 0 && (
-          <div>
-            <h3>Prizes:</h3>
-            <ul>
+          <div className="mt-4">
+            <h3 className="text-xl font-semibold mb-4 text-amber-700">Prix à gagner:</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {prizes.map(prize => (
-                <li key={prize.id}>
-                  <a href={prize.shop_url} target="_blank" rel="noopener noreferrer">
-                    {prize.image_url && <img src={prize.image_url} alt={prize.name} />}
-                    <h4>{prize.name}</h4>
-                    {prize.description && <p>{prize.description}</p>}
-                    {prize.value && <p>Value: {prize.value}</p>}
+                <div key={prize.id} className="bg-white/50 backdrop-blur-sm p-4 rounded-lg hover:shadow-md transition-all">
+                  <a 
+                    href={prize.shop_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block space-y-2"
+                  >
+                    {prize.image_url && (
+                      <div className="aspect-video relative overflow-hidden rounded-lg">
+                        <img 
+                          src={prize.image_url} 
+                          alt={prize.name}
+                          className="object-cover w-full h-full transform hover:scale-105 transition-transform"
+                        />
+                      </div>
+                    )}
+                    <h4 className="font-semibold text-amber-800">{prize.name}</h4>
+                    {prize.description && (
+                      <p className="text-sm text-gray-600">{prize.description}</p>
+                    )}
+                    {prize.value && (
+                      <p className="text-amber-600 font-medium">
+                        Valeur: {prize.value}€
+                      </p>
+                    )}
                   </a>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
       </CardContent>

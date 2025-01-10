@@ -1,7 +1,7 @@
 import React from "react";
 import ContestCard from "../ContestCard";
 import { useContestMutations } from "../hooks/useContestMutations";
-import { Contest, ContestStatus, ContestStatusUpdate } from "@/types/contest";
+import { Contest } from "@/types/contest";
 
 interface ContestListGridProps {
   contests: Contest[];
@@ -29,13 +29,16 @@ const ContestListGrid: React.FC<ContestListGridProps> = ({ contests, onSelectCon
       {contests.map((contest) => (
         <ContestCard
           key={contest.id}
-          contest={contest}
+          contest={{
+            id: contest.id,
+            title: contest.title,
+            description: contest.description || ''
+          }}
           onSelect={() => onSelectContest(contest.id)}
           onDelete={(id) => deleteMutation.mutate(id)}
           onArchive={(id) => archiveMutation.mutate(id)}
           onFeatureToggle={(id, featured) => featureToggleMutation.mutate({ id, featured })}
-          onStatusUpdate={(id, updates: ContestStatusUpdate) => 
-            statusUpdateMutation.mutate({ id, updates })}
+          onStatusUpdate={(id, updates) => statusUpdateMutation.mutate({ id, updates })}
           onEdit={(id) => onSelectContest(id)}
         />
       ))}

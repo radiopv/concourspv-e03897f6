@@ -1,36 +1,32 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Award } from "lucide-react";
 import { RANKS } from "@/services/pointsService";
+import { motion } from "framer-motion";
 
 const RanksList = () => {
   return (
-    <Card className="tropical-card">
+    <Card className="bg-gradient-to-br from-amber-50 to-red-50 border-amber-200">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-amber-800">
-          <Award className="w-6 h-6 text-amber-500" />
-          Rangs et Avantages
+        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-red-600 bg-clip-text text-transparent">
+          Niveaux & Avantages
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4">
-          {RANKS.map((rank) => (
-            <div key={rank.rank} className="warm-gradient p-4 rounded-lg border border-amber-100">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold flex items-center gap-2 text-amber-800">
-                  <span className="text-2xl">{rank.badge}</span>
-                  {rank.rank}
-                </h3>
-                <span className="text-sm text-amber-700">
-                  {rank.minPoints} - {rank.maxPoints === Infinity ? "∞" : rank.maxPoints} points
-                </span>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {RANKS.map((rank, index) => (
+            <motion.div
+              key={rank.rank}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white/50 backdrop-blur-sm p-4 rounded-lg text-center hover:shadow-md transition-all"
+            >
+              <div className="text-2xl mb-2">{rank.badge}</div>
+              <div className="font-bold text-amber-800">{rank.rank}</div>
+              <div className="text-sm text-amber-600">
+                {rank.minPoints} pts
               </div>
-              <ul className="list-disc list-inside text-amber-800 space-y-1">
-                {rank.benefits.map((benefit, index) => (
-                  <li key={index}>{benefit}</li>
-                ))}
-              </ul>
-            </div>
+            </motion.div>
           ))}
         </div>
       </CardContent>
