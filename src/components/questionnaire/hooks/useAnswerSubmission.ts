@@ -40,6 +40,14 @@ export const useAnswerSubmission = (contestId: string) => {
       const currentAttempt = participant?.attempts || 0;
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
 
+      console.log('Submitting answer:', {
+        participationId,
+        questionId: currentQuestion.id,
+        answer: state.selectedAnswer,
+        isCorrect: isAnswerCorrect,
+        attemptNumber: currentAttempt
+      });
+
       // Vérifier si cette question a déjà été répondue correctement dans une tentative précédente
       const { data: previousAnswers } = await supabase
         .from('participant_answers')
@@ -54,7 +62,7 @@ export const useAnswerSubmission = (contestId: string) => {
       // Insérer la nouvelle réponse
       const { error: insertError } = await supabase
         .from('participant_answers')
-        .upsert({
+        .insert({
           participant_id: participationId,
           question_id: currentQuestion.id,
           answer: state.selectedAnswer,
