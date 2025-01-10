@@ -3,11 +3,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, X, Eye, EyeOff } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 
@@ -252,9 +253,23 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
               )}
               <div className="flex justify-between items-start mb-4">
                 <h3 className="font-semibold">{prize.name}</h3>
-                <Badge variant={prize.is_visible ? "default" : "secondary"}>
-                  {prize.is_visible ? "Public" : "Non public"}
-                </Badge>
+                <Select
+                  value={prize.is_visible ? "public" : "private"}
+                  onValueChange={(value) => 
+                    toggleVisibilityMutation.mutate({ 
+                      id: prize.id, 
+                      is_visible: value === "public" 
+                    })
+                  }
+                >
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Public</SelectItem>
+                    <SelectItem value="private">Privé</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               {prize.description && (
                 <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
@@ -264,28 +279,12 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
                   {prize.value ? `${prize.value}€` : 'Prix non défini'}
                 </span>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => toggleVisibilityMutation.mutate({ 
-                    id: prize.id, 
-                    is_visible: !prize.is_visible 
-                  })}
-                >
-                  {prize.is_visible ? (
-                    <>
-                      <EyeOff className="w-4 h-4 mr-2" />
-                      Masquer
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-4 h-4 mr-2" />
-                      Rendre public
-                    </>
-                  )}
-                </Button>
-              </div>
+              <button
+                onClick={() => deletePrizeMutation.mutate(prize.id)}
+                className="mt-4 w-full px-4 py-2 text-sm text-red-600 hover:text-red-800 border border-red-600 hover:border-red-800 rounded-md transition-colors"
+              >
+                Retirer ce prix
+              </button>
             </CardContent>
           </Card>
         ))}
