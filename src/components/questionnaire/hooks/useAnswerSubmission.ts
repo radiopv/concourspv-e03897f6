@@ -60,8 +60,6 @@ export const useAnswerSubmission = (contestId: string) => {
           answer: state.selectedAnswer,
           is_correct: isAnswerCorrect,
           attempt_number: currentAttempt
-        }, {
-          onConflict: 'participant_id,question_id,attempt_number'
         });
 
       if (insertError) {
