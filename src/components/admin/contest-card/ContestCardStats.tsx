@@ -9,6 +9,20 @@ interface ContestCardStatsProps {
 }
 
 const ContestCardStats = ({ participantsCount, questionsCount, endDate }: ContestCardStatsProps) => {
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date:', dateString);
+        return 'Date invalide';
+      }
+      return format(date, 'dd MMMM yyyy', { locale: fr });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Date invalide';
+    }
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
       <div>
@@ -21,7 +35,7 @@ const ContestCardStats = ({ participantsCount, questionsCount, endDate }: Contes
       </div>
       <div className="col-span-2">
         <p className="font-medium">Date de fin</p>
-        <p>{format(new Date(endDate), 'dd MMMM yyyy', { locale: fr })}</p>
+        <p>{formatDate(endDate)}</p>
       </div>
     </div>
   );

@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+
 interface ContestCardBadgesProps {
   isNew: boolean;
   hasBigPrizes: boolean;

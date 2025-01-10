@@ -1,5 +1,14 @@
 export type ContestStatus = 'draft' | 'active' | 'archived';
 
+export interface Prize {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
+  shop_url: string;
+  value: number;
+}
+
 export interface ContestStatusUpdate {
   is_new?: boolean;
   has_big_prizes?: boolean;
@@ -19,6 +28,7 @@ export interface Contest {
   has_big_prizes: boolean;
   participants?: { count: number };
   questions?: { count: number };
+  prizes?: Prize[];
   shop_url?: string;
   prize_image_url?: string;
 }
