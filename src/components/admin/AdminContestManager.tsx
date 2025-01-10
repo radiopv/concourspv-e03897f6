@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/lib/supabase";
 import ContestList from './ContestList';
 import EditContestForm from './EditContestForm';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const AdminContestManager = () => {
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
@@ -24,23 +24,29 @@ const AdminContestManager = () => {
   if (error) return <div>Error loading contests: {error.message}</div>;
 
   return (
-    <div>
+    <div className="space-y-6">
       <h1>Admin Contest Manager</h1>
+      
+      {selectedContestId && (
+        <Accordion type="single" collapsible className="w-full mb-6">
+          <AccordionItem value="edit-contest">
+            <AccordionTrigger>
+              Modifier le concours
+            </AccordionTrigger>
+            <AccordionContent>
+              <EditContestForm 
+                contestId={selectedContestId} 
+                onClose={() => setSelectedContestId(null)}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+
       <ContestList 
         contests={data} 
         onSelectContest={(id) => setSelectedContestId(id)}
       />
-
-      <Dialog open={!!selectedContestId} onOpenChange={() => setSelectedContestId(null)}>
-        <DialogContent className="max-w-4xl">
-          {selectedContestId && (
-            <EditContestForm 
-              contestId={selectedContestId} 
-              onClose={() => setSelectedContestId(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
