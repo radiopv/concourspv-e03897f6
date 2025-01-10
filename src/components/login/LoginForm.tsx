@@ -51,7 +51,7 @@ export const LoginForm = () => {
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
-      console.log("Tentative de connexion avec:", values.email); // Debug log
+      console.log("Tentative de connexion avec:", values.email);
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
@@ -59,7 +59,7 @@ export const LoginForm = () => {
       });
 
       if (error) {
-        console.error("Erreur de connexion:", error); // Debug log
+        console.error("Erreur de connexion:", error);
         let errorMessage = "Email ou mot de passe incorrect.";
         
         if (error.message.includes("Email not confirmed")) {
@@ -74,15 +74,29 @@ export const LoginForm = () => {
         return;
       }
 
-      console.log("Réponse de connexion:", data); // Debug log
-
       if (data?.user) {
+        // Fetch user role immediately after successful login
+        const { data: memberData, error: memberError } = await supabase
+          .from('members')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (memberError) {
+          console.error("Erreur lors de la récupération du rôle:", memberError);
+        }
+
+        console.log("Connexion réussie, rôle:", memberData?.role);
+
         toast({
           title: "Connexion réussie",
           description: "Bienvenue sur votre espace membre !",
         });
         
-        navigate("/dashboard", { replace: true });
+        // Force a small delay to ensure the role is properly set
+        setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 500);
       }
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
@@ -166,7 +180,7 @@ export const LoginForm = () => {
         <div className="flex flex-col space-y-4">
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
+            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
           >
             Se connecter
           </Button>
