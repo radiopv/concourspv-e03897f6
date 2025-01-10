@@ -73,7 +73,7 @@ const AdminRoutes = () => {
     <div className="space-y-6">
       <Routes>
         <Route path="/" element={<AdminDashboard />} />
-        <Route path="/contests/*" element={<AdminContestManager onContestSelect={handleContestSelect} />} />
+        <Route path="/contests" element={<AdminContestManager onContestSelect={handleContestSelect} />} />
         <Route path="/contests/:contestId/questions" element={<ContestQuestionsManager />} />
         <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
         <Route path="/questions" element={<QuestionBankManager />} />

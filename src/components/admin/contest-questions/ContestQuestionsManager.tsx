@@ -1,16 +1,18 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery } from "@tanstack/react-query";
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Check } from "lucide-react";
+import { Plus, Check, ArrowLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ContestQuestionsManager = () => {
   const { contestId } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ['question-bank'],
@@ -25,9 +27,11 @@ const ContestQuestionsManager = () => {
     }
   });
 
-  const { data: contestQuestions, isLoading: contestQuestionsLoading, refetch } = useQuery({
+  const { data: contestQuestions, isLoading: contestQuestionsLoading } = useQuery({
     queryKey: ['contest-questions', contestId],
     queryFn: async () => {
+      if (!contestId) throw new Error('Contest ID is required');
+      
       const { data, error } = await supabase
         .from('questions')
         .select('*')
@@ -35,13 +39,15 @@ const ContestQuestionsManager = () => {
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!contestId
   });
 
   const handleAddQuestion = async (questionBankId: string) => {
     try {
-      const questionToAdd = questions?.find(q => q.id === questionBankId);
+      if (!contestId) return;
       
+      const questionToAdd = questions?.find(q => q.id === questionBankId);
       if (!questionToAdd) return;
 
       const { error } = await supabase
@@ -62,7 +68,7 @@ const ContestQuestionsManager = () => {
         description: "Question ajoutée au concours",
       });
 
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
     } catch (error) {
       console.error('Error adding question:', error);
       toast({
@@ -87,7 +93,7 @@ const ContestQuestionsManager = () => {
         description: "Question retirée du concours",
       });
 
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
     } catch (error) {
       console.error('Error removing question:', error);
       toast({
@@ -110,7 +116,17 @@ const ContestQuestionsManager = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold mb-6">Gestion des Questions du Concours</h1>
+      <div className="flex items-center gap-4 mb-6">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Retour
+        </Button>
+        <h1 className="text-2xl font-bold">Gestion des Questions du Concours</h1>
+      </div>
       
       <div className="grid md:grid-cols-2 gap-6">
         {/* Questions disponibles */}
