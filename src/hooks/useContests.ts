@@ -24,29 +24,12 @@ export const useContests = () => {
 
       console.log('Fetching contests for user:', session.user.id);
 
-      // First get user's winning participations
-      const { data: winningContests } = await supabase
-        .from('participants')
-        .select('contest_id')
-        .eq('id', session.user.id)
-        .eq('status', 'WINNER');
-
-      const winningContestIds = winningContests?.map(p => p.contest_id) || [];
-      console.log('Winning contest IDs:', winningContestIds);
-
-      // Get contests excluding the ones the user has won
-      let query = supabase
+      // Get all active contests without filtering winners
+      const { data: contests, error: contestsError } = await supabase
         .from('contests')
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
-
-      // Only exclude winning contests if there are any
-      if (winningContestIds.length > 0) {
-        query = query.not('id', 'in', `(${winningContestIds.join(',')})`);
-      }
-
-      const { data: contests, error: contestsError } = await query;
 
       if (contestsError) {
         console.error('Error fetching contests:', contestsError);
