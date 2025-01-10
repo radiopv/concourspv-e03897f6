@@ -16,24 +16,27 @@ const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
 
   const handleArticleClick = () => {
     if (isMobile) {
-      // Sur mobile, afficher un toast avec des instructions
+      // Sur mobile, d'abord afficher le toast
       toast({
         title: "Lecture de l'article",
         description: "L'article va s'ouvrir dans un nouvel onglet. N'oubliez pas de revenir ici pour répondre à la question ! 📱",
         duration: 5000,
       });
 
-      // Ouvrir l'article dans un nouvel onglet
-      window.open(url, '_blank');
-      
-      // Afficher un deuxième toast après quelques secondes
+      // Attendre un court instant pour que l'utilisateur puisse lire le message
       setTimeout(() => {
-        toast({
-          title: "Rappel",
-          description: "Une fois votre lecture terminée, revenez sur cet onglet pour continuer le questionnaire ! 🎯",
-          duration: 5000,
-        });
-      }, 6000);
+        // Ouvrir l'article dans un nouvel onglet
+        window.open(url, '_blank');
+        
+        // Afficher un deuxième toast après quelques secondes
+        setTimeout(() => {
+          toast({
+            title: "Rappel",
+            description: "Une fois votre lecture terminée, revenez sur cet onglet pour continuer le questionnaire ! 🎯",
+            duration: 5000,
+          });
+        }, 6000);
+      }, 1500); // Délai de 1.5 secondes avant l'ouverture du lien
     } else {
       // Sur desktop, ouvrir dans une popup
       const width = 800;
