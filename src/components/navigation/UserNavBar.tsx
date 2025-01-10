@@ -1,79 +1,91 @@
-import { Link } from "react-router-dom";
-import { Gift, Home, Trophy, User } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Settings, LogOut, User, Trophy } from 'lucide-react';
+import UserPoints from './UserPoints';
 
-const UserNavBar = () => {
+interface UserNavBarProps {
+  isAdmin: boolean;
+}
+
+const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   return (
-    <nav className="bg-white shadow-sm">
+    <nav className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-lg">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="text-xl font-bold text-purple-600">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center space-x-4">
+            <Link to="/" className="flex items-center space-x-2 text-white hover:text-amber-100">
+              <Trophy className="h-6 w-6" />
+              <span className="font-bold text-lg">Concours</span>
+            </Link>
+            <div className="hidden md:flex space-x-4">
+              <Link to="/contests" className="text-white hover:text-amber-100">
                 Concours
               </Link>
-            </div>
-
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Link
-                to="/"
-                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-purple-600"
-              >
-                <Home className="h-4 w-4 mr-2" />
-                Accueil
+              <Link to="/winners" className="text-white hover:text-amber-100">
+                Gagnants
               </Link>
-
-              <Link
-                to="/contests"
-                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-purple-600"
-              >
-                <Trophy className="h-4 w-4 mr-2" />
-                Concours
+              <Link to="/points" className="text-white hover:text-amber-100">
+                Points
               </Link>
-
-              <Link
-                to="/prizes"
-                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-purple-600"
-              >
-                <Gift className="h-4 w-4 mr-2" />
-                Cadeaux à Gagner
-              </Link>
+              {isAdmin && (
+                <Link to="/admin" className="text-white hover:text-amber-100 font-semibold">
+                  Administration
+                </Link>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar_url || undefined} alt={user.email} />
-                      <AvatarFallback>
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
+              <>
+                <UserPoints />
+                <div className="hidden md:flex space-x-2">
+                  <Link to="/dashboard">
+                    <Button variant="ghost" className="text-white hover:text-amber-100">
+                      <User className="h-5 w-5 mr-2" />
+                      Profil
+                    </Button>
+                  </Link>
+                  {isAdmin && (
+                    <Link to="/admin">
+                      <Button variant="ghost" className="text-white hover:text-amber-100">
+                        <Settings className="h-5 w-5 mr-2" />
+                        Admin
+                      </Button>
+                    </Link>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    className="text-white hover:text-amber-100" 
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-5 w-5" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => signOut()}>
-                    Déconnexion
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </div>
+              </>
             ) : (
-              <Link to="/login">
-                <Button variant="ghost">Connexion</Button>
-              </Link>
+              <div className="space-x-2">
+                <Link to="/login">
+                  <Button variant="ghost" className="text-white hover:text-amber-100">
+                    Connexion
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button variant="ghost" className="text-white hover:text-amber-100">
+                    Inscription
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
         </div>
