@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Gift, Home, Trophy, User } from "lucide-react";
+import { Gift, Home, Trophy, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,13 +9,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { User } from "@supabase/supabase-js";
 
 interface UserNavBarProps {
   isAdmin?: boolean;
 }
 
+interface ExtendedUser extends User {
+  avatar_url?: string | null;
+}
+
 const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
   const { user, signOut } = useAuth();
+  const extendedUser = user as ExtendedUser;
 
   return (
     <nav className="bg-white shadow-sm">
@@ -56,14 +62,14 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
           </div>
 
           <div className="flex items-center">
-            {user ? (
+            {extendedUser ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar_url || undefined} alt={user.email} />
+                      <AvatarImage src={extendedUser.avatar_url || undefined} alt={extendedUser.email} />
                       <AvatarFallback>
-                        <User className="h-4 w-4" />
+                        <UserIcon className="h-4 w-4" />
                       </AvatarFallback>
                     </Avatar>
                   </Button>
