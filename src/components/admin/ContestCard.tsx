@@ -15,6 +15,7 @@ interface ContestCardProps {
   onFeatureToggle?: (id: string, featured: boolean) => void;
   onStatusUpdate?: (id: string, updates: any) => void;
   onEdit?: (id: string) => void;
+  onSelect?: (id: string) => void;
 }
 
 const ContestCard: React.FC<ContestCardProps> = ({ 
@@ -23,7 +24,8 @@ const ContestCard: React.FC<ContestCardProps> = ({
   onArchive,
   onFeatureToggle,
   onStatusUpdate,
-  onEdit
+  onEdit,
+  onSelect
 }) => {
   const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
