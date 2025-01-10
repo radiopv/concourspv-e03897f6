@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EditQuestionsList from './EditQuestionsList';
 import ContestBasicForm from './ContestBasicForm';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
 
 interface EditContestFormProps {
   contestId: string;
@@ -14,6 +16,7 @@ interface EditContestFormProps {
 
 const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
 
@@ -176,9 +179,20 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
               handleImageUpload={handleImageUpload}
               uploading={uploading}
             />
-            <Button type="submit" className="w-full">
-              Enregistrer les modifications
-            </Button>
+            <div className="flex gap-4">
+              <Button type="submit" className="flex-1">
+                Enregistrer les modifications
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => navigate(`/admin/contests/${contestId}/questions`)}
+                className="flex items-center gap-2"
+              >
+                <BookOpen className="w-4 h-4" />
+                Gérer les questions
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
