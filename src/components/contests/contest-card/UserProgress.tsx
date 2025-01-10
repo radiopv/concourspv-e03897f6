@@ -9,6 +9,9 @@ interface UserProgressProps {
 const UserProgress = ({ userParticipation, settings, remainingAttempts }: UserProgressProps) => {
   if (!userParticipation) return null;
 
+  // S'assurer que remainingAttempts n'est jamais négatif
+  const displayedAttempts = Math.max(0, remainingAttempts);
+
   return (
     <div className="mb-6 space-y-4 bg-gray-50 p-4 rounded-lg">
       <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
@@ -24,8 +27,8 @@ const UserProgress = ({ userParticipation, settings, remainingAttempts }: UserPr
         </div>
         <div className="bg-white p-3 rounded-lg">
           <p className="text-sm text-gray-600">Tentatives restantes</p>
-          <p className={`text-lg font-bold ${remainingAttempts > 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {remainingAttempts}
+          <p className={`text-lg font-bold ${displayedAttempts > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {displayedAttempts}
           </p>
         </div>
       </div>

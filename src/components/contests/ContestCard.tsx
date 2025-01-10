@@ -83,7 +83,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   });
 
   const remainingAttempts = settings?.default_attempts 
-    ? settings.default_attempts - (userParticipation?.attempts || 0)
+    ? Math.max(0, settings.default_attempts - (userParticipation?.attempts || 0))
     : 0;
 
   const mainPrize = prizes?.[0]?.prize_catalog;
