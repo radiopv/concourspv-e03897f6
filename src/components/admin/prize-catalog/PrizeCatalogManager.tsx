@@ -11,7 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { motion } from "framer-motion";
 
-const PrizeCatalogManager = () => {
+interface PrizeCatalogManagerProps {
+  contestId: string | null;
+}
+
+const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();

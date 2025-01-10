@@ -13,6 +13,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Contest } from "@/types/contest";
 import PrizeCatalogDisplay from './prize-catalog/PrizeCatalogDisplay';
 
+interface Prize {
+  id: string;
+  name: string;
+  description?: string;
+  value?: number;
+  image_url?: string;
+  shop_url?: string;
+}
+
 interface ContestCardProps {
   contest: Contest;
   onDelete: (id: string) => void;
@@ -76,7 +85,7 @@ const ContestCard = ({
         .eq('contest_id', contest.id);
       
       if (error) throw error;
-      return data?.map(prize => prize.catalog_item) || [];
+      return data?.map(prize => prize.catalog_item) as Prize[] || [];
     }
   });
 
