@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash2, List } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ContestCardProps {
   contest: {
@@ -20,6 +24,8 @@ interface ContestCardProps {
 
 const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const getStatusColor = (status?: string) => {
     switch (status) {
@@ -47,13 +53,52 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('contests')
+        .update({ status: newStatus })
+        .eq('id', contest.id);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['contests'] });
+      
+      toast({
+        title: "Statut mis à jour",
+        description: `Le concours est maintenant ${getStatusLabel(newStatus).toLowerCase()}`,
+      });
+    } catch (error) {
+      console.error('Error updating contest status:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-xl font-bold">{contest.title}</CardTitle>
-        <Badge className={getStatusColor(contest.status)}>
-          {getStatusLabel(contest.status)}
-        </Badge>
+        <Select
+          defaultValue={contest.status}
+          onValueChange={handleStatusChange}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue>
+              <Badge className={getStatusColor(contest.status)}>
+                {getStatusLabel(contest.status)}
+              </Badge>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="draft">Brouillon</SelectItem>
+            <SelectItem value="active">Actif</SelectItem>
+            <SelectItem value="archived">Archivé</SelectItem>
+          </SelectContent>
+        </Select>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">{contest.description}</p>
