@@ -8,18 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
+import ParticipantInfo from './participants/ParticipantInfo';
 
 interface ContestCardProps {
   contest: {
     id: string;
     title: string;
     description?: string;
-    start_date: string;
-    end_date: string;
     status?: string;
+    participants_count?: number;
+    questions_count?: number;
   };
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
@@ -78,6 +79,19 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
     }
   };
 
+  // Get the current user's ID from Supabase session
+  const [userId, setUserId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+      }
+    };
+    getSession();
+  }, []);
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -102,31 +116,49 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">{contest.description}</p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(contest.id)}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Modifier
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/admin/contests/${contest.id}/questions`)}
-          >
-            <List className="w-4 h-4 mr-2" />
-            Questions
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => onDelete(contest.id)}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Supprimer
-          </Button>
+        <div className="flex flex-col space-y-4">
+          <div className="flex justify-between text-sm">
+            <span>Participants: {contest.participants_count || 0}</span>
+            <span>Questions: {contest.questions_count || 0}</span>
+          </div>
+          
+          {userId && (
+            <ParticipantInfo 
+              userId={userId} 
+              contestId={contest.id}
+            />
+          )}
+
+          <div className="flex justify-end space-x-2">
+            {onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(contest.id)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Modifier
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/admin/contests/${contest.id}/participants`)}
+            >
+              <List className="h-4 w-4 mr-2" />
+              Participants
+            </Button>
+            {onDelete && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => onDelete(contest.id)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Supprimer
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
