@@ -21,68 +21,27 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
     setIsLoading(true);
 
     try {
-      // Tentative de connexion
-      let authSession = null;
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (signInError) {
-        // Si la connexion échoue, on essaie de créer le compte
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+      if (signInError) throw signInError;
 
-        if (signUpError) throw signUpError;
-        
-        if (!signUpData.session) {
-          toast({
-            title: "Vérifiez vos emails",
-            description: "Un email de confirmation vous a été envoyé.",
-          });
-          return;
-        }
-
-        authSession = signUpData.session;
-      } else {
-        authSession = signInData.session;
+      if (!session?.user) {
+        throw new Error("No user session found");
       }
 
-      if (!authSession?.user) {
-        throw new Error("Aucune session utilisateur trouvée");
-      }
-
-      console.log("Checking admin role for user:", authSession.user.id);
-
-      // Vérification du rôle admin
       const { data: member, error: memberError } = await supabase
         .from('members')
         .select('role')
-        .eq('id', authSession.user.id)
-        .maybeSingle();
+        .eq('id', session.user.id)
+        .single();
 
-      if (memberError) {
-        console.error("Error checking member role:", memberError);
-        throw memberError;
-      }
+      if (memberError) throw memberError;
 
-      if (!member) {
-        console.log("Member not found, creating with admin role");
-        const { error: createError } = await supabase
-          .from('members')
-          .insert([{
-            id: authSession.user.id,
-            email: authSession.user.email,
-            first_name: 'Admin',
-            last_name: 'User',
-            role: 'admin'
-          }]);
-
-        if (createError) throw createError;
-      } else if (member.role !== 'admin') {
-        throw new Error("Non autorisé : Accès administrateur requis");
+      if (member?.role !== 'admin') {
+        throw new Error("Unauthorized: Admin access required");
       }
 
       onAuthenticated();

@@ -15,55 +15,28 @@ const Admin = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        setIsLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
-        
         if (!session) {
-          console.log("No session found");
           setIsAuthenticated(false);
+          navigate('/login');
           return;
         }
 
-        console.log("Checking admin rights for:", session.user.email);
-        
-        // Vérification explicite du rôle admin
-        const { data: member, error: memberError } = await supabase
+        const { data: member } = await supabase
           .from('members')
           .select('role')
           .eq('id', session.user.id)
           .single();
 
-        if (memberError) {
-          console.error("Error checking member role:", memberError);
-          throw memberError;
-        }
-
-        if (!member) {
-          console.log("Creating admin member for:", session.user.email);
-          // Création automatique du membre admin
-          const { error: createError } = await supabase
-            .from('members')
-            .insert([{
-              id: session.user.id,
-              email: session.user.email,
-              first_name: 'Admin',
-              last_name: 'User',
-              role: 'admin'
-            }]);
-
-          if (createError) throw createError;
+        if (member?.role === 'admin') {
           setIsAuthenticated(true);
         } else {
-          console.log("Member role found:", member.role);
-          setIsAuthenticated(member.role === 'admin');
-          
-          if (member.role !== 'admin') {
-            toast({
-              title: "Accès refusé",
-              description: "Vous n'avez pas les droits d'administration nécessaires.",
-              variant: "destructive",
-            });
-          }
+          toast({
+            title: "Accès refusé",
+            description: "Vous n'avez pas les droits d'administration nécessaires.",
+            variant: "destructive",
+          });
+          navigate('/');
         }
       } catch (error) {
         console.error('Error checking auth:', error);
@@ -72,7 +45,6 @@ const Admin = () => {
           description: "Une erreur est survenue lors de la vérification des droits d'accès",
           variant: "destructive",
         });
-        setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
       }

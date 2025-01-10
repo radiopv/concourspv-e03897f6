@@ -50,19 +50,6 @@ export const calculateExtraParticipations = (points: number): number => {
 export const initializeUserPoints = async (userId: string) => {
   console.log('Initializing user points for:', userId);
   try {
-    // Vérifie d'abord si les points existent déjà
-    const { data: existingPoints } = await supabase
-      .from('user_points')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (existingPoints) {
-      console.log('Points already initialized for user:', userId);
-      return existingPoints;
-    }
-
-    // Si les points n'existent pas, on les initialise
     const { data, error } = await supabase
       .from('user_points')
       .insert({
@@ -92,23 +79,19 @@ export const initializeUserPoints = async (userId: string) => {
 export const getUserPoints = async (userId: string) => {
   try {
     console.log('Getting user points for:', userId);
-    
-    // Utilise maybeSingle() au lieu de single() pour éviter l'erreur 406
     const { data, error } = await supabase
       .from('user_points')
       .select('*')
       .eq('user_id', userId)
-      .maybeSingle();
+      .single();
 
     if (error) {
+      if (error.code === 'PGRST116') {
+        console.log('No points record found, initializing...');
+        return await initializeUserPoints(userId);
+      }
       console.error('Error getting user points:', error);
       throw error;
-    }
-
-    // Si aucun point n'existe, initialise les points
-    if (!data) {
-      console.log('No points found, initializing...');
-      return await initializeUserPoints(userId);
     }
 
     console.log('User points retrieved successfully:', data);
@@ -141,17 +124,18 @@ export const awardPoints = async (
 
     if (historyError) throw historyError;
 
-    // Récupère les points actuels de l'utilisateur
-    const { data: currentPoints } = await supabase
+    // Mettre à jour les points totaux de l'utilisateur
+    const { data: userData, error: userError } = await supabase
       .from('user_points')
       .select('total_points, best_streak')
       .eq('user_id', userId)
-      .maybeSingle();
+      .single();
 
-    const newTotalPoints = (currentPoints?.total_points || 0) + points;
-    const newBestStreak = Math.max(currentPoints?.best_streak || 0, streak);
+    if (userError && userError.code !== 'PGRST116') throw userError;
 
-    // Met à jour ou crée les points de l'utilisateur
+    const newTotalPoints = (userData?.total_points || 0) + points;
+    const newBestStreak = Math.max(userData?.best_streak || 0, streak);
+
     const { error: updateError } = await supabase
       .from('user_points')
       .upsert({
