@@ -7,6 +7,7 @@ import GlobalSettings from './GlobalSettings';
 import EditQuestionsList from './EditQuestionsList';
 import UserManager from './users/UserManager';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
+import QuestionBankManager from './question-bank/QuestionBankManager';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -73,7 +74,7 @@ const AdminRoutes = () => {
         <Route path="/" element={<AdminDashboard />} />
         <Route path="/contests/*" element={<AdminContestManager onContestSelect={handleContestSelect} />} />
         <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
-        <Route path="/questions" element={<EditQuestionsList contestId={null} />} />
+        <Route path="/questions" element={<QuestionBankManager />} />
         <Route path="/users" element={<UserManager />} />
         <Route path="/settings" element={<GlobalSettings />} />
         <Route path="/content" element={<ContentValidator />} />
