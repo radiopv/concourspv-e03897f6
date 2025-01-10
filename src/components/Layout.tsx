@@ -7,6 +7,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Grid, Users, Settings, Database, Edit, Gift } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -17,16 +18,31 @@ const Layout = ({ children }: LayoutProps) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isAdmin, setIsAdmin] = React.useState(false);
 
-  console.log("Current user:", user); // Debug log
-  console.log("Current user role:", user?.role); // Debug log
+  React.useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!user) return;
 
-  // Strict check for admin role
-  const isAdmin = user?.role === 'admin';
+      const { data: memberData, error } = await supabase
+        .from('members')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error checking admin role:', error);
+        return;
+      }
+
+      console.log('Member data:', memberData);
+      setIsAdmin(memberData?.role === 'admin');
+    };
+
+    checkAdminRole();
+  }, [user]);
+
   const isAdminRoute = location.pathname.startsWith('/admin');
-
-  console.log("Is admin?", isAdmin); // Debug log
-  console.log("Is admin route?", isAdminRoute); // Debug log
 
   const adminLinks = [
     { icon: Grid, label: 'Dashboard', path: '/admin' },
@@ -40,7 +56,7 @@ const Layout = ({ children }: LayoutProps) => {
   // If not admin and trying to access admin route, redirect to home
   React.useEffect(() => {
     if (!isAdmin && isAdminRoute) {
-      console.log("Redirecting non-admin user from admin route"); // Debug log
+      console.log("Redirecting non-admin user from admin route");
       navigate('/');
     }
   }, [isAdmin, isAdminRoute, navigate]);
