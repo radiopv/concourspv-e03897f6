@@ -26,6 +26,9 @@ export interface Contest {
   is_featured: boolean;
   is_new: boolean;
   has_big_prizes: boolean;
+  is_exclusive: boolean;
+  is_limited: boolean;
+  is_vip: boolean;
   participants?: { count: number };
   questions?: { count: number };
   prizes?: Prize[];

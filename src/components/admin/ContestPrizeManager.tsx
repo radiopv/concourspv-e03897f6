@@ -3,13 +3,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
-import { ExternalLink, Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ExternalLink, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PrizeCatalogDialog } from "./prize/PrizeCatalogDialog";
 
 interface ContestPrizeManagerProps {
   contestId: string;

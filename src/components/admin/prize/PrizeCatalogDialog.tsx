@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Award } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +36,7 @@ export const PrizeCatalogDialog = ({ onSelectPrize }: PrizeCatalogDialogProps) =
     <Dialog>
       <DialogTrigger asChild>
         <Button className="tropical-button w-full">
-          <Plus className="w-4 h-4 mr-2" />
+          <Award className="w-4 h-4 mr-2" />
           Ajouter un prix du catalogue
         </Button>
       </DialogTrigger>
