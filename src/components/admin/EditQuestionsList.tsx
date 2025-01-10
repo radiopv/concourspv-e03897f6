@@ -7,6 +7,13 @@ import { Plus, Loader } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import QuestionBankSelector from './question-bank/QuestionBankSelector';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 interface EditQuestionsListProps {
   contestId: string | null;
@@ -15,6 +22,7 @@ interface EditQuestionsListProps {
 const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { toast } = useToast();
   const [editingQuestionId, setEditingQuestionId] = React.useState<string | null>(null);
+  const [selectedQuestions, setSelectedQuestions] = React.useState<string[]>([]);
   const [newQuestion, setNewQuestion] = React.useState({
     question_text: "",
     options: ["", "", "", ""],
@@ -130,29 +138,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     }
   };
 
-  const handleImageUpload = async (file: File) => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `questions/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('questions')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('questions')
-        .getPublicUrl(filePath);
-
-      return publicUrl;
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      throw error;
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -164,111 +149,138 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
 
   return (
     <div className="space-y-6 p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Ajouter une question</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <Label>Question</Label>
-              <Input
-                value={newQuestion.question_text}
-                onChange={(e) => setNewQuestion(prev => ({
-                  ...prev,
-                  question_text: e.target.value
-                }))}
-                placeholder="Entrez votre question"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Options</Label>
-              {newQuestion.options.map((option, index) => (
-                <Input
-                  key={index}
-                  value={option}
-                  onChange={(e) => {
-                    const newOptions = [...newQuestion.options];
-                    newOptions[index] = e.target.value;
-                    setNewQuestion(prev => ({
-                      ...prev,
-                      options: newOptions
-                    }));
-                  }}
-                  placeholder={`Option ${index + 1}`}
-                />
-              ))}
-            </div>
-
-            <div>
-              <Label>Réponse correcte</Label>
-              <Input
-                value={newQuestion.correct_answer}
-                onChange={(e) => setNewQuestion(prev => ({
-                  ...prev,
-                  correct_answer: e.target.value
-                }))}
-                placeholder="Entrez la réponse correcte"
-              />
-            </div>
-
-            <div>
-              <Label>Lien de l'article (optionnel)</Label>
-              <Input
-                value={newQuestion.article_url}
-                onChange={(e) => setNewQuestion(prev => ({
-                  ...prev,
-                  article_url: e.target.value
-                }))}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div>
-              <Label>Image de la question (optionnel)</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    try {
-                      const imageUrl = await handleImageUpload(file);
-                      setNewQuestion(prev => ({
-                        ...prev,
-                        image_url: imageUrl
-                      }));
-                      toast({
-                        title: "Succès",
-                        description: "Image téléchargée avec succès",
-                      });
-                    } catch (error) {
-                      toast({
-                        title: "Erreur",
-                        description: "Impossible de télécharger l'image",
-                        variant: "destructive",
-                      });
-                    }
-                  }
+      <Tabs defaultValue="bank" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="bank">Banque de questions</TabsTrigger>
+          <TabsTrigger value="manual">Ajout manuel</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="bank" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sélectionner des questions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <QuestionBankSelector
+                contestId={contestId || ''}
+                onQuestionSelect={(questionId) => {
+                  setSelectedQuestions([...selectedQuestions, questionId]);
+                  refetch();
                 }}
+                selectedQuestions={selectedQuestions}
               />
-              {newQuestion.image_url && (
-                <img
-                  src={newQuestion.image_url}
-                  alt="Preview"
-                  className="mt-2 max-h-40 rounded-lg"
-                />
-              )}
-            </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <Button onClick={handleAddQuestion} className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter la question
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="manual">
+          <Card>
+            <CardHeader>
+              <CardTitle>Ajouter une question manuellement</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label>Question</Label>
+                  <Input
+                    value={newQuestion.question_text}
+                    onChange={(e) => setNewQuestion(prev => ({
+                      ...prev,
+                      question_text: e.target.value
+                    }))}
+                    placeholder="Entrez votre question"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Options</Label>
+                  {newQuestion.options.map((option, index) => (
+                    <Input
+                      key={index}
+                      value={option}
+                      onChange={(e) => {
+                        const newOptions = [...newQuestion.options];
+                        newOptions[index] = e.target.value;
+                        setNewQuestion(prev => ({
+                          ...prev,
+                          options: newOptions
+                        }));
+                      }}
+                      placeholder={`Option ${index + 1}`}
+                    />
+                  ))}
+                </div>
+
+                <div>
+                  <Label>Réponse correcte</Label>
+                  <Input
+                    value={newQuestion.correct_answer}
+                    onChange={(e) => setNewQuestion(prev => ({
+                      ...prev,
+                      correct_answer: e.target.value
+                    }))}
+                    placeholder="Entrez la réponse correcte"
+                  />
+                </div>
+
+                <div>
+                  <Label>Lien de l'article (optionnel)</Label>
+                  <Input
+                    value={newQuestion.article_url}
+                    onChange={(e) => setNewQuestion(prev => ({
+                      ...prev,
+                      article_url: e.target.value
+                    }))}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div>
+                  <Label>Image de la question (optionnel)</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const imageUrl = await handleImageUpload(file);
+                          setNewQuestion(prev => ({
+                            ...prev,
+                            image_url: imageUrl
+                          }));
+                          toast({
+                            title: "Succès",
+                            description: "Image téléchargée avec succès",
+                          });
+                        } catch (error) {
+                          toast({
+                            title: "Erreur",
+                            description: "Impossible de télécharger l'image",
+                            variant: "destructive",
+                          });
+                        }
+                      }
+                    }}
+                  />
+                  {newQuestion.image_url && (
+                    <img
+                      src={newQuestion.image_url}
+                      alt="Preview"
+                      className="mt-2 max-h-40 rounded-lg"
+                    />
+                  )}
+                </div>
+
+                <Button onClick={handleAddQuestion} className="w-full">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter la question
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <div className="space-y-4">
         {questions?.map((question) => (
