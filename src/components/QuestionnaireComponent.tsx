@@ -58,29 +58,53 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           return;
         }
 
-        const participation_id = crypto.randomUUID();
-
-        // Upsert participant with ON CONFLICT handling
-        const { error: upsertError } = await supabase
+        // First, check if participant exists
+        const { data: existingParticipant } = await supabase
           .from('participants')
-          .upsert({
-            id: session.session.user.id,
-            contest_id: contestId,
-            status: 'pending',
-            attempts: 0,
-            score: 0,
-            first_name: userProfile.first_name,
-            last_name: userProfile.last_name,
-            email: userProfile.email,
-            participation_id: participation_id
-          }, {
-            onConflict: 'id,contest_id',
-            ignoreDuplicates: false
-          });
+          .select('participation_id')
+          .eq('id', session.session.user.id)
+          .eq('contest_id', contestId)
+          .maybeSingle();
 
-        if (upsertError) {
-          console.error('Error upserting participant:', upsertError);
-          throw upsertError;
+        // If participant exists, update their record
+        if (existingParticipant?.participation_id) {
+          const { error: updateError } = await supabase
+            .from('participants')
+            .update({
+              status: 'pending',
+              attempts: 0,
+              score: 0,
+              first_name: userProfile.first_name,
+              last_name: userProfile.last_name,
+              email: userProfile.email
+            })
+            .eq('participation_id', existingParticipant.participation_id);
+
+          if (updateError) {
+            console.error('Error updating participant:', updateError);
+            throw updateError;
+          }
+        } else {
+          // If participant doesn't exist, create a new record
+          const participation_id = crypto.randomUUID();
+          const { error: insertError } = await supabase
+            .from('participants')
+            .insert({
+              participation_id,
+              id: session.session.user.id,
+              contest_id: contestId,
+              status: 'pending',
+              attempts: 0,
+              score: 0,
+              first_name: userProfile.first_name,
+              last_name: userProfile.last_name,
+              email: userProfile.email
+            });
+
+          if (insertError) {
+            console.error('Error inserting participant:', insertError);
+            throw insertError;
+          }
         }
         
         console.log('Participant initialized successfully');
@@ -226,6 +250,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       </CardContent>
     </Card>
   );
+
 };
 
 export default QuestionnaireComponent;
