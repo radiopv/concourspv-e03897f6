@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Gift, Home, Trophy, User as UserIcon } from "lucide-react";
+import { Gift, Home, Trophy, User as UserIcon, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -58,6 +58,16 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                 <Gift className="h-4 w-4 mr-2" />
                 Cadeaux à Gagner
               </Link>
+
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-purple-600"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Administration
+                </Link>
+              )}
             </div>
           </div>
 
