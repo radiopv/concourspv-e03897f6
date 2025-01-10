@@ -50,6 +50,16 @@ const QuestionDisplay = ({
         {hasClickedLink ? questionText : getPartialQuestion(questionText)}
       </p>
       
+      {articleUrl && !hasClickedLink && (
+        <Alert className="bg-yellow-100 border-yellow-300">
+          <InfoIcon className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-800 font-medium">
+            Une fois l'article ouvert, prenez le temps de le lire. 
+            La question apparaîtra automatiquement dans quelques secondes.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {articleUrl && (
         <ArticleLink
           url={articleUrl}
