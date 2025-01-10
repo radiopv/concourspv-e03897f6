@@ -26,11 +26,15 @@ const AdminRoutes = () => {
     return <Navigate to="/" replace />;
   }
 
+  const handleContestSelect = (id: string) => {
+    console.log("Contest selected:", id);
+  };
+
   return (
     <div className="space-y-6">
       <Routes>
         <Route path="/" element={<AdminDashboard />} />
-        <Route path="/contests/*" element={<AdminContestManager />} />
+        <Route path="/contests/*" element={<AdminContestManager onContestSelect={handleContestSelect} />} />
         <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
         <Route path="/questions" element={<QuestionBank />} />
         <Route path="/users" element={<UserManager />} />

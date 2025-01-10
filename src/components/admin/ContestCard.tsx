@@ -70,7 +70,7 @@ const ContestCard: React.FC<ContestCardProps> = ({
           <div className="mt-4">
             <h3 className="text-xl font-semibold mb-4 text-amber-700">Prix à gagner:</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {prizes.map((prize) => (
+              {prizes.map((prize: Prize) => (
                 <div key={prize.id} className="bg-white/50 backdrop-blur-sm p-4 rounded-lg hover:shadow-md transition-all">
                   <a 
                     href={prize.shop_url} 
