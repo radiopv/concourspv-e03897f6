@@ -1,4 +1,4 @@
-import { Home, Settings, User, Shield } from "lucide-react";
+import { Home, Settings, User, Shield, Gift, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -23,8 +23,16 @@ const MobileNavBar = () => {
           to="/contests" 
           className="flex flex-col items-center text-gray-600 hover:text-gray-900"
         >
-          <Settings className="h-6 w-6" />
+          <Trophy className="h-6 w-6" />
           <span className="text-xs mt-1">Concours</span>
+        </Link>
+
+        <Link 
+          to="/prizes" 
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
+        >
+          <Gift className="h-6 w-6" />
+          <span className="text-xs mt-1">Prix</span>
         </Link>
 
         {isAdmin && (
