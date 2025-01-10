@@ -110,7 +110,7 @@ const Instructions = () => {
           </CardHeader>
           <CardContent className="text-center text-gray-600">
             <p className="mb-4">
-              Le concours est exclusivement réservé aux résidents des provinces suivantes :
+              Le concours est exclusivement réservé aux résidents canadiens des provinces suivantes :
             </p>
             <div className="flex justify-center gap-8">
               <div className="text-center">
