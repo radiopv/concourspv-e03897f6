@@ -60,6 +60,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     }
   }, [participant, navigate, questions?.length, contestId]);
 
+  useEffect(() => {
     const initializeParticipant = async () => {
       try {
         const { data: session } = await supabase.auth.getSession();
