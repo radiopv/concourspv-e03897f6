@@ -20,7 +20,7 @@ const QuizCompletion = () => {
   const numericScore = typeof score === 'number' ? score : 0;
   const numericTotalQuestions = typeof totalQuestions === 'number' ? totalQuestions : 0;
   
-  // Calculer le nombre de bonnes réponses
+  // Calculer le nombre de bonnes réponses en fonction du score
   const correctAnswers = Math.round((numericScore / 100) * numericTotalQuestions);
   
   const isQualified = numericScore >= requiredPercentage;
