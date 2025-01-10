@@ -5,32 +5,32 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
   try {
     console.log('Checking participant existence for user:', userId, 'contest:', contestId);
     
-    // Vérifie si l'utilisateur participe déjà à ce concours
-    const { data: existingParticipant, error: fetchError } = await supabase
+    // First check if participant exists
+    const { data: existingParticipants, error: fetchError } = await supabase
       .from('participants')
       .select('participation_id, attempts')
       .eq('id', userId)
-      .eq('contest_id', contestId)
-      .maybeSingle();
+      .eq('contest_id', contestId);
 
     if (fetchError) {
       console.error('Error checking participant:', fetchError);
       throw fetchError;
     }
 
-    if (existingParticipant) {
-      console.log('Found existing participant:', existingParticipant);
-      return existingParticipant.participation_id;
+    // If participant exists, return their participation_id
+    if (existingParticipants && existingParticipants.length > 0) {
+      console.log('Found existing participant:', existingParticipants[0]);
+      return existingParticipants[0].participation_id;
     }
 
-    // Récupère l'email de l'utilisateur depuis la session auth
+    // Get user email from auth session
     const { data: { session } } = await supabase.auth.getSession();
     const userEmail = session?.user?.email || 'anonymous@user.com';
 
-    // Génère un nouveau UUID pour participation_id
+    // Generate a new UUID for participation_id
     const participation_id = crypto.randomUUID();
 
-    // Crée une nouvelle participation
+    // Create new participant
     const { data: newParticipant, error: insertError } = await supabase
       .from('participants')
       .insert([{
