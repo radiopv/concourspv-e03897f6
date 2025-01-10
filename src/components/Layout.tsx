@@ -17,7 +17,6 @@ const Layout = ({ children }: LayoutProps) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  // Vérifier si l'utilisateur est administrateur
   const isAdmin = user?.role === 'admin';
 
   const adminLinks = [
@@ -35,14 +34,14 @@ const Layout = ({ children }: LayoutProps) => {
       
       {/* Menu d'administration */}
       {isAdmin && (
-        <div className="bg-white shadow sticky top-0 z-50">
+        <div className="bg-white/80 backdrop-blur-sm shadow-md sticky top-0 z-50 border-b border-amber-100/20">
           <div className="container mx-auto px-4">
             <div className="flex items-center space-x-4 overflow-x-auto py-4">
               {adminLinks.map((link) => (
                 <Button
                   key={link.path}
                   variant="ghost"
-                  className="flex items-center gap-2 whitespace-nowrap hover:bg-amber-100"
+                  className="flex items-center gap-2 whitespace-nowrap hover:bg-amber-100 transition-colors"
                   onClick={() => navigate(link.path)}
                 >
                   <link.icon className="h-4 w-4" />

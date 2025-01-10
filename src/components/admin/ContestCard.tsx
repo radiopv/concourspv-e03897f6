@@ -72,7 +72,6 @@ const ContestCard = ({
       const { data, error } = await supabase
         .from('prizes')
         .select(`
-          id,
           catalog_item:prize_catalog (
             id,
             name,
@@ -85,7 +84,14 @@ const ContestCard = ({
         .eq('contest_id', contest.id);
       
       if (error) throw error;
-      return data?.map(prize => prize.catalog_item) as Prize[] || [];
+      return data?.map(item => ({
+        id: item.catalog_item.id,
+        name: item.catalog_item.name,
+        description: item.catalog_item.description,
+        image_url: item.catalog_item.image_url,
+        shop_url: item.catalog_item.shop_url,
+        value: item.catalog_item.value
+      })) as Prize[] || [];
     }
   });
 
