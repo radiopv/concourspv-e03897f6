@@ -16,14 +16,9 @@ const QuizCompletion = () => {
     requiredPercentage: 90
   };
 
-  // S'assurer que le score est un nombre valide
-  const numericScore = typeof score === 'number' ? score : 0;
-  const numericTotalQuestions = typeof totalQuestions === 'number' ? totalQuestions : 0;
-  
-  // Calculer le nombre exact de bonnes réponses
-  const correctAnswers = Math.floor((numericScore / 100) * numericTotalQuestions);
-  
-  const isQualified = numericScore >= requiredPercentage;
+  // Calcul simple et direct du nombre de bonnes réponses
+  const correctAnswers = Math.round((score / 100) * totalQuestions);
+  const isQualified = score >= requiredPercentage;
 
   const handleRetry = () => {
     if (!contestId) {
@@ -70,7 +65,7 @@ const QuizCompletion = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-amber-600">{numericScore}%</p>
+              <p className="text-3xl font-bold text-amber-600">{score}%</p>
             </CardContent>
           </Card>
         </motion.div>
@@ -89,7 +84,7 @@ const QuizCompletion = () => {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold text-purple-600">
-                {correctAnswers}/{numericTotalQuestions}
+                {correctAnswers}/{totalQuestions}
               </p>
             </CardContent>
           </Card>
@@ -122,11 +117,6 @@ const QuizCompletion = () => {
         transition={{ delay: 0.5 }}
         className="text-center space-y-4"
       >
-        <p className="text-lg text-gray-600">
-          {isQualified 
-            ? "Bravo ! Vous êtes qualifié pour le tirage au sort !"
-            : `Le score minimum requis est de ${requiredPercentage}%. N'hésitez pas à réessayer !`}
-        </p>
         <div className="space-x-4">
           {!isQualified && (
             <Button

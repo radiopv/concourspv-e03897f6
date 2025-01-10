@@ -15,49 +15,27 @@ export const calculateFinalScore = async (participantId: string) => {
       throw answersError;
     }
 
-    console.log('Retrieved answers:', answers);
-
     if (!answers || answers.length === 0) {
       console.log('No answers found, returning 0');
       return 0;
     }
 
-    // Compter le nombre de réponses correctes
+    // Compter simplement le nombre de réponses correctes
     const correctAnswers = answers.filter(answer => answer.is_correct === true).length;
     const totalQuestions = answers.length;
     
-    console.log('Score calculation details:', {
-      correctAnswers,
-      totalQuestions,
-      percentage: Math.round((correctAnswers / totalQuestions) * 100)
-    });
-
-    // Calculer le pourcentage exact
+    // Calcul simple : (nombre de bonnes réponses / nombre total de questions) * 100
     const score = Math.round((correctAnswers / totalQuestions) * 100);
     
-    console.log('Final calculated score:', score);
+    console.log('Score calculation:', {
+      correctAnswers,
+      totalQuestions,
+      score
+    });
     
     return score;
   } catch (error) {
     console.error('Error calculating final score:', error);
     return 0;
-  }
-};
-
-export const completeQuestionnaire = async (participantId: string, finalScore: number) => {
-  console.log('Completing questionnaire for participant:', participantId, 'with score:', finalScore);
-  
-  const { error } = await supabase
-    .from('participants')
-    .update({
-      status: 'completed',
-      score: finalScore,
-      completed_at: new Date().toISOString()
-    })
-    .eq('participation_id', participantId);
-
-  if (error) {
-    console.error('Error completing questionnaire:', error);
-    throw error;
   }
 };
