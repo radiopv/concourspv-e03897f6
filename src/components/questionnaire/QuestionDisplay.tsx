@@ -45,10 +45,23 @@ const QuestionDisplay = ({
   };
 
   const handleSubmitClick = React.useCallback(() => {
+    console.log('Submit button clicked with state:', {
+      selectedAnswer,
+      hasAnswered,
+      isSubmitting,
+      hasClickedLink
+    });
+
     if (!isSubmitting && !hasAnswered) {
+      console.log('Conditions met, submitting answer');
       onSubmitAnswer();
+    } else {
+      console.log('Submit blocked because:', {
+        isSubmitting,
+        hasAnswered
+      });
     }
-  }, [isSubmitting, hasAnswered, onSubmitAnswer]);
+  }, [isSubmitting, hasAnswered, onSubmitAnswer, selectedAnswer, hasClickedLink]);
 
   return (
     <div className="space-y-4">

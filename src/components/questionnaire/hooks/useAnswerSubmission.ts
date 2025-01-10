@@ -12,20 +12,29 @@ export const useAnswerSubmission = (contestId: string) => {
   const state = useQuestionnaireState();
 
   const handleSubmitAnswer = async (currentQuestion: any) => {
+    console.log('handleSubmitAnswer called with state:', {
+      selectedAnswer: state.selectedAnswer,
+      hasAnswered: state.hasAnswered,
+      isSubmitting: state.isSubmitting
+    });
+
     if (!state.selectedAnswer || !currentQuestion) {
       console.log('No answer selected or no current question');
       return;
     }
 
-    console.log('Submitting answer:', {
-      selectedAnswer: state.selectedAnswer,
-      correctAnswer: currentQuestion.correct_answer
-    });
+    if (state.hasAnswered) {
+      console.log('Answer already submitted, preventing duplicate submission');
+      return;
+    }
 
+    console.log('Starting answer submission process');
     state.setIsSubmitting(true);
+
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user?.id) {
+        console.log('No authenticated user found');
         toast({
           title: "Erreur",
           description: "Vous devez être connecté pour participer",
@@ -45,6 +54,7 @@ export const useAnswerSubmission = (contestId: string) => {
       console.log('Participant data:', participant);
 
       if (participant?.score === 100) {
+        console.log('Participant already has perfect score');
         toast({
           title: "Participation impossible",
           description: "Vous avez déjà obtenu un score parfait de 100% !",
@@ -72,7 +82,6 @@ export const useAnswerSubmission = (contestId: string) => {
       console.log('Existing answers:', existingAnswers);
 
       const currentAttempt = participant?.attempts || 0;
-      // Assurez-vous que la comparaison est sensible à la casse
       const isAnswerCorrect = state.selectedAnswer.trim() === currentQuestion.correct_answer.trim();
 
       console.log('Answer validation:', {
