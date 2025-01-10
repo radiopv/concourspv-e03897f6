@@ -75,7 +75,6 @@ export const LoginForm = () => {
       }
 
       if (data?.user) {
-        // Fetch user role immediately after successful login
         const { data: memberData, error: memberError } = await supabase
           .from('members')
           .select('role')
@@ -92,11 +91,9 @@ export const LoginForm = () => {
           title: "Connexion réussie",
           description: "Bienvenue sur votre espace membre !",
         });
-        
-        // Force a small delay to ensure the role is properly set
-        setTimeout(() => {
-          navigate("/dashboard", { replace: true });
-        }, 500);
+
+        // Ensure the navigation happens after the role is fetched
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
