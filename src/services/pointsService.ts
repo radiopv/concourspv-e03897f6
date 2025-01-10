@@ -32,7 +32,7 @@ export const RANKS: UserRank[] = [
   },
   {
     rank: 'MAITRE',
-    minPoints: 100,
+    minPoints: 500,
     maxPoints: Infinity,
     badge: '👑',
     benefits: ['Participations illimitées', 'Accès à tous les concours']
