@@ -30,7 +30,7 @@ const Layout = ({ children }: LayoutProps) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
       <UserNavBar />
       
       {/* Menu d'administration */}
@@ -42,7 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <Button
                   key={link.path}
                   variant="ghost"
-                  className="flex items-center gap-2 whitespace-nowrap"
+                  className="flex items-center gap-2 whitespace-nowrap hover:bg-amber-100"
                   onClick={() => navigate(link.path)}
                 >
                   <link.icon className="h-4 w-4" />
