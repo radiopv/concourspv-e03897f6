@@ -10,7 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const UserNavBar = () => {
+interface UserNavBarProps {
+  isAdmin?: boolean;
+}
+
+const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
   const { user, signOut } = useAuth();
 
   return (
