@@ -67,9 +67,9 @@ const AdminRoutes = () => {
     <div className="space-y-6">
       <Routes>
         <Route path="/" element={<AdminDashboard />} />
-        <Route path="/contests/*" element={<AdminContestManager />} />
-        <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
-        <Route path="/questions" element={<EditQuestionsList contestId={null} />} />
+        <Route path="/contests/*" element={<AdminContestManager onContestSelect={() => {}} />} />
+        <Route path="/prizes" element={<PrizeCatalogManager />} />
+        <Route path="/questions" element={<EditQuestionsList />} />
         <Route path="/users" element={<UserManager />} />
         <Route path="/settings" element={<GlobalSettings />} />
         <Route path="/content" element={<ContentValidator />} />
