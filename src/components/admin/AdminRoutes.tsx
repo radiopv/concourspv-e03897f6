@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import { Grid, Users, Settings, Database, Edit } from 'lucide-react';
+import { Grid, Users, Settings, Database, Edit, Gift } from 'lucide-react';
 import AdminDashboard from './AdminDashboard';
 import ContestPrizeManager from './ContestPrizeManager';
 import DrawManager from './DrawManager';
@@ -11,6 +11,7 @@ import QuestionBank from '@/pages/QuestionBank';
 import UserManager from './users/UserManager';
 import { Button } from '../ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 
 const AdminRoutes = () => {
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
@@ -32,6 +33,7 @@ const AdminRoutes = () => {
   const adminLinks = [
     { icon: Grid, label: 'Dashboard', path: '/admin' },
     { icon: Edit, label: 'Concours', path: '/admin/contests' },
+    { icon: Gift, label: 'Prix', path: '/admin/prizes' },
     { icon: Database, label: 'Questions', path: '/admin/questions' },
     { icon: Users, label: 'Utilisateurs', path: '/admin/users' },
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
@@ -39,24 +41,6 @@ const AdminRoutes = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center space-x-4 overflow-x-auto py-4">
-            {adminLinks.map((link) => (
-              <Button
-                key={link.path}
-                variant="ghost"
-                className="flex items-center gap-2"
-                onClick={() => navigate(link.path)}
-              >
-                <link.icon className="h-4 w-4" />
-                {link.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <div className="container mx-auto px-4">
         <Routes>
           <Route path="/" element={<AdminDashboard />} />
@@ -84,6 +68,7 @@ const AdminRoutes = () => {
           <Route path="/settings" element={<GlobalSettings />} />
           <Route path="/questions" element={<QuestionBank />} />
           <Route path="/users" element={<UserManager />} />
+          <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
         </Routes>
       </div>
     </div>

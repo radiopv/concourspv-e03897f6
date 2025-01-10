@@ -4,7 +4,7 @@ import UserNavBar from './navigation/UserNavBar';
 import MobileNavBar from './navigation/MobileNavBar';
 import { Toaster } from './ui/toaster';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Grid, Users, Settings, Database, Edit } from 'lucide-react';
+import { Grid, Users, Settings, Database, Edit, Gift } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,6 +23,7 @@ const Layout = ({ children }: LayoutProps) => {
   const adminLinks = [
     { icon: Grid, label: 'Dashboard', path: '/admin' },
     { icon: Edit, label: 'Concours', path: '/admin/contests' },
+    { icon: Gift, label: 'Prix', path: '/admin/prizes' },
     { icon: Database, label: 'Questions', path: '/admin/questions' },
     { icon: Users, label: 'Utilisateurs', path: '/admin/users' },
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
@@ -41,7 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <Button
                   key={link.path}
                   variant="ghost"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 whitespace-nowrap"
                   onClick={() => navigate(link.path)}
                 >
                   <link.icon className="h-4 w-4" />
