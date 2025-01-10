@@ -31,8 +31,8 @@ const QuestionCard = ({
     <Card className="p-4">
       {isEditing ? (
         <QuestionForm
-          question={question}
-          onSave={onSave}
+          initialQuestion={question}
+          onSubmit={onSave}
           onCancel={onCancel}
         />
       ) : (
