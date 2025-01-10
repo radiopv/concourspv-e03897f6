@@ -21,14 +21,16 @@ const GlobalSettings = () => {
         const { data, error } = await supabase
           .from('settings')
           .select('*')
-          .single();
+          .limit(1)
+          .order('created_at', { ascending: false });
         
         if (error) {
           console.error('Settings fetch error:', error);
           throw error;
         }
         
-        return data;
+        // Return the most recent settings or null if no settings exist
+        return data?.[0] || null;
       } catch (err) {
         console.error('Settings fetch error:', err);
         throw err;
@@ -42,14 +44,27 @@ const GlobalSettings = () => {
     if (settings) {
       setDefaultAttempts(settings.default_attempts);
       setRequiredPercentage(settings.required_percentage);
-      console.log('Settings loaded:', settings); // Debug log
+      console.log('Settings loaded:', settings);
     }
   }, [settings]);
 
   const updateSettings = useMutation({
     mutationFn: async () => {
-      if (!settings?.id) throw new Error("Settings not found");
+      if (!settings?.id) {
+        // If no settings exist, create new settings
+        const { data, error } = await supabase
+          .from('settings')
+          .insert({
+            default_attempts: defaultAttempts,
+            required_percentage: requiredPercentage
+          })
+          .select();
+
+        if (error) throw error;
+        return data;
+      }
       
+      // Update existing settings
       const { data, error } = await supabase
         .from('settings')
         .update({
