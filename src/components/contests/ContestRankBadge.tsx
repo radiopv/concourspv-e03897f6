@@ -1,8 +1,7 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Lock } from "lucide-react";
-import { Rank } from '@/types/points';
-import { RANKS } from '@/services/pointsService';
+import { Rank, RANKS } from '@/types/points';
 
 interface ContestRankBadgeProps {
   requiredRank: Rank;

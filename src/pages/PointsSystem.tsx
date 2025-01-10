@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Star, Award, Gift, TrendingUp, Users, Medal } from "lucide-react";
-import { RANKS } from "@/services/pointsService";
+import { RANKS } from "@/types/points";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import TopParticipantsList from "@/components/contest/TopParticipantsList";
