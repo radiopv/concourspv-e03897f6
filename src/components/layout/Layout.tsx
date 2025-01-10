@@ -4,7 +4,7 @@ import UserNavBar from '../navigation/UserNavBar';
 import MobileNavBar from '../navigation/MobileNavBar';
 import { Toaster } from '../ui/toaster';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Grid, Users, Settings, Database, Edit, Gift } from 'lucide-react';
+import { Grid, Users, Settings, Database, Edit, Gift, BookOpen } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -70,8 +70,8 @@ const Layout = ({ children }: LayoutProps) => {
   const adminLinks = [
     { icon: Grid, label: 'Dashboard', path: '/admin' },
     { icon: Edit, label: 'Concours', path: '/admin/contests' },
+    { icon: BookOpen, label: 'Questions', path: '/admin/questions' },
     { icon: Gift, label: 'Prix', path: '/admin/prizes' },
-    { icon: Database, label: 'Questions', path: '/admin/questions' },
     { icon: Users, label: 'Utilisateurs', path: '/admin/users' },
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];
