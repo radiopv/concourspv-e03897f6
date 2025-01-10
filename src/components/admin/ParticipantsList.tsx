@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
 
 interface ParticipantsListProps {
   contestId: string;
@@ -34,7 +35,9 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
           email,
           created_at,
           completed_at,
-          status
+          status,
+          score,
+          attempts
         `)
         .eq('contest_id', contestId)
         .order('created_at', { ascending: false });
@@ -74,6 +77,16 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
     return <div>Chargement des participants...</div>;
   }
 
+  const getStatusBadge = (status: string | null, score: number | null) => {
+    if (status === 'completed') {
+      if (score && score >= 90) {
+        return <Badge className="bg-green-500">Réussi ({score}%)</Badge>;
+      }
+      return <Badge className="bg-yellow-500">Complété ({score}%)</Badge>;
+    }
+    return <Badge variant="secondary">En cours</Badge>;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -90,6 +103,7 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
             <TableHead>Prénom</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Date d'inscription</TableHead>
+            <TableHead>Tentatives</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -104,8 +118,9 @@ const ParticipantsList = ({ contestId }: ParticipantsListProps) => {
                 {participant.created_at && 
                   format(new Date(participant.created_at), 'dd MMMM yyyy', { locale: fr })}
               </TableCell>
+              <TableCell>{participant.attempts || 0}</TableCell>
               <TableCell>
-                {participant.status === 'completed' ? 'Complété' : 'En cours'}
+                {getStatusBadge(participant.status, participant.score)}
               </TableCell>
               <TableCell>
                 <Button
