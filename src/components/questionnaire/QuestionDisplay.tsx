@@ -46,8 +46,10 @@ const QuestionDisplay = ({
 
   const handleSubmitClick = () => {
     if (!selectedAnswer || isSubmitting || hasAnswered) {
+      console.log('Submit blocked:', { selectedAnswer, isSubmitting, hasAnswered });
       return;
     }
+    console.log('Submitting answer:', selectedAnswer);
     onSubmitAnswer();
   };
 

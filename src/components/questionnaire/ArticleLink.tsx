@@ -13,7 +13,7 @@ interface ArticleLinkProps {
 const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
   const [hasClicked, setHasClicked] = useState(false);
   const [readingTimer, setReadingTimer] = useState<number>(0);
-  const READING_TIME = 5; // 5 seconds minimum reading time
+  const READING_TIME = 5;
 
   useEffect(() => {
     setHasClicked(false);
@@ -21,26 +21,23 @@ const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
   }, [url]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (hasClicked && readingTimer < READING_TIME) {
-      interval = setInterval(() => {
-        setReadingTimer((prev) => {
-          const newValue = prev + 1;
-          if (newValue >= READING_TIME) {
-            onArticleRead();
-            return READING_TIME;
-          }
-          return newValue;
-        });
-      }, 1000);
+    if (!hasClicked || readingTimer >= READING_TIME) {
+      return;
     }
 
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
+    const interval = setInterval(() => {
+      setReadingTimer((prev) => {
+        if (prev >= READING_TIME - 1) {
+          clearInterval(interval);
+          // Déplacer onArticleRead en dehors du setState
+          setTimeout(onArticleRead, 0);
+          return READING_TIME;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [hasClicked, readingTimer, onArticleRead]);
 
   const handleClick = () => {
