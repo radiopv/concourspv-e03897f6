@@ -15,11 +15,6 @@ const ArticleLink: React.FC<ArticleLinkProps> = ({ url, onArticleRead }) => {
   const [readingTimer, setReadingTimer] = useState(0);
 
   useEffect(() => {
-    setHasClicked(false);
-    setReadingTimer(0);
-  }, [url]);
-
-  useEffect(() => {
     if (!hasClicked || readingTimer >= READING_TIME) return;
 
     const timer = setInterval(() => {
