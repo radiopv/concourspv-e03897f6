@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Trophy, Gift, Users, Award } from 'lucide-react';
+import { Trophy, Gift, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -30,7 +30,7 @@ const Home = () => {
         </Button>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         <motion.div
           whileHover={{ scale: 1.05 }}
           className="glass-card p-6 rounded-xl bg-gradient-to-br from-white/80 to-amber-50/80 backdrop-blur-sm border border-amber-200/20 shadow-xl"
@@ -59,19 +59,6 @@ const Home = () => {
 
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="glass-card p-6 rounded-xl bg-gradient-to-br from-white/80 to-yellow-50/80 backdrop-blur-sm border border-yellow-200/20 shadow-xl"
-        >
-          <CardHeader className="text-center">
-            <Users className="w-12 h-12 mx-auto text-yellow-600 mb-2" />
-            <CardTitle className="text-yellow-800">Club VIP</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center text-yellow-700">
-            Rejoignez une communauté exclusive
-          </CardContent>
-        </motion.div>
-
-        <motion.div
-          whileHover={{ scale: 1.05 }}
           className="glass-card p-6 rounded-xl bg-gradient-to-br from-white/80 to-rose-50/80 backdrop-blur-sm border border-rose-200/20 shadow-xl"
         >
           <CardHeader className="text-center">
@@ -95,7 +82,7 @@ const Home = () => {
           >
             <div className="bg-gradient-to-br from-amber-500 to-orange-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold text-white shadow-lg">1</div>
             <h3 className="font-semibold mb-2 text-amber-800">Inscrivez-vous</h3>
-            <p className="text-amber-700">Créez votre compte VIP en quelques clics</p>
+            <p className="text-amber-700">Créez votre compte en quelques clics</p>
           </motion.div>
           <motion.div 
             whileHover={{ y: -5 }}
