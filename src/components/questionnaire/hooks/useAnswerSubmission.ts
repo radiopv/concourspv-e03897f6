@@ -4,7 +4,6 @@ import { supabase } from "@/lib/supabase";
 import { useQuestionnaireState } from '../QuestionnaireState';
 import { ensureParticipantExists } from '../ParticipantManager';
 import { getRandomMessage } from '../messages';
-
 import { awardPoints } from '../../../services/pointsService';
 
 export const useAnswerSubmission = (contestId: string) => {
@@ -37,13 +36,23 @@ export const useAnswerSubmission = (contestId: string) => {
       const participationId = participant?.participation_id || 
         await ensureParticipantExists(session.session.user.id, contestId);
 
-      const { data: existingAnswer } = await supabase
+      // Récupérer le nombre de tentatives actuel
+      const currentAttempt = participant?.attempts || 0;
+
+      // Vérifier si une réponse existe déjà pour cette question dans la tentative actuelle
+      const { data: existingAnswers, error: fetchError } = await supabase
         .from('participant_answers')
         .select('*')
         .eq('participant_id', participationId)
         .eq('question_id', currentQuestion.id)
-        .single();
+        .eq('attempt_number', currentAttempt);
 
+      if (fetchError) {
+        console.error('Error fetching existing answer:', fetchError);
+        throw fetchError;
+      }
+
+      const existingAnswer = existingAnswers?.[0];
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
 
       if (existingAnswer) {
@@ -64,16 +73,13 @@ export const useAnswerSubmission = (contestId: string) => {
       if (isAnswerCorrect) {
         state.setScore(prev => prev + 1);
         
-        // Calculer les points et le streak
         const currentStreak = state.getCurrentStreak();
-        let pointsToAward = 1; // Point de base
+        let pointsToAward = 1;
 
-        // Bonus pour 10 bonnes réponses consécutives
         if (currentStreak > 0 && currentStreak % 10 === 0) {
-          pointsToAward += 5; // Bonus de 5 points
+          pointsToAward += 5;
         }
 
-        // Attribuer les points
         await awardPoints(
           session.session.user.id,
           pointsToAward,
@@ -84,6 +90,7 @@ export const useAnswerSubmission = (contestId: string) => {
         state.resetStreak();
       }
 
+      // Insérer la nouvelle réponse avec le numéro de tentative
       const { error: insertError } = await supabase
         .from('participant_answers')
         .insert([{
@@ -91,7 +98,7 @@ export const useAnswerSubmission = (contestId: string) => {
           question_id: currentQuestion.id,
           answer: state.selectedAnswer,
           is_correct: isAnswerCorrect,
-          attempt_number: participant?.attempts || 0
+          attempt_number: currentAttempt
         }]);
 
       if (insertError) throw insertError;
