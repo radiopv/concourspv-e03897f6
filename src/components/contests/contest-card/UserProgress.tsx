@@ -9,8 +9,7 @@ interface UserProgressProps {
 const UserProgress = ({ userParticipation, settings, remainingAttempts }: UserProgressProps) => {
   if (!userParticipation) return null;
 
-  // S'assurer que remainingAttempts n'est jamais négatif
-  const displayedAttempts = Math.max(0, remainingAttempts);
+  const isPerfectScore = userParticipation.score === 100;
 
   return (
     <div className="mb-6 space-y-4 bg-gray-50 p-4 rounded-lg">
@@ -22,16 +21,21 @@ const UserProgress = ({ userParticipation, settings, remainingAttempts }: UserPr
         <div className="bg-white p-3 rounded-lg">
           <p className="text-sm text-gray-600">Score requis</p>
           <p className="text-lg font-bold text-blue-600">
-            {settings?.required_percentage || 70}%
+            90%
           </p>
         </div>
         <div className="bg-white p-3 rounded-lg">
           <p className="text-sm text-gray-600">Tentatives restantes</p>
-          <p className={`text-lg font-bold ${displayedAttempts > 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {displayedAttempts}
+          <p className={`text-lg font-bold ${remainingAttempts > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {isPerfectScore ? "Score parfait !" : remainingAttempts}
           </p>
         </div>
       </div>
+      {isPerfectScore && (
+        <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm">
+          Félicitations ! Vous avez obtenu un score parfait. Vous ne pouvez plus participer à ce concours.
+        </div>
+      )}
     </div>
   );
 };
