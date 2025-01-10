@@ -1,5 +1,4 @@
 import { Gift, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface ContestPrizesProps {
   prizes: Array<{

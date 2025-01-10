@@ -26,28 +26,27 @@ interface ContestCardProps {
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
+  const { data: prizes, isLoading: isPrizesLoading } = useQuery({
+    queryKey: ['contest-prizes', contest.id],
+    queryFn: async () => {
+      console.log('Fetching prizes for contest:', contest.id);
+      const { data: prizesData, error } = await supabase
+        .from('prizes')
+        .select(`
+          *,
+          catalog_item:prize_catalog(
+            name,
+            image_url,
+            shop_url,
+            value
+          )
+        `)
+        .eq('contest_id', contest.id);
 
-const { data: prizes, isLoading: isPrizesLoading } = useQuery({
-  queryKey: ['contest-prizes', contest.id],
-  queryFn: async () => {
-    console.log('Fetching prizes for contest:', contest.id);
-    const { data: prizesData, error } = await supabase
-      .from('prizes')
-      .select(`
-        *,
-        catalog_item:prize_catalog(
-          name,
-          image_url,
-          shop_url,
-          value
-        )
-      `)
-      .eq('contest_id', contest.id);
-
-    if (error) throw error;
-    return prizesData || [];
-  },
-});
+      if (error) throw error;
+      return prizesData || [];
+    },
+  });
 
   const { data: settings, isLoading: isSettingsLoading } = useQuery({
     queryKey: ['global-settings'],
@@ -85,7 +84,7 @@ const { data: prizes, isLoading: isPrizesLoading } = useQuery({
     ? Math.max(0, settings.default_attempts - (userParticipation?.attempts || 0))
     : 0;
 
-  const mainPrize = prizes?.[0]?.prize_catalog;
+  const mainPrize = prizes?.[0]?.catalog_item;
 
   const isLoading = isPrizesLoading || isSettingsLoading || isParticipationLoading;
 
