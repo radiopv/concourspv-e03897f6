@@ -19,6 +19,7 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPrize, setEditingPrize] = useState<any>(null);
+  const [openPrizeId, setOpenPrizeId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -192,6 +193,7 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
 
   const handleEdit = (prize: any) => {
     setEditingPrize(prize);
+    setOpenPrizeId(prize.id);
     setFormData({
       name: prize.name,
       description: prize.description || '',
@@ -252,63 +254,105 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {prizes?.map((prize) => (
-          <Card key={prize.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="pt-6">
-              {prize.image_url && (
-                <div className="aspect-square relative mb-4">
-                  <img
-                    src={prize.image_url}
-                    alt={prize.name}
-                    className="object-cover rounded-lg w-full h-full"
-                  />
+          <Collapsible 
+            key={prize.id} 
+            open={openPrizeId === prize.id}
+            onOpenChange={(open) => {
+              if (open) {
+                handleEdit(prize);
+              } else {
+                setOpenPrizeId(null);
+                setEditingPrize(null);
+              }
+            }}
+          >
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                {prize.image_url && (
+                  <div className="aspect-square relative mb-4">
+                    <img
+                      src={prize.image_url}
+                      alt={prize.name}
+                      className="object-cover rounded-lg w-full h-full"
+                    />
+                  </div>
+                )}
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="font-semibold">{prize.name}</h3>
+                  <Select
+                    value={prize.is_visible ? "public" : "private"}
+                    onValueChange={(value) => 
+                      toggleVisibilityMutation.mutate({ 
+                        id: prize.id, 
+                        is_visible: value === "public" 
+                      })
+                    }
+                  >
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="public">Public</SelectItem>
+                      <SelectItem value="private">Privé</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="font-semibold">{prize.name}</h3>
-                <Select
-                  value={prize.is_visible ? "public" : "private"}
-                  onValueChange={(value) => 
-                    toggleVisibilityMutation.mutate({ 
-                      id: prize.id, 
-                      is_visible: value === "public" 
-                    })
-                  }
-                >
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="public">Public</SelectItem>
-                    <SelectItem value="private">Privé</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {prize.description && (
-                <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
-              )}
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-sm font-medium">
-                  {prize.value ? `${prize.value}€` : 'Prix non défini'}
-                </span>
-              </div>
-              <div className="space-y-2">
-                <Button
-                  onClick={() => handleEdit(prize)}
-                  className="w-full"
-                  variant="outline"
-                >
-                  Modifier
-                </Button>
-                <Button
-                  onClick={() => deletePrizeMutation.mutate(prize.id)}
-                  className="w-full"
-                  variant="destructive"
-                >
-                  Supprimer
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                {prize.description && (
+                  <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
+                )}
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-sm font-medium">
+                    {prize.value ? `${prize.value}€` : 'Prix non défini'}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                    >
+                      {openPrizeId === prize.id ? "Fermer" : "Modifier"}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <Button
+                    onClick={() => deletePrizeMutation.mutate(prize.id)}
+                    className="w-full"
+                    variant="destructive"
+                  >
+                    Supprimer
+                  </Button>
+                </div>
+              </CardContent>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <PrizeForm
+                    formData={formData}
+                    onFormChange={(field, value) => setFormData({ ...formData, [field]: value })}
+                    onImageUpload={handleImageUpload}
+                    onCancel={() => {
+                      setOpenPrizeId(null);
+                      setEditingPrize(null);
+                      setFormData({
+                        name: '',
+                        description: '',
+                        value: '',
+                        image_url: '',
+                        shop_url: '',
+                      });
+                    }}
+                    onSave={() => {
+                      updatePrizeMutation.mutate({ 
+                        id: prize.id, 
+                        data: formData 
+                      });
+                      setOpenPrizeId(null);
+                    }}
+                    uploading={uploading}
+                  />
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         ))}
       </div>
     </div>
