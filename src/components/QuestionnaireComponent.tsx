@@ -79,11 +79,13 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
         const newAttempts = (participantData?.attempts || 0) + 1;
 
-        await supabase
+        const { error: attemptsError } = await supabase
           .from('participants')
           .update({ attempts: newAttempts })
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id);
+
+        if (attemptsError) throw attemptsError;
 
         // Invalider les requêtes pour forcer le rafraîchissement des données
         await queryClient.invalidateQueries({ queryKey: ['contests'] });
@@ -99,10 +101,10 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           duration: 5000,
         });
 
-        // Attendre un court instant pour que le toast soit visible
+        // Redirection après un court délai
         setTimeout(() => {
           navigate('/contests');
-        }, 1000);
+        }, 2000);
 
       } catch (error) {
         console.error('Error completing questionnaire:', error);
