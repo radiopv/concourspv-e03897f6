@@ -3,7 +3,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, X } from "lucide-react";
+import { Plus, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { motion } from "framer-motion";
 
-interface PrizeCatalogManagerProps {
-  contestId: string | null;
-}
-
-const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
+const PrizeCatalogManager = () => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -89,6 +85,7 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
           value: parseFloat(data.value) || null,
           image_url: data.image_url,
           shop_url: data.shop_url,
+          is_active: true
         }]);
       
       if (error) throw error;
@@ -113,6 +110,32 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
       toast({
         title: "Erreur",
         description: "Impossible d'ajouter le prix",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deletePrizeMutation = useMutation({
+    mutationFn: async (prizeId: string) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .delete()
+        .eq('id', prizeId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été supprimé du catalogue",
+      });
+    },
+    onError: (error) => {
+      console.error("Delete prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le prix",
         variant: "destructive",
       });
     }
@@ -164,7 +187,7 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="value">Valeur (€)</Label>
+                  <Label htmlFor="value">Valeur ($)</Label>
                   <Input
                     id="value"
                     type="number"
@@ -224,7 +247,7 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
         {catalogPrizes?.map((prize) => (
           <motion.div
             key={prize.id}
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
             <Card className="overflow-hidden bg-gradient-to-br from-purple-50 to-amber-50 hover:shadow-xl transition-shadow">
@@ -244,8 +267,8 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
                     <p className="text-sm text-gray-600 mb-2">{prize.description}</p>
                   )}
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">
-                      {prize.value ? `${prize.value}€` : 'Prix non défini'}
+                    <span className="text-sm font-medium text-purple-600">
+                      {prize.value ? `${prize.value} $` : 'Prix non défini'}
                     </span>
                     {prize.shop_url && (
                       <a
@@ -254,9 +277,31 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
                         rel="noopener noreferrer"
                         className="text-purple-600 hover:text-purple-800"
                       >
-                        Voir
+                        <ExternalLink className="h-4 w-4" />
                       </a>
                     )}
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <Button
+                      variant="outline"
+                      className="w-full text-purple-600 border-purple-600 hover:bg-purple-50"
+                      onClick={() => {
+                        // Logique pour ajouter à un concours
+                        toast({
+                          title: "Info",
+                          description: "Fonctionnalité à venir : Ajouter à un concours",
+                        });
+                      }}
+                    >
+                      Ajouter à un concours
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full text-red-600 border-red-600 hover:bg-red-50"
+                      onClick={() => deletePrizeMutation.mutate(prize.id)}
+                    >
+                      Supprimer du catalogue
+                    </Button>
                   </div>
                 </div>
               </CardContent>
