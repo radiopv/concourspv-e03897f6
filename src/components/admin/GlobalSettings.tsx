@@ -21,15 +21,14 @@ const GlobalSettings = () => {
         const { data, error } = await supabase
           .from('settings')
           .select('*')
-          .limit(1)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(1);
         
         if (error) {
           console.error('Settings fetch error:', error);
           throw error;
         }
         
-        // Return the most recent settings or null if no settings exist
         return data?.[0] || null;
       } catch (err) {
         console.error('Settings fetch error:', err);
