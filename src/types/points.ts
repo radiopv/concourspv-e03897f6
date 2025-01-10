@@ -1,4 +1,4 @@
-export type Rank = 'BEGINNER' | 'BRONZE' | 'SILVER' | 'GOLD' | 'MASTER';
+export type Rank = 'BEGINNER' | 'BRONZE' | 'SILVER' | 'GOLD' | 'MASTER' | 'LEGEND';
 
 export interface UserRank {
   rank: Rank;
@@ -24,4 +24,5 @@ export interface UserPoints {
   best_streak: number;
   current_rank: Rank;
   extra_participations: number;
+  articles_read: number;
 }
