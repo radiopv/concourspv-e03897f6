@@ -1,127 +1,124 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import ArticleLink from './ArticleLink';
-import AnswerOptions from './AnswerOptions';
 
 interface QuestionDisplayProps {
-  questionText: string;
-  articleUrl?: string;
-  options: string[];
-  selectedAnswer: string;
-  correctAnswer?: string;
-  hasClickedLink: boolean;
-  hasAnswered: boolean;
-  isSubmitting: boolean;
-  onArticleRead: () => void;
+  question: {
+    id: string;
+    question_text: string;
+    options: string[];
+    article_url?: string;
+  };
+  selectedAnswer: string | null;
   onAnswerSelect: (answer: string) => void;
   onSubmitAnswer: () => void;
-  onNextQuestion: () => void;
-  isLastQuestion: boolean;
+  hasAnswered: boolean;
+  isCorrect?: boolean;
+  isSubmitting: boolean;
+  correctAnswer?: string;
 }
 
-const QuestionDisplay = ({
-  questionText,
-  articleUrl,
-  options,
+const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
+  question,
   selectedAnswer,
-  correctAnswer,
-  hasClickedLink,
-  hasAnswered,
-  isSubmitting,
-  onArticleRead,
   onAnswerSelect,
   onSubmitAnswer,
-  onNextQuestion,
-  isLastQuestion
-}: QuestionDisplayProps) => {
-  const getPartialQuestion = (text: string) => {
-    if (!text) return "";
+  hasAnswered,
+  isCorrect,
+  isSubmitting,
+  correctAnswer,
+}) => {
+  const { toast } = useToast();
+
+  const truncateText = (text: string, maxLength: number = 100) => {
+    if (text.length <= maxLength) return text;
     const words = text.split(" ");
-    const partialLength = Math.min(5, words.length);
+    let partialLength = 0;
+    for (let i = 0; i < words.length; i++) {
+      partialLength += words[i].length + 1;
+      if (partialLength > maxLength) {
+        return words.slice(0, i).join(" ") + "...";
+      }
+    }
     return words.slice(0, partialLength).join(" ") + "...";
   };
 
-  const handleSubmitClick = useCallback(() => {
-    console.log('Submit button clicked with state:', {
-      selectedAnswer,
-      hasAnswered,
-      isSubmitting
-    });
-
-    if (!selectedAnswer || isSubmitting || hasAnswered) {
-      console.log('Submit blocked:', { selectedAnswer, isSubmitting, hasAnswered });
+  const handleSubmitClick = () => {
+    if (!selectedAnswer) {
+      toast({
+        title: "Sélectionnez une réponse",
+        description: "Veuillez choisir une réponse avant de valider.",
+        variant: "destructive",
+      });
       return;
     }
 
-    console.log('Proceeding with answer submission');
-    onSubmitAnswer();
-  }, [selectedAnswer, isSubmitting, hasAnswered, onSubmitAnswer]);
+    if (!isSubmitting && !hasAnswered) {
+      onSubmitAnswer();
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <p className="text-lg font-medium">
-        {hasClickedLink ? questionText : getPartialQuestion(questionText)}
-      </p>
-      
-      {articleUrl && !hasClickedLink && (
-        <Alert className="bg-yellow-100 border-yellow-300">
-          <InfoIcon className="h-4 w-4 text-yellow-600" />
-          <AlertDescription className="text-yellow-800 font-medium">
-            Une fois l'article ouvert, prenez le temps de le lire. 
-            La question apparaîtra automatiquement dans quelques secondes.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {articleUrl && (
-        <ArticleLink
-          url={articleUrl}
-          onArticleRead={onArticleRead}
-          isRead={hasClickedLink}
-        />
-      )}
-      
-      {(hasClickedLink || !articleUrl) && (
-        <AnswerOptions
-          options={options}
-          selectedAnswer={selectedAnswer}
-          correctAnswer={hasAnswered ? correctAnswer : undefined}
-          hasAnswered={hasAnswered}
-          isDisabled={articleUrl ? !hasClickedLink : false}
-          onAnswerSelect={onAnswerSelect}
-        />
+      {question.article_url && (
+        <ArticleLink url={question.article_url} onArticleRead={() => {}} />
       )}
 
-      {!hasAnswered && (hasClickedLink || !articleUrl) && (
-        <Button
-          onClick={handleSubmitClick}
-          disabled={!selectedAnswer || isSubmitting || hasAnswered}
-          className="w-full"
-        >
-          {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
-        </Button>
-      )}
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <h3 className="text-lg font-medium mb-4">{question.question_text}</h3>
 
-      {hasAnswered && (
-        <Button
-          onClick={onNextQuestion}
-          className="w-full"
-          variant="outline"
-          disabled={isSubmitting}
-        >
-          {isLastQuestion ? (
-            "Terminer le quiz"
-          ) : (
-            <>
-              Question suivante
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </>
-          )}
-        </Button>
-      )}
+        <div className="space-y-3">
+          {question.options.map((option, index) => (
+            <button
+              key={index}
+              onClick={() => !hasAnswered && onAnswerSelect(option)}
+              disabled={hasAnswered}
+              className={`w-full text-left p-4 rounded-lg border transition-colors ${
+                selectedAnswer === option
+                  ? hasAnswered
+                    ? isCorrect
+                      ? "bg-green-100 border-green-500"
+                      : "bg-red-100 border-red-500"
+                    : "bg-blue-100 border-blue-500"
+                  : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+
+        {hasAnswered && (
+          <Alert className={`mt-4 ${isCorrect ? "bg-green-50" : "bg-red-50"}`}>
+            <AlertDescription>
+              {isCorrect
+                ? "Bonne réponse ! 🎉"
+                : `La bonne réponse était : ${correctAnswer}`}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <Button
+            onClick={handleSubmitClick}
+            disabled={!selectedAnswer || isSubmitting || hasAnswered}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            {isSubmitting ? (
+              "Validation..."
+            ) : hasAnswered ? (
+              "Validé"
+            ) : (
+              <>
+                Valider <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
