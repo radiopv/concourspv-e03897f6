@@ -9,12 +9,22 @@ import { Helmet } from 'react-helmet';
 const QuizCompletion = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { score, totalQuestions, contestId } = location.state || { score: 0, totalQuestions: 0 };
+  const { score, totalQuestions, contestId } = location.state || { 
+    score: 0, 
+    totalQuestions: 0,
+    contestId: null 
+  };
+  
   const percentage = Math.round((score / totalQuestions) * 100);
   const isQualified = percentage >= 70;
 
   const handleRetry = () => {
-    navigate(`/contests/${contestId}/quiz`);
+    if (!contestId) {
+      console.error("Contest ID is missing");
+      navigate('/contests');
+      return;
+    }
+    navigate(`/contest/${contestId}`);
   };
 
   return (
