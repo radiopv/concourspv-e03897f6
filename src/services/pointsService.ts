@@ -108,3 +108,84 @@ export const getUserPoints = async (userId: string) => {
     extra_participations: data.extra_participations
   };
 };
+
+export const initializeUserPoints = async (userId: string) => {
+  const { data: existingPoints } = await supabase
+    .from('user_points')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (!existingPoints) {
+    const { error } = await supabase
+      .from('user_points')
+      .insert([{
+        user_id: userId,
+        total_points: 0,
+        current_streak: 0,
+        best_streak: 0,
+        current_rank: 'NOVATO',
+        extra_participations: 0,
+        articles_read: 0
+      }]);
+
+    if (error) throw error;
+  }
+};
+
+export const awardPoints = async (
+  userId: string,
+  points: number,
+  contestId?: string,
+  streak?: number
+) => {
+  try {
+    // Mettre à jour les points totaux
+    const { data: currentPoints, error: pointsError } = await supabase
+      .from('user_points')
+      .select('total_points, best_streak')
+      .eq('user_id', userId)
+      .single();
+
+    if (pointsError) throw pointsError;
+
+    const newTotalPoints = (currentPoints?.total_points || 0) + points;
+    const newBestStreak = Math.max(streak || 0, currentPoints?.best_streak || 0);
+
+    // Calculer le nouveau rang
+    const newRank = RANKS.find(
+      rank => newTotalPoints >= rank.minPoints && newTotalPoints <= rank.maxPoints
+    );
+
+    // Mettre à jour user_points
+    const { error: updateError } = await supabase
+      .from('user_points')
+      .update({
+        total_points: newTotalPoints,
+        current_streak: streak || 0,
+        best_streak: newBestStreak,
+        current_rank: newRank?.rank || 'NOVATO'
+      })
+      .eq('user_id', userId);
+
+    if (updateError) throw updateError;
+
+    // Enregistrer dans l'historique des points
+    const { error: historyError } = await supabase
+      .from('point_history')
+      .insert([{
+        user_id: userId,
+        points: points,
+        source: contestId ? 'contest' : 'system',
+        contest_id: contestId,
+        streak: streak || 0
+      }]);
+
+    if (historyError) throw historyError;
+
+    return { newTotalPoints, newRank: newRank?.rank || 'NOVATO' };
+  } catch (error) {
+    console.error('Error awarding points:', error);
+    throw error;
+  }
+};
