@@ -1,9 +1,10 @@
 import React from "react";
 import ContestListHeader from "./contest-list/ContestListHeader";
 import ContestListGrid from "./contest-list/ContestListGrid";
+import { Contest } from "@/types/contest";
 
 interface ContestListProps {
-  contests: any[];
+  contests: Contest[];
   onSelectContest: (id: string) => void;
 }
 

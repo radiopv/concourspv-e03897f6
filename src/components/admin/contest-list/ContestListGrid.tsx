@@ -9,12 +9,7 @@ interface ContestListGridProps {
 }
 
 const ContestListGrid: React.FC<ContestListGridProps> = ({ contests, onSelectContest }) => {
-  const { 
-    deleteMutation,
-    archiveMutation,
-    featureToggleMutation,
-    statusUpdateMutation 
-  } = useContestMutations();
+  const { deleteMutation } = useContestMutations();
 
   if (!contests || contests.length === 0) {
     return (

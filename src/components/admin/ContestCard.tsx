@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Settings, List } from "lucide-react";
+import { Edit, Trash2, List } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 interface ContestCardProps {
