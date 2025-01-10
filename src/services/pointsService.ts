@@ -3,7 +3,7 @@ import { Rank, UserRank } from "../types/points";
 
 export const RANKS: UserRank[] = [
   {
-    rank: 'DEBUTANT',
+    rank: 'BEGINNER',
     minPoints: 0,
     maxPoints: 24,
     badge: '🌱',
@@ -17,21 +17,21 @@ export const RANKS: UserRank[] = [
     benefits: ['Participation supplémentaire', 'Accès aux concours Bronze']
   },
   {
-    rank: 'ARGENT',
+    rank: 'SILVER',
     minPoints: 50,
     maxPoints: 74,
     badge: '🥈',
-    benefits: ['2 participations supplémentaires', 'Accès aux concours Argent']
+    benefits: ['2 participations supplémentaires', 'Accès aux concours Silver']
   },
   {
-    rank: 'OR',
+    rank: 'GOLD',
     minPoints: 75,
     maxPoints: 99,
     badge: '🥇',
-    benefits: ['3 participations supplémentaires', 'Accès aux concours Or']
+    benefits: ['3 participations supplémentaires', 'Accès aux concours Gold']
   },
   {
-    rank: 'MAITRE',
+    rank: 'MASTER',
     minPoints: 100,
     maxPoints: Infinity,
     badge: '👑',
