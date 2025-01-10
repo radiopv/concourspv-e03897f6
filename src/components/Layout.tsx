@@ -18,7 +18,11 @@ const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  console.log("Current user role:", user?.role); // Debug log
+
+  // Strict check for admin role
   const isAdmin = user?.role === 'admin';
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   const adminLinks = [
     { icon: Grid, label: 'Dashboard', path: '/admin' },
@@ -29,7 +33,12 @@ const Layout = ({ children }: LayoutProps) => {
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];
 
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  // If not admin and trying to access admin route, redirect to home
+  React.useEffect(() => {
+    if (!isAdmin && isAdminRoute) {
+      navigate('/');
+    }
+  }, [isAdmin, isAdminRoute, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
