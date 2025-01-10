@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   session: Session | null;
@@ -22,24 +23,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Initial session check
     const checkSession = async () => {
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error fetching session:", error.message);
-          return;
+          throw error;
         }
 
         if (currentSession) {
           setSession(currentSession);
           setUser(currentSession.user);
+        } else {
+          // Clear state if no session
+          setSession(null);
+          setUser(null);
+          // Redirect to login if on a protected route
+          if (window.location.pathname.startsWith('/dashboard') || 
+              window.location.pathname.startsWith('/admin')) {
+            navigate('/login');
+          }
         }
       } catch (error) {
         console.error("Session check error:", error);
+        // Clear state on error
+        setSession(null);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -47,7 +60,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     checkSession();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth state changed:", event);
       
@@ -57,6 +69,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setSession(null);
         setUser(null);
+        
+        // Handle specific auth events
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed successfully');
+        } else if (event === 'SIGNED_OUT') {
+          navigate('/login');
+          toast({
+            title: "Session expirée",
+            description: "Veuillez vous reconnecter.",
+          });
+        }
       }
       
       setLoading(false);
@@ -65,7 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate, toast]);
 
   const signOut = async () => {
     try {
@@ -79,6 +102,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Déconnexion réussie",
         description: "À bientôt !",
       });
+      
+      navigate('/login');
     } catch (error) {
       console.error("Sign out error:", error);
       toast({
