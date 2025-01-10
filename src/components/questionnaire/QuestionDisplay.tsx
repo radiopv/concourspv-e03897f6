@@ -53,6 +53,10 @@ const QuestionDisplay = ({
     }
   };
 
+  if (!question) {
+    return null;
+  }
+
   return (
     <div className="space-y-4">
       {question.article_url && (
