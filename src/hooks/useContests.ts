@@ -24,10 +24,14 @@ export const useContests = () => {
 
       console.log('Fetching contests for user:', session.user.id);
 
-      // Get all active contests without filtering winners
+      // Récupérer tous les concours actifs
       const { data: contests, error: contestsError } = await supabase
         .from('contests')
-        .select('*')
+        .select(`
+          *,
+          participants:participants(count),
+          questions:questions(count)
+        `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
@@ -38,27 +42,14 @@ export const useContests = () => {
 
       console.log('Fetched contests:', contests);
 
-      // For each contest, count participants
-      const contestsWithCounts = await Promise.all(contests.map(async (contest) => {
-        const { count: participantsCount } = await supabase
-          .from('participants')
-          .select('*', { count: 'exact', head: true })
-          .eq('contest_id', contest.id);
-
-        const { count: questionsCount } = await supabase
-          .from('questions')
-          .select('*', { count: 'exact', head: true })
-          .eq('contest_id', contest.id);
-
-        return {
-          ...contest,
-          participants: { count: participantsCount || 0 },
-          questions: { count: questionsCount || 0 }
-        };
-      }));
+      const contestsWithCounts = contests?.map(contest => ({
+        ...contest,
+        participants: { count: contest.participants?.[0]?.count || 0 },
+        questions: { count: contest.questions?.[0]?.count || 0 }
+      })) || [];
 
       console.log('Contests with counts:', contestsWithCounts);
-      return contestsWithCounts || [];
+      return contestsWithCounts;
     },
     retry: 1,
     refetchOnWindowFocus: false,
