@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet';
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,173 +11,84 @@ import QuickActions from "@/components/dashboard/QuickActions";
 import ProfileCard from "@/components/dashboard/ProfileCard";
 import { initializeUserPoints } from "@/services/pointsService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-  });
-
-  // Fonction pour créer un nouveau membre si nécessaire
-  const initializeMember = async (userId: string, userEmail: string) => {
-    try {
-      console.log('Initializing member for user:', userId);
-      
-      // First, check if member exists
-      const { data: existingMember, error: checkError } = await supabase
-        .from('members')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('Error checking member:', checkError);
-        throw checkError;
-      }
-
-      if (existingMember) {
-        console.log('Member found:', existingMember);
-        return existingMember;
-      }
-
-      // Get user metadata for names
-      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error('Error getting user metadata:', userError);
-        throw userError;
-      }
-
-      const userMetadata = authUser?.user_metadata || {};
-      const defaultData = {
-        id: userId,
-        email: userEmail,
-        first_name: userMetadata.first_name || 'New',
-        last_name: userMetadata.last_name || 'Member',
-        total_points: 0,
-        contests_participated: 0,
-        contests_won: 0,
-        notifications_enabled: true,
-        share_scores: true,
-      };
-      
-      // Create new member with all required fields
-      console.log('Creating new member with data:', defaultData);
-      const { data: newMember, error: createError } = await supabase
-        .from('members')
-        .insert([defaultData])
-        .select()
-        .maybeSingle();
-
-      if (createError) {
-        console.error('Error creating member:', createError);
-        throw createError;
-      }
-
-      if (!newMember) {
-        throw new Error('Failed to create new member');
-      }
-
-      console.log('New member created:', newMember);
-      return newMember;
-    } catch (error) {
-      console.error('Error in initializeMember:', error);
-      throw error;
-    }
-  };
 
   const { data: profileData, isLoading: isLoadingProfile, refetch } = useQuery({
     queryKey: ['user-profile', user?.id],
     queryFn: async () => {
       if (!user?.id || !user?.email) return null;
       
-      console.log('Fetching user profile data...');
-      
-      // Initialiser ou récupérer le membre
-      const member = await initializeMember(user.id, user.email);
-      
-      // Initialize user points if needed
-      await initializeUserPoints(user.id);
-      
-      return member;
-    },
-    enabled: !!user?.id && !!user?.email,
-    retry: 1,
-    staleTime: 300000, // 5 minutes
-    gcTime: 3600000, // 1 hour
-  });
-
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['user-stats', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      console.log('Fetching user stats...');
-      
-      const { data, error } = await supabase
+      const { data: member, error } = await supabase
         .from('members')
-        .select('total_points, contests_participated, contests_won')
+        .select('*')
         .eq('id', user.id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching stats:', error);
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
-      return {
-        contests_participated: data?.contests_participated || 0,
-        total_points: data?.total_points || 0,
-        contests_won: data?.contests_won || 0,
-      };
-    },
-    enabled: !!user?.id,
-    retry: 1,
-    staleTime: 300000, // 5 minutes
-    gcTime: 3600000, // 1 hour
-  });
+      if (!member) {
+        const defaultData = {
+          id: user.id,
+          email: user.email,
+          first_name: user.user_metadata?.first_name || 'New',
+          last_name: user.user_metadata?.last_name || 'Member',
+          total_points: 0,
+          contests_participated: 0,
+          contests_won: 0,
+          notifications_enabled: true,
+          share_scores: true,
+        };
 
-  useEffect(() => {
-    if (profileData) {
-      setFormData({
-        first_name: profileData.first_name || '',
-        last_name: profileData.last_name || '',
-        email: profileData.email || '',
-      });
-    }
-  }, [profileData]);
+        const { data: newMember, error: createError } = await supabase
+          .from('members')
+          .insert([defaultData])
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        return newMember;
+      }
+
+      await initializeUserPoints(user.id);
+      return member;
+    },
+    enabled: !!user?.id && !!user?.email,
+  });
 
   if (!user) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12 bg-gradient-to-br from-amber-50 to-orange-100">
         <Helmet>
           <title>Connexion requise | Tableau de bord</title>
-          <meta name="description" content="Connectez-vous pour accéder à votre tableau de bord personnel et suivre vos performances dans les concours." />
-          <meta name="robots" content="noindex,nofollow" />
         </Helmet>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-amber-800">
           Veuillez vous connecter pour accéder à votre tableau de bord
         </h1>
       </div>
     );
   }
 
-  const isLoading = isLoadingProfile || isLoadingStats;
-
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 space-y-6">
       <Helmet>
-        <title>Tableau de bord | {formData.first_name} {formData.last_name}</title>
-        <meta name="description" content="Gérez vos concours, suivez vos points et consultez vos statistiques de participation." />
-        <meta name="robots" content="noindex,nofollow" />
+        <title>Tableau de bord | {profileData?.first_name} {profileData?.last_name}</title>
       </Helmet>
       
-      <DashboardHeader firstName={profileData?.first_name} />
-      
-      {isLoading ? (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <DashboardHeader firstName={profileData?.first_name} />
+      </motion.div>
+
+      {isLoadingProfile ? (
         <div className="space-y-8" role="status" aria-label="Chargement du tableau de bord">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Skeleton className="h-32" />
@@ -186,25 +97,50 @@ const Dashboard = () => {
           </div>
           <Skeleton className="h-64" />
           <Skeleton className="h-48" />
-          <Skeleton className="h-96" />
         </div>
       ) : (
-        <>
-          <StatsCards stats={stats} />
-          <PointsOverview />
-          <QuickActions />
+        <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <StatsCards stats={profileData} />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="glass-card p-6 rounded-xl"
+          >
+            <PointsOverview />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            className="glass-card p-6 rounded-xl"
+          >
+            <QuickActions />
+          </motion.div>
+
           {profileData && (
-            <ProfileCard 
-              userProfile={profileData}
-              isEditing={isEditing}
-              formData={formData}
-              setFormData={setFormData}
-              setIsEditing={setIsEditing}
-              userId={user.id}
-              refetch={refetch}
-            />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+              className="glass-card p-6 rounded-xl"
+            >
+              <ProfileCard 
+                userProfile={profileData}
+                userId={user.id}
+                refetch={refetch}
+              />
+            </motion.div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
