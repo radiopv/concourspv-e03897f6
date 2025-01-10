@@ -1,6 +1,8 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 import ArticleLink from './ArticleLink';
 import AnswerOptions from './AnswerOptions';
 
@@ -62,7 +64,7 @@ const QuestionDisplay = ({
           selectedAnswer={selectedAnswer}
           correctAnswer={hasAnswered ? correctAnswer : undefined}
           hasAnswered={hasAnswered}
-          isDisabled={articleUrl && !hasClickedLink}
+          isDisabled={articleUrl ? !hasClickedLink : false}
           onAnswerSelect={onAnswerSelect}
         />
       )}
@@ -70,7 +72,7 @@ const QuestionDisplay = ({
       {!hasAnswered && (hasClickedLink || !articleUrl) && (
         <Button
           onClick={onSubmitAnswer}
-          disabled={!selectedAnswer || (articleUrl && !hasClickedLink) || isSubmitting}
+          disabled={!selectedAnswer || isSubmitting}
           className="w-full"
         >
           {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
