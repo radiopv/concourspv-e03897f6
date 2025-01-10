@@ -3,13 +3,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Loader } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface EditQuestionsListProps {
-  contestId: string;
+  contestId: string | null;
 }
 
 const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
@@ -26,11 +26,13 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { data: questions, refetch, isLoading } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('contest_id', contestId)
-        .order('order_number');
+      let query = supabase.from('questions').select('*');
+      
+      if (contestId) {
+        query = query.eq('contest_id', contestId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
       return data;
@@ -48,7 +50,6 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
           correct_answer: newQuestion.correct_answer,
           article_url: newQuestion.article_url || null,
           image_url: newQuestion.image_url || null,
-          order_number: (questions?.length || 0) + 1,
           type: 'multiple_choice'
         }]);
 
@@ -153,11 +154,16 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   };
 
   if (isLoading) {
-    return <div>Chargement des questions...</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader className="w-8 h-8 animate-spin" />
+        <span className="ml-2">Chargement des questions...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <Card>
         <CardHeader>
           <CardTitle>Ajouter une question</CardTitle>
@@ -257,6 +263,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
             </div>
 
             <Button onClick={handleAddQuestion} className="w-full">
+              <Plus className="w-4 h-4 mr-2" />
               Ajouter la question
             </Button>
           </div>
