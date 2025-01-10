@@ -25,7 +25,7 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
           <div className="flex items-center space-x-4">
             <Link to="/" className="flex items-center space-x-2 text-white hover:text-amber-100">
               <Trophy className="h-6 w-6" />
-              <span className="font-bold text-lg">Concours</span>
+              <span className="font-bold text-lg">Passion Varadero</span>
             </Link>
             <div className="hidden md:flex space-x-4">
               <Link to="/contests" className="text-white hover:text-amber-100">

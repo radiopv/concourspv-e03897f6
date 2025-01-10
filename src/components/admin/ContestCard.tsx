@@ -129,9 +129,9 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
   }, []);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-bold">{contest.title}</CardTitle>
+    <Card className="w-full bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b">
+        <CardTitle className="text-2xl font-bold text-gray-800">{contest.title}</CardTitle>
         <Select
           defaultValue={contest.status}
           onValueChange={handleStatusChange}
@@ -150,25 +150,34 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-gray-500 mb-4">{contest.description}</p>
-        <div className="flex flex-col space-y-4">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="font-medium">Participants:</span>
-              <p>{participantsData?.total || 0}</p>
+      <CardContent className="pt-6">
+        <div className="space-y-6">
+          {contest.description && (
+            <p className="text-gray-600 text-base leading-relaxed">
+              {contest.description}
+            </p>
+          )}
+          
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-gray-700 mb-2">Participants</h3>
+              <p className="text-2xl font-bold text-primary">
+                {participantsData?.total || 0}
+              </p>
               {participantsData?.total > 0 && (
-                <p className="text-xs text-gray-500">
+                <p className="text-sm text-gray-500 mt-1">
                   Taux de réussite: {participantsData.successRate}%
                 </p>
               )}
             </div>
-            <div>
-              <span className="font-medium">Questions:</span>
-              <p>{questionsCount || 0}</p>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-gray-700 mb-2">Questions</h3>
+              <p className="text-2xl font-bold text-primary">
+                {questionsCount || 0}
+              </p>
             </div>
           </div>
-          
+
           {userId && (
             <ParticipantInfo 
               userId={userId} 
@@ -176,12 +185,12 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
             />
           )}
 
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-3 pt-4">
             {onEdit && (
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => onEdit(contest.id)}
+                className="hover:bg-gray-100"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Modifier
@@ -189,8 +198,8 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
             )}
             <Button
               variant="outline"
-              size="sm"
               onClick={() => setShowParticipants(!showParticipants)}
+              className="hover:bg-gray-100"
             >
               <List className="h-4 w-4 mr-2" />
               Participants
@@ -198,8 +207,8 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
             {onDelete && (
               <Button
                 variant="destructive"
-                size="sm"
                 onClick={() => onDelete(contest.id)}
+                className="hover:bg-red-600"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Supprimer
@@ -208,7 +217,9 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
           </div>
 
           {showParticipants && (
-            <ParticipantsList contestId={contest.id} />
+            <div className="mt-6">
+              <ParticipantsList contestId={contest.id} />
+            </div>
           )}
         </div>
       </CardContent>
