@@ -11,6 +11,7 @@ import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
 import QuestionDisplay from './questionnaire/QuestionDisplay';
 import { useAttempts } from './questionnaire/hooks/useAttempts';
 import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
+import { useQuery } from "@tanstack/react-query";
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -27,7 +28,38 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
   useAttempts(contestId);
 
+  // Vérifier si le participant a déjà complété le quiz
+  const { data: participant } = useQuery({
+    queryKey: ['participant-status', contestId],
+    queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('participants')
+        .select('status, score')
+        .eq('contest_id', contestId)
+        .eq('id', session.session.user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   useEffect(() => {
+    if (participant?.status === 'completed') {
+      navigate('/quiz-completion', {
+        state: {
+          score: participant.score,
+          totalQuestions: questions?.length || 0,
+          contestId: contestId
+        }
+      });
+      return;
+    }
+  }, [participant, navigate, questions?.length, contestId]);
+
     const initializeParticipant = async () => {
       try {
         const { data: session } = await supabase.auth.getSession();
@@ -178,14 +210,16 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         // Invalider les requêtes pour forcer le rafraîchissement des données
         await queryClient.invalidateQueries({ queryKey: ['contests'] });
         await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
+        await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
 
         console.log('Quiz completed successfully');
 
         // Rediriger vers la page de complétion avec les statistiques
         navigate('/quiz-completion', {
           state: {
-            score: state.score,
-            totalQuestions: questions?.length || 0
+            score: finalScore,
+            totalQuestions: questions?.length || 0,
+            contestId: contestId
           }
         });
 
@@ -243,7 +277,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       </CardContent>
     </Card>
   );
-
 };
 
 export default QuestionnaireComponent;
