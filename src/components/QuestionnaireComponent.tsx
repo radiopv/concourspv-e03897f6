@@ -27,7 +27,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
   useAttempts(contestId);
 
-  // Ajout de l'effet pour créer le participant au chargement
   useEffect(() => {
     const initializeParticipant = async () => {
       try {
@@ -42,17 +41,39 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           return;
         }
 
-        // Vérifie si le participant existe déjà
-        const { data: existingParticipant } = await supabase
+        // Get user profile data first
+        const { data: userProfile } = await supabase
+          .from('members')
+          .select('first_name, last_name, email')
+          .eq('id', session.session.user.id)
+          .single();
+
+        if (!userProfile) {
+          console.error('User profile not found');
+          toast({
+            title: "Erreur",
+            description: "Profil utilisateur non trouvé",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Check if participant exists
+        const { data: existingParticipant, error: queryError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id)
-          .single();
+          .maybeSingle();
+
+        if (queryError) {
+          console.error('Error checking participant:', queryError);
+          throw queryError;
+        }
 
         if (!existingParticipant) {
-          console.log('Creating new participant...');
-          // Crée un nouveau participant
+          console.log('Creating new participant with profile:', userProfile);
+          
           const { error: createError } = await supabase
             .from('participants')
             .insert([{
@@ -60,7 +81,10 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
               contest_id: contestId,
               status: 'in_progress',
               attempts: 0,
-              score: 0
+              score: 0,
+              first_name: userProfile.first_name,
+              last_name: userProfile.last_name,
+              email: userProfile.email
             }]);
 
           if (createError) {

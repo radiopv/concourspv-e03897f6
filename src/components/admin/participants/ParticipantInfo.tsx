@@ -1,8 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ParticipantInfoProps {
   userId: string;
@@ -10,89 +10,53 @@ interface ParticipantInfoProps {
 }
 
 const ParticipantInfo = ({ userId, contestId }: ParticipantInfoProps) => {
-  const { toast } = useToast();
-
-  const { data: participants, isLoading, error } = useQuery({
-    queryKey: ['participant-info', userId, contestId],
+  const { data: participant, isLoading, error } = useQuery({
+    queryKey: ['participant', userId, contestId],
     queryFn: async () => {
-      console.log('Fetching participant info for:', { userId, contestId });
-      
       const { data, error } = await supabase
         .from('participants')
-        .select('participation_id, attempts')
+        .select('*')
+        .eq('contest_id', contestId)
         .eq('id', userId)
-        .eq('contest_id', contestId);
+        .maybeSingle();
 
       if (error) {
-        console.error('Error fetching participant info:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de récupérer les informations du participant",
-          variant: "destructive",
-        });
+        console.error('Error fetching participant:', error);
         throw error;
       }
 
-      console.log('Participant data:', data);
       return data;
-    },
+    }
   });
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <Skeleton className="h-4 w-[200px]" />;
   }
 
   if (error) {
-    return (
-      <Card className="border-red-200">
-        <CardContent className="p-6">
-          <p className="text-red-500">Une erreur est survenue lors de la récupération des données</p>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
-  if (!participants || participants.length === 0) {
+  if (!participant) {
     return (
-      <Card className="border-gray-200">
-        <CardContent className="p-6">
-          <p className="text-gray-500">Aucun participant trouvé</p>
-        </CardContent>
-      </Card>
+      <Badge variant="outline" className="text-sm">
+        Pas encore participé
+      </Badge>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Informations du participant</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {participants.map((participant) => (
-            <div key={participant.participation_id} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">ID de participation:</span>
-                <span className="text-gray-600">{participant.participation_id}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium">Nombre de tentatives:</span>
-                <span className="text-gray-600">{participant.attempts}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex gap-2 items-center">
+      <Badge 
+        variant={participant.score >= 70 ? "success" : "secondary"}
+        className="text-sm"
+      >
+        Score: {participant.score}%
+      </Badge>
+      <Badge variant="outline" className="text-sm">
+        Tentatives: {participant.attempts}/3
+      </Badge>
+    </div>
   );
 };
 
