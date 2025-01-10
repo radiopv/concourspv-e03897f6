@@ -69,8 +69,10 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         .select('status, score')
         .eq('contest_id', contestId)
         .eq('id', session.session.user.id)
-        .single();
+        .maybeSingle();
 
+      // If no participant found, return null instead of throwing
+      if (error && error.code === 'PGRST116') return null;
       if (error) throw error;
       return data;
     }
@@ -122,33 +124,36 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         }
 
         // First, check if participant exists
-        const { data: existingParticipant } = await supabase
+        const { data: existingParticipant, error: checkError } = await supabase
           .from('participants')
-          .select('participation_id')
+          .select('participation_id, attempts')
           .eq('id', session.session.user.id)
           .eq('contest_id', contestId)
           .maybeSingle();
 
-        // If participant exists, update their record
+        // Handle case where no participant exists
+        if (checkError && checkError.code !== 'PGRST116') {
+          throw checkError;
+        }
+
         if (existingParticipant?.participation_id) {
+          // Update existing participant
           const { error: updateError } = await supabase
             .from('participants')
             .update({
               status: 'pending',
-              attempts: 0,
+              attempts: (existingParticipant.attempts || 0) + 1,
               score: 0,
               first_name: userProfile.first_name,
               last_name: userProfile.last_name,
-              email: userProfile.email
+              email: userProfile.email,
+              updated_at: new Date().toISOString()
             })
             .eq('participation_id', existingParticipant.participation_id);
 
-          if (updateError) {
-            console.error('Error updating participant:', updateError);
-            throw updateError;
-          }
+          if (updateError) throw updateError;
         } else {
-          // If participant doesn't exist, create a new record
+          // Create new participant with a new UUID
           const participation_id = crypto.randomUUID();
           const { error: insertError } = await supabase
             .from('participants')
@@ -157,19 +162,19 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
               id: session.session.user.id,
               contest_id: contestId,
               status: 'pending',
-              attempts: 0,
+              attempts: 1,
               score: 0,
               first_name: userProfile.first_name,
               last_name: userProfile.last_name,
-              email: userProfile.email
+              email: userProfile.email,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             });
 
-          if (insertError) {
-            console.error('Error inserting participant:', insertError);
-            throw insertError;
-          }
+          if (insertError) throw insertError;
         }
-        
+
+        await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
         console.log('Participant initialized successfully');
 
       } catch (error) {
@@ -183,7 +188,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     };
 
     initializeParticipant();
-  }, [contestId, navigate, toast]);
+  }, [contestId, navigate, toast, queryClient]);
 
   const handleNextQuestion = async () => {
     if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
