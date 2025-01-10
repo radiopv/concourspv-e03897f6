@@ -16,12 +16,12 @@ const QuizCompletion = () => {
     requiredPercentage: 90
   };
 
-  // S'assurer que le score est un nombre
+  // S'assurer que le score est un nombre valide
   const numericScore = typeof score === 'number' ? score : 0;
   const numericTotalQuestions = typeof totalQuestions === 'number' ? totalQuestions : 0;
   
-  // Calculer le nombre de bonnes réponses en fonction du score
-  const correctAnswers = Math.round((numericScore / 100) * numericTotalQuestions);
+  // Calculer le nombre exact de bonnes réponses
+  const correctAnswers = Math.floor((numericScore / 100) * numericTotalQuestions);
   
   const isQualified = numericScore >= requiredPercentage;
 
