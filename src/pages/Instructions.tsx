@@ -121,6 +121,10 @@ const Instructions = () => {
                 <Award className="w-6 h-6 mx-auto text-amber-500 mb-2" />
                 <p className="font-semibold">Nouveau-Brunswick</p>
               </div>
+              <div className="text-center">
+                <Award className="w-6 h-6 mx-auto text-amber-500 mb-2" />
+                <p className="font-semibold">Québec</p>
+              </div>
             </div>
             <p className="mt-4 text-sm">
               Une preuve de résidence pourra être demandée lors de la réclamation des prix.
