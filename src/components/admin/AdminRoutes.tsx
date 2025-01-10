@@ -16,6 +16,10 @@ const AdminRoutes = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const handleContestSelect = (id: string) => {
+    navigate(`/admin/contests/${id}`);
+  };
+
   React.useEffect(() => {
     const checkAdminRole = async () => {
       if (!user) return;
@@ -67,7 +71,7 @@ const AdminRoutes = () => {
     <div className="space-y-6">
       <Routes>
         <Route path="/" element={<AdminDashboard />} />
-        <Route path="/contests/*" element={<AdminContestManager />} />
+        <Route path="/contests/*" element={<AdminContestManager onContestSelect={handleContestSelect} />} />
         <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
         <Route path="/questions" element={<EditQuestionsList contestId={null} />} />
         <Route path="/users" element={<UserManager />} />
