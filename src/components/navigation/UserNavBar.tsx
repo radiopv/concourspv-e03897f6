@@ -37,7 +37,7 @@ const UserNavBar = () => {
                 Points
               </Link>
               {isAdmin && (
-                <Link to="/admin" className="text-white hover:text-amber-100 font-semibold">
+                <Link to="/admin" className="text-white hover:text-amber-100 font-semibold bg-amber-600 px-3 py-1 rounded-md">
                   Administration
                 </Link>
               )}
@@ -57,7 +57,7 @@ const UserNavBar = () => {
                   </Link>
                   {isAdmin && (
                     <Link to="/admin">
-                      <Button variant="ghost" className="text-white hover:text-amber-100">
+                      <Button variant="ghost" className="text-white hover:text-amber-100 bg-amber-600">
                         <Settings className="h-5 w-5 mr-2" />
                         Admin
                       </Button>

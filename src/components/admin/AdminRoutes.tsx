@@ -8,15 +8,22 @@ import QuestionBank from '@/pages/QuestionBank';
 import UserManager from './users/UserManager';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminRoutes = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   console.log("Current user in AdminRoutes:", user);
   console.log("User role:", user?.role);
 
   if (!user || user.role !== 'admin') {
     console.log("User not authorized, redirecting to login");
-    return <Navigate to="/login" replace />;
+    toast({
+      variant: "destructive",
+      title: "Accès refusé",
+      description: "Vous devez être administrateur pour accéder à cette section.",
+    });
+    return <Navigate to="/" replace />;
   }
 
   return (
