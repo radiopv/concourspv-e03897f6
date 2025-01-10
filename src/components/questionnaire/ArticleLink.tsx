@@ -8,33 +8,40 @@ interface ArticleLinkProps {
   onArticleRead: () => void;
 }
 
-const READING_TIME = 5;
+const READING_TIME = 30;
 
 const ArticleLink: React.FC<ArticleLinkProps> = ({ url, onArticleRead }) => {
   const [hasClicked, setHasClicked] = useState(false);
   const [readingTimer, setReadingTimer] = useState(0);
 
+  // Reset timer when URL changes
   useEffect(() => {
     setHasClicked(false);
     setReadingTimer(0);
   }, [url]);
 
+  // Handle timer logic
   useEffect(() => {
-    if (!hasClicked || readingTimer >= READING_TIME) return;
+    let timer: NodeJS.Timeout | null = null;
 
-    const timer = setInterval(() => {
-      setReadingTimer(prev => {
-        const newValue = prev + 1;
-        if (newValue >= READING_TIME) {
-          clearInterval(timer);
-          onArticleRead();
-          return READING_TIME;
-        }
-        return newValue;
-      });
-    }, 1000);
+    if (hasClicked && readingTimer < READING_TIME) {
+      timer = setInterval(() => {
+        setReadingTimer(prev => {
+          const newValue = prev + 1;
+          if (newValue >= READING_TIME) {
+            onArticleRead();
+            return READING_TIME;
+          }
+          return newValue;
+        });
+      }, 1000);
+    }
 
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
   }, [hasClicked, readingTimer, onArticleRead]);
 
   const handleClick = () => {
