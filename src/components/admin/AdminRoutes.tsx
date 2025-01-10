@@ -12,7 +12,7 @@ const AdminRoutes = () => {
     <Routes>
       <Route path="/" element={<AdminContestManager />} />
       <Route path="/contests/:contestId/questions" element={<ContestQuestionsManager />} />
-      <Route path="/prizes" element={<PrizeCatalogManager />} />
+      <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
       <Route path="/question-bank" element={<QuestionBankManager />} />
       <Route path="/settings" element={<GlobalSettings />} />
       <Route path="/users" element={<UserManager />} />
