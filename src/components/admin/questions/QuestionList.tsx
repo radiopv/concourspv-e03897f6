@@ -28,7 +28,7 @@ const QuestionList = ({ questions, onEdit, onDelete }: QuestionListProps) => {
           <CardContent className="pt-6">
             {editingId === question.id ? (
               <QuestionForm
-                initialData={question}
+                initialQuestion={question}
                 onSubmit={(data) => {
                   onEdit(question.id, data);
                   setEditingId(null);
