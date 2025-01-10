@@ -6,3 +6,8 @@ export type Prize = {
   shop_url?: string;
   value?: number;
 };
+
+export type ContestPrize = {
+  id: string;
+  catalog_item: Prize;
+};

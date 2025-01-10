@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import UserPoints from "./UserPoints";
+import { Shield } from 'lucide-react';
 
 const UserNavBar = () => {
   const { user, signOut } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   return (
     <nav className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 shadow-lg border-b border-amber-300">
@@ -40,6 +42,20 @@ const UserNavBar = () => {
               >
                 Points & Rangs
               </Link>
+              {isAdmin && (
+                <Link 
+                  to="/admin" 
+                  className="text-white hover:text-amber-100 transition-colors font-medium
+                            relative after:content-[''] after:absolute after:w-full after:scale-x-0 
+                            after:h-0.5 after:bottom-0 after:left-0 after:bg-amber-100 
+                            after:origin-bottom-right after:transition-transform after:duration-300 
+                            hover:after:scale-x-100 hover:after:origin-bottom-left
+                            flex items-center gap-2"
+                >
+                  <Shield className="w-4 h-4" />
+                  Administration
+                </Link>
+              )}
             </div>
           </div>
           

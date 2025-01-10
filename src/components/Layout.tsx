@@ -37,14 +37,14 @@ const Layout = ({ children }: LayoutProps) => {
       
       {/* Menu d'administration */}
       {isAdmin && (
-        <div className="bg-white/80 backdrop-blur-sm shadow-md sticky top-0 z-50 border-b border-amber-100/20">
+        <div className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-md sticky top-0 z-50 border-b border-amber-100/20">
           <div className="container mx-auto px-4">
             <div className="flex items-center space-x-4 overflow-x-auto py-4">
               {adminLinks.map((link) => (
                 <Button
                   key={link.path}
-                  variant={isAdminRoute && location.pathname === link.path ? "default" : "ghost"}
-                  className="flex items-center gap-2 whitespace-nowrap hover:bg-amber-100 transition-colors"
+                  variant={isAdminRoute && location.pathname === link.path ? "secondary" : "ghost"}
+                  className="flex items-center gap-2 whitespace-nowrap hover:bg-white/20 transition-colors text-white"
                   onClick={() => navigate(link.path)}
                 >
                   <link.icon className="h-4 w-4" />
