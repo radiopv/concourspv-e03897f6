@@ -9,16 +9,18 @@ import { Helmet } from 'react-helmet';
 const QuizCompletion = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { score, totalQuestions, contestId, requiredPercentage = 90 } = location.state || { 
-    score: 0, 
-    totalQuestions: 0,
-    contestId: null,
-    requiredPercentage: 90
-  };
+  const { score = 0, totalQuestions = 0, contestId, requiredPercentage = 90 } = location.state || {};
 
-  // Calcul simple et direct du nombre de bonnes réponses
+  // Calcul exact du nombre de bonnes réponses basé sur le score
   const correctAnswers = Math.round((score / 100) * totalQuestions);
   const isQualified = score >= requiredPercentage;
+
+  console.log('Quiz completion details:', {
+    score,
+    totalQuestions,
+    correctAnswers,
+    isQualified
+  });
 
   const handleRetry = () => {
     if (!contestId) {
@@ -45,9 +47,7 @@ const QuizCompletion = () => {
           {isQualified ? "🎉 Félicitations !" : "Quiz terminé"}
         </h1>
         <p className="text-xl text-gray-600">
-          {isQualified 
-            ? "Vous êtes qualifié pour le tirage au sort !"
-            : `Le score minimum requis est de ${requiredPercentage}%. N'hésitez pas à réessayer !`}
+          Voici vos résultats
         </p>
       </motion.div>
 
@@ -117,6 +117,11 @@ const QuizCompletion = () => {
         transition={{ delay: 0.5 }}
         className="text-center space-y-4"
       >
+        <p className="text-lg text-gray-600 mb-4">
+          {isQualified 
+            ? "Bravo ! Vous êtes qualifié pour le tirage au sort !"
+            : `Le score minimum requis est de ${requiredPercentage}%. N'hésitez pas à réessayer !`}
+        </p>
         <div className="space-x-4">
           {!isQualified && (
             <Button

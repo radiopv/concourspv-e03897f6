@@ -239,7 +239,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
         await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
 
-        console.log('Quiz completed successfully');
+        console.log('Quiz completed successfully. Navigating to completion page with score:', finalScore);
 
         navigate('/quiz-completion', {
           state: {

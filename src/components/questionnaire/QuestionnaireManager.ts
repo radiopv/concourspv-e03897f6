@@ -15,23 +15,27 @@ export const calculateFinalScore = async (participantId: string) => {
       throw answersError;
     }
 
+    console.log('Raw answers data:', answers);
+
     if (!answers || answers.length === 0) {
       console.log('No answers found, returning 0');
       return 0;
     }
 
-    // Compter simplement le nombre de réponses correctes
+    // Calcul basique : nombre de réponses correctes / nombre total de questions * 100
     const correctAnswers = answers.filter(answer => answer.is_correct === true).length;
     const totalQuestions = answers.length;
     
-    // Calcul simple : (nombre de bonnes réponses / nombre total de questions) * 100
-    const score = Math.round((correctAnswers / totalQuestions) * 100);
-    
-    console.log('Score calculation:', {
+    console.log('Calculation details:', {
       correctAnswers,
       totalQuestions,
-      score
+      rawPercentage: (correctAnswers / totalQuestions) * 100
     });
+
+    // Arrondir à l'entier le plus proche
+    const score = Math.round((correctAnswers / totalQuestions) * 100);
+    
+    console.log('Final score:', score);
     
     return score;
   } catch (error) {
