@@ -8,7 +8,7 @@ interface ArticleLinkProps {
   onArticleRead: () => void;
 }
 
-const READING_TIME = 30;
+const READING_TIME = 5;
 
 const ArticleLink: React.FC<ArticleLinkProps> = ({ url, onArticleRead }) => {
   const [hasClicked, setHasClicked] = useState(false);
