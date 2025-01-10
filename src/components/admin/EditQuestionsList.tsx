@@ -3,11 +3,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader } from "lucide-react";
+import { Plus, Loader, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import QuestionBankSelector from './question-bank/QuestionBankSelector';
 import QuestionForm from './questions/QuestionForm';
 import QuestionList from './questions/QuestionList';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Tabs,
   TabsContent,
@@ -15,28 +16,27 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 
-interface EditQuestionsListProps {
-  contestId: string | null;
-}
-
-const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
+const EditQuestionsList = () => {
+  const { contestId } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedQuestions, setSelectedQuestions] = React.useState<string[]>([]);
 
   const { data: questions, refetch, isLoading } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
-      let query = supabase.from('questions').select('*');
+      if (!contestId) throw new Error('Contest ID is required');
       
-      if (contestId) {
-        query = query.eq('contest_id', contestId);
-      }
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('contest_id', contestId)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!contestId
   });
 
   const handleAddQuestion = async (formData: any) => {
@@ -121,6 +121,18 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     }
   };
 
+  if (!contestId) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">Erreur</h2>
+        <p className="mb-4">ID du concours manquant</p>
+        <Button onClick={() => navigate('/admin/contests')}>
+          Retour aux concours
+        </Button>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -132,6 +144,18 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
 
   return (
     <div className="space-y-6 p-4">
+      <div className="flex items-center gap-4 mb-6">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/admin/contests')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Retour aux concours
+        </Button>
+        <h1 className="text-2xl font-bold">Questions du concours</h1>
+      </div>
+
       <Tabs defaultValue="bank" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="bank">Banque de questions</TabsTrigger>
@@ -145,7 +169,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
             </CardHeader>
             <CardContent>
               <QuestionBankSelector
-                contestId={contestId || ''}
+                contestId={contestId}
                 onQuestionSelect={(questionId) => {
                   setSelectedQuestions([...selectedQuestions, questionId]);
                   refetch();

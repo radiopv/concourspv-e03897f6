@@ -4,11 +4,10 @@ import AdminDashboard from './AdminDashboard';
 import AdminContestManager from './AdminContestManager';
 import ContentValidator from './ContentValidator';
 import GlobalSettings from './GlobalSettings';
-import EditQuestionsList from './EditQuestionsList';
 import UserManager from './users/UserManager';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import QuestionBankManager from './question-bank/QuestionBankManager';
-import ContestQuestionsManager from './contest-questions/ContestQuestionsManager';
+import EditQuestionsList from './EditQuestionsList';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -17,10 +16,6 @@ const AdminRoutes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-
-  const handleContestSelect = (id: string) => {
-    navigate(`/admin/contests/${id}`);
-  };
 
   React.useEffect(() => {
     const checkAdminRole = async () => {
@@ -73,10 +68,10 @@ const AdminRoutes = () => {
     <div className="space-y-6">
       <Routes>
         <Route path="/" element={<AdminDashboard />} />
-        <Route path="/contests" element={<AdminContestManager onContestSelect={handleContestSelect} />} />
-        <Route path="/contests/:contestId/questions" element={<ContestQuestionsManager />} />
-        <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
+        <Route path="/contests" element={<AdminContestManager />} />
+        <Route path="/contests/:contestId/questions" element={<EditQuestionsList />} />
         <Route path="/questions" element={<QuestionBankManager />} />
+        <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
         <Route path="/users" element={<UserManager />} />
         <Route path="/settings" element={<GlobalSettings />} />
         <Route path="/content" element={<ContentValidator />} />
