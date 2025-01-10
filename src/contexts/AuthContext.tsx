@@ -23,30 +23,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchUserRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('members')
-        .select('role')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        return {
-          ...user,
-          role: data.role
-        };
-      }
-      return user;
-    } catch (error) {
-      console.error("Error fetching user role:", error);
-      return user;
-    }
-  };
-
   useEffect(() => {
+    // Initial session check
     const checkSession = async () => {
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
@@ -57,9 +35,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         if (currentSession) {
-          const userWithRole = await fetchUserRole(currentSession.user.id);
           setSession(currentSession);
-          setUser(userWithRole);
+          setUser(currentSession.user);
         }
       } catch (error) {
         console.error("Session check error:", error);
@@ -70,13 +47,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     checkSession();
 
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth state changed:", event);
       
       if (currentSession) {
-        const userWithRole = await fetchUserRole(currentSession.user.id);
         setSession(currentSession);
-        setUser(userWithRole);
+        setUser(currentSession.user);
       } else {
         setSession(null);
         setUser(null);

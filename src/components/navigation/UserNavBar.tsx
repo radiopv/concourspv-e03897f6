@@ -9,8 +9,6 @@ const UserNavBar = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
-  console.log("Current user in UserNavBar:", user);
-  console.log("Is admin in UserNavBar:", isAdmin);
 
   const handleLogout = async () => {
     await signOut();
@@ -37,7 +35,7 @@ const UserNavBar = () => {
                 Points
               </Link>
               {isAdmin && (
-                <Link to="/admin" className="text-white hover:text-amber-100 font-semibold bg-amber-600 px-3 py-1 rounded-md">
+                <Link to="/admin" className="text-white hover:text-amber-100 font-semibold">
                   Administration
                 </Link>
               )}
@@ -57,7 +55,7 @@ const UserNavBar = () => {
                   </Link>
                   {isAdmin && (
                     <Link to="/admin">
-                      <Button variant="ghost" className="text-white hover:text-amber-100 bg-amber-600">
+                      <Button variant="ghost" className="text-white hover:text-amber-100">
                         <Settings className="h-5 w-5 mr-2" />
                         Admin
                       </Button>
