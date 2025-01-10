@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -25,8 +25,22 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const { data: questions } = useQuestions(contestId);
   const { handleSubmitAnswer } = useAnswerSubmission(contestId);
   const currentQuestion = questions?.[state.currentQuestionIndex];
+  const [countdown, setCountdown] = useState(5);
+  const [showQuestions, setShowQuestions] = useState(false);
 
   useAttempts(contestId);
+
+  // Countdown effect
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowQuestions(true);
+    }
+  }, [countdown]);
 
   // Récupérer les paramètres globaux
   const { data: settings } = useQuery({
@@ -255,6 +269,20 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         <CardContent className="p-6">
           <div className="text-center">
             <p className="text-lg text-gray-600">Aucune question disponible.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!showQuestions) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold mb-4">Préparez-vous !</h2>
+            <p className="text-6xl font-bold text-indigo-600 mb-4">{countdown}</p>
+            <p className="text-lg text-gray-600">Le quiz commence dans quelques secondes...</p>
           </div>
         </CardContent>
       </Card>
