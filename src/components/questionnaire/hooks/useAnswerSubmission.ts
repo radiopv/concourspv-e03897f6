@@ -12,29 +12,12 @@ export const useAnswerSubmission = (contestId: string) => {
   const state = useQuestionnaireState();
 
   const handleSubmitAnswer = async (currentQuestion: any) => {
-    console.log('handleSubmitAnswer called with state:', {
-      selectedAnswer: state.selectedAnswer,
-      hasAnswered: state.hasAnswered,
-      isSubmitting: state.isSubmitting
-    });
+    if (!state.selectedAnswer || !currentQuestion) return;
 
-    if (!state.selectedAnswer || !currentQuestion) {
-      console.log('No answer selected or no current question');
-      return;
-    }
-
-    if (state.hasAnswered) {
-      console.log('Answer already submitted, preventing duplicate submission');
-      return;
-    }
-
-    console.log('Starting answer submission process');
     state.setIsSubmitting(true);
-
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user?.id) {
-        console.log('No authenticated user found');
         toast({
           title: "Erreur",
           description: "Vous devez être connecté pour participer",
@@ -51,10 +34,7 @@ export const useAnswerSubmission = (contestId: string) => {
         .eq('contest_id', contestId)
         .single();
 
-      console.log('Participant data:', participant);
-
       if (participant?.score === 100) {
-        console.log('Participant already has perfect score');
         toast({
           title: "Participation impossible",
           description: "Vous avez déjà obtenu un score parfait de 100% !",
@@ -79,16 +59,8 @@ export const useAnswerSubmission = (contestId: string) => {
         throw answersError;
       }
 
-      console.log('Existing answers:', existingAnswers);
-
       const currentAttempt = participant?.attempts || 0;
-      const isAnswerCorrect = state.selectedAnswer.trim() === currentQuestion.correct_answer.trim();
-
-      console.log('Answer validation:', {
-        isCorrect: isAnswerCorrect,
-        selectedAnswer: state.selectedAnswer.trim(),
-        correctAnswer: currentQuestion.correct_answer.trim()
-      });
+      const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
 
       // N'attribuer des points que si la réponse est correcte ET n'a pas déjà été correctement répondue
       if (isAnswerCorrect && !existingAnswers?.is_correct) {
@@ -118,10 +90,7 @@ export const useAnswerSubmission = (contestId: string) => {
           attempt_number: currentAttempt
         }]);
 
-      if (insertError) {
-        console.error('Error inserting answer:', insertError);
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
       // Mettre à jour le state
       state.setIsCorrect(isAnswerCorrect);
@@ -131,10 +100,8 @@ export const useAnswerSubmission = (contestId: string) => {
       if (isAnswerCorrect) {
         state.setScore(prev => prev + 1);
         state.incrementStreak();
-        console.log('Streak incremented');
       } else {
         state.resetStreak();
-        console.log('Streak reset');
       }
 
       await queryClient.invalidateQueries({ queryKey: ['contests'] });
@@ -144,9 +111,9 @@ export const useAnswerSubmission = (contestId: string) => {
 
       const message = getRandomMessage();
       toast({
-        title: isAnswerCorrect ? "Bonne réponse !" : "Mauvaise réponse",
+        title: "Réponse enregistrée",
         description: message,
-        variant: isAnswerCorrect ? "default" : "destructive",
+        variant: "default",
       });
 
     } catch (error) {
