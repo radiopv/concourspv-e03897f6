@@ -79,12 +79,13 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
             .insert([{
               id: session.session.user.id,
               contest_id: contestId,
-              status: 'in_progress',
+              status: 'pending', // Changed from 'in_progress' to 'pending'
               attempts: 0,
               score: 0,
               first_name: userProfile.first_name,
               last_name: userProfile.last_name,
-              email: userProfile.email
+              email: userProfile.email,
+              participation_id: crypto.randomUUID()
             }]);
 
           if (createError) {
@@ -213,7 +214,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       <CardHeader>
         <QuestionnaireProgress
           currentQuestionIndex={state.currentQuestionIndex}
-          totalQuestions={questions.length}
+          totalQuestions={questions?.length || 0}
           score={state.score}
           totalAnswered={state.totalAnswered}
         />
@@ -232,7 +233,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           onAnswerSelect={state.setSelectedAnswer}
           onSubmitAnswer={() => handleSubmitAnswer(currentQuestion)}
           onNextQuestion={handleNextQuestion}
-          isLastQuestion={state.currentQuestionIndex === questions.length - 1}
+          isLastQuestion={state.currentQuestionIndex === questions?.length - 1}
         />
       </CardContent>
     </Card>
