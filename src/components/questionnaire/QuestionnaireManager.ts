@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import { calculateFinalScore } from "@/utils/scoreCalculations";
 
 export const calculateFinalScore = async (participantId: string) => {
   try {
@@ -30,7 +29,7 @@ export const calculateFinalScore = async (participantId: string) => {
       totalQuestions
     });
 
-    const score = calculateFinalScore(correctAnswers, totalQuestions);
+    const score = Math.round((correctAnswers / totalQuestions) * 100);
     console.log('Final score:', score);
     
     return score;
