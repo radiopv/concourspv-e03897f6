@@ -37,59 +37,54 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     } else {
       state.setIsSubmitting(true);
       try {
+        console.log('Starting quiz completion process...');
+        
         const { data: session } = await supabase.auth.getSession();
         if (!session?.session?.user?.id) {
           throw new Error("User not authenticated");
         }
 
-        const { data: participant } = await supabase
+        // Récupérer d'abord le participant
+        const { data: participant, error: participantError } = await supabase
           .from('participants')
-          .select('participation_id')
+          .select('participation_id, attempts')
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id)
           .single();
 
-        if (!participant?.participation_id) {
+        if (participantError || !participant?.participation_id) {
+          console.error('Error fetching participant:', participantError);
           throw new Error("Participant not found");
         }
 
+        console.log('Participant found:', participant);
+
+        // Calculer le score final
         const finalScore = await calculateFinalScore(participant.participation_id);
         console.log('Final score calculated:', finalScore);
-        
+
         // Mettre à jour le score et le statut du participant
         const { error: updateError } = await supabase
           .from('participants')
           .update({ 
             score: finalScore,
             status: 'completed',
-            completed_at: new Date().toISOString()
+            completed_at: new Date().toISOString(),
+            attempts: (participant.attempts || 0) + 1
           })
           .eq('contest_id', contestId)
           .eq('id', session.session.user.id);
 
-        if (updateError) throw updateError;
-
-        // Mettre à jour le nombre de tentatives
-        const { data: participantData } = await supabase
-          .from('participants')
-          .select('attempts')
-          .eq('contest_id', contestId)
-          .eq('id', session.session.user.id)
-          .single();
-
-        const newAttempts = (participantData?.attempts || 0) + 1;
-
-        const { error: attemptsError } = await supabase
-          .from('participants')
-          .update({ attempts: newAttempts })
-          .eq('contest_id', contestId)
-          .eq('id', session.session.user.id);
-
-        if (attemptsError) throw attemptsError;
+        if (updateError) {
+          console.error('Error updating participant:', updateError);
+          throw updateError;
+        }
 
         // Invalider les requêtes pour forcer le rafraîchissement des données
         await queryClient.invalidateQueries({ queryKey: ['contests'] });
         await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
+
+        console.log('Quiz completed successfully');
 
         toast({
           title: "Questionnaire terminé ! 🎉",
@@ -101,7 +96,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           duration: 5000,
         });
 
-        // Redirection après un court délai
+        // Redirection après un délai plus long pour assurer la visibilité du toast
         setTimeout(() => {
           navigate('/contests');
         }, 2000);
