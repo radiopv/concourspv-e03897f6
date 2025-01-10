@@ -58,45 +58,33 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
           return;
         }
 
-        // Check if participant exists
-        const { data: existingParticipant, error: queryError } = await supabase
+        const participation_id = crypto.randomUUID();
+
+        // Upsert participant with ON CONFLICT handling
+        const { error: upsertError } = await supabase
           .from('participants')
-          .select('*')
-          .eq('contest_id', contestId)
-          .eq('id', session.session.user.id)
-          .maybeSingle();
+          .upsert({
+            id: session.session.user.id,
+            contest_id: contestId,
+            status: 'pending',
+            attempts: 0,
+            score: 0,
+            first_name: userProfile.first_name,
+            last_name: userProfile.last_name,
+            email: userProfile.email,
+            participation_id: participation_id
+          }, {
+            onConflict: 'id,contest_id',
+            ignoreDuplicates: false
+          });
 
-        if (queryError) {
-          console.error('Error checking participant:', queryError);
-          throw queryError;
+        if (upsertError) {
+          console.error('Error upserting participant:', upsertError);
+          throw upsertError;
         }
+        
+        console.log('Participant initialized successfully');
 
-        if (!existingParticipant) {
-          console.log('Creating new participant with profile:', userProfile);
-          
-          const { error: createError } = await supabase
-            .from('participants')
-            .insert([{
-              id: session.session.user.id,
-              contest_id: contestId,
-              status: 'pending', // Changed from 'in_progress' to 'pending'
-              attempts: 0,
-              score: 0,
-              first_name: userProfile.first_name,
-              last_name: userProfile.last_name,
-              email: userProfile.email,
-              participation_id: crypto.randomUUID()
-            }]);
-
-          if (createError) {
-            console.error('Error creating participant:', createError);
-            throw createError;
-          }
-          
-          console.log('Participant created successfully');
-        } else {
-          console.log('Participant already exists:', existingParticipant);
-        }
       } catch (error) {
         console.error('Error initializing participant:', error);
         toast({
