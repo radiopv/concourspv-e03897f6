@@ -15,7 +15,6 @@ interface ContestCardProps {
   onFeatureToggle?: (id: string, featured: boolean) => void;
   onStatusUpdate?: (id: string, updates: any) => void;
   onEdit?: (id: string) => void;
-  onSelect?: (id: string) => void;
 }
 
 interface PrizeCatalogItem {
@@ -37,8 +36,7 @@ const ContestCard: React.FC<ContestCardProps> = ({
   onArchive,
   onFeatureToggle,
   onStatusUpdate,
-  onEdit,
-  onSelect
+  onEdit
 }) => {
   const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
@@ -59,13 +57,13 @@ const ContestCard: React.FC<ContestCardProps> = ({
       
       if (error) throw error;
       
-      return data?.map(item => ({
-        id: item.catalog_item?.id || '',
-        name: item.catalog_item?.name || '',
-        description: item.catalog_item?.description || '',
-        image_url: item.catalog_item?.image_url || '',
-        shop_url: item.catalog_item?.shop_url || '',
-        value: item.catalog_item?.value || 0
+      return (data || []).map(prize => ({
+        id: prize.catalog_item?.id || '',
+        name: prize.catalog_item?.name || '',
+        description: prize.catalog_item?.description || '',
+        image_url: prize.catalog_item?.image_url || '',
+        shop_url: prize.catalog_item?.shop_url || '',
+        value: prize.catalog_item?.value || 0
       })) as Prize[];
     }
   });
@@ -83,7 +81,7 @@ const ContestCard: React.FC<ContestCardProps> = ({
           <div className="mt-4">
             <h3 className="text-xl font-semibold mb-4 text-amber-700">Prix à gagner:</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {prizes.map(prize => (
+              {prizes.map((prize: Prize) => (
                 <div key={prize.id} className="bg-white/50 backdrop-blur-sm p-4 rounded-lg hover:shadow-md transition-all">
                   <a 
                     href={prize.shop_url} 
