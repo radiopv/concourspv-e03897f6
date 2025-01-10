@@ -19,6 +19,9 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
 
   const isAdmin = user?.role === 'admin';
+  console.log("Current user in Layout:", user);
+  console.log("Is admin:", isAdmin);
+  console.log("Current location:", location.pathname);
 
   const adminLinks = [
     { icon: Grid, label: 'Dashboard', path: '/admin' },

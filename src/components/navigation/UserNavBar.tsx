@@ -9,6 +9,8 @@ const UserNavBar = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
+  console.log("Current user in UserNavBar:", user);
+  console.log("Is admin in UserNavBar:", isAdmin);
 
   const handleLogout = async () => {
     await signOut();
