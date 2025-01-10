@@ -1,10 +1,10 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ImagePlus, Save, X } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Save, X, ImagePlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 interface QuestionFormProps {
   question: {
@@ -15,7 +15,7 @@ interface QuestionFormProps {
     article_url?: string;
     image_url?: string;
   };
-  onSave: (updatedQuestion: any) => void;
+  onSave: (question: any) => void;
   onCancel: () => void;
 }
 
@@ -78,36 +78,6 @@ const QuestionForm = ({ question, onSave, onCancel }: QuestionFormProps) => {
       </div>
 
       <div>
-        <Label>Options</Label>
-        {formData.options.map((option, index) => (
-          <Input
-            key={index}
-            className="mt-2"
-            value={option}
-            onChange={(e) => {
-              const newOptions = [...formData.options];
-              newOptions[index] = e.target.value;
-              setFormData(prev => ({
-                ...prev,
-                options: newOptions
-              }));
-            }}
-          />
-        ))}
-      </div>
-
-      <div>
-        <Label>Réponse correcte</Label>
-        <Input
-          value={formData.correct_answer}
-          onChange={(e) => setFormData(prev => ({
-            ...prev,
-            correct_answer: e.target.value
-          }))}
-        />
-      </div>
-
-      <div>
         <Label>Lien de l'article</Label>
         <Input
           value={formData.article_url}
@@ -115,6 +85,7 @@ const QuestionForm = ({ question, onSave, onCancel }: QuestionFormProps) => {
             ...prev,
             article_url: e.target.value
           }))}
+          placeholder="https://..."
         />
       </div>
 
@@ -143,6 +114,34 @@ const QuestionForm = ({ question, onSave, onCancel }: QuestionFormProps) => {
             className="mt-2 rounded-lg max-h-48 object-cover"
           />
         )}
+      </div>
+
+      {formData.options.map((option, optionIndex) => (
+        <div key={optionIndex}>
+          <Label>Option {optionIndex + 1}</Label>
+          <Input
+            value={option}
+            onChange={(e) => {
+              const newOptions = [...formData.options];
+              newOptions[optionIndex] = e.target.value;
+              setFormData(prev => ({
+                ...prev,
+                options: newOptions
+              }));
+            }}
+          />
+        </div>
+      ))}
+
+      <div>
+        <Label>Réponse correcte</Label>
+        <Input
+          value={formData.correct_answer}
+          onChange={(e) => setFormData(prev => ({
+            ...prev,
+            correct_answer: e.target.value
+          }))}
+        />
       </div>
 
       <div className="flex gap-2">
