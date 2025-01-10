@@ -2,20 +2,25 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Star, Target, ArrowRight } from "lucide-react";
+import { Trophy, Star, Target, ArrowRight, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { Helmet } from 'react-helmet';
 
 const QuizCompletion = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { score, totalQuestions } = location.state || { score: 0, totalQuestions: 0 };
+  const { score, totalQuestions, contestId } = location.state || { score: 0, totalQuestions: 0 };
   const percentage = Math.round((score / totalQuestions) * 100);
+  const isQualified = percentage >= 70;
+
+  const handleRetry = () => {
+    navigate(`/contests/${contestId}/quiz`);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Helmet>
-        <title>Félicitations !</title>
+        <title>{isQualified ? "Félicitations !" : "Quiz terminé"}</title>
       </Helmet>
 
       <motion.div
@@ -25,10 +30,12 @@ const QuizCompletion = () => {
         className="text-center mb-8"
       >
         <h1 className="text-4xl font-bold text-amber-600 mb-4">
-          🎉 Félicitations !
+          {isQualified ? "🎉 Félicitations !" : "Quiz terminé"}
         </h1>
         <p className="text-xl text-gray-600">
-          Vous avez terminé le quiz avec succès !
+          {isQualified 
+            ? "Vous êtes qualifié pour le tirage au sort !"
+            : "Vous n'avez pas obtenu le score minimum requis pour vous qualifier."}
         </p>
       </motion.div>
 
@@ -85,7 +92,7 @@ const QuizCompletion = () => {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold text-green-600">
-                {percentage >= 70 ? "Qualifié" : "À améliorer"}
+                {isQualified ? "Qualifié" : "Non qualifié"}
               </p>
             </CardContent>
           </Card>
@@ -99,11 +106,20 @@ const QuizCompletion = () => {
         className="text-center space-y-4"
       >
         <p className="text-lg text-gray-600">
-          {percentage >= 70 
+          {isQualified 
             ? "Bravo ! Vous êtes qualifié pour le tirage au sort !"
-            : "Continuez à participer pour améliorer vos chances !"}
+            : "Le score minimum requis est de 70%. N'hésitez pas à réessayer !"}
         </p>
         <div className="space-x-4">
+          {!isQualified && (
+            <Button
+              onClick={handleRetry}
+              className="bg-amber-500 hover:bg-amber-600"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Réessayer le quiz
+            </Button>
+          )}
           <Button
             onClick={() => navigate('/contests')}
             className="bg-amber-500 hover:bg-amber-600"
