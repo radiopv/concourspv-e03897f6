@@ -39,63 +39,58 @@ const ProfileCard = ({
   const handleSaveProfile = async () => {
     try {
       console.log("Début de la mise à jour du profil...");
-      console.log("Email actuel:", userProfile.email);
-      console.log("Nouvel email:", formData.email);
-
-      // Si l'email n'a pas changé, ne pas tenter de le mettre à jour
-      if (formData.email !== userProfile.email) {
-        // Mise à jour de l'email dans auth
-        const { data: authData, error: authError } = await supabase.auth.updateUser({
-          email: formData.email,
-        });
-
-        console.log("Réponse de updateUser:", { authData, authError });
-
-        if (authError) {
-          // Vérifier si l'erreur est due à un email déjà existant
-          if (authError.message.includes("email_exists") || authError.message.includes("already been registered")) {
-            toast({
-              variant: "destructive",
-              title: "Email déjà utilisé",
-              description: "Cette adresse email est déjà associée à un autre compte.",
-            });
-            return;
-          }
-          console.error("Erreur lors de la mise à jour de l'email:", authError);
-          throw authError;
-        }
-      }
+      console.log("Données à mettre à jour:", formData);
 
       // Mise à jour du profil dans la base de données
-      const { data: dbData, error: dbError } = await supabase
+      const { error: dbError } = await supabase
         .from("members")
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
-          // Ne mettre à jour l'email que s'il a changé
-          ...(formData.email !== userProfile.email ? { email: formData.email } : {})
+          email: formData.email
         })
-        .eq("id", userId)
-        .select();
-
-      console.log("Réponse de la mise à jour DB:", { dbData, dbError });
+        .eq("id", userId);
 
       if (dbError) {
         console.error("Erreur lors de la mise à jour du profil:", dbError);
         throw dbError;
       }
 
+      // Si l'email a changé, mettre à jour l'email dans auth
+      if (formData.email !== userProfile.email) {
+        const { error: authError } = await supabase.auth.updateUser({
+          email: formData.email,
+        });
+
+        if (authError) {
+          console.error("Erreur lors de la mise à jour de l'email:", authError);
+          throw authError;
+        }
+      }
+
+      await refetch();
+      
       toast({
         title: "Profil mis à jour",
         description: formData.email !== userProfile.email 
-          ? "Vos informations ont été enregistrées avec succès. Si vous avez modifié votre email, veuillez vérifier votre boîte de réception pour confirmer le changement."
+          ? "Vos informations ont été enregistrées. Si vous avez modifié votre email, veuillez vérifier votre boîte de réception pour confirmer le changement."
           : "Vos informations ont été enregistrées avec succès.",
       });
       
       setIsEditing(false);
-      refetch();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur complète:", error);
+      
+      // Gestion spécifique des erreurs d'email en doublon
+      if (error.message?.includes("email_exists") || error.message?.includes("already been registered")) {
+        toast({
+          variant: "destructive",
+          title: "Email déjà utilisé",
+          description: "Cette adresse email est déjà associée à un autre compte.",
+        });
+        return;
+      }
+
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -149,7 +144,14 @@ const ProfileCard = ({
               </Button>
             ) : (
               <>
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
+                <Button variant="outline" onClick={() => {
+                  setIsEditing(false);
+                  setFormData({
+                    first_name: userProfile.first_name,
+                    last_name: userProfile.last_name,
+                    email: userProfile.email
+                  });
+                }}>
                   Annuler
                 </Button>
                 <Button onClick={handleSaveProfile} className="gap-2">
