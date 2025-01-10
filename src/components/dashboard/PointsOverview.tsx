@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Award, Star, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { getPointHistory, getUserPoints } from "@/services/pointsService";
+import { getPointHistory, getUserPoints, RANKS } from "@/services/pointsService";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -24,6 +24,9 @@ const PointsOverview = () => {
 
   if (!points) return null;
 
+  const currentRankInfo = RANKS.find(r => r.rank === points.current_rank);
+  const nextRankInfo = RANKS.find(r => r.minPoints > points.total_points);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -34,40 +37,53 @@ const PointsOverview = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="p-4 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="w-5 h-5 text-amber-500" />
-                <h3 className="font-semibold">Rang actuel</h3>
+          <div className="grid gap-6">
+            <div className="p-6 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <Award className="w-6 h-6 text-amber-500" />
+                <h3 className="text-lg font-semibold">Rang actuel</h3>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{points.current_rank.badge}</span>
-                <span className="text-lg font-medium">{points.current_rank.rank}</span>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-3xl">{currentRankInfo?.badge}</span>
+                <span className="text-2xl font-medium">{currentRankInfo?.rank}</span>
               </div>
-            </div>
-            
-            <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Star className="w-5 h-5 text-purple-500" />
-                <h3 className="font-semibold">Total des points</h3>
-              </div>
-              <p className="text-2xl font-bold">{points.total_points}</p>
-            </div>
-
-            <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-5 h-5 text-green-500" />
-                <h3 className="font-semibold">Meilleure série</h3>
-              </div>
-              <p className="text-2xl font-bold">{points.best_streak}</p>
+              <p className="text-gray-600">{currentRankInfo?.description}</p>
+              {nextRankInfo && (
+                <div className="mt-4 p-4 bg-white/50 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    Prochain rang : {nextRankInfo.rank} ({nextRankInfo.badge})
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Points nécessaires : {nextRankInfo.minPoints - points.total_points} points
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Trophy className="w-5 h-5 text-blue-500" />
-                <h3 className="font-semibold">Participations bonus</h3>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Star className="w-5 h-5 text-purple-500" />
+                  <h3 className="font-semibold">Total des points</h3>
+                </div>
+                <p className="text-2xl font-bold">{points.total_points}</p>
               </div>
-              <p className="text-2xl font-bold">{points.extra_participations}</p>
+
+              <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-5 h-5 text-green-500" />
+                  <h3 className="font-semibold">Meilleure série</h3>
+                </div>
+                <p className="text-2xl font-bold">{points.best_streak}</p>
+              </div>
+
+              <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trophy className="w-5 h-5 text-blue-500" />
+                  <h3 className="font-semibold">Participations bonus</h3>
+                </div>
+                <p className="text-2xl font-bold">{points.extra_participations}</p>
+              </div>
             </div>
           </div>
         </CardContent>

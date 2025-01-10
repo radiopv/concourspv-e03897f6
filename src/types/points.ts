@@ -6,6 +6,7 @@ export interface UserRank {
   maxPoints: number;
   badge: string;
   benefits: string[];
+  description: string;
 }
 
 export interface PointHistory {
