@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,64 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const currentQuestion = questions?.[state.currentQuestionIndex];
 
   useAttempts(contestId);
+
+  // Ajout de l'effet pour créer le participant au chargement
+  useEffect(() => {
+    const initializeParticipant = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session?.session?.user?.id) {
+          toast({
+            title: "Erreur",
+            description: "Vous devez être connecté pour participer",
+            variant: "destructive",
+          });
+          navigate('/login');
+          return;
+        }
+
+        // Vérifie si le participant existe déjà
+        const { data: existingParticipant } = await supabase
+          .from('participants')
+          .select('*')
+          .eq('contest_id', contestId)
+          .eq('id', session.session.user.id)
+          .single();
+
+        if (!existingParticipant) {
+          console.log('Creating new participant...');
+          // Crée un nouveau participant
+          const { error: createError } = await supabase
+            .from('participants')
+            .insert([{
+              id: session.session.user.id,
+              contest_id: contestId,
+              status: 'in_progress',
+              attempts: 0,
+              score: 0
+            }]);
+
+          if (createError) {
+            console.error('Error creating participant:', createError);
+            throw createError;
+          }
+          
+          console.log('Participant created successfully');
+        } else {
+          console.log('Participant already exists:', existingParticipant);
+        }
+      } catch (error) {
+        console.error('Error initializing participant:', error);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de l'initialisation",
+          variant: "destructive",
+        });
+      }
+    };
+
+    initializeParticipant();
+  }, [contestId, navigate, toast]);
 
   const handleNextQuestion = async () => {
     if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
