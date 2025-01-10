@@ -5,7 +5,7 @@ export const RANKS: UserRank[] = [
   {
     rank: "NOVATO",
     minPoints: 0,
-    maxPoints: 75,
+    maxPoints: 50,
     badge: "🌱",
     benefits: [
       "Accès aux concours de base",
@@ -14,55 +14,55 @@ export const RANKS: UserRank[] = [
   },
   {
     rank: "HAVANA",
-    minPoints: 76,
-    maxPoints: 200,
+    minPoints: 51,
+    maxPoints: 150,
     badge: "🌴",
     benefits: [
       "2 participations bonus par concours",
-      "Bonus x2 sur les séries de 5"
+      "Bonus x1.5 sur les séries de 5"
     ]
   },
   {
     rank: "SANTIAGO",
-    minPoints: 201,
-    maxPoints: 500,
+    minPoints: 151,
+    maxPoints: 300,
     badge: "🌺",
     benefits: [
-      "4 participations bonus par concours",
-      "Bonus x3 sur les séries de 5",
+      "3 participations bonus par concours",
+      "Bonus x2 sur les séries de 5",
       "Accès prioritaire aux nouveaux concours"
     ]
   },
   {
     rank: "RIO",
-    minPoints: 501,
-    maxPoints: 1000,
+    minPoints: 301,
+    maxPoints: 600,
     badge: "🎭",
     benefits: [
-      "6 participations bonus par concours",
-      "Bonus x4 sur les séries de 5",
+      "4 participations bonus par concours",
+      "Bonus x2.5 sur les séries de 5",
       "Accès aux concours exclusifs"
     ]
   },
   {
     rank: "CARNIVAL",
-    minPoints: 1001,
-    maxPoints: 2000,
+    minPoints: 601,
+    maxPoints: 1000,
     badge: "🎪",
     benefits: [
-      "8 participations bonus par concours",
-      "Bonus x5 sur les séries de 5",
+      "5 participations bonus par concours",
+      "Bonus x3 sur les séries de 5",
       "Accès VIP aux tirages au sort"
     ]
   },
   {
     rank: "ELDORADO",
-    minPoints: 2001,
+    minPoints: 1001,
     maxPoints: Infinity,
     badge: "👑",
     benefits: [
-      "Participations illimitées aux concours",
-      "Bonus x6 sur les séries de 5",
+      "6 participations bonus par concours",
+      "Bonus x4 sur les séries de 5",
       "Statut légendaire permanent",
       "Accès à tous les avantages VIP"
     ]
@@ -135,12 +135,11 @@ export const initializeUserPoints = async (userId: string) => {
 
 export const awardPoints = async (
   userId: string,
-  points: number,
+  basePoints: number,
   contestId?: string,
   streak?: number
 ) => {
   try {
-    // Mettre à jour les points totaux
     const { data: currentPoints, error: pointsError } = await supabase
       .from('user_points')
       .select('total_points, best_streak')
@@ -149,15 +148,24 @@ export const awardPoints = async (
 
     if (pointsError) throw pointsError;
 
+    // Calculer les points avec le nouveau système
+    let bonusMultiplier = 1;
+    if (streak) {
+      if (streak >= 5) bonusMultiplier = 1.5;
+      if (streak >= 10) bonusMultiplier = 2;
+      if (streak >= 15) bonusMultiplier = 2.5;
+      if (streak >= 20) bonusMultiplier = 3;
+    }
+
+    // Réduire les points de base et appliquer le multiplicateur
+    const points = Math.round((basePoints * 0.5) * bonusMultiplier);
     const newTotalPoints = (currentPoints?.total_points || 0) + points;
     const newBestStreak = Math.max(streak || 0, currentPoints?.best_streak || 0);
 
-    // Calculer le nouveau rang
     const newRank = RANKS.find(
       rank => newTotalPoints >= rank.minPoints && newTotalPoints <= rank.maxPoints
     );
 
-    // Mettre à jour user_points
     const { error: updateError } = await supabase
       .from('user_points')
       .update({
@@ -170,7 +178,6 @@ export const awardPoints = async (
 
     if (updateError) throw updateError;
 
-    // Enregistrer dans l'historique des points
     const { error: historyError } = await supabase
       .from('point_history')
       .insert([{
