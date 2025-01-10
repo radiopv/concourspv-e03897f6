@@ -5,8 +5,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "@/components/layout/Layout";
 import { Toaster } from "react-hot-toast";
 import PointsSystem from "@/pages/PointsSystem";
-import QuestionnaireComponent from "@/components/QuestionnaireComponent";
-import ContestCard from "@/components/contests/ContestCard";
 import ContestsList from "@/pages/ContestsList";
 import Dashboard from "@/pages/Dashboard";
 import Contest from "@/pages/Contest";

@@ -1,9 +1,11 @@
-import { Home, Settings, User, Shield, Gift, Trophy } from "lucide-react";
-import { Link } from "react-router-dom";
+import React from 'react';
+import { Home, Settings, User, Shield, Gift, Trophy, Award } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const MobileNavBar = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const isAdmin = user?.role === 'admin';
 
   if (!user) return null;
@@ -28,22 +30,12 @@ const MobileNavBar = () => {
         </Link>
 
         <Link 
-          to="/prizes" 
+          to="/winners" 
           className="flex flex-col items-center text-gray-600 hover:text-gray-900"
         >
-          <Gift className="h-6 w-6" />
-          <span className="text-xs mt-1">Prix</span>
+          <Award className="h-6 w-6" />
+          <span className="text-xs mt-1">Gagnants</span>
         </Link>
-
-        {isAdmin && (
-          <Link 
-            to="/admin" 
-            className="flex flex-col items-center text-gray-600 hover:text-gray-900"
-          >
-            <Shield className="h-6 w-6" />
-            <span className="text-xs mt-1">Admin</span>
-          </Link>
-        )}
 
         <Link 
           to="/dashboard" 
@@ -52,6 +44,16 @@ const MobileNavBar = () => {
           <User className="h-6 w-6" />
           <span className="text-xs mt-1">Profil</span>
         </Link>
+
+        {isAdmin && (
+          <Link 
+            to="/admin" 
+            className="flex flex-col items-center text-gray-600 hover:text-gray-900"
+          >
+            <Settings className="h-6 w-6" />
+            <span className="text-xs mt-1">Admin</span>
+          </Link>
+        )}
       </div>
     </div>
   );

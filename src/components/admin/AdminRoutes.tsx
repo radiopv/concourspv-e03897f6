@@ -1,8 +1,6 @@
 import React from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import AdminDashboard from './AdminDashboard';
-import ContestPrizeManager from './ContestPrizeManager';
-import DrawManager from './DrawManager';
 import AdminContestManager from './AdminContestManager';
 import ContentValidator from './ContentValidator';
 import GlobalSettings from './GlobalSettings';
@@ -15,11 +13,11 @@ const AdminRoutes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  if (!user) {
+  if (!user || user.role !== 'admin') {
     return (
       <div className="p-8 text-center">
         <h2 className="text-2xl font-bold mb-4">Accès non autorisé</h2>
-        <p className="mb-4">Vous devez être connecté pour accéder à l'administration.</p>
+        <p className="mb-4">Vous devez être administrateur pour accéder à cette section.</p>
         <button onClick={() => navigate('/login')} className="btn-primary">
           Se connecter
         </button>
@@ -41,8 +39,6 @@ const AdminRoutes = () => {
         <Route path="/users" element={<UserManager />} />
         <Route path="/settings" element={<GlobalSettings />} />
         <Route path="/content" element={<ContentValidator />} />
-        <Route path="/contest/:contestId/prizes" element={<ContestPrizeManager contestId="" />} />
-        <Route path="/contest/:contestId/draw" element={<DrawManager contestId="" />} />
       </Routes>
     </div>
   );
