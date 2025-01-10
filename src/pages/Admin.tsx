@@ -26,7 +26,6 @@ const Admin = () => {
 
         console.log("Checking admin rights for:", session.user.email);
         
-        // Vérification explicite du rôle admin
         const { data: member, error: memberError } = await supabase
           .from('members')
           .select('role')
@@ -40,7 +39,6 @@ const Admin = () => {
 
         if (!member) {
           console.log("Creating admin member for:", session.user.email);
-          // Création automatique du membre admin
           const { error: createError } = await supabase
             .from('members')
             .insert([{

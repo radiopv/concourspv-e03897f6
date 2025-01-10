@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 
@@ -23,7 +23,6 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
     try {
       console.log("Tentative de connexion avec:", email);
       
-      // Tentative de connexion
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -40,7 +39,6 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
 
       console.log("Utilisateur connecté:", signInData.session.user.id);
 
-      // Vérification du rôle admin
       const { data: member, error: memberError } = await supabase
         .from('members')
         .select('role')
@@ -51,25 +49,10 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
 
       if (memberError) {
         console.error("Erreur lors de la vérification du rôle:", memberError);
-        
-        // Si l'utilisateur n'existe pas dans la table members, on le crée avec le rôle admin
-        const { error: createError } = await supabase
-          .from('members')
-          .insert([{
-            id: signInData.session.user.id,
-            email: signInData.session.user.email,
-            first_name: 'Admin',
-            last_name: 'User',
-            role: 'admin'
-          }]);
+        throw memberError;
+      }
 
-        if (createError) {
-          console.error("Erreur lors de la création du membre admin:", createError);
-          throw createError;
-        }
-        
-        console.log("Nouveau membre admin créé");
-      } else if (member.role !== 'admin') {
+      if (member.role !== 'admin') {
         console.error("L'utilisateur n'est pas admin:", member);
         throw new Error("Non autorisé : Accès administrateur requis");
       }
