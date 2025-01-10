@@ -2,46 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { ExternalLink, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ArticleLinkProps {
   url: string;
   onArticleRead: () => void;
+  isRead: boolean;
 }
 
-const READING_TIME = 30;
-
-const ArticleLink: React.FC<ArticleLinkProps> = ({ url, onArticleRead }) => {
+const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
   const [hasClicked, setHasClicked] = useState(false);
-  const [readingTimer, setReadingTimer] = useState(0);
+  const [readingTimer, setReadingTimer] = useState<number>(0);
+  const READING_TIME = 5; // 5 seconds minimum reading time
 
-  // Reset timer when URL changes
   useEffect(() => {
     setHasClicked(false);
     setReadingTimer(0);
   }, [url]);
 
-  // Handle timer logic
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-
+    let interval: NodeJS.Timeout;
     if (hasClicked && readingTimer < READING_TIME) {
-      timer = setInterval(() => {
+      interval = setInterval(() => {
         setReadingTimer(prev => {
-          const newValue = prev + 1;
-          if (newValue >= READING_TIME) {
+          if (prev >= READING_TIME - 1) {
             onArticleRead();
             return READING_TIME;
           }
-          return newValue;
+          return prev + 1;
         });
       }, 1000);
     }
-
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
+    return () => clearInterval(interval);
   }, [hasClicked, readingTimer, onArticleRead]);
 
   const handleClick = () => {
@@ -51,36 +43,39 @@ const ArticleLink: React.FC<ArticleLinkProps> = ({ url, onArticleRead }) => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-blue-50 p-4 rounded-lg flex items-start gap-3">
-        <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
-        <div className="flex-1">
-          <p className="text-sm text-blue-700">
-            Lisez l'article avant de répondre à la question
-          </p>
-          <div className="mt-2 flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "text-blue-600 border-blue-200",
-                hasClicked && "opacity-50 cursor-not-allowed"
-              )}
-              onClick={handleClick}
-              disabled={hasClicked}
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              {hasClicked ? "Article ouvert" : "Lire l'article"}
-            </Button>
-            {hasClicked && (
-              <span className="text-sm text-blue-600">
-                {readingTimer >= READING_TIME
-                  ? "Temps de lecture écoulé"
-                  : `${READING_TIME - readingTimer}s`}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      <Alert variant="info" className="bg-blue-50 border-blue-200">
+        <AlertCircle className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800">
+          Important : L'article s'ouvrira dans un nouvel onglet. 
+          Après votre lecture, revenez sur cet onglet pour répondre à la question.
+        </AlertDescription>
+      </Alert>
+
+      <Button
+        variant="outline"
+        className={cn(
+          "w-full flex items-center justify-center gap-2",
+          isRead && "bg-green-50"
+        )}
+        onClick={handleClick}
+        disabled={hasClicked && readingTimer < READING_TIME}
+      >
+        <ExternalLink className="w-4 h-4" />
+        {hasClicked 
+          ? readingTimer < READING_TIME 
+            ? `Veuillez patienter ${READING_TIME - readingTimer} secondes...`
+            : "Article consulté ✓"
+          : "Cliquez ici pour lire l'article et afficher la question"}
+      </Button>
+
+      {hasClicked && readingTimer < READING_TIME && (
+        <Alert variant="default" className="bg-yellow-50 border-yellow-200">
+          <AlertDescription className="text-yellow-800">
+            Une fois l'article ouvert, prenez le temps de le lire. 
+            La question apparaîtra automatiquement dans quelques secondes.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-export type Rank = 'PIONERO' | 'GUAJIRO' | 'HABANERO' | 'CUBANO' | 'MAXIMO';
+export type Rank = 'DEBUTANT' | 'BRONZE' | 'ARGENT' | 'OR' | 'MAITRE';
 
 export interface UserRank {
   rank: Rank;
@@ -6,7 +6,6 @@ export interface UserRank {
   maxPoints: number;
   badge: string;
   benefits: string[];
-  description: string;
 }
 
 export interface PointHistory {
@@ -26,46 +25,3 @@ export interface UserPoints {
   current_rank: Rank;
   extra_participations: number;
 }
-
-export const RANKS: UserRank[] = [
-  {
-    rank: 'PIONERO',
-    minPoints: 0,
-    maxPoints: 75,
-    badge: '🌱',
-    benefits: ['Accès aux concours débutants'],
-    description: 'Les "Pioneros" sont les jeunes élèves cubains, symbolisant les premiers pas et l\'apprentissage. Comme eux, vous débutez votre voyage dans notre communauté.'
-  },
-  {
-    rank: 'GUAJIRO',
-    minPoints: 76,
-    maxPoints: 200,
-    badge: '🌾',
-    benefits: ['Participation supplémentaire', 'Accès aux concours Guajiro'],
-    description: 'Le "Guajiro" est le paysan traditionnel cubain, connu pour sa persévérance et son authenticité. Ce rang représente votre engagement grandissant.'
-  },
-  {
-    rank: 'HABANERO',
-    minPoints: 201,
-    maxPoints: 500,
-    badge: '🎭',
-    benefits: ['2 participations supplémentaires', 'Accès aux concours Habanero'],
-    description: 'Les "Habaneros", habitants de La Havane, incarnent l\'élégance et la sophistication de la capitale cubaine. Vous maîtrisez maintenant les bases.'
-  },
-  {
-    rank: 'CUBANO',
-    minPoints: 501,
-    maxPoints: 1000,
-    badge: '🌴',
-    benefits: ['3 participations supplémentaires', 'Accès aux concours Cubano'],
-    description: 'Être "Cubano" représente la fierté et l\'excellence de la culture cubaine. À ce niveau, vous êtes un membre respecté de notre communauté.'
-  },
-  {
-    rank: 'MAXIMO',
-    minPoints: 1001,
-    maxPoints: Infinity,
-    badge: '⭐',
-    benefits: ['Participations illimitées', 'Accès à tous les concours'],
-    description: 'Inspiré par Máximo Gómez, héros de l\'indépendance cubaine, ce rang représente l\'excellence absolue et la maîtrise totale. Vous êtes une légende!'
-  }
-];
