@@ -1,4 +1,4 @@
-export type Rank = 'BEGINNER' | 'BRONZE' | 'SILVER' | 'GOLD' | 'MASTER';
+export type Rank = 'DEBUTANT' | 'BRONZE' | 'ARGENT' | 'OR' | 'MAITRE';
 
 export interface UserRank {
   rank: Rank;
