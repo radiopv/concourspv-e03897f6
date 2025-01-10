@@ -14,9 +14,15 @@ const QuizCompletion = () => {
     totalQuestions: 0,
     contestId: null 
   };
+
+  // Ensure score is a number and calculate percentage correctly
+  const numericScore = typeof score === 'number' ? score : 0;
+  const numericTotalQuestions = typeof totalQuestions === 'number' ? totalQuestions : 0;
   
-  const percentage = Math.round((score / totalQuestions) * 100);
-  const isQualified = percentage >= 70;
+  // Calculate correct answers based on the score percentage
+  const correctAnswers = Math.round((numericScore / 100) * numericTotalQuestions);
+  
+  const isQualified = numericScore >= 70;
 
   const handleRetry = () => {
     if (!contestId) {
@@ -63,7 +69,7 @@ const QuizCompletion = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-amber-600">{percentage}%</p>
+              <p className="text-3xl font-bold text-amber-600">{numericScore}%</p>
             </CardContent>
           </Card>
         </motion.div>
@@ -82,7 +88,7 @@ const QuizCompletion = () => {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold text-purple-600">
-                {score}/{totalQuestions}
+                {correctAnswers}/{numericTotalQuestions}
               </p>
             </CardContent>
           </Card>
