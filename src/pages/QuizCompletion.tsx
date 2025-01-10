@@ -7,14 +7,15 @@ import { Helmet } from 'react-helmet';
 import { ScoreCard } from '@/components/quiz-completion/ScoreCard';
 import { AnswersCard } from '@/components/quiz-completion/AnswersCard';
 import { StatusCard } from '@/components/quiz-completion/StatusCard';
-import { calculateCorrectAnswers, isQualifiedForDraw } from '@/utils/scoreCalculations';
+import { isQualifiedForDraw } from '@/utils/scoreCalculations';
 
 const QuizCompletion = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { score = 0, totalQuestions = 0, contestId, requiredPercentage = 90 } = location.state || {};
 
-  const correctAnswers = calculateCorrectAnswers(score, totalQuestions);
+  // Calculer directement le nombre de bonnes réponses à partir du score
+  const correctAnswers = Math.round((score / 100) * totalQuestions);
   const isQualified = isQualifiedForDraw(score, requiredPercentage);
 
   console.log('Quiz completion details:', {

@@ -8,5 +8,6 @@ export const isQualifiedForDraw = (score: number, requiredPercentage: number = 9
 
 export const calculateFinalScore = (correctAnswers: number, totalQuestions: number): number => {
   if (totalQuestions === 0) return 0;
-  return Math.round((correctAnswers / totalQuestions) * 100);
+  const score = (correctAnswers / totalQuestions) * 100;
+  return Math.round(score);
 };

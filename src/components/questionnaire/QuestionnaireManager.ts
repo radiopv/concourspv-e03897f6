@@ -29,9 +29,10 @@ export const calculateFinalScore = async (participantId: string) => {
       totalQuestions
     });
 
+    if (totalQuestions === 0) return 0;
     const score = Math.round((correctAnswers / totalQuestions) * 100);
-    console.log('Final score:', score);
     
+    console.log('Final score:', score);
     return score;
   } catch (error) {
     console.error('Error calculating final score:', error);
