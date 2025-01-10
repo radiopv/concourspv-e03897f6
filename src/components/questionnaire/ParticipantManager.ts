@@ -30,6 +30,19 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     // Generate a new UUID for participation_id
     const participation_id = crypto.randomUUID();
 
+    // Check if participation_id already exists to avoid duplicate key error
+    const { data: existingParticipationId } = await supabase
+      .from('participants')
+      .select('participation_id')
+      .eq('participation_id', participation_id)
+      .single();
+
+    if (existingParticipationId) {
+      // If by rare chance we get a duplicate UUID, generate a new one
+      console.log('Duplicate participation_id found, generating new one');
+      return ensureParticipantExists(userId, contestId);
+    }
+
     // Create new participant
     const { data: newParticipant, error: insertError } = await supabase
       .from('participants')
