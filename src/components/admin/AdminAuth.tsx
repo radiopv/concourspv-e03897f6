@@ -21,80 +21,73 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
     setIsLoading(true);
 
     try {
+      console.log("Tentative de connexion avec:", email);
+      
       // Tentative de connexion
-      let authSession = null;
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (signInError) {
-        // Si la connexion échoue, on essaie de créer le compte
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-
-        if (signUpError) throw signUpError;
-        
-        if (!signUpData.session) {
-          toast({
-            title: "Vérifiez vos emails",
-            description: "Un email de confirmation vous a été envoyé.",
-          });
-          return;
-        }
-
-        authSession = signUpData.session;
-      } else {
-        authSession = signInData.session;
+        console.error("Erreur de connexion:", signInError);
+        throw signInError;
       }
 
-      if (!authSession?.user) {
+      if (!signInData.session?.user) {
         throw new Error("Aucune session utilisateur trouvée");
       }
 
-      console.log("Checking admin role for user:", authSession.user.id);
+      console.log("Utilisateur connecté:", signInData.session.user.id);
 
       // Vérification du rôle admin
       const { data: member, error: memberError } = await supabase
         .from('members')
         .select('role')
-        .eq('id', authSession.user.id)
-        .maybeSingle();
+        .eq('id', signInData.session.user.id)
+        .single();
+
+      console.log("Résultat de la vérification du rôle:", { member, memberError });
 
       if (memberError) {
-        console.error("Error checking member role:", memberError);
-        throw memberError;
-      }
-
-      if (!member) {
-        console.log("Member not found, creating with admin role");
+        console.error("Erreur lors de la vérification du rôle:", memberError);
+        
+        // Si l'utilisateur n'existe pas dans la table members, on le crée avec le rôle admin
         const { error: createError } = await supabase
           .from('members')
           .insert([{
-            id: authSession.user.id,
-            email: authSession.user.email,
+            id: signInData.session.user.id,
+            email: signInData.session.user.email,
             first_name: 'Admin',
             last_name: 'User',
             role: 'admin'
           }]);
 
-        if (createError) throw createError;
+        if (createError) {
+          console.error("Erreur lors de la création du membre admin:", createError);
+          throw createError;
+        }
+        
+        console.log("Nouveau membre admin créé");
       } else if (member.role !== 'admin') {
+        console.error("L'utilisateur n'est pas admin:", member);
         throw new Error("Non autorisé : Accès administrateur requis");
       }
 
+      console.log("Authentification admin réussie");
       onAuthenticated();
+      
       toast({
         title: "Succès",
-        description: "Authentification réussie",
+        description: "Authentification réussie en tant qu'administrateur",
       });
+      
+      navigate('/admin');
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Erreur complète:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'authentification",
         variant: "destructive",
       });
     } finally {
@@ -116,6 +109,7 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email administrateur"
               className="w-full"
+              required
             />
           </div>
           <div>
@@ -125,6 +119,7 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mot de passe"
               className="w-full"
+              required
             />
           </div>
           <Button
