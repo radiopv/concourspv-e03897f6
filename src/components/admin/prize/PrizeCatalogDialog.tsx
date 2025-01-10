@@ -20,17 +20,12 @@ export const PrizeCatalogDialog = ({ onSelectPrize }: PrizeCatalogDialogProps) =
   const { data: catalogPrizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
-      console.log('Fetching prize catalog...');
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
         .order('name');
       
-      if (error) {
-        console.error('Error fetching prize catalog:', error);
-        throw error;
-      }
-      console.log('Prize catalog data:', data);
+      if (error) throw error;
       return data;
     }
   });
@@ -40,7 +35,7 @@ export const PrizeCatalogDialog = ({ onSelectPrize }: PrizeCatalogDialogProps) =
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-full">
+        <Button className="tropical-button w-full">
           <Plus className="w-4 h-4 mr-2" />
           Ajouter un prix du catalogue
         </Button>
@@ -52,7 +47,7 @@ export const PrizeCatalogDialog = ({ onSelectPrize }: PrizeCatalogDialogProps) =
         <ScrollArea className="h-[500px] pr-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {catalogPrizes?.map((prize) => (
-              <Card key={prize.id} className="hover:shadow-lg transition-shadow">
+              <Card key={prize.id} className="tropical-card">
                 <CardContent className="pt-6">
                   {prize.image_url && (
                     <div className="aspect-square relative mb-4">
@@ -74,6 +69,7 @@ export const PrizeCatalogDialog = ({ onSelectPrize }: PrizeCatalogDialogProps) =
                     <Button
                       onClick={() => onSelectPrize(prize.id)}
                       size="sm"
+                      className="tropical-button"
                     >
                       Ajouter
                     </Button>
