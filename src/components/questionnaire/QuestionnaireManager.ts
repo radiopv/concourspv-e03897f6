@@ -26,22 +26,24 @@ export const calculateFinalScore = async (participantId: string) => {
     const correctAnswers = answers.filter(answer => answer.is_correct === true).length;
     const totalQuestions = answers.length;
     
-    console.log('Correct answers:', correctAnswers, 'Total questions:', totalQuestions);
-
-    // Calculer le pourcentage exact
-    const percentage = (correctAnswers / totalQuestions) * 100;
-    
-    // Arrondir à l'entier le plus proche
-    const roundedPercentage = Math.round(percentage);
-    
-    console.log('Final percentage calculation:', {
+    console.log('Score calculation:', {
       correctAnswers,
       totalQuestions,
-      exactPercentage: percentage,
-      roundedPercentage
+      percentage: (correctAnswers / totalQuestions) * 100
     });
+
+    // Si toutes les réponses sont correctes, retourner 100%
+    if (correctAnswers === totalQuestions) {
+      console.log('All answers correct, returning 100%');
+      return 100;
+    }
+
+    // Calculer le pourcentage exact et arrondir à l'entier le plus proche
+    const score = Math.round((correctAnswers / totalQuestions) * 100);
     
-    return roundedPercentage;
+    console.log('Final score:', score);
+    
+    return score;
   } catch (error) {
     console.error('Error calculating final score:', error);
     return 0;
