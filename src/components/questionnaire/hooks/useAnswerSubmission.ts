@@ -37,30 +37,9 @@ export const useAnswerSubmission = (contestId: string) => {
         await ensureParticipantExists(session.session.user.id, contestId);
 
       const currentAttempt = participant?.attempts || 0;
-
-      // Vérifier si une réponse existe déjà
-      const { data: existingAnswers } = await supabase
-        .from('participant_answers')
-        .select('*')
-        .eq('participant_id', participationId)
-        .eq('question_id', currentQuestion.id)
-        .eq('attempt_number', currentAttempt);
-
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
 
-      if (existingAnswers && existingAnswers.length > 0) {
-        // Si une réponse existe déjà, mettre à jour le state sans insérer
-        console.log('Answer already exists for current attempt:', existingAnswers[0]);
-        state.setIsCorrect(isAnswerCorrect);
-        state.setHasAnswered(true);
-        state.setTotalAnswered(prev => prev + 1);
-        if (isAnswerCorrect) {
-          state.setScore(prev => prev + 1);
-        }
-        return;
-      }
-
-      // Si aucune réponse n'existe, insérer la nouvelle réponse
+      // Insérer la nouvelle réponse avec le numéro de tentative actuel
       const { error: insertError } = await supabase
         .from('participant_answers')
         .upsert([{
