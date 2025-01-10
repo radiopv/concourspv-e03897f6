@@ -1,150 +1,74 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
   password: z.string().min(1, "Veuillez entrer votre mot de passe"),
 });
 
+type LoginFormValues = z.infer<typeof loginSchema>;
+
 export const LoginForm = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
-  const state = location.state as { email?: string; message?: string } | null;
 
-  const form = useForm<z.infer<typeof loginSchema>>({
+  const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: state?.email || "",
+      email: "",
       password: "",
     },
   });
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/dashboard", { replace: true });
-      }
-    };
-    checkSession();
-  }, [navigate]);
-
-  useEffect(() => {
-    if (state?.message) {
-      toast({
-        title: "Information",
-        description: state.message,
-      });
-    }
-  }, [state?.message, toast]);
-
-  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
+  const handleLogin = async (values: LoginFormValues) => {
     try {
-      console.log("Tentative de connexion avec:", values.email);
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
       if (error) {
-        console.error("Erreur de connexion:", error);
-        let errorMessage = "Email ou mot de passe incorrect.";
-        
-        if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Veuillez vérifier votre email pour activer votre compte.";
-        }
-
         toast({
           variant: "destructive",
           title: "Erreur de connexion",
-          description: errorMessage,
+          description: "Email ou mot de passe incorrect.",
         });
         return;
       }
 
-      if (data?.user) {
-        const { data: memberData, error: memberError } = await supabase
+      if (data.user) {
+        const { data: memberData } = await supabase
           .from('members')
           .select('role')
           .eq('id', data.user.id)
           .single();
-
-        if (memberError) {
-          console.error("Erreur lors de la récupération du rôle:", memberError);
-        }
-
-        console.log("Connexion réussie, rôle:", memberData?.role);
 
         toast({
           title: "Connexion réussie",
           description: "Bienvenue sur votre espace membre !",
         });
 
-        // Ensure the navigation happens after the role is fetched
-        navigate("/dashboard", { replace: true });
+        navigate("/dashboard");
       }
     } catch (error) {
-      console.error("Erreur lors de la connexion:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de la connexion. Veuillez réessayer.",
-      });
-    }
-  };
-
-  const handleResetPassword = async () => {
-    const email = form.getValues("email");
-    if (!email) {
-      toast({
-        variant: "destructive",
-        title: "Email requis",
-        description: "Veuillez entrer votre email pour réinitialiser votre mot de passe.",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Email envoyé",
-        description: "Veuillez vérifier votre boîte de réception pour réinitialiser votre mot de passe.",
-      });
-    } catch (error) {
-      console.error("Erreur lors de la réinitialisation du mot de passe:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue. Veuillez réessayer.",
+        description: "Une erreur est survenue lors de la connexion.",
       });
     }
   };
 
   return (
     <Form {...form}>
-      {state?.message && (
-        <Alert className="mb-6">
-          <AlertDescription>{state.message}</AlertDescription>
-        </Alert>
-      )}
-      
       <form onSubmit={form.handleSubmit(handleLogin)} className="space-y-6">
         <FormField
           control={form.control}
@@ -183,14 +107,6 @@ export const LoginForm = () => {
           </Button>
 
           <div className="flex justify-between text-sm">
-            <Button
-              type="button"
-              variant="link"
-              className="text-indigo-600"
-              onClick={handleResetPassword}
-            >
-              Mot de passe oublié ?
-            </Button>
             <Link to="/register" className="text-indigo-600 hover:underline">
               Créer un compte
             </Link>
