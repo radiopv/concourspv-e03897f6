@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, List } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { Badge } from "@/components/ui/badge";
 
 interface ContestCardProps {
   contest: {
@@ -20,10 +21,39 @@ interface ContestCardProps {
 const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
   const navigate = useNavigate();
 
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-500 hover:bg-green-600';
+      case 'draft':
+        return 'bg-yellow-500 hover:bg-yellow-600';
+      case 'archived':
+        return 'bg-gray-500 hover:bg-gray-600';
+      default:
+        return 'bg-blue-500 hover:bg-blue-600';
+    }
+  };
+
+  const getStatusLabel = (status?: string) => {
+    switch (status) {
+      case 'active':
+        return 'Actif';
+      case 'draft':
+        return 'Brouillon';
+      case 'archived':
+        return 'Archivé';
+      default:
+        return 'Inconnu';
+    }
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{contest.title}</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-xl font-bold">{contest.title}</CardTitle>
+        <Badge className={getStatusColor(contest.status)}>
+          {getStatusLabel(contest.status)}
+        </Badge>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">{contest.description}</p>
