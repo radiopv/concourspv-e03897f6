@@ -26,6 +26,7 @@ export const useAnswerSubmission = (contestId: string) => {
         return;
       }
 
+      // Récupérer les informations du participant
       const { data: participant } = await supabase
         .from('participants')
         .select('participation_id, attempts')
@@ -53,56 +54,54 @@ export const useAnswerSubmission = (contestId: string) => {
       // Insérer la nouvelle réponse
       const { error: insertError } = await supabase
         .from('participant_answers')
-        .upsert([{
+        .upsert({
           participant_id: participationId,
           question_id: currentQuestion.id,
           answer: state.selectedAnswer,
           is_correct: isAnswerCorrect,
           attempt_number: currentAttempt
-        }], {
+        }, {
           onConflict: 'participant_id,question_id,attempt_number'
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Erreur lors de l\'insertion de la réponse:', insertError);
+        throw insertError;
+      }
 
       // Mettre à jour le state
       state.setIsCorrect(isAnswerCorrect);
       state.setHasAnswered(true);
       state.setTotalAnswered(prev => prev + 1);
       
-      if (isAnswerCorrect && isFirstCorrectAnswer) {
-        state.setScore(prev => prev + 1);
-        
-        const currentStreak = state.getCurrentStreak();
-        let pointsToAward = 1;
+      if (isAnswerCorrect) {
+        if (isFirstCorrectAnswer) {
+          state.setScore(prev => prev + 1);
+          state.incrementStreak();
+          const currentStreak = state.getCurrentStreak();
+          
+          await awardPoints(
+            session.session.user.id,
+            1,
+            contestId,
+            currentStreak
+          );
 
-        if (currentStreak > 0 && currentStreak % 10 === 0) {
-          pointsToAward += 5;
+          toast({
+            title: "Bravo ! 🎉",
+            description: "Vous avez gagné un point pour cette nouvelle bonne réponse !",
+          });
+        } else {
+          toast({
+            title: "Bonne réponse ! ✨",
+            description: "Vous aviez déjà répondu correctement à cette question.",
+          });
         }
-
-        await awardPoints(
-          session.session.user.id,
-          pointsToAward,
-          contestId,
-          currentStreak
-        );
-
-        toast({
-          title: "Bravo !",
-          description: "Vous avez gagné un point pour cette nouvelle bonne réponse !",
-          variant: "default",
-        });
-      } else if (isAnswerCorrect) {
-        toast({
-          title: "Bonne réponse !",
-          description: "Vous aviez déjà répondu correctement à cette question.",
-          variant: "default",
-        });
       } else {
         state.resetStreak();
         toast({
-          title: "Pas tout à fait...",
-          description: "Essayez encore, vous pouvez y arriver !",
+          title: "Pas tout à fait... 😕",
+          description: "La réponse n'est pas correcte. Essayez encore !",
           variant: "destructive",
         });
       }
@@ -114,13 +113,11 @@ export const useAnswerSubmission = (contestId: string) => {
 
       const message = getRandomMessage();
       toast({
-        title: "Réponse enregistrée",
         description: message,
-        variant: "default",
       });
 
     } catch (error) {
-      console.error('Error submitting answer:', error);
+      console.error('Erreur lors de la soumission de la réponse:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la soumission de votre réponse",
