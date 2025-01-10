@@ -28,7 +28,7 @@ const AdminContestManager = () => {
       <h1>Admin Contest Manager</h1>
       
       {selectedContestId && (
-        <Accordion type="single" collapsible className="w-full mb-6">
+        <Accordion type="single" collapsible className="w-full mb-6" defaultValue="edit-contest">
           <AccordionItem value="edit-contest">
             <AccordionTrigger>
               Modifier le concours
