@@ -2,60 +2,43 @@ import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Save, X, ImagePlus } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { handleImageUpload } from '@/utils/imageUpload';
 import { useToast } from "@/hooks/use-toast";
 
 interface QuestionFormProps {
-  question: {
-    id: string;
+  initialData?: {
     question_text: string;
     options: string[];
     correct_answer: string;
     article_url?: string;
     image_url?: string;
   };
-  onSave: (question: any) => void;
-  onCancel: () => void;
+  onSubmit: (data: any) => void;
+  onCancel?: () => void;
 }
 
-const QuestionForm = ({ question, onSave, onCancel }: QuestionFormProps) => {
+const QuestionForm = ({ initialData, onSubmit, onCancel }: QuestionFormProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = React.useState({
-    question_text: question.question_text,
-    options: [...question.options],
-    correct_answer: question.correct_answer,
-    article_url: question.article_url || '',
-    image_url: question.image_url || '',
+    question_text: initialData?.question_text || "",
+    options: initialData?.options || ["", "", "", ""],
+    correct_answer: initialData?.correct_answer || "",
+    article_url: initialData?.article_url || "",
+    image_url: initialData?.image_url || "",
   });
 
-  const handleImageUpload = async (file: File) => {
+  const handleImageChange = async (file: File) => {
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `questions/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('questions')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('questions')
-        .getPublicUrl(filePath);
-
+      const imageUrl = await handleImageUpload(file);
       setFormData(prev => ({
         ...prev,
-        image_url: publicUrl
+        image_url: imageUrl
       }));
-
       toast({
         title: "Succès",
         description: "Image téléchargée avec succès",
       });
     } catch (error) {
-      console.error("Error uploading image:", error);
       toast({
         title: "Erreur",
         description: "Impossible de télécharger l'image",
@@ -74,11 +57,43 @@ const QuestionForm = ({ question, onSave, onCancel }: QuestionFormProps) => {
             ...prev,
             question_text: e.target.value
           }))}
+          placeholder="Entrez votre question"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Options</Label>
+        {formData.options.map((option, index) => (
+          <Input
+            key={index}
+            value={option}
+            onChange={(e) => {
+              const newOptions = [...formData.options];
+              newOptions[index] = e.target.value;
+              setFormData(prev => ({
+                ...prev,
+                options: newOptions
+              }));
+            }}
+            placeholder={`Option ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      <div>
+        <Label>Réponse correcte</Label>
+        <Input
+          value={formData.correct_answer}
+          onChange={(e) => setFormData(prev => ({
+            ...prev,
+            correct_answer: e.target.value
+          }))}
+          placeholder="Entrez la réponse correcte"
         />
       </div>
 
       <div>
-        <Label>Lien de l'article</Label>
+        <Label>Lien de l'article (optionnel)</Label>
         <Input
           value={formData.article_url}
           onChange={(e) => setFormData(prev => ({
@@ -90,67 +105,35 @@ const QuestionForm = ({ question, onSave, onCancel }: QuestionFormProps) => {
       </div>
 
       <div>
-        <Label>Image de la question</Label>
-        <div className="flex gap-2">
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                handleImageUpload(file);
-              }
-            }}
-          />
-          <Button variant="outline" className="flex items-center gap-2">
-            <ImagePlus className="w-4 h-4" />
-            Modifier l'image
-          </Button>
-        </div>
+        <Label>Image de la question (optionnel)</Label>
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              handleImageChange(file);
+            }
+          }}
+        />
         {formData.image_url && (
           <img
             src={formData.image_url}
             alt="Question"
-            className="mt-2 rounded-lg max-h-48 object-cover"
+            className="mt-2 max-h-40 rounded-lg"
           />
         )}
       </div>
 
-      {formData.options.map((option, optionIndex) => (
-        <div key={optionIndex}>
-          <Label>Option {optionIndex + 1}</Label>
-          <Input
-            value={option}
-            onChange={(e) => {
-              const newOptions = [...formData.options];
-              newOptions[optionIndex] = e.target.value;
-              setFormData(prev => ({
-                ...prev,
-                options: newOptions
-              }));
-            }}
-          />
-        </div>
-      ))}
-
-      <div>
-        <Label>Réponse correcte</Label>
-        <Input
-          value={formData.correct_answer}
-          onChange={(e) => setFormData(prev => ({
-            ...prev,
-            correct_answer: e.target.value
-          }))}
-        />
-      </div>
-
       <div className="flex gap-2">
-        <Button onClick={() => onSave(formData)} className="flex items-center gap-2">
-          <Save className="w-4 h-4" /> Enregistrer
+        <Button onClick={() => onSubmit(formData)}>
+          Enregistrer
         </Button>
-        <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
-          <X className="w-4 h-4" /> Annuler
-        </Button>
+        {onCancel && (
+          <Button variant="outline" onClick={onCancel}>
+            Annuler
+          </Button>
+        )}
       </div>
     </div>
   );
