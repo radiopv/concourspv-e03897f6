@@ -10,22 +10,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { Plus, Trash2, RotateCcw } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Contest } from "@/types/contest";
 
 interface ContestCardProps {
-  contest: {
-    id: string;
-    title: string;
-    description?: string;
-    status: string;
-    start_date: string;
-    end_date: string;
-    draw_date: string;
-    is_featured: boolean;
-    is_new: boolean;
-    has_big_prizes: boolean;
-    participants?: { count: number };
-    questions?: { count: number };
-  };
+  contest: Contest;
   onDelete: (id: string) => void;
   onArchive: (id: string) => void;
   onFeatureToggle: (id: string, featured: boolean) => void;
