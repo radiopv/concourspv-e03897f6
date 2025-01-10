@@ -1,10 +1,43 @@
 import React from 'react';
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import CommunityStats from '@/components/points/CommunityStats';
 import RanksList from '@/components/points/RanksList';
 import ExtraParticipations from '@/components/points/ExtraParticipations';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PointsSystem = () => {
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['community-stats'],
+    queryFn: async () => {
+      // Récupérer le nombre total de participants
+      const { count: participantsCount } = await supabase
+        .from('participants')
+        .select('*', { count: 'exact', head: true });
+
+      // Récupérer le nombre de concours actifs
+      const { count: contestsCount } = await supabase
+        .from('contests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+
+      // Récupérer le meilleur score
+      const { data: topScore } = await supabase
+        .from('participants')
+        .select('score')
+        .order('score', { ascending: false })
+        .limit(1)
+        .single();
+
+      return {
+        totalParticipants: participantsCount || 0,
+        totalContests: contestsCount || 0,
+        topScore: topScore?.score || 0
+      };
+    }
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-12">
       <div className="container mx-auto px-4">
@@ -21,11 +54,19 @@ const PointsSystem = () => {
           </p>
         </motion.div>
 
-        <CommunityStats
-          totalParticipants={1234}
-          totalContests={5}
-          topScore={9999}
-        />
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+          </div>
+        ) : (
+          <CommunityStats
+            totalParticipants={stats?.totalParticipants || 0}
+            totalContests={stats?.totalContests || 0}
+            topScore={stats?.topScore || 0}
+          />
+        )}
 
         <div className="space-y-8">
           <RanksList />
