@@ -9,6 +9,7 @@ import ContestsList from "@/pages/ContestsList";
 import Dashboard from "@/pages/Dashboard";
 import Contest from "@/pages/Contest";
 import WinnersList from "@/pages/WinnersList";
+import Instructions from "@/pages/Instructions";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Admin from "@/pages/Admin";
@@ -29,6 +30,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/winners" element={<WinnersList />} />
               <Route path="/points" element={<PointsSystem />} />
+              <Route path="/instructions" element={<Instructions />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/admin/*" element={<Admin />} />

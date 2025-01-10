@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Settings, LogOut, User, Trophy } from 'lucide-react';
+import { Settings, LogOut, User, Trophy, BookOpen } from 'lucide-react';
 import UserPoints from './UserPoints';
 
 interface UserNavBarProps {
@@ -36,6 +36,12 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               </Link>
               <Link to="/points" className="text-white hover:text-amber-100">
                 Points
+              </Link>
+              <Link to="/instructions" className="text-white hover:text-amber-100">
+                <span className="flex items-center">
+                  <BookOpen className="h-4 w-4 mr-1" />
+                  Instructions
+                </span>
               </Link>
               {isAdmin && (
                 <Link to="/admin" className="text-white hover:text-amber-100 font-semibold">
