@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { Pencil, Trash2, ImagePlus } from "lucide-react";
+import QuestionForm from "./QuestionForm";
 
 interface QuestionsManagerProps {
   contestId: string;
@@ -13,11 +15,14 @@ interface QuestionsManagerProps {
 
 const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
   const { toast } = useToast();
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [newQuestion, setNewQuestion] = useState({
     question_text: "",
     type: "multiple_choice",
     options: ["", "", "", ""],
     correct_answer: "",
+    article_url: "",
+    image_url: "",
   });
 
   const { data: questions, refetch, isError } = useQuery({
@@ -43,14 +48,37 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
     }
   });
 
+  const handleImageUpload = async (file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `questions/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('questions')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('questions')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw error;
+    }
+  };
+
   const handleAddQuestion = async () => {
     try {
       const { data: session } = await supabase.auth.getSession();
       
       if (!session?.session?.access_token) {
         toast({
-          title: "Error",
-          description: "You must be authenticated to add questions",
+          title: "Erreur",
+          description: "Vous devez être connecté pour ajouter des questions",
           variant: "destructive",
         });
         return;
@@ -65,18 +93,17 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
             type: newQuestion.type,
             options: newQuestion.options,
             correct_answer: newQuestion.correct_answer,
+            article_url: newQuestion.article_url,
+            image_url: newQuestion.image_url,
             order_number: (questions?.length || 0) + 1
           }
         ]);
 
-      if (error) {
-        console.error("Error adding question:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Question added successfully",
+        title: "Succès",
+        description: "Question ajoutée avec succès",
       });
 
       setNewQuestion({
@@ -84,13 +111,41 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
         type: "multiple_choice",
         options: ["", "", "", ""],
         correct_answer: "",
+        article_url: "",
+        image_url: "",
       });
 
       refetch();
     } catch (error) {
+      console.error("Error adding question:", error);
       toast({
-        title: "Error",
-        description: "Failed to add question. Please ensure you're logged in.",
+        title: "Erreur",
+        description: "Impossible d'ajouter la question",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('questions')
+        .delete()
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Question supprimée avec succès",
+      });
+
+      refetch();
+    } catch (error) {
+      console.error("Error deleting question:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la question",
         variant: "destructive",
       });
     }
@@ -99,7 +154,7 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
   if (isError) {
     return (
       <div className="p-4 text-center">
-        <p className="text-red-500">Error loading questions. Please ensure you're logged in.</p>
+        <p className="text-red-500">Erreur lors du chargement des questions</p>
       </div>
     );
   }
@@ -108,7 +163,7 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Add Question</CardTitle>
+          <CardTitle>Ajouter une question</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -145,7 +200,7 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
             </div>
 
             <div>
-              <Label htmlFor="correct">Correct Answer</Label>
+              <Label htmlFor="correct">Réponse correcte</Label>
               <Input
                 id="correct"
                 value={newQuestion.correct_answer}
@@ -156,7 +211,57 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
               />
             </div>
 
-            <Button onClick={handleAddQuestion}>Add Question</Button>
+            <div>
+              <Label htmlFor="article">Lien de l'article</Label>
+              <Input
+                id="article"
+                value={newQuestion.article_url}
+                onChange={(e) => setNewQuestion({
+                  ...newQuestion,
+                  article_url: e.target.value
+                })}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="image">Image de la question</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        const imageUrl = await handleImageUpload(file);
+                        setNewQuestion({
+                          ...newQuestion,
+                          image_url: imageUrl
+                        });
+                        toast({
+                          title: "Succès",
+                          description: "Image téléchargée avec succès",
+                        });
+                      } catch (error) {
+                        toast({
+                          title: "Erreur",
+                          description: "Impossible de télécharger l'image",
+                          variant: "destructive",
+                        });
+                      }
+                    }
+                  }}
+                />
+                <Button variant="outline" className="flex items-center gap-2">
+                  <ImagePlus className="w-4 h-4" />
+                  Ajouter une image
+                </Button>
+              </div>
+            </div>
+
+            <Button onClick={handleAddQuestion}>Ajouter la question</Button>
           </div>
         </CardContent>
       </Card>
@@ -164,19 +269,95 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
       <div className="grid gap-4">
         {questions?.map((question, index) => (
           <Card key={question.id}>
-            <CardHeader>
-              <CardTitle>Question {index + 1}</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Question {index + 1}
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setEditingQuestionId(question.id)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => handleDeleteQuestion(question.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <p>{question.question_text}</p>
-              {question.options && (
-                <ul className="list-disc list-inside mt-2">
-                  {question.options.map((option: string, i: number) => (
-                    <li key={i} className={option === question.correct_answer ? "text-green-600" : ""}>
-                      {option}
-                    </li>
-                  ))}
-                </ul>
+              {editingQuestionId === question.id ? (
+                <QuestionForm
+                  question={question}
+                  onSave={async (updatedQuestion) => {
+                    try {
+                      const { error } = await supabase
+                        .from('questions')
+                        .update(updatedQuestion)
+                        .eq('id', question.id);
+
+                      if (error) throw error;
+
+                      toast({
+                        title: "Succès",
+                        description: "Question mise à jour avec succès",
+                      });
+
+                      setEditingQuestionId(null);
+                      refetch();
+                    } catch (error) {
+                      console.error("Error updating question:", error);
+                      toast({
+                        title: "Erreur",
+                        description: "Impossible de mettre à jour la question",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  onCancel={() => setEditingQuestionId(null)}
+                />
+              ) : (
+                <>
+                  <p className="text-sm">{question.question_text}</p>
+                  {question.image_url && (
+                    <img
+                      src={question.image_url}
+                      alt="Question"
+                      className="mt-2 rounded-lg max-h-48 object-cover"
+                    />
+                  )}
+                  {question.options && (
+                    <ul className="list-disc list-inside mt-2">
+                      {question.options.map((option: string, i: number) => (
+                        <li
+                          key={i}
+                          className={
+                            option === question.correct_answer
+                              ? "text-green-600"
+                              : ""
+                          }
+                        >
+                          {option}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {question.article_url && (
+                    <a
+                      href={question.article_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline mt-2 block"
+                    >
+                      Lien vers l'article
+                    </a>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -187,4 +368,3 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
 };
 
 export default QuestionsManager;
-
