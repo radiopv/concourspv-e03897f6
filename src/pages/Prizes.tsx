@@ -23,14 +23,7 @@ const PrizesPage = () => {
 
       // Transform the data to match the Prize type
       const transformedPrizes = data?.map(item => ({
-        prize_catalog: {
-          id: item.prize_catalog.id,
-          name: item.prize_catalog.name,
-          description: item.prize_catalog.description,
-          image_url: item.prize_catalog.image_url,
-          value: item.prize_catalog.value,
-          shop_url: item.prize_catalog.shop_url
-        }
+        prize_catalog: item.prize_catalog
       })) || [];
 
       return transformedPrizes;
