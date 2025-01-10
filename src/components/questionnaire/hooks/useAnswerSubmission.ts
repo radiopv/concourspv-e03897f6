@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuestionnaireState } from '../QuestionnaireState';
 import { ensureParticipantExists } from '../ParticipantManager';
 import { getRandomMessage } from '../messages';
+
 import { awardPoints } from '../../../services/pointsService';
 
 export const useAnswerSubmission = (contestId: string) => {
@@ -26,60 +27,63 @@ export const useAnswerSubmission = (contestId: string) => {
         return;
       }
 
-      // Vérifier si le participant a déjà un score de 100%
       const { data: participant } = await supabase
         .from('participants')
-        .select('participation_id, score, attempts')
+        .select('participation_id, attempts')
         .eq('id', session.session.user.id)
         .eq('contest_id', contestId)
         .single();
 
-      if (participant?.score === 100) {
-        toast({
-          title: "Participation impossible",
-          description: "Vous avez déjà obtenu un score parfait de 100% !",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const participationId = participant?.participation_id || 
         await ensureParticipantExists(session.session.user.id, contestId);
 
-      // Vérifier si la question a déjà été répondue correctement
-      const { data: existingAnswers, error: answersError } = await supabase
+      const { data: existingAnswer } = await supabase
         .from('participant_answers')
         .select('*')
         .eq('participant_id', participationId)
         .eq('question_id', currentQuestion.id)
-        .maybeSingle();
+        .single();
 
-      if (answersError) {
-        console.error('Error checking existing answers:', answersError);
-        throw answersError;
-      }
-
-      const currentAttempt = participant?.attempts || 0;
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
 
-      // N'attribuer des points que si la réponse est correcte ET n'a pas déjà été correctement répondue
-      if (isAnswerCorrect && !existingAnswers?.is_correct) {
-        const currentStreak = state.getCurrentStreak();
-        let pointsToAward = 1;
+      if (existingAnswer) {
+        console.log('Answer already exists for current attempt:', existingAnswer);
+        state.setIsCorrect(isAnswerCorrect);
+        state.setHasAnswered(true);
+        state.setTotalAnswered(prev => prev + 1);
+        if (isAnswerCorrect) {
+          state.setScore(prev => prev + 1);
+        }
+        return;
+      }
 
+      // Mettre à jour le state
+      state.setIsCorrect(isAnswerCorrect);
+      state.setHasAnswered(true);
+      state.setTotalAnswered(prev => prev + 1);
+      if (isAnswerCorrect) {
+        state.setScore(prev => prev + 1);
+        
+        // Calculer les points et le streak
+        const currentStreak = state.getCurrentStreak();
+        let pointsToAward = 1; // Point de base
+
+        // Bonus pour 10 bonnes réponses consécutives
         if (currentStreak > 0 && currentStreak % 10 === 0) {
-          pointsToAward += 5;
+          pointsToAward += 5; // Bonus de 5 points
         }
 
+        // Attribuer les points
         await awardPoints(
           session.session.user.id,
           pointsToAward,
           contestId,
           currentStreak
         );
+      } else {
+        state.resetStreak();
       }
 
-      // Enregistrer la nouvelle réponse
       const { error: insertError } = await supabase
         .from('participant_answers')
         .insert([{
@@ -87,22 +91,10 @@ export const useAnswerSubmission = (contestId: string) => {
           question_id: currentQuestion.id,
           answer: state.selectedAnswer,
           is_correct: isAnswerCorrect,
-          attempt_number: currentAttempt
+          attempt_number: participant?.attempts || 0
         }]);
 
       if (insertError) throw insertError;
-
-      // Mettre à jour le state
-      state.setIsCorrect(isAnswerCorrect);
-      state.setHasAnswered(true);
-      state.setTotalAnswered(prev => prev + 1);
-      
-      if (isAnswerCorrect) {
-        state.setScore(prev => prev + 1);
-        state.incrementStreak();
-      } else {
-        state.resetStreak();
-      }
 
       await queryClient.invalidateQueries({ queryKey: ['contests'] });
       await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
