@@ -5,7 +5,7 @@ import ContestCardStats from './contest-card/ContestCardStats';
 import ContestCardToggles from './contest-card/ContestCardToggles';
 import ContestStatusBadge from './contest-card/ContestStatusBadge';
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Star, Fire, Sparkles, Gift, Crown } from 'lucide-react';
+import { Trophy, Star, Flame, Sparkles, Gift, Crown } from 'lucide-react';
 import ContestCardPrize from './contest-card/ContestCardPrize';
 
 interface Prize {
@@ -99,7 +99,7 @@ const ContestCard = ({
 
           {contest.is_limited && (
             <Badge variant="secondary" className="bg-gradient-to-r from-red-500 to-orange-500 text-white flex items-center gap-1">
-              <Fire className="w-3 h-3" />
+              <Flame className="w-3 h-3" />
               Édition limitée
             </Badge>
           )}

@@ -40,6 +40,9 @@ const ContestListGrid: React.FC<ContestListGridProps> = ({ contests, onSelectCon
             is_featured: contest.is_featured,
             is_new: contest.is_new,
             has_big_prizes: contest.has_big_prizes,
+            is_exclusive: contest.is_exclusive || false,
+            is_limited: contest.is_limited || false,
+            is_vip: contest.is_vip || false,
             participants_count: contest.participants?.count || 0,
             questions_count: contest.questions?.count || 0,
             prizes: contest.prizes || []

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Switch } from "@/components/ui/switch";
-import { Trophy, Star, Fire, Sparkles, Gift, Crown } from 'lucide-react';
+import { Trophy, Star, Flame, Sparkles, Gift, Crown } from 'lucide-react';
 
 interface ContestCardTogglesProps {
   contestId: string;
@@ -83,7 +83,7 @@ const ContestCardToggles = ({
 
       <div className="flex items-center justify-between">
         <label htmlFor={`limited-${contestId}`} className="text-sm font-medium flex items-center gap-2">
-          <Fire className="w-4 h-4 text-red-500" />
+          <Flame className="w-4 h-4 text-red-500" />
           Édition limitée
         </label>
         <Switch
