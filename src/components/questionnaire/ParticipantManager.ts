@@ -5,13 +5,12 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
   try {
     console.log('Checking participant existence for user:', userId, 'contest:', contestId);
     
-    // First check if participant exists - using select() instead of single()
+    // First check if participant exists - using select() and checking array length
     const { data: existingParticipants, error: fetchError } = await supabase
       .from('participants')
       .select('participation_id, attempts')
       .eq('id', userId)
-      .eq('contest_id', contestId)
-      .limit(1); // Limit to 1 result to avoid 406 error
+      .eq('contest_id', contestId);
 
     if (fetchError) {
       console.error('Error checking participant:', fetchError);
@@ -35,12 +34,11 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
 
     // Keep trying until we get a unique participation_id or max retries reached
     while (retryCount < maxRetries) {
-      // Check if participation_id already exists
-      const { data: existingId, error: idCheckError } = await supabase
+      // Check if participation_id already exists - using select() instead of single()
+      const { data: existingIds, error: idCheckError } = await supabase
         .from('participants')
         .select('participation_id')
-        .eq('participation_id', participation_id)
-        .limit(1);
+        .eq('participation_id', participation_id);
 
       if (idCheckError) {
         console.error('Error checking participation_id:', idCheckError);
@@ -48,7 +46,7 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
       }
 
       // If no existing ID found, we can use this one
-      if (!existingId || existingId.length === 0) {
+      if (!existingIds || existingIds.length === 0) {
         break;
       }
 
@@ -85,7 +83,7 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     }
 
     console.log('Created new participant:', newParticipant);
-    return newParticipant.participation_id;
+    return participation_id;
   } catch (error) {
     console.error('Error in ensureParticipantExists:', error);
     throw error;
