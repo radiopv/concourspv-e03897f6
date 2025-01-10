@@ -195,7 +195,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="value">Valeur (€)</Label>
+                  <Label htmlFor="value">Valeur ($)</Label>
                   <Input
                     id="value"
                     type="number"
@@ -267,11 +267,14 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
               )}
               <h3 className="font-semibold mb-2">{prize.catalog_item?.name}</h3>
               {prize.catalog_item?.description && (
-                <p className="text-sm text-gray-500 mb-2">{prize.catalog_item.description}</p>
+                <div 
+                  className="text-sm text-gray-500 mb-2"
+                  dangerouslySetInnerHTML={{ __html: prize.catalog_item.description }}
+                />
               )}
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">
-                  {prize.catalog_item?.value ? `${prize.catalog_item.value}€` : 'Prix non défini'}
+                  {prize.catalog_item?.value ? `$${prize.catalog_item.value}` : 'Prix non défini'}
                 </span>
                 {prize.catalog_item?.shop_url && (
                   <a
