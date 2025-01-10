@@ -9,7 +9,6 @@ import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,12 +19,15 @@ const Layout = ({ children }: LayoutProps) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isAdmin, setIsAdmin] = React.useState(false);
   const { toast } = useToast();
 
-  const { data: isAdmin = false } = useQuery({
-    queryKey: ['admin-status', user?.id],
-    queryFn: async () => {
-      if (!user) return false;
+  React.useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
 
       console.log('Checking admin rights for:', user.email);
 
@@ -42,25 +44,26 @@ const Layout = ({ children }: LayoutProps) => {
           title: "Erreur",
           description: "Impossible de vérifier vos droits d'administrateur",
         });
-        return false;
+        setIsAdmin(false);
+        return;
       }
 
       console.log('Member data:', memberData);
-      return memberData?.role === 'admin';
-    },
-    enabled: !!user?.id
-  });
+      const isUserAdmin = memberData?.role === 'admin';
+      setIsAdmin(isUserAdmin);
 
-  React.useEffect(() => {
-    if (!isAdmin && location.pathname.startsWith('/admin')) {
-      toast({
-        variant: "destructive",
-        title: "Accès refusé",
-        description: "Vous n'avez pas les droits d'administrateur",
-      });
-      navigate('/');
-    }
-  }, [isAdmin, location.pathname, navigate, toast]);
+      if (!isUserAdmin && location.pathname.startsWith('/admin')) {
+        toast({
+          variant: "destructive",
+          title: "Accès refusé",
+          description: "Vous n'avez pas les droits d'administrateur",
+        });
+        navigate('/');
+      }
+    };
+
+    checkAdminRole();
+  }, [user, location.pathname, navigate, toast]);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
 
