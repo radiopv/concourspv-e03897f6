@@ -1,10 +1,10 @@
-import { Home, Settings, User } from "lucide-react";
+import { Home, Settings, User, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const MobileNavBar = () => {
   const { user } = useAuth();
-  const isAdmin = user?.email === "renaudcanuel@me.com";
+  const isAdmin = user?.role === 'admin';
 
   if (!user) return null;
 
@@ -32,7 +32,7 @@ const MobileNavBar = () => {
             to="/admin" 
             className="flex flex-col items-center text-gray-600 hover:text-gray-900"
           >
-            <Settings className="h-6 w-6" />
+            <Shield className="h-6 w-6" />
             <span className="text-xs mt-1">Admin</span>
           </Link>
         )}

@@ -24,33 +24,20 @@ const UserNavBar = () => {
             <div className="hidden md:flex space-x-6">
               <Link 
                 to="/contests" 
-                className="text-white hover:text-amber-100 transition-colors font-medium 
-                          relative after:content-[''] after:absolute after:w-full after:scale-x-0 
-                          after:h-0.5 after:bottom-0 after:left-0 after:bg-amber-100 
-                          after:origin-bottom-right after:transition-transform after:duration-300 
-                          hover:after:scale-x-100 hover:after:origin-bottom-left"
+                className="text-white hover:text-amber-100 transition-colors font-medium"
               >
                 Participer
               </Link>
               <Link 
                 to="/points" 
-                className="text-white hover:text-amber-100 transition-colors font-medium
-                          relative after:content-[''] after:absolute after:w-full after:scale-x-0 
-                          after:h-0.5 after:bottom-0 after:left-0 after:bg-amber-100 
-                          after:origin-bottom-right after:transition-transform after:duration-300 
-                          hover:after:scale-x-100 hover:after:origin-bottom-left"
+                className="text-white hover:text-amber-100 transition-colors font-medium"
               >
                 Points & Rangs
               </Link>
               {isAdmin && (
                 <Link 
                   to="/admin" 
-                  className="text-white hover:text-amber-100 transition-colors font-medium
-                            relative after:content-[''] after:absolute after:w-full after:scale-x-0 
-                            after:h-0.5 after:bottom-0 after:left-0 after:bg-amber-100 
-                            after:origin-bottom-right after:transition-transform after:duration-300 
-                            hover:after:scale-x-100 hover:after:origin-bottom-left
-                            flex items-center gap-2"
+                  className="text-white hover:text-amber-100 transition-colors font-medium flex items-center gap-2"
                 >
                   <Shield className="w-4 h-4" />
                   Administration
@@ -66,8 +53,7 @@ const UserNavBar = () => {
                 <Link to="/dashboard">
                   <Button 
                     variant="outline" 
-                    className="bg-white/10 border-amber-200 text-white hover:bg-white/20 
-                              hover:text-amber-100 backdrop-blur-sm"
+                    className="bg-white/10 border-amber-200 text-white hover:bg-white/20 hover:text-amber-100 backdrop-blur-sm"
                   >
                     Mon compte
                   </Button>
@@ -85,17 +71,14 @@ const UserNavBar = () => {
                 <Link to="/login">
                   <Button 
                     variant="outline"
-                    className="bg-white/10 border-amber-200 text-white hover:bg-white/20 
-                              hover:text-amber-100 backdrop-blur-sm"
+                    className="bg-white/10 border-amber-200 text-white hover:bg-white/20 hover:text-amber-100 backdrop-blur-sm"
                   >
                     Connexion
                   </Button>
                 </Link>
                 <Link to="/register">
                   <Button
-                    className="bg-amber-500 hover:bg-amber-600 text-white border-2 
-                              border-amber-200/30 shadow-lg hover:shadow-xl 
-                              transition-all duration-300"
+                    className="bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-200/30 shadow-lg hover:shadow-xl transition-all duration-300"
                   >
                     Inscription
                   </Button>

@@ -35,15 +35,14 @@ const Layout = ({ children }: LayoutProps) => {
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
       <UserNavBar />
       
-      {/* Menu d'administration */}
-      {isAdmin && (
+      {isAdmin && isAdminRoute && (
         <div className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-md sticky top-0 z-50 border-b border-amber-100/20">
           <div className="container mx-auto px-4">
             <div className="flex items-center space-x-4 overflow-x-auto py-4">
               {adminLinks.map((link) => (
                 <Button
                   key={link.path}
-                  variant={isAdminRoute && location.pathname === link.path ? "secondary" : "ghost"}
+                  variant={location.pathname === link.path ? "secondary" : "ghost"}
                   className="flex items-center gap-2 whitespace-nowrap hover:bg-white/20 transition-colors text-white"
                   onClick={() => navigate(link.path)}
                 >
