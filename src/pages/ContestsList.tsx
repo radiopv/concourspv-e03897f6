@@ -76,7 +76,7 @@ const ContestsList = () => {
                 <div className="flex justify-between items-start gap-4">
                   <CardTitle className="text-xl">{contest.title}</CardTitle>
                   <Badge 
-                    variant={contest.status === 'active' ? 'success' : 'secondary'}
+                    variant={contest.status === 'active' ? 'default' : 'secondary'}
                     className="capitalize"
                   >
                     {contest.status}
