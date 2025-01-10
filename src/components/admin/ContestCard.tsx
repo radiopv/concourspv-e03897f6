@@ -100,9 +100,12 @@ const ContestCard = ({
 
       if (questions && questions.length > 0) {
         const newQuestions = questions.map(q => ({
-          ...q,
-          id: undefined,
+          question_text: q.question_text,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          article_url: q.article_url,
           contest_id: newContest.id,
+          type: q.type,
           created_at: new Date().toISOString()
         }));
 
