@@ -1,10 +1,10 @@
 import { supabase } from "@/lib/supabase";
+import { calculateFinalScore } from "@/utils/scoreCalculations";
 
 export const calculateFinalScore = async (participantId: string) => {
   try {
     console.log('Calculating final score for participant:', participantId);
     
-    // Récupérer toutes les réponses du participant
     const { data: answers, error: answersError } = await supabase
       .from('participant_answers')
       .select('is_correct')
@@ -22,19 +22,15 @@ export const calculateFinalScore = async (participantId: string) => {
       return 0;
     }
 
-    // Calcul basique : nombre de réponses correctes / nombre total de questions * 100
     const correctAnswers = answers.filter(answer => answer.is_correct === true).length;
     const totalQuestions = answers.length;
     
     console.log('Calculation details:', {
       correctAnswers,
-      totalQuestions,
-      rawPercentage: (correctAnswers / totalQuestions) * 100
+      totalQuestions
     });
 
-    // Arrondir à l'entier le plus proche
-    const score = Math.round((correctAnswers / totalQuestions) * 100);
-    
+    const score = calculateFinalScore(correctAnswers, totalQuestions);
     console.log('Final score:', score);
     
     return score;

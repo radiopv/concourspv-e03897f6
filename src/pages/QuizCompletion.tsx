@@ -1,19 +1,21 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Star, Target, ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowRight, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { Helmet } from 'react-helmet';
+import { ScoreCard } from '@/components/quiz-completion/ScoreCard';
+import { AnswersCard } from '@/components/quiz-completion/AnswersCard';
+import { StatusCard } from '@/components/quiz-completion/StatusCard';
+import { calculateCorrectAnswers, isQualifiedForDraw } from '@/utils/scoreCalculations';
 
 const QuizCompletion = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { score = 0, totalQuestions = 0, contestId, requiredPercentage = 90 } = location.state || {};
 
-  // Calcul exact du nombre de bonnes réponses basé sur le score
-  const correctAnswers = Math.round((score / 100) * totalQuestions);
-  const isQualified = score >= requiredPercentage;
+  const correctAnswers = calculateCorrectAnswers(score, totalQuestions);
+  const isQualified = isQualifiedForDraw(score, requiredPercentage);
 
   console.log('Quiz completion details:', {
     score,
@@ -57,17 +59,7 @@ const QuizCompletion = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="bg-gradient-to-br from-amber-50 to-yellow-50">
-            <CardHeader className="space-y-1">
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-amber-500" />
-                Score Final
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-amber-600">{score}%</p>
-            </CardContent>
-          </Card>
+          <ScoreCard score={score} />
         </motion.div>
 
         <motion.div
@@ -75,19 +67,7 @@ const QuizCompletion = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="bg-gradient-to-br from-purple-50 to-pink-50">
-            <CardHeader className="space-y-1">
-              <CardTitle className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-purple-500" />
-                Bonnes Réponses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-purple-600">
-                {correctAnswers}/{totalQuestions}
-              </p>
-            </CardContent>
-          </Card>
+          <AnswersCard correctAnswers={correctAnswers} totalQuestions={totalQuestions} />
         </motion.div>
 
         <motion.div
@@ -95,19 +75,7 @@ const QuizCompletion = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50">
-            <CardHeader className="space-y-1">
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-green-500" />
-                Statut
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-green-600">
-                {isQualified ? "Qualifié" : "Non qualifié"}
-              </p>
-            </CardContent>
-          </Card>
+          <StatusCard isQualified={isQualified} />
         </motion.div>
       </div>
 
