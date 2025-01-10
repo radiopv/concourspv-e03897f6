@@ -1,7 +1,7 @@
 import React from 'react';
 import { Home, Settings, User, Shield, Gift, Trophy, Award } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MobileNavBarProps {
   isAdmin: boolean;
@@ -18,9 +18,7 @@ const MobileNavBar = ({ isAdmin }: MobileNavBarProps) => {
       <div className="flex justify-around items-center">
         <Link 
           to="/" 
-          className={`flex flex-col items-center text-gray-600 hover:text-purple-600 ${
-            location.pathname === '/' ? 'text-purple-600' : ''
-          }`}
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
         >
           <Home className="h-6 w-6" />
           <span className="text-xs mt-1">Accueil</span>
@@ -28,29 +26,23 @@ const MobileNavBar = ({ isAdmin }: MobileNavBarProps) => {
         
         <Link 
           to="/contests" 
-          className={`flex flex-col items-center text-gray-600 hover:text-purple-600 ${
-            location.pathname.includes('/contests') ? 'text-purple-600' : ''
-          }`}
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
         >
           <Trophy className="h-6 w-6" />
           <span className="text-xs mt-1">Concours</span>
         </Link>
 
         <Link 
-          to="/prizes" 
-          className={`flex flex-col items-center text-gray-600 hover:text-purple-600 ${
-            location.pathname === '/prizes' ? 'text-purple-600' : ''
-          }`}
+          to="/winners" 
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
         >
-          <Gift className="h-6 w-6" />
-          <span className="text-xs mt-1">Cadeaux</span>
+          <Award className="h-6 w-6" />
+          <span className="text-xs mt-1">Gagnants</span>
         </Link>
 
         <Link 
           to="/dashboard" 
-          className={`flex flex-col items-center text-gray-600 hover:text-purple-600 ${
-            location.pathname === '/dashboard' ? 'text-purple-600' : ''
-          }`}
+          className="flex flex-col items-center text-gray-600 hover:text-gray-900"
         >
           <User className="h-6 w-6" />
           <span className="text-xs mt-1">Profil</span>
@@ -59,9 +51,7 @@ const MobileNavBar = ({ isAdmin }: MobileNavBarProps) => {
         {isAdmin && (
           <Link 
             to="/admin" 
-            className={`flex flex-col items-center text-gray-600 hover:text-purple-600 ${
-              location.pathname.includes('/admin') ? 'text-purple-600' : ''
-            }`}
+            className="flex flex-col items-center text-gray-600 hover:text-gray-900"
           >
             <Settings className="h-6 w-6" />
             <span className="text-xs mt-1">Admin</span>

@@ -11,7 +11,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType>({
+const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   loading: true,
@@ -39,8 +39,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(currentSession);
           setUser(currentSession.user);
         } else {
+          // Clear state if no session
           setSession(null);
           setUser(null);
+          // Redirect to login if on a protected route
           if (window.location.pathname.startsWith('/dashboard') || 
               window.location.pathname.startsWith('/admin')) {
             navigate('/login');
@@ -48,6 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("Session check error:", error);
+        // Clear state on error
         setSession(null);
         setUser(null);
       } finally {
@@ -67,6 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(null);
         setUser(null);
         
+        // Handle specific auth events
         if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed successfully');
         } else if (event === 'SIGNED_OUT') {

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Gift, Home, Trophy, User as UserIcon, Settings } from "lucide-react";
+import { Gift, Home, Trophy, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,19 +9,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User } from "@supabase/supabase-js";
 
-interface UserNavBarProps {
-  isAdmin?: boolean;
-}
-
-interface ExtendedUser extends User {
-  avatar_url?: string | null;
-}
-
-const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
+const UserNavBar = () => {
   const { user, signOut } = useAuth();
-  const extendedUser = user as ExtendedUser;
 
   return (
     <nav className="bg-white shadow-sm">
@@ -58,28 +48,18 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                 <Gift className="h-4 w-4 mr-2" />
                 Cadeaux à Gagner
               </Link>
-
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-purple-600"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Administration
-                </Link>
-              )}
             </div>
           </div>
 
           <div className="flex items-center">
-            {extendedUser ? (
+            {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={extendedUser.avatar_url || undefined} alt={extendedUser.email} />
+                      <AvatarImage src={user.avatar_url || undefined} alt={user.email} />
                       <AvatarFallback>
-                        <UserIcon className="h-4 w-4" />
+                        <User className="h-4 w-4" />
                       </AvatarFallback>
                     </Avatar>
                   </Button>

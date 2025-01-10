@@ -1,78 +1,75 @@
 import React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Plus, X, Edit, Trash2 } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Plus, Loader } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface EditQuestionsListProps {
-  contestId?: string | null;
+  contestId: string | null;
 }
 
-const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId }) => {
+const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [isFormOpen, setIsFormOpen] = React.useState(false);
-  const [editingQuestion, setEditingQuestion] = React.useState<string | null>(null);
-  const [formData, setFormData] = React.useState({
-    question: '',
-    correct_answer: '',
-    wrong_answers: ['', '', ''],
-    explanation: '',
-    is_active: true,
+  const [editingQuestionId, setEditingQuestionId] = React.useState<string | null>(null);
+  const [newQuestion, setNewQuestion] = React.useState({
+    question_text: "",
+    options: ["", "", "", ""],
+    correct_answer: "",
+    article_url: "",
+    image_url: "",
   });
 
-  const { data: questions, isLoading } = useQuery({
+  const { data: questions, refetch, isLoading } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
-      const query = supabase
-        .from('questions')
-        .select('*')
-        .order('created_at', { ascending: true });
-
+      let query = supabase.from('questions').select('*');
+      
       if (contestId) {
-        query.eq('contest_id', contestId);
+        query = query.eq('contest_id', contestId);
       }
-
-      const { data, error } = await query;
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      
       if (error) throw error;
       return data;
-    },
+    }
   });
 
-  const addQuestionMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+  const handleAddQuestion = async () => {
+    try {
       const { error } = await supabase
         .from('questions')
         .insert([{
-          ...data,
           contest_id: contestId,
+          question_text: newQuestion.question_text,
+          options: newQuestion.options.filter(opt => opt !== ""),
+          correct_answer: newQuestion.correct_answer,
+          article_url: newQuestion.article_url || null,
+          image_url: newQuestion.image_url || null,
+          type: 'multiple_choice'
         }]);
-      
+
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
-      setIsFormOpen(false);
-      setFormData({
-        question: '',
-        correct_answer: '',
-        wrong_answers: ['', '', ''],
-        explanation: '',
-        is_active: true,
-      });
+
       toast({
         title: "Succès",
-        description: "La question a été ajoutée",
+        description: "Question ajoutée avec succès",
       });
-    },
-    onError: (error) => {
+
+      setNewQuestion({
+        question_text: "",
+        options: ["", "", "", ""],
+        correct_answer: "",
+        article_url: "",
+        image_url: "",
+      });
+
+      refetch();
+    } catch (error) {
       console.error('Error adding question:', error);
       toast({
         title: "Erreur",
@@ -80,33 +77,25 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId }) => {
         variant: "destructive",
       });
     }
-  });
+  };
 
-  const updateQuestionMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+  const handleUpdateQuestion = async (questionId: string, updatedData: any) => {
+    try {
       const { error } = await supabase
         .from('questions')
-        .update(data)
-        .eq('id', id);
-      
+        .update(updatedData)
+        .eq('id', questionId);
+
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
-      setEditingQuestion(null);
-      setFormData({
-        question: '',
-        correct_answer: '',
-        wrong_answers: ['', '', ''],
-        explanation: '',
-        is_active: true,
-      });
+
       toast({
         title: "Succès",
-        description: "La question a été mise à jour",
+        description: "Question mise à jour avec succès",
       });
-    },
-    onError: (error) => {
+
+      setEditingQuestionId(null);
+      refetch();
+    } catch (error) {
       console.error('Error updating question:', error);
       toast({
         title: "Erreur",
@@ -114,25 +103,24 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId }) => {
         variant: "destructive",
       });
     }
-  });
+  };
 
-  const deleteQuestionMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const handleDelete = async (questionId: string) => {
+    try {
       const { error } = await supabase
         .from('questions')
         .delete()
-        .eq('id', id);
-      
+        .eq('id', questionId);
+
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+
       toast({
         title: "Succès",
-        description: "La question a été supprimée",
+        description: "Question supprimée avec succès",
       });
-    },
-    onError: (error) => {
+
+      refetch();
+    } catch (error) {
       console.error('Error deleting question:', error);
       toast({
         title: "Erreur",
@@ -140,158 +128,288 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId }) => {
         variant: "destructive",
       });
     }
-  });
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingQuestion) {
-      updateQuestionMutation.mutate({ id: editingQuestion, data: formData });
-    } else {
-      addQuestionMutation.mutate(formData);
+  const handleImageUpload = async (file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `questions/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('questions')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('questions')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw error;
     }
   };
 
   if (isLoading) {
-    return <div>Chargement des questions...</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader className="w-8 h-8 animate-spin" />
+        <span className="ml-2">Chargement des questions...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-4">
-        {contestId ? `Questions du concours ${contestId}` : 'Toutes les questions'}
-      </h2>
+    <div className="space-y-6 p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Ajouter une question</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label>Question</Label>
+              <Input
+                value={newQuestion.question_text}
+                onChange={(e) => setNewQuestion(prev => ({
+                  ...prev,
+                  question_text: e.target.value
+                }))}
+                placeholder="Entrez votre question"
+              />
+            </div>
 
-      <Collapsible open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <CollapsibleTrigger asChild>
-          <Button className="w-full">
-            {isFormOpen ? (
-              <X className="w-4 h-4 mr-2" />
-            ) : (
+            <div className="space-y-2">
+              <Label>Options</Label>
+              {newQuestion.options.map((option, index) => (
+                <Input
+                  key={index}
+                  value={option}
+                  onChange={(e) => {
+                    const newOptions = [...newQuestion.options];
+                    newOptions[index] = e.target.value;
+                    setNewQuestion(prev => ({
+                      ...prev,
+                      options: newOptions
+                    }));
+                  }}
+                  placeholder={`Option ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            <div>
+              <Label>Réponse correcte</Label>
+              <Input
+                value={newQuestion.correct_answer}
+                onChange={(e) => setNewQuestion(prev => ({
+                  ...prev,
+                  correct_answer: e.target.value
+                }))}
+                placeholder="Entrez la réponse correcte"
+              />
+            </div>
+
+            <div>
+              <Label>Lien de l'article (optionnel)</Label>
+              <Input
+                value={newQuestion.article_url}
+                onChange={(e) => setNewQuestion(prev => ({
+                  ...prev,
+                  article_url: e.target.value
+                }))}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div>
+              <Label>Image de la question (optionnel)</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    try {
+                      const imageUrl = await handleImageUpload(file);
+                      setNewQuestion(prev => ({
+                        ...prev,
+                        image_url: imageUrl
+                      }));
+                      toast({
+                        title: "Succès",
+                        description: "Image téléchargée avec succès",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Erreur",
+                        description: "Impossible de télécharger l'image",
+                        variant: "destructive",
+                      });
+                    }
+                  }
+                }}
+              />
+              {newQuestion.image_url && (
+                <img
+                  src={newQuestion.image_url}
+                  alt="Preview"
+                  className="mt-2 max-h-40 rounded-lg"
+                />
+              )}
+            </div>
+
+            <Button onClick={handleAddQuestion} className="w-full">
               <Plus className="w-4 h-4 mr-2" />
-            )}
-            {isFormOpen ? "Fermer le formulaire" : "Ajouter une question"}
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="question">Question</Label>
-                  <Textarea
-                    id="question"
-                    value={formData.question}
-                    onChange={(e) => setFormData({ ...formData, question: e.target.value })}
-                    required
-                  />
-                </div>
+              Ajouter la question
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-                <div>
-                  <Label htmlFor="correct_answer">Bonne réponse</Label>
-                  <Input
-                    id="correct_answer"
-                    value={formData.correct_answer}
-                    onChange={(e) => setFormData({ ...formData, correct_answer: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Mauvaises réponses</Label>
-                  {formData.wrong_answers.map((answer, index) => (
-                    <Input
-                      key={index}
-                      value={answer}
-                      onChange={(e) => {
-                        const newWrongAnswers = [...formData.wrong_answers];
-                        newWrongAnswers[index] = e.target.value;
-                        setFormData({ ...formData, wrong_answers: newWrongAnswers });
-                      }}
-                      placeholder={`Mauvaise réponse ${index + 1}`}
-                      required
-                    />
-                  ))}
-                </div>
-
-                <div>
-                  <Label htmlFor="explanation">Explication</Label>
-                  <Textarea
-                    id="explanation"
-                    value={formData.explanation}
-                    onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_active"
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                  />
-                  <Label htmlFor="is_active">Question active</Label>
-                </div>
-
-                <Button type="submit" className="w-full">
-                  {editingQuestion ? 'Mettre à jour' : 'Ajouter'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </CollapsibleContent>
-      </Collapsible>
-
-      <div className="grid grid-cols-1 gap-4">
+      <div className="space-y-4">
         {questions?.map((question) => (
           <Card key={question.id}>
             <CardContent className="pt-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold">{question.question}</h3>
-                  <p className="text-green-600 mt-2">✓ {question.correct_answer}</p>
-                  <div className="text-red-600 mt-1">
-                    {question.wrong_answers.map((answer, index) => (
-                      <p key={index}>✗ {answer}</p>
+              {editingQuestionId === question.id ? (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Question</Label>
+                    <Input
+                      value={question.question_text}
+                      onChange={(e) => {
+                        const updatedQuestion = { ...question, question_text: e.target.value };
+                        handleUpdateQuestion(question.id, updatedQuestion);
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Options</Label>
+                    {question.options.map((option: string, index: number) => (
+                      <Input
+                        key={index}
+                        value={option}
+                        onChange={(e) => {
+                          const newOptions = [...question.options];
+                          newOptions[index] = e.target.value;
+                          const updatedQuestion = { ...question, options: newOptions };
+                          handleUpdateQuestion(question.id, updatedQuestion);
+                        }}
+                      />
                     ))}
                   </div>
-                  {question.explanation && (
-                    <p className="text-gray-600 mt-2 text-sm">{question.explanation}</p>
+
+                  <div>
+                    <Label>Réponse correcte</Label>
+                    <Input
+                      value={question.correct_answer}
+                      onChange={(e) => {
+                        const updatedQuestion = { ...question, correct_answer: e.target.value };
+                        handleUpdateQuestion(question.id, updatedQuestion);
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Lien de l'article</Label>
+                    <Input
+                      value={question.article_url || ''}
+                      onChange={(e) => {
+                        const updatedQuestion = { ...question, article_url: e.target.value };
+                        handleUpdateQuestion(question.id, updatedQuestion);
+                      }}
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Image de la question</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            const imageUrl = await handleImageUpload(file);
+                            const updatedQuestion = { ...question, image_url: imageUrl };
+                            handleUpdateQuestion(question.id, updatedQuestion);
+                          } catch (error) {
+                            toast({
+                              title: "Erreur",
+                              description: "Impossible de télécharger l'image",
+                              variant: "destructive",
+                            });
+                          }
+                        }
+                      }}
+                    />
+                    {question.image_url && (
+                      <img
+                        src={question.image_url}
+                        alt="Question"
+                        className="mt-2 max-h-40 rounded-lg"
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={() => setEditingQuestionId(null)}>
+                      Terminer
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDelete(question.id)}
+                    >
+                      Supprimer
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold">{question.question_text}</h3>
+                      <div className="mt-2">
+                        {question.options.map((option: string, index: number) => (
+                          <p
+                            key={index}
+                            className={option === question.correct_answer ? "text-green-600" : ""}
+                          >
+                            {option}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                    <Button onClick={() => setEditingQuestionId(question.id)}>
+                      Modifier
+                    </Button>
+                  </div>
+
+                  {question.image_url && (
+                    <img
+                      src={question.image_url}
+                      alt="Question"
+                      className="mt-2 max-h-40 rounded-lg"
+                    />
+                  )}
+
+                  {question.article_url && (
+                    <a
+                      href={question.article_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline block"
+                    >
+                      Lien vers l'article
+                    </a>
                   )}
                 </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      setEditingQuestion(question.id);
-                      setFormData({
-                        question: question.question,
-                        correct_answer: question.correct_answer,
-                        wrong_answers: question.wrong_answers,
-                        explanation: question.explanation || '',
-                        is_active: question.is_active,
-                      });
-                      setIsFormOpen(true);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      if (window.confirm('Êtes-vous sûr de vouloir supprimer cette question ?')) {
-                        deleteQuestionMutation.mutate(question.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>ID: {question.id}</span>
-                <span>{question.is_active ? 'Active' : 'Inactive'}</span>
-              </div>
+              )}
             </CardContent>
           </Card>
         ))}
