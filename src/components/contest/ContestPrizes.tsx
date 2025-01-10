@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 interface Prize {
   prize_catalog: {
@@ -19,7 +21,26 @@ interface ContestPrizesProps {
 }
 
 const ContestPrizes = ({ prizes, isLoading }: ContestPrizesProps) => {
-  if (isLoading) {
+  const { data: publicPrizes, isLoading: isPrizesLoading } = useQuery({
+    queryKey: ['public-prizes'],
+    queryFn: async () => {
+      console.log('Fetching public prizes from catalog...');
+      const { data, error } = await supabase
+        .from('prize_catalog')
+        .select('*')
+        .eq('is_visible', true)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching public prizes:', error);
+        throw error;
+      }
+      console.log('Public prizes data:', data);
+      return data;
+    }
+  });
+
+  if (isLoading || isPrizesLoading) {
     return (
       <Card className="bg-white/50 backdrop-blur-sm">
         <CardHeader className="text-center">
@@ -40,7 +61,7 @@ const ContestPrizes = ({ prizes, isLoading }: ContestPrizesProps) => {
     );
   }
 
-  if (!prizes || prizes.length === 0) {
+  if (!publicPrizes || publicPrizes.length === 0) {
     return (
       <Card className="bg-white/50 backdrop-blur-sm">
         <CardHeader className="text-center">
@@ -49,7 +70,7 @@ const ContestPrizes = ({ prizes, isLoading }: ContestPrizesProps) => {
         </CardHeader>
         <CardContent>
           <p className="text-center text-gray-500">
-            Aucun prix n'est disponible pour ce concours pour le moment.
+            Aucun prix n'est disponible pour le moment.
           </p>
         </CardContent>
       </Card>
@@ -64,37 +85,37 @@ const ContestPrizes = ({ prizes, isLoading }: ContestPrizesProps) => {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {prizes.map((prize, index) => (
+          {publicPrizes.map((prize) => (
             <div
-              key={prize.prize_catalog.id}
+              key={prize.id}
               className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md"
             >
-              {prize.prize_catalog.image_url && (
+              {prize.image_url && (
                 <div className="aspect-video relative">
                   <img
-                    src={prize.prize_catalog.image_url}
-                    alt={prize.prize_catalog.name}
+                    src={prize.image_url}
+                    alt={prize.name}
                     className="h-full w-full object-cover transition-transform group-hover:scale-105"
                   />
                 </div>
               )}
               <div className="p-4 space-y-2">
                 <h3 className="font-semibold text-lg text-purple-700">
-                  {prize.prize_catalog.name}
+                  {prize.name}
                 </h3>
-                {prize.prize_catalog.description && (
+                {prize.description && (
                   <p className="text-sm text-gray-600">
-                    {prize.prize_catalog.description}
+                    {prize.description}
                   </p>
                 )}
-                {prize.prize_catalog.value && (
+                {prize.value && (
                   <p className="text-sm font-medium text-purple-600">
-                    Valeur: {prize.prize_catalog.value}€
+                    Valeur: {prize.value}€
                   </p>
                 )}
-                {prize.prize_catalog.shop_url && (
+                {prize.shop_url && (
                   <a
-                    href={prize.prize_catalog.shop_url}
+                    href={prize.shop_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center text-sm text-purple-600 hover:text-purple-800 transition-colors mt-2"

@@ -30,6 +30,32 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
     shop_url: '',
   });
 
+  const deletePrizeMutation = useMutation({
+    mutationFn: async (prizeId: string) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .delete()
+        .eq('id', prizeId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été supprimé du catalogue",
+      });
+    },
+    onError: (error) => {
+      console.error("Delete prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le prix",
+        variant: "destructive",
+      });
+    }
+  });
+
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
