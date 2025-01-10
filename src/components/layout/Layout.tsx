@@ -10,7 +10,7 @@ interface LayoutProps {
   isAdmin?: boolean;
 }
 
-const Layout = ({ children, isAdmin = false }: LayoutProps) => {
+const Layout: React.FC<LayoutProps> = ({ children, isAdmin = false }) => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
