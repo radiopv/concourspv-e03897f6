@@ -1,14 +1,13 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Settings, LogOut, User, Trophy, Gift, Users, Database } from 'lucide-react';
+import { Settings, LogOut, User, Trophy } from 'lucide-react';
 import UserPoints from './UserPoints';
 
 const UserNavBar = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const isAdmin = user?.role === 'admin';
 
   const handleLogout = async () => {
@@ -35,6 +34,11 @@ const UserNavBar = () => {
               <Link to="/points" className="text-white hover:text-amber-100">
                 Points
               </Link>
+              {isAdmin && (
+                <Link to="/admin" className="text-white hover:text-amber-100 font-semibold">
+                  Administration
+                </Link>
+              )}
             </div>
           </div>
 
