@@ -22,44 +22,33 @@ export const useContests = () => {
         return [];
       }
 
-      console.log('Fetching contests for user:', session.user.id);
-
-      const { data: contests, error: contestsError } = await supabase
+      console.log('Fetching contests...');
+      
+      const { data: contests, error } = await supabase
         .from('contests')
-        .select(`
-          id,
-          title,
-          description,
-          start_date,
-          end_date,
-          status,
-          is_new,
-          has_big_prizes,
-          participants:participants(count),
-          questions:questions(count)
-        `)
+        .select('*, participants(count), questions(count)')
         .eq('status', 'active');
 
-      if (contestsError) {
-        console.error('Error fetching contests:', contestsError);
-        throw contestsError;
+      if (error) {
+        console.error('Error fetching contests:', error);
+        throw error;
       }
 
       console.log('Raw contests data:', contests);
 
-      if (!contests) {
-        console.log('No contests found');
+      if (!contests || contests.length === 0) {
+        console.log('No contests found in database');
         return [];
       }
 
-      const contestsWithCounts = contests.map(contest => ({
+      const processedContests = contests.map(contest => ({
         ...contest,
         participants: { count: contest.participants?.[0]?.count || 0 },
         questions: { count: contest.questions?.[0]?.count || 0 }
       }));
 
-      console.log('Processed contests:', contestsWithCounts);
-      return contestsWithCounts;
+      console.log('Processed contests:', processedContests);
+      return processedContests;
     },
     retry: 1,
     refetchOnWindowFocus: false,
