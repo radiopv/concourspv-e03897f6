@@ -86,17 +86,15 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
         await queryClient.invalidateQueries({ queryKey: ['contests'] });
         await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
 
-        const message = finalScore === 100 
-          ? "Félicitations ! Vous avez obtenu un score parfait ! 🎉"
-          : `Votre meilleur score est maintenant de ${finalScore}%. ${
-              finalScore >= 70 
-                ? "Vous êtes éligible pour le tirage au sort !" 
-                : "Continuez à participer pour améliorer vos chances !"
-            }`;
-
         toast({
           title: "Questionnaire terminé !",
-          description: message,
+          description: finalScore === 100 
+            ? "Félicitations ! Vous avez obtenu un score parfait ! 🎉"
+            : `Votre score est de ${finalScore}%. ${
+                finalScore >= 70 
+                  ? "Vous êtes éligible pour le tirage au sort !" 
+                  : "Continuez à participer pour améliorer vos chances !"
+              }`,
           duration: 5000,
         });
 
