@@ -36,7 +36,12 @@ const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
             duration: 5000,
           });
         }, 6000);
-      }, 1500); // Délai de 1.5 secondes avant l'ouverture du lien
+      }, 1500);
+
+      // Attendre 5 secondes avant d'activer l'affichage des réponses
+      setTimeout(() => {
+        onArticleRead();
+      }, 5000);
     } else {
       // Sur desktop, ouvrir dans une popup
       const width = 800;
@@ -49,9 +54,17 @@ const ArticleLink = ({ url, onArticleRead, isRead }: ArticleLinkProps) => {
         'Article',
         `width=${width},height=${height},top=${top},left=${left}`
       );
+
+      // Attendre 5 secondes avant d'activer l'affichage des réponses
+      setTimeout(() => {
+        onArticleRead();
+        toast({
+          title: "Question déverrouillée",
+          description: "Vous pouvez maintenant répondre à la question ! 🎯",
+          duration: 3000,
+        });
+      }, 5000);
     }
-    
-    onArticleRead();
   };
 
   return (
