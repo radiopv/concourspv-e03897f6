@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, RotateCcw } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface ContestCardProps {
   contest: {
@@ -65,6 +66,78 @@ const ContestCard = ({
       return data;
     }
   });
+
+  const handleResetContest = async () => {
+    try {
+      // 1. Créer une copie du concours
+      const { data: newContest, error: copyError } = await supabase
+        .from('contests')
+        .insert([{
+          title: `${contest.title} (Nouveau)`,
+          description: contest.description,
+          start_date: new Date().toISOString(),
+          end_date: contest.end_date,
+          draw_date: contest.draw_date,
+          is_featured: false,
+          is_new: true,
+          has_big_prizes: contest.has_big_prizes,
+          status: 'active',
+          shop_url: contest.shop_url,
+          prize_image_url: contest.prize_image_url
+        }])
+        .select()
+        .single();
+
+      if (copyError) throw copyError;
+
+      // 2. Copier les questions du concours original
+      const { data: questions, error: questionsError } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('contest_id', contest.id);
+
+      if (questionsError) throw questionsError;
+
+      if (questions && questions.length > 0) {
+        const newQuestions = questions.map(q => ({
+          ...q,
+          id: undefined,
+          contest_id: newContest.id,
+          created_at: new Date().toISOString()
+        }));
+
+        const { error: insertQuestionsError } = await supabase
+          .from('questions')
+          .insert(newQuestions);
+
+        if (insertQuestionsError) throw insertQuestionsError;
+      }
+
+      // 3. Archiver l'ancien concours
+      const { error: archiveError } = await supabase
+        .from('contests')
+        .update({ status: 'archived' })
+        .eq('id', contest.id);
+
+      if (archiveError) throw archiveError;
+
+      // 4. Rafraîchir les données
+      await queryClient.invalidateQueries({ queryKey: ['contests'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
+
+      toast({
+        title: "Succès",
+        description: "Le concours a été réinitialisé avec succès",
+      });
+    } catch (error) {
+      console.error('Error resetting contest:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de réinitialiser le concours",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAddQuestion = async () => {
     try {
@@ -242,6 +315,31 @@ const ContestCard = ({
               </div>
             ))}
           </div>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full mt-4">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Réinitialiser le concours
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Réinitialiser le concours</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Cette action va créer une nouvelle copie du concours et archiver la version actuelle.
+                  Toutes les participations seront conservées dans la version archivée.
+                  Êtes-vous sûr de vouloir continuer ?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetContest}>
+                  Réinitialiser
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardContent>
     </Card>
