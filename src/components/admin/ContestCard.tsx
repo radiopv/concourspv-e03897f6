@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import ParticipantInfo from './participants/ParticipantInfo';
+import ParticipantsList from './ParticipantsList';
 
 interface ContestCardProps {
   contest: {
@@ -25,8 +26,8 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showParticipants, setShowParticipants] = React.useState(false);
 
-  // Fetch participants count and success rate
   const { data: participantsData } = useQuery({
     queryKey: ['contest-participants', contest.id],
     queryFn: async () => {
@@ -189,7 +190,7 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/admin/contests/${contest.id}/participants`)}
+              onClick={() => setShowParticipants(!showParticipants)}
             >
               <List className="h-4 w-4 mr-2" />
               Participants
@@ -205,6 +206,10 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
               </Button>
             )}
           </div>
+
+          {showParticipants && (
+            <ParticipantsList contestId={contest.id} />
+          )}
         </div>
       </CardContent>
     </Card>
