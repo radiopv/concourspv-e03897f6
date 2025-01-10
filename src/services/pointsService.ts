@@ -6,13 +6,13 @@ export const calculateRank = (points: number): UserRank => {
 };
 
 export const calculateExtraParticipations = (points: number): number => {
-  return Math.floor(points / 25);
+  // Une participation supplémentaire tous les 50 points
+  return Math.floor(points / 50);
 };
 
 export const initializeUserPoints = async (userId: string) => {
   console.log('Initializing user points for:', userId);
   try {
-    // Vérifie d'abord si les points existent déjà
     const { data: existingPoints } = await supabase
       .from('user_points')
       .select('*')
@@ -24,7 +24,6 @@ export const initializeUserPoints = async (userId: string) => {
       return existingPoints;
     }
 
-    // Si les points n'existent pas, on les initialise
     const { data, error } = await supabase
       .from('user_points')
       .insert({
@@ -32,7 +31,7 @@ export const initializeUserPoints = async (userId: string) => {
         total_points: 0,
         current_streak: 0,
         best_streak: 0,
-        current_rank: 'BEGINNER',
+        current_rank: 'PIONERO',
         extra_participations: 0,
       })
       .select()
@@ -79,6 +78,7 @@ export const getUserPoints = async (userId: string) => {
   }
 };
 
+// Nouveau système de points plus élaboré
 export const awardPoints = async (
   userId: string,
   points: number,
@@ -88,11 +88,41 @@ export const awardPoints = async (
   try {
     console.log('Awarding points:', { userId, points, contestId, streak });
 
+    // Calcul des points bonus basé sur différents facteurs
+    let bonusPoints = 0;
+
+    // 1. Bonus de streak
+    if (streak >= 3) {
+      bonusPoints += Math.floor(streak / 3) * 2; // +2 points tous les 3 bonnes réponses consécutives
+    }
+
+    // 2. Bonus de rapidité (si disponible dans le futur)
+    // bonusPoints += speedBonus;
+
+    // 3. Bonus de première participation quotidienne
+    const today = new Date().toISOString().split('T')[0];
+    const { data: dailyParticipation } = await supabase
+      .from('point_history')
+      .select('created_at')
+      .eq('user_id', userId)
+      .gte('created_at', today)
+      .limit(1);
+
+    if (!dailyParticipation?.length) {
+      bonusPoints += 5; // Bonus de première participation du jour
+    }
+
+    // 4. Bonus de difficulté du concours (à implémenter plus tard avec les niveaux de difficulté)
+    // bonusPoints += difficultyBonus;
+
+    const totalPointsToAward = points + bonusPoints;
+
+    // Enregistrement dans l'historique
     const { error: historyError } = await supabase
       .from('point_history')
       .insert([{
         user_id: userId,
-        points,
+        points: totalPointsToAward,
         source: 'contest_participation',
         streak,
         contest_id: contestId,
@@ -100,13 +130,14 @@ export const awardPoints = async (
 
     if (historyError) throw historyError;
 
+    // Mise à jour des points totaux
     const { data: currentPoints } = await supabase
       .from('user_points')
       .select('total_points, best_streak')
       .eq('user_id', userId)
       .maybeSingle();
 
-    const newTotalPoints = (currentPoints?.total_points || 0) + points;
+    const newTotalPoints = (currentPoints?.total_points || 0) + totalPointsToAward;
     const newBestStreak = Math.max(currentPoints?.best_streak || 0, streak);
     const newRank = calculateRank(newTotalPoints);
 
@@ -123,8 +154,27 @@ export const awardPoints = async (
 
     if (updateError) throw updateError;
 
-    console.log('Points awarded successfully');
-    return { success: true, newTotalPoints, streak, newRank };
+    console.log('Points awarded successfully:', {
+      basePoints: points,
+      bonusPoints,
+      totalPointsToAward,
+      newTotalPoints,
+      streak,
+      newRank
+    });
+
+    return { 
+      success: true, 
+      newTotalPoints, 
+      streak, 
+      newRank,
+      bonusDetails: {
+        basePoints: points,
+        streakBonus: streak >= 3 ? Math.floor(streak / 3) * 2 : 0,
+        firstDailyBonus: !dailyParticipation?.length ? 5 : 0,
+        totalBonus: bonusPoints
+      }
+    };
   } catch (error) {
     console.error('Error awarding points:', error);
     throw error;
