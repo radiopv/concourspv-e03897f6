@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import ContestList from './ContestList';
 
 interface AdminContestManagerProps {
-  onContestSelect: (id: string) => void;
+  onContestSelect?: (id: string) => void;
 }
 
 const AdminContestManager: React.FC<AdminContestManagerProps> = ({ onContestSelect }) => {
