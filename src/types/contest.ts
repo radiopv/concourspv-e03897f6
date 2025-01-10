@@ -19,4 +19,6 @@ export interface Contest {
   has_big_prizes: boolean;
   participants?: { count: number };
   questions?: { count: number };
+  shop_url?: string;
+  prize_image_url?: string;
 }
