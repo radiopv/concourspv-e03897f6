@@ -39,25 +39,16 @@ export const useAnswerSubmission = (contestId: string) => {
 
       const currentAttempt = participant?.attempts || 0;
       const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
+      const isFirstAttempt = currentAttempt === 0;
 
       console.log('Submitting answer:', {
         participationId,
         questionId: currentQuestion.id,
         answer: state.selectedAnswer,
         isCorrect: isAnswerCorrect,
-        attemptNumber: currentAttempt
+        attemptNumber: currentAttempt,
+        isFirstAttempt
       });
-
-      // Vérifier si cette question a déjà été répondue correctement dans une tentative précédente
-      const { data: previousAnswers } = await supabase
-        .from('participant_answers')
-        .select('is_correct')
-        .eq('participant_id', participationId)
-        .eq('question_id', currentQuestion.id)
-        .eq('is_correct', true)
-        .lt('attempt_number', currentAttempt);
-
-      const isFirstCorrectAnswer = !previousAnswers || previousAnswers.length === 0;
 
       // Insérer la nouvelle réponse
       const { error: insertError } = await supabase
@@ -81,7 +72,8 @@ export const useAnswerSubmission = (contestId: string) => {
       state.setTotalAnswered(prev => prev + 1);
       
       if (isAnswerCorrect) {
-        if (isFirstCorrectAnswer) {
+        // N'attribuer des points que lors de la première tentative
+        if (isFirstAttempt) {
           state.setScore(prev => prev + 1);
           state.incrementStreak();
           const currentStreak = state.getCurrentStreak();
@@ -95,12 +87,12 @@ export const useAnswerSubmission = (contestId: string) => {
 
           toast({
             title: "Bravo ! 🎉",
-            description: "Vous avez gagné un point pour cette nouvelle bonne réponse !",
+            description: "Vous avez gagné un point pour cette bonne réponse !",
           });
         } else {
           toast({
             title: "Bonne réponse ! ✨",
-            description: "Vous aviez déjà répondu correctement à cette question.",
+            description: "Pas de points pour les tentatives suivantes, mais continuez comme ça !",
           });
         }
       } else {
