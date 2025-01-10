@@ -42,6 +42,12 @@ const UserPoints = () => {
           <p className="text-sm text-gray-600">
             Participations bonus disponibles : {points.extra_participations}
           </p>
+          <Link 
+            to="/points/explanation" 
+            className="text-sm text-amber-600 hover:text-amber-700 font-medium block mt-2"
+          >
+            En savoir plus sur les points →
+          </Link>
         </div>
       </HoverCardContent>
     </HoverCard>
