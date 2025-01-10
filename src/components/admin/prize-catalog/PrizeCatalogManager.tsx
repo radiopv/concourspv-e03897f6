@@ -5,12 +5,9 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
+import { PrizeForm } from "./PrizeForm";
 
 interface PrizeCatalogManagerProps {
   contestId: string | null;
@@ -28,32 +25,6 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
     value: '',
     image_url: '',
     shop_url: '',
-  });
-
-  const deletePrizeMutation = useMutation({
-    mutationFn: async (prizeId: string) => {
-      const { error } = await supabase
-        .from('prize_catalog')
-        .delete()
-        .eq('id', prizeId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
-      toast({
-        title: "Succès",
-        description: "Le prix a été supprimé du catalogue",
-      });
-    },
-    onError: (error) => {
-      console.error("Delete prize error:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le prix",
-        variant: "destructive",
-      });
-    }
   });
 
   const { data: prizes, isLoading } = useQuery({
@@ -166,6 +137,70 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
     }
   });
 
+  const updatePrizeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .update(data)
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      setEditingPrize(null);
+      toast({
+        title: "Succès",
+        description: "Le prix a été mis à jour",
+      });
+    },
+    onError: (error) => {
+      console.error("Update prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le prix",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deletePrizeMutation = useMutation({
+    mutationFn: async (prizeId: string) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .delete()
+        .eq('id', prizeId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été supprimé du catalogue",
+      });
+    },
+    onError: (error) => {
+      console.error("Delete prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le prix",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleEdit = (prize: any) => {
+    setEditingPrize(prize);
+    setFormData({
+      name: prize.name,
+      description: prize.description || '',
+      value: prize.value?.toString() || '',
+      image_url: prize.image_url || '',
+      shop_url: prize.shop_url || '',
+    });
+  };
+
   if (isLoading) {
     return <div>Chargement du catalogue...</div>;
   }
@@ -186,79 +221,30 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
         <CollapsibleContent className="mt-4">
           <Card>
             <CardContent className="pt-6">
-              <form className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nom du prix</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="value">Valeur ($)</Label>
-                  <Input
-                    id="value"
-                    type="number"
-                    step="0.01"
-                    value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="shop_url">Lien vers la boutique</Label>
-                  <Input
-                    id="shop_url"
-                    type="url"
-                    value={formData.shop_url}
-                    onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="image">Image du prix</Label>
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                  />
-                  {formData.image_url && (
-                    <div className="mt-2">
-                      <img
-                        src={formData.image_url}
-                        alt="Aperçu"
-                        className="w-32 h-32 object-cover rounded"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  onClick={(e) => {
-                    e.preventDefault();
+              <PrizeForm
+                formData={formData}
+                onFormChange={(field, value) => setFormData({ ...formData, [field]: value })}
+                onImageUpload={handleImageUpload}
+                onCancel={() => {
+                  setIsFormOpen(false);
+                  setEditingPrize(null);
+                  setFormData({
+                    name: '',
+                    description: '',
+                    value: '',
+                    image_url: '',
+                    shop_url: '',
+                  });
+                }}
+                onSave={() => {
+                  if (editingPrize) {
+                    updatePrizeMutation.mutate({ id: editingPrize.id, data: formData });
+                  } else {
                     addPrizeMutation.mutate(formData);
-                  }}
-                  disabled={uploading}
-                >
-                  {editingPrize ? 'Mettre à jour' : 'Ajouter au catalogue'}
-                </Button>
-              </form>
+                  }
+                }}
+                uploading={uploading}
+              />
             </CardContent>
           </Card>
         </CollapsibleContent>
@@ -305,12 +291,22 @@ const PrizeCatalogManager = ({ contestId }: PrizeCatalogManagerProps) => {
                   {prize.value ? `${prize.value}€` : 'Prix non défini'}
                 </span>
               </div>
-              <button
-                onClick={() => deletePrizeMutation.mutate(prize.id)}
-                className="mt-4 w-full px-4 py-2 text-sm text-red-600 hover:text-red-800 border border-red-600 hover:border-red-800 rounded-md transition-colors"
-              >
-                Retirer ce prix
-              </button>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => handleEdit(prize)}
+                  className="w-full"
+                  variant="outline"
+                >
+                  Modifier
+                </Button>
+                <Button
+                  onClick={() => deletePrizeMutation.mutate(prize.id)}
+                  className="w-full"
+                  variant="destructive"
+                >
+                  Supprimer
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
