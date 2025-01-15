@@ -11,20 +11,24 @@ const Points = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['community-stats'],
     queryFn: async () => {
-      const { count: totalParticipants } = await supabase
+      const { data: { count: totalParticipants }, error: participantsError } = await supabase
         .from('participants')
         .select('*', { count: 'exact', head: true });
 
-      const { count: totalContests } = await supabase
+      const { data: { count: totalContests }, error: contestsError } = await supabase
         .from('contests')
         .select('*', { count: 'exact', head: true });
 
-      const { data: topScoreData } = await supabase
+      const { data: topScoreData, error: topScoreError } = await supabase
         .from('participants')
         .select('score')
         .order('score', { ascending: false })
         .limit(1)
         .single();
+
+      if (participantsError || contestsError || topScoreError) {
+        throw new Error('Failed to fetch community stats');
+      }
 
       return {
         totalParticipants: totalParticipants || 0,
@@ -44,13 +48,7 @@ const Points = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {!isLoading && stats && (
-            <CommunityStats 
-              totalParticipants={stats.totalParticipants}
-              totalContests={stats.totalContests}
-              topScore={stats.topScore}
-            />
-          )}
+          {!isLoading && stats && <CommunityStats {...stats} />}
           <RanksList />
           <ExtraParticipations />
         </CardContent>
