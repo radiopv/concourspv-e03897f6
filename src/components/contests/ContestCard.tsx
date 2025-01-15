@@ -34,7 +34,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         .from('prizes')
         .select(`
           *,
-          catalog_item:prize_catalog(
+          catalog_item:prize_catalog!fk_prize_catalog (
             name,
             image_url,
             shop_url,
