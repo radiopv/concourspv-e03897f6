@@ -68,7 +68,7 @@ const Instructions = () => {
               <ul className="space-y-4 text-gray-600">
                 <li>
                   <strong>Points de base :</strong>
-                  <br />Chaque bonne réponse rapporte des points de base qui sont multipliés selon votre série
+                  <br />Chaque bonne réponse rapporte des points
                 </li>
                 <li>
                   <strong>Bonus de série :</strong>
@@ -93,12 +93,10 @@ const Instructions = () => {
                 Accumulez des points pour débloquer des avantages :
               </p>
               <ul className="list-disc list-inside space-y-2">
-                <li><strong>NOVATO (0-99 points) :</strong> Accès aux concours de base</li>
-                <li><strong>HAVANA (100-249 points) :</strong> 2 participations bonus</li>
-                <li><strong>SANTIAGO (250-499 points) :</strong> 3 participations bonus</li>
-                <li><strong>VARADERO (500-999 points) :</strong> 4 participations bonus</li>
-                <li><strong>CARNIVAL (1000-1999 points) :</strong> 5 participations bonus</li>
-                <li><strong>ELDORADO (2000+ points) :</strong> Statut VIP permanent</li>
+                <li><strong>NOVATO (0-50 points) :</strong> Accès aux concours de base</li>
+                <li><strong>HAVANA (51-150 points) :</strong> 2 participations bonus</li>
+                <li><strong>SANTIAGO (151-300 points) :</strong> 3 participations bonus</li>
+                <li><strong>ELDORADO (1000+ points) :</strong> Statut VIP permanent</li>
               </ul>
             </CardContent>
           </Card>
