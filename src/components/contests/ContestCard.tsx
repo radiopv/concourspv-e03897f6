@@ -1,16 +1,9 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Trophy } from "lucide-react";
 import { motion } from "framer-motion";
+import { Trophy, Gift, Users, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import ContestStats from "./ContestStats";
-import UserProgress from "./contest-card/UserProgress";
-import ContestPrizes from "./contest-card/ContestPrizes";
-import ParticipationStats from "./contest-card/ParticipationStats";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface ContestCardProps {
   contest: {
@@ -26,10 +19,9 @@ interface ContestCardProps {
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
-  const { data: prizes, isLoading: isPrizesLoading } = useQuery({
+  const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
     queryFn: async () => {
-      console.log('Fetching prizes for contest:', contest.id);
       const { data: prizesData, error } = await supabase
         .from('prizes')
         .select(`
@@ -48,146 +40,72 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     },
   });
 
-  const { data: settings, isLoading: isSettingsLoading } = useQuery({
-    queryKey: ['global-settings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (error) throw error;
-      return data?.[0] || null;
-    }
-  });
-
-  const { data: userParticipation, isLoading: isParticipationLoading } = useQuery({
-    queryKey: ['user-participation', contest.id],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return null;
-
-      const { data, error } = await supabase
-        .from('participants')
-        .select('*')
-        .eq('contest_id', contest.id)
-        .eq('id', session.user.id)
-        .maybeSingle();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
-    }
-  });
-
-  const remainingAttempts = settings?.default_attempts 
-    ? Math.max(0, settings.default_attempts - (userParticipation?.attempts || 0))
-    : 0;
-
   const mainPrize = prizes?.[0]?.catalog_item;
-
-  const isLoading = isPrizesLoading || isSettingsLoading || isParticipationLoading;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ scale: 1.02 }}
       className="h-full"
     >
-      <Card 
-        className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card float"
-        role="article"
-        aria-labelledby={`contest-title-${contest.id}`}
-      >
-        <CardHeader>
-          <div className="flex justify-between items-start mb-2">
-            <CardTitle 
-              id={`contest-title-${contest.id}`}
-              className="text-xl font-bold"
-            >
-              {contest.title}
-            </CardTitle>
-            {contest.is_new && (
-              <Badge 
-                variant="secondary" 
-                className="bg-blue-500 text-white"
-                aria-label="Nouveau concours"
-              >
-                Nouveau
-              </Badge>
+      <div className="relative h-full bg-white/10 backdrop-blur-md rounded-xl overflow-hidden border border-white/20 shadow-xl">
+        {contest.is_new && (
+          <div className="absolute top-4 right-4 z-10">
+            <Badge className="bg-amber-500 text-white font-semibold px-3 py-1">
+              NOUVEAU
+            </Badge>
+          </div>
+        )}
+
+        {mainPrize?.image_url && (
+          <div className="relative aspect-video">
+            <div className="absolute inset-0 bg-gradient-to-t from-purple-900/80 to-transparent" />
+            <img
+              src={mainPrize.image_url}
+              alt={mainPrize.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        <div className="p-6">
+          <h3 className="text-2xl font-bold text-white mb-3">
+            {contest.title}
+          </h3>
+
+          {contest.description && (
+            <p className="text-gray-300 mb-4">
+              {contest.description}
+            </p>
+          )}
+
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-white/5 rounded-lg p-3">
+              <Users className="w-5 h-5 text-blue-400 mb-1" />
+              <p className="text-sm text-gray-400">Participants</p>
+              <p className="text-xl font-bold text-white">
+                {contest.participants?.count || 0}
+              </p>
+            </div>
+            {mainPrize && (
+              <div className="bg-white/5 rounded-lg p-3">
+                <Gift className="w-5 h-5 text-pink-400 mb-1" />
+                <p className="text-sm text-gray-400">Prix Principal</p>
+                <p className="text-xl font-bold text-white">
+                  {mainPrize.value}€
+                </p>
+              </div>
             )}
           </div>
-          {contest.has_big_prizes && (
-            <Badge 
-              variant="secondary" 
-              className="bg-amber-500 text-white flex items-center gap-1 w-fit"
-              aria-label="Gros lots disponibles"
-            >
-              <Trophy className="w-4 h-4" aria-hidden="true" />
-              Gros lots à gagner
-            </Badge>
-          )}
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          {isLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : (
-            <>
-              {contest.description && (
-                <p className="text-gray-600 mb-6">
-                  {contest.description}
-                </p>
-              )}
 
-              {mainPrize && mainPrize.image_url && (
-                <div className="mb-6">
-                  <div className="relative aspect-video rounded-lg overflow-hidden">
-                    <img
-                      src={mainPrize.image_url}
-                      alt={mainPrize.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                </div>
-              )}
-              
-              <ContestStats contestId={contest.id} />
-
-              <UserProgress
-                userParticipation={userParticipation}
-                settings={settings}
-                remainingAttempts={remainingAttempts}
-              />
-              
-              <ContestPrizes prizes={prizes || []} />
-
-              <div className="mt-4 space-y-4">
-                <ParticipationStats
-                  participantsCount={contest.participants?.count || 0}
-                />
-
-                <Button 
-                  onClick={() => onSelect(contest.id)}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
-                  disabled={remainingAttempts <= 0}
-                  aria-label={remainingAttempts > 0 ? 
-                    `Participer au concours ${contest.title}` : 
-                    'Plus de tentatives disponibles pour ce concours'}
-                >
-                  {remainingAttempts > 0 ? 'Participer' : 'Plus de tentatives disponibles'}
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+          <button
+            onClick={() => onSelect(contest.id)}
+            className="w-full py-3 px-6 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg font-semibold hover:from-amber-600 hover:to-orange-700 transition-all duration-300 flex items-center justify-center gap-2 group"
+          >
+            <Trophy className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+            Participer
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 };
