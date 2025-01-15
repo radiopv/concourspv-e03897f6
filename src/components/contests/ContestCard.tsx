@@ -27,6 +27,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const { data: prizes } = useQuery({
     queryKey: ['contest-prizes', contest.id],
     queryFn: async () => {
+      console.log('Fetching prizes for contest:', contest.id);
       const { data: prizesData, error } = await supabase
         .from('prizes')
         .select(`
@@ -41,7 +42,11 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         `)
         .eq('contest_id', contest.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching prizes:', error);
+        throw error;
+      }
+      console.log('Prizes data:', prizesData);
       return prizesData || [];
     },
   });
@@ -161,7 +166,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             onClick={() => onSelect(contest.id)}
             className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
           >
-            <Trophy className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+            <Trophy className="w-5 h-5" />
             Participer
           </button>
         </div>
