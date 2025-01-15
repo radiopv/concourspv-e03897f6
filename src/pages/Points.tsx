@@ -1,30 +1,42 @@
 import React from 'react';
-import { motion } from "framer-motion";
-import PointsOverview from '@/components/dashboard/PointsOverview';
-import RanksList from '@/components/points/RanksList';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import RanksList from "@/components/points/RanksList";
+import CommunityStats from "@/components/points/CommunityStats";
+import ExtraParticipations from "@/components/points/ExtraParticipations";
 
 const Points = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-12">
-      <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-600 to-red-600 bg-clip-text text-transparent mb-4">
-            Système de Points & Rangs
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Participez aux concours, gagnez des points et progressez dans les rangs !
-          </p>
-        </motion.div>
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      <h1 className="text-3xl font-bold text-center mb-8">Système de Points et Rangs</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Rangs et Avantages</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RanksList />
+          </CardContent>
+        </Card>
 
-        <div className="space-y-8">
-          <PointsOverview />
-          <RanksList />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Statistiques de la Communauté</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CommunityStats />
+          </CardContent>
+        </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Participations Bonus</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ExtraParticipations />
+        </CardContent>
+      </Card>
     </div>
   );
 };
