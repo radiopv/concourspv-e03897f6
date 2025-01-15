@@ -40,6 +40,7 @@ const ProfileCard = ({
     try {
       console.log("Début de la mise à jour du profil...");
       console.log("Données à mettre à jour:", formData);
+      console.log("ID utilisateur:", userId);
 
       // Mise à jour du profil dans la base de données
       const { error: dbError } = await supabase
