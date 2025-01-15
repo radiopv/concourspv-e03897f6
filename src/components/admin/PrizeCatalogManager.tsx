@@ -37,7 +37,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         .from('prizes')
         .select(`
           *,
-          catalog_item:prize_catalog(*)
+          prize_catalog (*)
         `)
         .eq('contest_id', contestId);
       
@@ -95,7 +95,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         .from('prizes')
         .insert([{
           contest_id: contestId,
-          catalog_item_id: catalogItemId
+          prize_catalog_id: catalogItemId
         }]);
       
       if (error) {
@@ -256,29 +256,29 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         {contestPrizes?.map((prize) => (
           <Card key={prize.id} className="hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
-              {prize.catalog_item?.image_url && (
+              {prize.prize_catalog?.image_url && (
                 <div className="aspect-square relative mb-4">
                   <img
-                    src={prize.catalog_item.image_url}
-                    alt={prize.catalog_item.name}
+                    src={prize.prize_catalog.image_url}
+                    alt={prize.prize_catalog.name}
                     className="object-cover rounded-lg w-full h-full"
                   />
                 </div>
               )}
-              <h3 className="font-semibold mb-2">{prize.catalog_item?.name}</h3>
-              {prize.catalog_item?.description && (
+              <h3 className="font-semibold mb-2">{prize.prize_catalog?.name}</h3>
+              {prize.prize_catalog?.description && (
                 <div 
                   className="text-sm text-gray-500 mb-2"
-                  dangerouslySetInnerHTML={{ __html: prize.catalog_item.description }}
+                  dangerouslySetInnerHTML={{ __html: prize.prize_catalog.description }}
                 />
               )}
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">
-                  {prize.catalog_item?.value ? `$${prize.catalog_item.value}` : 'Prix non défini'}
+                  {prize.prize_catalog?.value ? `$${prize.prize_catalog.value}` : 'Prix non défini'}
                 </span>
-                {prize.catalog_item?.shop_url && (
+                {prize.prize_catalog?.shop_url && (
                   <a
-                    href={prize.catalog_item.shop_url}
+                    href={prize.prize_catalog.shop_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800"
