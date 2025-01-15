@@ -70,10 +70,11 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                   )}
                   <Button 
                     variant="ghost" 
-                    className="text-white hover:text-amber-100" 
+                    className="text-white hover:text-amber-100 flex items-center" 
                     onClick={handleLogout}
                   >
-                    <LogOut className="h-5 w-5" />
+                    <LogOut className="h-5 w-5 mr-2" />
+                    Déconnexion
                   </Button>
                 </div>
               </>
