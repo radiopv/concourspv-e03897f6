@@ -17,10 +17,10 @@ const Home = () => {
         className="text-center mb-12"
       >
         <h1 className="text-5xl font-bold bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 bg-clip-text text-transparent mb-6 drop-shadow-lg">
-          Bienvenue au Casino des Concours
+          Bienvenue aux Concours Passion Varadero
         </h1>
         <p className="text-xl text-amber-800 mb-8 max-w-2xl mx-auto">
-          Tentez votre chance, participez à nos concours exclusifs et remportez des prix exceptionnels dans une ambiance festive et chaleureuse.
+          Tentez votre chance, participez à nos concours exclusifs et gagnez des cadeaux formidables dans une ambiance festive et chaleureuse.
         </p>
         <Button
           onClick={() => navigate('/contests')}
