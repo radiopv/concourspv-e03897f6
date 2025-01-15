@@ -28,20 +28,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        // First, try to get the session from Supabase
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error("Error fetching session:", error.message);
-          throw error;
+        if (sessionError) {
+          console.error("Error fetching session:", sessionError.message);
+          throw sessionError;
         }
 
         if (currentSession) {
-          setSession(currentSession);
-          setUser(currentSession.user);
+          // If we have a session, verify it's still valid
+          const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+          
+          if (userError) {
+            console.error("Error fetching user:", userError.message);
+            throw userError;
+          }
+
+          if (currentUser) {
+            setSession(currentSession);
+            setUser(currentUser);
+          } else {
+            // User data not found, clear the session
+            await signOut();
+          }
         } else {
-          // Clear state if no session
+          // No session found, clear state
           setSession(null);
           setUser(null);
+          
           // Redirect to login if on a protected route
           if (window.location.pathname.startsWith('/dashboard') || 
               window.location.pathname.startsWith('/admin')) {
@@ -50,41 +65,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("Session check error:", error);
-        // Clear state on error
-        setSession(null);
-        setUser(null);
+        // Clear state and redirect on error
+        await signOut();
       } finally {
         setLoading(false);
       }
     };
 
+    // Initial session check
     checkSession();
 
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth state changed:", event);
       
-      if (currentSession) {
-        setSession(currentSession);
-        setUser(currentSession.user);
-      } else {
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
         setSession(null);
         setUser(null);
-        
-        // Handle specific auth events
-        if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed successfully');
-        } else if (event === 'SIGNED_OUT') {
-          navigate('/login');
-          toast({
-            title: "Session expirée",
-            description: "Veuillez vous reconnecter.",
-          });
+        navigate('/login');
+        toast({
+          title: "Session terminée",
+          description: "Veuillez vous reconnecter.",
+        });
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (currentSession) {
+          setSession(currentSession);
+          setUser(currentSession.user);
         }
       }
       
       setLoading(false);
     });
 
+    // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
@@ -97,6 +110,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setSession(null);
       setUser(null);
+      
+      // Clear any stored tokens
+      localStorage.removeItem('supabase.auth.token');
       
       toast({
         title: "Déconnexion réussie",
