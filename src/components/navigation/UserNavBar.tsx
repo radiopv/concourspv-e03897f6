@@ -28,6 +28,12 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               <span className="font-bold text-lg">Passion Varadero</span>
             </Link>
             <div className="hidden md:flex space-x-4">
+              <Link to="/instructions" className="text-white hover:text-amber-100">
+                <span className="flex items-center">
+                  <BookOpen className="h-4 w-4 mr-1" />
+                  Instructions
+                </span>
+              </Link>
               <Link to="/contests" className="text-white hover:text-amber-100">
                 Concours
               </Link>
@@ -37,12 +43,6 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               </Link>
               <Link to="/points" className="text-white hover:text-amber-100">
                 Points
-              </Link>
-              <Link to="/instructions" className="text-white hover:text-amber-100">
-                <span className="flex items-center">
-                  <BookOpen className="h-4 w-4 mr-1" />
-                  Instructions
-                </span>
               </Link>
             </div>
           </div>
