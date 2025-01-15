@@ -98,10 +98,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
           prize_catalog_id: catalogItemId
         }]);
       
-      if (error) {
-        console.error('Error adding prize:', error);
-        throw error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
@@ -234,7 +231,6 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
                     </div>
                   )}
                 </div>
-
                 <Button 
                   type="submit" 
                   className="w-full"
