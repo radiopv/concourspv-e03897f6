@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Star, MapPin, Gift, Info, Award } from "lucide-react";
+import { Trophy, Star, Info, Gift, Award, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Instructions = () => {
@@ -23,46 +23,36 @@ const Instructions = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
-              <Trophy className="w-8 h-8 mx-auto text-amber-500 mb-2" />
-              <CardTitle>Système de Points</CardTitle>
+              <BookOpen className="w-8 h-8 mx-auto text-amber-500 mb-2" />
+              <CardTitle>Lecture des Articles</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-gray-600">
-                <strong>Points de base :</strong> Chaque bonne réponse vous rapporte des points.
+            <CardContent className="space-y-4 text-gray-600">
+              <p>
+                <strong>Important :</strong> Toutes les réponses aux questions se trouvent dans les articles fournis.
               </p>
-              <ul className="list-disc list-inside space-y-2 text-gray-600">
-                <li>Première tentative réussie : 1 point</li>
-                <li>Bonus de série de 5 bonnes réponses : x1.5</li>
-                <li>Bonus de série de 10 bonnes réponses : x2</li>
-                <li>Bonus de série de 15 bonnes réponses : x2.5</li>
-                <li>Bonus de série de 20 bonnes réponses : x3</li>
+              <ul className="list-disc list-inside space-y-2">
+                <li>Prenez le temps de lire attentivement chaque article</li>
+                <li>Les articles s'ouvrent dans une nouvelle fenêtre</li>
+                <li>Vous pouvez relire les articles autant de fois que nécessaire</li>
+                <li>Utilisez les articles comme référence pendant le questionnaire</li>
               </ul>
             </CardContent>
           </Card>
 
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
-              <Star className="w-8 h-8 mx-auto text-amber-500 mb-2" />
-              <CardTitle>Rangs et Avantages</CardTitle>
+              <Trophy className="w-8 h-8 mx-auto text-amber-500 mb-2" />
+              <CardTitle>Qualification et Tentatives</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ul className="space-y-4 text-gray-600">
-                <li>
-                  <strong>NOVATO (0-50 points) :</strong>
-                  <br />Accès aux concours de base
-                </li>
-                <li>
-                  <strong>HAVANA (51-150 points) :</strong>
-                  <br />2 participations bonus par concours
-                </li>
-                <li>
-                  <strong>SANTIAGO (151-300 points) :</strong>
-                  <br />3 participations bonus et accès prioritaire
-                </li>
-                <li>
-                  <strong>ELDORADO (1000+ points) :</strong>
-                  <br />Statut VIP et avantages exclusifs
-                </li>
+            <CardContent className="space-y-4 text-gray-600">
+              <p>
+                <strong>Score minimum requis : 90%</strong> pour être qualifié au tirage au sort
+              </p>
+              <ul className="list-disc list-inside space-y-2">
+                <li>Vous disposez de 3 tentatives maximum par questionnaire</li>
+                <li>Chaque tentative repart de zéro</li>
+                <li>Seul votre meilleur score est conservé</li>
+                <li>Les tentatives non utilisées ne sont pas reportables</li>
               </ul>
             </CardContent>
           </Card>
@@ -71,16 +61,24 @@ const Instructions = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
-              <Info className="w-8 h-8 mx-auto text-amber-500 mb-2" />
-              <CardTitle>Fonctionnement du Questionnaire</CardTitle>
+              <Star className="w-8 h-8 mx-auto text-amber-500 mb-2" />
+              <CardTitle>Système de Points</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 text-gray-600">
-              <ul className="list-disc list-inside space-y-2">
-                <li>Lisez attentivement chaque question</li>
-                <li>Vous avez 3 tentatives maximum par questionnaire</li>
-                <li>Les réponses sont enregistrées automatiquement</li>
-                <li>Vous pouvez faire une pause et reprendre plus tard</li>
-                <li>Les articles liés aux questions sont disponibles pour référence</li>
+            <CardContent>
+              <ul className="space-y-4 text-gray-600">
+                <li>
+                  <strong>Points de base :</strong>
+                  <br />Chaque bonne réponse rapporte des points
+                </li>
+                <li>
+                  <strong>Bonus de série :</strong>
+                  <ul className="list-disc list-inside pl-4 mt-2 space-y-1">
+                    <li>5 bonnes réponses : x1.5</li>
+                    <li>10 bonnes réponses : x2</li>
+                    <li>15 bonnes réponses : x2.5</li>
+                    <li>20 bonnes réponses : x3</li>
+                  </ul>
+                </li>
               </ul>
             </CardContent>
           </Card>
@@ -88,47 +86,40 @@ const Instructions = () => {
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
               <Gift className="w-8 h-8 mx-auto text-amber-500 mb-2" />
-              <CardTitle>Prix et Récompenses</CardTitle>
+              <CardTitle>Récompenses et Rangs</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-gray-600">
               <p>
-                Les gagnants peuvent choisir entre deux prix de valeur équivalente.
-                Les prix sont soigneusement sélectionnés pour leur qualité et leur utilité.
+                Accumulez des points pour débloquer des avantages :
               </p>
-              <p>
-                <strong>Important :</strong> Les gagnants seront contactés par email
-                et auront 7 jours pour choisir leur prix.
-              </p>
+              <ul className="list-disc list-inside space-y-2">
+                <li><strong>NOVATO (0-50 points) :</strong> Accès aux concours de base</li>
+                <li><strong>HAVANA (51-150 points) :</strong> 2 participations bonus</li>
+                <li><strong>SANTIAGO (151-300 points) :</strong> 3 participations bonus</li>
+                <li><strong>ELDORADO (1000+ points) :</strong> Statut VIP permanent</li>
+              </ul>
             </CardContent>
           </Card>
         </div>
 
         <Card className="bg-white/50 backdrop-blur-sm mb-12">
           <CardHeader className="text-center">
-            <MapPin className="w-8 h-8 mx-auto text-amber-500 mb-2" />
-            <CardTitle>Éligibilité</CardTitle>
+            <Info className="w-8 h-8 mx-auto text-amber-500 mb-2" />
+            <CardTitle>Conseils pour Réussir</CardTitle>
           </CardHeader>
           <CardContent className="text-center text-gray-600">
-            <p className="mb-4">
-              Le concours est exclusivement réservé aux résidents canadiens des provinces suivantes :
-            </p>
-            <div className="flex justify-center gap-8">
-              <div className="text-center">
-                <Award className="w-6 h-6 mx-auto text-amber-500 mb-2" />
-                <p className="font-semibold">Ontario</p>
-              </div>
-              <div className="text-center">
-                <Award className="w-6 h-6 mx-auto text-amber-500 mb-2" />
-                <p className="font-semibold">Nouveau-Brunswick</p>
-              </div>
-              <div className="text-center">
-                <Award className="w-6 h-6 mx-auto text-amber-500 mb-2" />
-                <p className="font-semibold">Québec</p>
-              </div>
+            <div className="space-y-4">
+              <p className="mb-4">
+                Pour maximiser vos chances de qualification :
+              </p>
+              <ul className="list-disc text-left max-w-lg mx-auto space-y-2">
+                <li>Lisez attentivement chaque article avant de commencer</li>
+                <li>Prenez des notes pendant votre lecture</li>
+                <li>Vérifiez vos réponses avant de les soumettre</li>
+                <li>Utilisez vos tentatives avec stratégie</li>
+                <li>N'hésitez pas à relire les articles en cas de doute</li>
+              </ul>
             </div>
-            <p className="mt-4 text-sm">
-              Une preuve de résidence pourra être demandée lors de la réclamation des prix.
-            </p>
           </CardContent>
         </Card>
       </div>
