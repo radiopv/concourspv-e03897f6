@@ -67,7 +67,7 @@ const PrizeCatalogSelector = ({ onSelectPrize }: PrizeCatalogSelectorProps) => {
                   )}
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">
-                      {prize.value ? `${prize.value}€` : 'Prix non défini'}
+                      {prize.value ? `$${prize.value}` : 'Prix non défini'}
                     </span>
                     <Button
                       onClick={() => onSelectPrize(prize.id)}
@@ -87,4 +87,3 @@ const PrizeCatalogSelector = ({ onSelectPrize }: PrizeCatalogSelectorProps) => {
 };
 
 export default PrizeCatalogSelector;
-

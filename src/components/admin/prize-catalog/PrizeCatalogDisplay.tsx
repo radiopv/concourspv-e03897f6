@@ -35,7 +35,7 @@ const PrizeCatalogDisplay = ({ prizes }: PrizeCatalogDisplayProps) => {
                   {prize.value && (
                     <div className="absolute top-2 right-2 bg-amber-500 text-white px-3 py-1 rounded-full flex items-center gap-1">
                       <Trophy className="w-4 h-4" />
-                      {prize.value}€
+                      ${prize.value}
                     </div>
                   )}
                 </div>

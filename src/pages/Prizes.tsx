@@ -80,7 +80,7 @@ const Prizes = () => {
                       {prize.value && (
                         <div className="absolute top-4 right-4 bg-amber-500 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
                           <Trophy className="w-4 h-4" />
-                          <span className="font-bold">{prize.value}€</span>
+                          <span className="font-bold">${prize.value}</span>
                         </div>
                       )}
                     </div>
