@@ -60,17 +60,17 @@ const RanksList = () => {
 const getRankDescription = (rank: string): string => {
   switch (rank) {
     case 'NOVATO':
-      return "Signifiant 'débutant' en espagnol, c'est le point de départ de votre aventure cubaine. Comme un voyageur découvrant ses premiers pas dans un nouveau monde.";
+      return "Signifiant 'débutant' en espagnol, c'est le point de départ de votre aventure cubaine (0-99 points). Comme un voyageur découvrant ses premiers pas dans un nouveau monde.";
     case 'HAVANA':
-      return "Inspiré de la capitale cubaine, ce rang représente votre première immersion dans la culture cubaine, comme une soirée de salsa dans les rues de La Havane.";
+      return "Inspiré de la capitale cubaine, ce rang (100-249 points) représente votre première immersion dans la culture cubaine, comme une soirée de salsa dans les rues de La Havane.";
     case 'SANTIAGO':
-      return "Nommé d'après la deuxième plus grande ville de Cuba, ce niveau symbolise votre progression et votre maîtrise grandissante, tel un danseur expérimenté.";
+      return "Nommé d'après la deuxième plus grande ville de Cuba, ce niveau (250-499 points) symbolise votre progression et votre maîtrise grandissante, tel un danseur expérimenté.";
     case 'VARADERO':
-      return "Évoquant la célèbre station balnéaire cubaine, ce rang représente votre esprit festif et votre engagement dans la communauté, comme une fête sur la plage.";
+      return "Évoquant la célèbre station balnéaire cubaine, ce rang (500-999 points) représente votre esprit festif et votre engagement dans la communauté, comme une fête sur la plage.";
     case 'CARNIVAL':
-      return "Inspiré du carnaval de Santiago de Cuba, ce niveau célèbre votre expertise et votre contribution exceptionnelle à la communauté.";
+      return "Inspiré du carnaval de Santiago de Cuba, ce niveau (1000-1999 points) célèbre votre expertise et votre contribution exceptionnelle à la communauté.";
     case 'ELDORADO':
-      return "Comme la légendaire cité d'or des Caraïbes, ce rang ultime représente l'excellence et la maîtrise absolue. Vous êtes devenu une légende vivante de notre communauté !";
+      return "Comme la légendaire cité d'or des Caraïbes, ce rang ultime (2000+ points) représente l'excellence et la maîtrise absolue. Vous êtes devenu une légende vivante de notre communauté !";
     default:
       return "";
   }
