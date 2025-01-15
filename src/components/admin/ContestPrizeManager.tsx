@@ -22,13 +22,21 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     queryKey: ['prizes', contestId],
     queryFn: async () => {
       console.log('Fetching contest prizes...');
-      const { data, error } = await supabase
+      let query = supabase
         .from('prizes')
         .select(`
           *,
           prize_catalog (*)
-        `)
-        .eq('contest_id', contestId);
+        `);
+      
+      // Only add the contest_id filter if contestId is provided
+      if (contestId) {
+        query = query.eq('contest_id', contestId);
+      } else {
+        query = query.is('contest_id', null);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Error fetching contest prizes:', error);
@@ -52,7 +60,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         .from('prizes')
         .insert([{
           contest_id: contestId,
-          catalog_item_id: catalogItemId,
+          prize_catalog_id: catalogItemId,
           is_choice: contestPrizes && contestPrizes.length === 1 // Second prize is automatically marked as choice
         }]);
       
