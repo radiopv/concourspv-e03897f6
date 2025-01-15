@@ -1,4 +1,4 @@
-export type Rank = 'NOVATO' | 'HAVANA' | 'SANTIAGO' | 'VARADERO' | 'CARNIVAL' | 'ELDORADO';
+export type Rank = 'NOVATO' | 'HAVANA' | 'SANTIAGO' | 'RIO' | 'CARNIVAL' | 'ELDORADO';
 
 export interface UserRank {
   rank: Rank;
