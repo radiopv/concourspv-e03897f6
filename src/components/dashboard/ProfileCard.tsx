@@ -42,6 +42,10 @@ const ProfileCard = ({
       console.log("Données à mettre à jour:", formData);
       console.log("ID utilisateur:", userId);
 
+      if (!userId) {
+        throw new Error("ID utilisateur manquant");
+      }
+
       // Mise à jour du profil dans la base de données
       const { error: dbError } = await supabase
         .from("members")
@@ -69,6 +73,7 @@ const ProfileCard = ({
         }
       }
 
+      // Rafraîchir les données après la mise à jour
       await refetch();
       
       toast({
