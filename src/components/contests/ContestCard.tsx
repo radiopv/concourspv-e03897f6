@@ -1,12 +1,16 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Trophy } from "lucide-react";
 import { motion } from "framer-motion";
-import { Trophy, Gift, Users, Star, Calendar, Clock, ExternalLink, Coins } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Card } from "@/components/ui/card";
+import ContestStats from "./ContestStats";
+import UserProgress from "./contest-card/UserProgress";
+import ContestPrizes from "./contest-card/ContestPrizes";
+import ParticipationStats from "./contest-card/ParticipationStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ContestCardProps {
   contest: {
@@ -15,8 +19,6 @@ interface ContestCardProps {
     description?: string;
     is_new: boolean;
     has_big_prizes: boolean;
-    start_date?: string;
-    end_date?: string;
     participants?: { count: number };
   };
   onSelect: (id: string) => void;
@@ -32,161 +34,159 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         .from('prizes')
         .select(`
           *,
-          prize_catalog!fk_prize_catalog (
+          catalog_item:prize_catalog!fk_prize_catalog (
             name,
             image_url,
             shop_url,
-            value,
-            description
+            value
           )
         `)
         .eq('contest_id', contest.id);
 
-      if (error) {
-        console.error('Error fetching prizes:', error);
-        throw error;
-      }
-      console.log('Prizes data:', prizesData);
+      if (error) throw error;
       return prizesData || [];
     },
   });
 
-  const mainPrize = prizes?.[0]?.prize_catalog;
-  const totalPrizeValue = prizes?.reduce((sum, prize) => sum + (prize.prize_catalog?.value || 0), 0);
+  const { data: settings, isLoading: isSettingsLoading } = useQuery({
+    queryKey: ['global-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) throw error;
+      return data?.[0] || null;
+    }
+  });
+
+  const { data: userParticipation, isLoading: isParticipationLoading } = useQuery({
+    queryKey: ['user-participation', contest.id],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('contest_id', contest.id)
+        .eq('id', session.user.id)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    }
+  });
+
+  const remainingAttempts = settings?.default_attempts 
+    ? Math.max(0, settings.default_attempts - (userParticipation?.attempts || 0))
+    : 0;
+
+  const mainPrize = prizes?.[0]?.catalog_item;
+
+  const isLoading = isPrizesLoading || isSettingsLoading || isParticipationLoading;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className="h-full mx-auto max-w-2xl"
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="h-full"
     >
-      <Card className="overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 shadow-xl hover:shadow-2xl transition-all duration-300">
-        {/* Badge Nouveau */}
-        {contest.is_new && (
-          <div className="absolute top-4 right-4 z-10">
-            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-3 py-1">
-              NOUVEAU
-            </Badge>
-          </div>
-        )}
-
-        {/* Image et lien du prix principal */}
-        {mainPrize?.image_url && (
-          <div className="relative aspect-video group">
-            <div className="absolute inset-0 bg-gradient-to-t from-amber-900/80 to-transparent z-10" />
-            <img
-              src={mainPrize.image_url}
-              alt={mainPrize.name}
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
-            />
-            {mainPrize.value && (
-              <div className="absolute top-4 left-4 z-20">
-                <Badge className="bg-white/90 text-amber-800 px-3 py-1 font-bold text-lg">
-                  {mainPrize.value}€
-                </Badge>
-              </div>
-            )}
-            {mainPrize.shop_url && (
-              <a
-                href={mainPrize.shop_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="absolute bottom-4 right-4 z-20 bg-white/90 hover:bg-white text-amber-800 px-3 py-1 rounded-full flex items-center gap-2 transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Voir le cadeau
-              </a>
-            )}
-          </div>
-        )}
-
-        <div className="p-6">
-          {/* Titre et valeur totale */}
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-2xl font-bold text-amber-800">
+      <Card 
+        className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card float"
+        role="article"
+        aria-labelledby={`contest-title-${contest.id}`}
+      >
+        <CardHeader>
+          <div className="flex justify-between items-start mb-2">
+            <CardTitle 
+              id={`contest-title-${contest.id}`}
+              className="text-xl font-bold"
+            >
               {contest.title}
-            </h3>
-            {totalPrizeValue > 0 && (
-              <div className="flex items-center gap-1 text-amber-700">
-                <Coins className="w-5 h-5" />
-                <span className="font-semibold">Valeur totale: {totalPrizeValue}€</span>
-              </div>
+            </CardTitle>
+            {contest.is_new && (
+              <Badge 
+                variant="secondary" 
+                className="bg-blue-500 text-white"
+                aria-label="Nouveau concours"
+              >
+                Nouveau
+              </Badge>
             )}
           </div>
-
-          {/* Description du concours */}
-          {contest.description && (
-            <p className="text-amber-700 mb-6">
-              {contest.description}
-            </p>
+          {contest.has_big_prizes && (
+            <Badge 
+              variant="secondary" 
+              className="bg-amber-500 text-white flex items-center gap-1 w-fit"
+              aria-label="Gros lots disponibles"
+            >
+              <Trophy className="w-4 h-4" aria-hidden="true" />
+              Gros lots à gagner
+            </Badge>
           )}
-
-          {/* Détails du prix principal */}
-          {mainPrize && (
-            <div className="bg-white/50 rounded-lg p-4 mb-6">
-              <h4 className="font-semibold text-amber-800 flex items-center gap-2 mb-2">
-                <Gift className="w-5 h-5" />
-                Prix principal
-              </h4>
-              <p className="text-lg font-medium text-amber-700">{mainPrize.name}</p>
-              {mainPrize.description && (
-                <p className="text-sm text-amber-600 mt-1">{mainPrize.description}</p>
-              )}
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col">
+          {isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-12 w-full" />
             </div>
-          )}
-
-          {/* Statistiques */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-amber-50/50 rounded-lg p-3">
-              <Users className="w-5 h-5 text-amber-600 mb-1" />
-              <p className="text-sm text-amber-700">Participants</p>
-              <p className="text-xl font-bold text-amber-800">
-                {contest.participants?.count || 0}
-              </p>
-            </div>
-            {prizes && prizes.length > 0 && (
-              <div className="bg-amber-50/50 rounded-lg p-3">
-                <Gift className="w-5 h-5 text-amber-600 mb-1" />
-                <p className="text-sm text-amber-700">Nombre de prix</p>
-                <p className="text-xl font-bold text-amber-800">
-                  {prizes.length}
+          ) : (
+            <>
+              {contest.description && (
+                <p className="text-gray-600 mb-6">
+                  {contest.description}
                 </p>
+              )}
+
+              {mainPrize && mainPrize.image_url && (
+                <div className="mb-6">
+                  <div className="relative aspect-video rounded-lg overflow-hidden">
+                    <img
+                      src={mainPrize.image_url}
+                      alt={mainPrize.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <ContestStats contestId={contest.id} />
+
+              <UserProgress
+                userParticipation={userParticipation}
+                settings={settings}
+                remainingAttempts={remainingAttempts}
+              />
+              
+              <ContestPrizes prizes={prizes || []} />
+
+              <div className="mt-4 space-y-4">
+                <ParticipationStats
+                  participantsCount={contest.participants?.count || 0}
+                />
+
+                <Button 
+                  onClick={() => onSelect(contest.id)}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
+                  disabled={remainingAttempts <= 0}
+                  aria-label={remainingAttempts > 0 ? 
+                    `Participer au concours ${contest.title}` : 
+                    'Plus de tentatives disponibles pour ce concours'}
+                >
+                  {remainingAttempts > 0 ? 'Participer' : 'Plus de tentatives disponibles'}
+                </Button>
               </div>
-            )}
-          </div>
-
-          {/* Dates */}
-          {(contest.start_date || contest.end_date) && (
-            <div className="mb-6 space-y-2">
-              {contest.start_date && (
-                <div className="flex items-center text-amber-700">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  <span className="text-sm">
-                    Début: {format(new Date(contest.start_date), 'dd MMMM yyyy', { locale: fr })}
-                  </span>
-                </div>
-              )}
-              {contest.end_date && (
-                <div className="flex items-center text-amber-700">
-                  <Clock className="w-4 h-4 mr-2" />
-                  <span className="text-sm">
-                    Fin: {format(new Date(contest.end_date), 'dd MMMM yyyy', { locale: fr })}
-                  </span>
-                </div>
-              )}
-            </div>
+            </>
           )}
-
-          {/* Bouton de participation */}
-          <button
-            onClick={() => onSelect(contest.id)}
-            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-105"
-          >
-            <Trophy className="w-5 h-5" />
-            Participer au concours
-          </button>
-        </div>
+        </CardContent>
       </Card>
     </motion.div>
   );
