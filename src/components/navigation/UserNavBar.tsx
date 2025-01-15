@@ -18,6 +18,8 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
     navigate('/login');
   };
 
+  console.log("UserNavBar - isAdmin:", isAdmin); // Debug log
+
   return (
     <nav className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-lg">
       <div className="container mx-auto px-4">

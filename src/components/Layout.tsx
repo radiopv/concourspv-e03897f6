@@ -18,6 +18,7 @@ const Layout = () => {
   useEffect(() => {
     const checkAdminRole = async () => {
       if (!user) {
+        console.log("No user found, setting isAdmin to false");
         setIsAdmin(false);
         return;
       }
