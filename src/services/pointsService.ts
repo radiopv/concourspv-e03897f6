@@ -34,7 +34,7 @@ export const RANKS: UserRank[] = [
     ]
   },
   {
-    rank: "RIO",
+    rank: "VARADERO",
     minPoints: 301,
     maxPoints: 600,
     badge: "🎭",
