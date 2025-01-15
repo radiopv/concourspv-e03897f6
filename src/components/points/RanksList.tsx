@@ -12,20 +12,32 @@ const RanksList = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {RANKS.map((rank, index) => (
             <motion.div
               key={rank.rank}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white/50 backdrop-blur-sm p-4 rounded-lg text-center hover:shadow-md transition-all"
+              className="bg-white/50 backdrop-blur-sm p-6 rounded-lg shadow-sm hover:shadow-md transition-all"
             >
-              <div className="text-2xl mb-2">{rank.badge}</div>
-              <div className="font-bold text-amber-800">{rank.rank}</div>
-              <div className="text-sm text-amber-600">
-                {rank.minPoints} pts
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-3xl">{rank.badge}</span>
+                <div>
+                  <h3 className="font-bold text-lg text-amber-800">{rank.rank}</h3>
+                  <p className="text-sm text-amber-600">
+                    {rank.minPoints} - {rank.maxPoints === Infinity ? "∞" : rank.maxPoints} points
+                  </p>
+                </div>
               </div>
+              <ul className="space-y-2 text-gray-700">
+                {rank.benefits.map((benefit, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-amber-500">•</span>
+                    <span>{benefit}</span>
+                  </li>
+                ))}
+              </ul>
             </motion.div>
           ))}
         </div>
