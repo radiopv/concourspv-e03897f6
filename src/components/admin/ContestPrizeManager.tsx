@@ -26,7 +26,14 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         .from('prizes')
         .select(`
           *,
-          prize_catalog (*)
+          prize_catalog (
+            id,
+            name,
+            description,
+            value,
+            image_url,
+            shop_url
+          )
         `);
       
       if (contestId) {
