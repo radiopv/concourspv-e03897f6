@@ -5,7 +5,7 @@ export const RANKS: UserRank[] = [
   {
     rank: "NOVATO",
     minPoints: 0,
-    maxPoints: 99,
+    maxPoints: 50,
     badge: "🌱",
     benefits: [
       "Accès aux concours de base",
@@ -14,8 +14,8 @@ export const RANKS: UserRank[] = [
   },
   {
     rank: "HAVANA",
-    minPoints: 100,
-    maxPoints: 249,
+    minPoints: 51,
+    maxPoints: 150,
     badge: "🌴",
     benefits: [
       "2 participations bonus par concours",
@@ -24,8 +24,8 @@ export const RANKS: UserRank[] = [
   },
   {
     rank: "SANTIAGO",
-    minPoints: 250,
-    maxPoints: 499,
+    minPoints: 151,
+    maxPoints: 300,
     badge: "🌺",
     benefits: [
       "3 participations bonus par concours",
@@ -35,8 +35,8 @@ export const RANKS: UserRank[] = [
   },
   {
     rank: "VARADERO",
-    minPoints: 500,
-    maxPoints: 999,
+    minPoints: 301,
+    maxPoints: 600,
     badge: "🎭",
     benefits: [
       "4 participations bonus par concours",
@@ -46,8 +46,8 @@ export const RANKS: UserRank[] = [
   },
   {
     rank: "CARNIVAL",
-    minPoints: 1000,
-    maxPoints: 1999,
+    minPoints: 601,
+    maxPoints: 1000,
     badge: "🎪",
     benefits: [
       "5 participations bonus par concours",
@@ -57,7 +57,7 @@ export const RANKS: UserRank[] = [
   },
   {
     rank: "ELDORADO",
-    minPoints: 2000,
+    minPoints: 1001,
     maxPoints: Infinity,
     badge: "👑",
     benefits: [
@@ -148,6 +148,7 @@ export const awardPoints = async (
 
     if (pointsError) throw pointsError;
 
+    // Calculer les points avec le nouveau système
     let bonusMultiplier = 1;
     if (streak) {
       if (streak >= 5) bonusMultiplier = 1.5;
@@ -156,6 +157,7 @@ export const awardPoints = async (
       if (streak >= 20) bonusMultiplier = 3;
     }
 
+    // Réduire les points de base et appliquer le multiplicateur
     const points = Math.round((basePoints * 0.5) * bonusMultiplier);
     const newTotalPoints = (currentPoints?.total_points || 0) + points;
     const newBestStreak = Math.max(streak || 0, currentPoints?.best_streak || 0);
