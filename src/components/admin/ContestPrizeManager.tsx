@@ -29,7 +29,6 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
           prize_catalog (*)
         `);
       
-      // Only add the contest_id filter if contestId is provided
       if (contestId) {
         query = query.eq('contest_id', contestId);
       } else {
