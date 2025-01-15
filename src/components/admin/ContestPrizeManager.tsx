@@ -26,7 +26,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         .from('prizes')
         .select(`
           *,
-          prize_catalog!fk_prize_catalog(*)
+          prize_catalog(*)
         `)
         .eq('contest_id', contestId);
       
@@ -138,7 +138,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
               )}
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">
-                  {prize.prize_catalog?.value ? `${prize.prize_catalog.value}€` : 'Prix non défini'}
+                  {prize.prize_catalog?.value ? `$${prize.prize_catalog.value}` : 'Prix non défini'}
                 </span>
                 {prize.prize_catalog?.shop_url && (
                   <a
