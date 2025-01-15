@@ -3,7 +3,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PrizeCatalogDialog } from "./prize/PrizeCatalogDialog";
 
@@ -26,7 +26,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
         .from('prizes')
         .select(`
           *,
-          prize_catalog(*)
+          prize_catalog (*)
         `)
         .eq('contest_id', contestId);
       

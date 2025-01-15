@@ -15,16 +15,14 @@ const Winners = () => {
         .from('participants')
         .select(`
           *,
-          contest:contests!fk_participants_contest (
+          contest:contests (
             id,
             title
           ),
           participant_prizes (
-            prize:prizes (
+            prizes (
               id,
-              catalog_item:prize_catalog (
-                *
-              )
+              prize_catalog (*)
             )
           )
         `)
