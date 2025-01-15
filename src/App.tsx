@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Winners from "./pages/Winners";
 import WinnersList from "./pages/WinnersList";
+import Prizes from "./pages/Prizes";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="points" element={<Points />} />
           <Route path="points-system" element={<PointsSystem />} />
+          <Route path="prizes" element={<Prizes />} />
           <Route path="contests" element={<ContestsList />} />
           <Route path="contest/:id" element={<Contest />} />
           <Route path="contest/:id/stats" element={<ContestStats />} />
