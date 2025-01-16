@@ -29,6 +29,14 @@ const Layout = () => {
       console.log("Checking admin rights for user:", user.id);
       console.log("User email:", user.email);
 
+      // Vérification directe pour l'email spécifique
+      if (user.email === 'renaudcanuel@me.com') {
+        console.log("Admin email match found, setting isAdmin to true");
+        setIsAdmin(true);
+        return;
+      }
+
+      // Vérification dans la table members comme backup
       const { data: memberData, error } = await supabase
         .from('members')
         .select('role')
