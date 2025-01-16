@@ -27,11 +27,12 @@ const Layout = () => {
       }
 
       console.log("Checking admin rights for user:", user.id);
+      console.log("User email:", user.email);
 
       const { data: memberData, error } = await supabase
         .from('members')
         .select('role')
-        .eq('id', user.id)
+        .eq('email', user.email)
         .single();
 
       if (error) {
