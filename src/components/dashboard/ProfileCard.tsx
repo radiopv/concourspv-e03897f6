@@ -6,18 +6,27 @@ import { Label } from "@/components/ui/label";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ProfileCardProps {
   userProfile: {
     email: string;
     first_name: string;
     last_name: string;
+    street_address?: string;
+    city?: string;
+    province?: string;
+    postal_code?: string;
   };
   isEditing: boolean;
   formData: {
     first_name: string;
     last_name: string;
     email: string;
+    street_address: string;
+    city: string;
+    province: string;
+    postal_code: string;
   };
   setFormData: (data: any) => void;
   setIsEditing: (editing: boolean) => void;
@@ -38,12 +47,19 @@ const ProfileCard = ({
 
   const handleSaveProfile = async () => {
     try {
-      console.log("Début de la mise à jour du profil...");
-      console.log("Données à mettre à jour:", formData);
-      console.log("ID utilisateur:", userId);
-
       if (!userId) {
         throw new Error("ID utilisateur manquant");
+      }
+
+      // Validation du code postal canadien
+      const postalCodeRegex = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/;
+      if (formData.postal_code && !postalCodeRegex.test(formData.postal_code)) {
+        toast({
+          variant: "destructive",
+          title: "Code postal invalide",
+          description: "Veuillez entrer un code postal canadien valide (ex: A1A 1A1)",
+        });
+        return;
       }
 
       // Mise à jour du profil dans la base de données
@@ -52,7 +68,11 @@ const ProfileCard = ({
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
-          email: formData.email
+          email: formData.email,
+          street_address: formData.street_address,
+          city: formData.city,
+          province: formData.province,
+          postal_code: formData.postal_code
         })
         .eq("id", userId);
 
@@ -73,7 +93,6 @@ const ProfileCard = ({
         }
       }
 
-      // Rafraîchir les données après la mise à jour
       await refetch();
       
       toast({
@@ -87,7 +106,6 @@ const ProfileCard = ({
     } catch (error: any) {
       console.error("Erreur complète:", error);
       
-      // Gestion spécifique des erreurs d'email en doublon
       if (error.message?.includes("email_exists") || error.message?.includes("already been registered")) {
         toast({
           variant: "destructive",
@@ -143,6 +161,52 @@ const ProfileCard = ({
               disabled={!isEditing}
             />
           </div>
+          {isEditing && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="street">Adresse</Label>
+                <Input
+                  id="street"
+                  value={formData.street_address}
+                  onChange={(e) => setFormData(prev => ({ ...prev, street_address: e.target.value }))}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">Ville</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="province">Province</Label>
+                  <Select 
+                    value={formData.province}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, province: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez une province" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ON">Ontario</SelectItem>
+                      <SelectItem value="NB">Nouveau-Brunswick</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="postalCode">Code postal</Label>
+                <Input
+                  id="postalCode"
+                  value={formData.postal_code}
+                  onChange={(e) => setFormData(prev => ({ ...prev, postal_code: e.target.value }))}
+                  placeholder="A1A 1A1"
+                />
+              </div>
+            </>
+          )}
           <div className="flex justify-end gap-4">
             {!isEditing ? (
               <Button onClick={() => setIsEditing(true)}>
@@ -155,7 +219,11 @@ const ProfileCard = ({
                   setFormData({
                     first_name: userProfile.first_name,
                     last_name: userProfile.last_name,
-                    email: userProfile.email
+                    email: userProfile.email,
+                    street_address: userProfile.street_address || '',
+                    city: userProfile.city || '',
+                    province: userProfile.province || '',
+                    postal_code: userProfile.postal_code || ''
                   });
                 }}>
                   Annuler

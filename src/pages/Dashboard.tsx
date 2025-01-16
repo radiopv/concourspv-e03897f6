@@ -16,9 +16,10 @@ const Dashboard = () => {
     first_name: '',
     last_name: '',
     email: '',
-    phone_number: '',
-    notifications_enabled: true,
-    share_scores: true
+    street_address: '',
+    city: '',
+    province: '',
+    postal_code: '',
   });
 
   const { data: userProfile, refetch } = useQuery({
@@ -31,6 +32,18 @@ const Dashboard = () => {
         .single();
 
       if (error) throw error;
+      
+      // Initialize form data with user profile
+      setFormData({
+        first_name: data.first_name || '',
+        last_name: data.last_name || '',
+        email: data.email || '',
+        street_address: data.street_address || '',
+        city: data.city || '',
+        province: data.province || '',
+        postal_code: data.postal_code || '',
+      });
+      
       return data;
     },
     enabled: !!user?.id
@@ -58,7 +71,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-8">
       <Helmet>
-        <title>{"Tableau de bord"}</title>
+        <title>Tableau de bord</title>
       </Helmet>
       
       <DashboardHeader />
