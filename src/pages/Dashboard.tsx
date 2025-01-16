@@ -8,9 +8,14 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import StatsCards from '@/components/dashboard/StatsCards';
 import QuickActions from '@/components/dashboard/QuickActions';
 import PointsOverview from '@/components/dashboard/PointsOverview';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { Database, Grid, Users, Settings, Gift, BookOpen } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
@@ -55,6 +60,17 @@ const Dashboard = () => {
     enabled: !!user?.id
   });
 
+  const isAdmin = userProfile?.role === 'admin';
+
+  const adminLinks = [
+    { icon: Grid, label: 'Dashboard', path: '/admin' },
+    { icon: BookOpen, label: 'Concours', path: '/admin/contests' },
+    { icon: Database, label: 'Questions', path: '/admin/questions' },
+    { icon: Gift, label: 'Prix', path: '/admin/prizes' },
+    { icon: Users, label: 'Utilisateurs', path: '/admin/users' },
+    { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
+  ];
+
   return (
     <div className="space-y-8">
       <Helmet>
@@ -62,6 +78,29 @@ const Dashboard = () => {
       </Helmet>
       
       <DashboardHeader />
+      
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Administration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              {adminLinks.map((link) => (
+                <Button
+                  key={link.path}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={() => navigate(link.path)}
+                >
+                  <link.icon className="h-4 w-4" />
+                  {link.label}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         <div className="md:col-span-4">
