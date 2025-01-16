@@ -27,6 +27,7 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               <Trophy className="h-6 w-6" />
               <span className="font-bold text-lg">Passion Varadero</span>
             </Link>
+            
             {user && (
               <div className="hidden md:flex space-x-4">
                 <Link to="/instructions" className="text-white hover:text-amber-100">
@@ -36,11 +37,16 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                   </span>
                 </Link>
                 <Link to="/contests" className="text-white hover:text-amber-100">
-                  Concours
+                  <span className="flex items-center">
+                    <Trophy className="h-4 w-4 mr-1" />
+                    Concours
+                  </span>
                 </Link>
-                <Link to="/prizes" className="text-white hover:text-amber-100 flex items-center">
-                  <Gift className="h-4 w-4 mr-1" />
-                  Prix à Gagner
+                <Link to="/prizes" className="text-white hover:text-amber-100">
+                  <span className="flex items-center">
+                    <Gift className="h-4 w-4 mr-1" />
+                    Prix à Gagner
+                  </span>
                 </Link>
                 <Link to="/points" className="text-white hover:text-amber-100">
                   Points
