@@ -18,6 +18,8 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
     navigate('/login');
   };
 
+  console.log("UserNavBar - isAdmin:", isAdmin); // Debug log
+
   return (
     <nav className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-lg">
       <div className="container mx-auto px-4">
@@ -27,32 +29,24 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               <Trophy className="h-6 w-6" />
               <span className="font-bold text-lg">Passion Varadero</span>
             </Link>
-            
-            {user && (
-              <div className="hidden md:flex space-x-4">
-                <Link to="/instructions" className="text-white hover:text-amber-100">
-                  <span className="flex items-center">
-                    <BookOpen className="h-4 w-4 mr-1" />
-                    Instructions
-                  </span>
-                </Link>
-                <Link to="/contests" className="text-white hover:text-amber-100">
-                  <span className="flex items-center">
-                    <Trophy className="h-4 w-4 mr-1" />
-                    Concours
-                  </span>
-                </Link>
-                <Link to="/prizes" className="text-white hover:text-amber-100">
-                  <span className="flex items-center">
-                    <Gift className="h-4 w-4 mr-1" />
-                    Prix à Gagner
-                  </span>
-                </Link>
-                <Link to="/points" className="text-white hover:text-amber-100">
-                  Points
-                </Link>
-              </div>
-            )}
+            <div className="hidden md:flex space-x-4">
+              <Link to="/instructions" className="text-white hover:text-amber-100">
+                <span className="flex items-center">
+                  <BookOpen className="h-4 w-4 mr-1" />
+                  Instructions
+                </span>
+              </Link>
+              <Link to="/contests" className="text-white hover:text-amber-100">
+                Concours
+              </Link>
+              <Link to="/prizes" className="text-white hover:text-amber-100 flex items-center">
+                <Gift className="h-4 w-4 mr-1" />
+                Prix à Gagner
+              </Link>
+              <Link to="/points" className="text-white hover:text-amber-100">
+                Points
+              </Link>
+            </div>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -76,7 +70,7 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                   )}
                   <Button 
                     variant="ghost" 
-                    className="text-white hover:text-amber-100" 
+                    className="text-white hover:text-amber-100 flex items-center" 
                     onClick={handleLogout}
                   >
                     <LogOut className="h-5 w-5 mr-2" />
