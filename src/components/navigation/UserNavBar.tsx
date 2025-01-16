@@ -80,12 +80,12 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               </>
             ) : (
               <div className="space-x-2">
-                <Link to="/login">
+                <Link to="/auth/login">
                   <Button variant="ghost" className="text-white hover:text-amber-100">
                     Connexion
                   </Button>
                 </Link>
-                <Link to="/register">
+                <Link to="/auth/register">
                   <Button variant="ghost" className="text-white hover:text-amber-100">
                     Inscription
                   </Button>
