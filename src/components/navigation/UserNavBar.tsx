@@ -19,6 +19,7 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
   };
 
   console.log("UserNavBar - isAdmin:", isAdmin);
+  console.log("UserNavBar - user:", user);
 
   return (
     <nav className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-lg">
@@ -80,12 +81,12 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               </>
             ) : (
               <div className="space-x-2">
-                <Link to="/auth/login">
+                <Link to="/login">
                   <Button variant="ghost" className="text-white hover:text-amber-100">
                     Connexion
                   </Button>
                 </Link>
-                <Link to="/auth/register">
+                <Link to="/register">
                   <Button variant="ghost" className="text-white hover:text-amber-100">
                     Inscription
                   </Button>
