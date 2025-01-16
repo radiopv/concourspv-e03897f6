@@ -29,26 +29,24 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               <Trophy className="h-6 w-6" />
               <span className="font-bold text-lg">Passion Varadero</span>
             </Link>
-            {user ? (
-              <div className="hidden md:flex space-x-4">
-                <Link to="/instructions" className="text-white hover:text-amber-100">
-                  <span className="flex items-center">
-                    <BookOpen className="h-4 w-4 mr-1" />
-                    Instructions
-                  </span>
-                </Link>
-                <Link to="/contests" className="text-white hover:text-amber-100">
-                  Concours
-                </Link>
-                <Link to="/prizes" className="text-white hover:text-amber-100 flex items-center">
-                  <Gift className="h-4 w-4 mr-1" />
-                  Prix à Gagner
-                </Link>
-                <Link to="/points" className="text-white hover:text-amber-100">
-                  Points
-                </Link>
-              </div>
-            ) : null}
+            <div className="hidden md:flex space-x-4">
+              <Link to="/instructions" className="text-white hover:text-amber-100">
+                <span className="flex items-center">
+                  <BookOpen className="h-4 w-4 mr-1" />
+                  Instructions
+                </span>
+              </Link>
+              <Link to="/contests" className="text-white hover:text-amber-100">
+                Concours
+              </Link>
+              <Link to="/prizes" className="text-white hover:text-amber-100 flex items-center">
+                <Gift className="h-4 w-4 mr-1" />
+                Prix à Gagner
+              </Link>
+              <Link to="/points" className="text-white hover:text-amber-100">
+                Points
+              </Link>
+            </div>
           </div>
 
           <div className="flex items-center space-x-4">
