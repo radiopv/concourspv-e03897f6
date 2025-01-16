@@ -18,7 +18,7 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
     navigate('/login');
   };
 
-  console.log("UserNavBar - isAdmin:", isAdmin); // Debug log
+  console.log("UserNavBar - isAdmin:", isAdmin);
 
   return (
     <nav className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-lg">
@@ -29,7 +29,7 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               <Trophy className="h-6 w-6" />
               <span className="font-bold text-lg">Passion Varadero</span>
             </Link>
-            {user && (
+            {user ? (
               <div className="hidden md:flex space-x-4">
                 <Link to="/instructions" className="text-white hover:text-amber-100">
                   <span className="flex items-center">
@@ -48,7 +48,7 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                   Points
                 </Link>
               </div>
-            )}
+            ) : null}
           </div>
 
           <div className="flex items-center space-x-4">
