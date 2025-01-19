@@ -6,7 +6,7 @@ import { Toaster } from './ui/toaster';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Grid, Users, Settings, Database, Edit, Gift, BookOpen } from 'lucide-react';
 import { Button } from './ui/button';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -19,20 +19,16 @@ const Layout = () => {
   const { toast } = useToast();
 
   // Vérification du rôle admin avec React Query
-  const { data: isAdmin = false } = useQuery({
+  const { data: isAdmin = false, isLoading: isCheckingAdmin } = useQuery({
     queryKey: ['admin-check', user?.id],
     queryFn: async () => {
-      if (!user) {
-        console.log("No user found, setting isAdmin to false");
-        return false;
-      }
+      if (!user) return false;
 
-      console.log("Checking admin rights for user:", user.id);
-      console.log("User email:", user.email);
+      console.log("Checking admin rights for user:", user.email);
 
       // Vérification directe pour l'email spécifique
       if (user.email === 'renaudcanuel@me.com') {
-        console.log("Admin email match found, setting isAdmin to true");
+        console.log("Admin email match found");
         return true;
       }
 
@@ -45,15 +41,9 @@ const Layout = () => {
 
       if (error) {
         console.error('Error checking admin role:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de vérifier vos droits d'administrateur",
-        });
         return false;
       }
 
-      console.log("Member data received:", memberData);
       const isUserAdmin = memberData?.role === 'admin';
       console.log("Is user admin?", isUserAdmin);
       return isUserAdmin;
@@ -64,19 +54,19 @@ const Layout = () => {
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/register';
 
-  // Redirect logic
+  // Redirection logic
   React.useEffect(() => {
     if (!user && !isAuthRoute) {
       navigate('/login');
     } else if (user && isAuthRoute) {
       navigate(isAdmin ? '/admin' : '/dashboard');
     } else if (isAdminRoute && !isAdmin && user) {
-      navigate('/dashboard');
       toast({
         variant: "destructive",
         title: "Accès refusé",
         description: "Vous n'avez pas les droits d'accès à l'administration.",
       });
+      navigate('/dashboard');
     }
   }, [user, isAdmin, isAdminRoute, isAuthRoute, navigate, toast]);
 
@@ -88,6 +78,11 @@ const Layout = () => {
     { icon: Users, label: 'Utilisateurs', path: '/admin/users' },
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];
+
+  // Si on vérifie encore les droits admin, afficher un loader
+  if (isCheckingAdmin) {
+    return <div>Vérification des droits d'accès...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
