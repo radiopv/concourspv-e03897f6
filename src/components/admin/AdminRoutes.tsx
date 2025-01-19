@@ -2,10 +2,10 @@ import React from 'react';
 import { Routes, Route, useParams } from 'react-router-dom';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import EditContestForm from './EditContestForm';
-import ContestList from './ContestList';
 import AdminDashboard from './AdminDashboard';
 import QuestionForm from './QuestionForm';
 import AdminContestManager from './AdminContestManager';
+import QuestionsManager from './QuestionsManager';
 
 const AdminRoutes = () => {
   return (
@@ -19,6 +19,10 @@ const AdminRoutes = () => {
       <Route 
         path="/contests/:contestId" 
         element={<EditContestFormWrapper />}
+      />
+      <Route 
+        path="/contests/:contestId/questions" 
+        element={<QuestionsManagerWrapper />}
       />
       <Route 
         path="/questions/new" 
@@ -67,6 +71,12 @@ const EditContestFormWrapper = () => {
       onClose={() => {}}
     />
   );
+};
+
+// Wrapper component to provide contestId to QuestionsManager
+const QuestionsManagerWrapper = () => {
+  const { contestId } = useParams();
+  return <QuestionsManager contestId={contestId || ''} />;
 };
 
 export default AdminRoutes;
