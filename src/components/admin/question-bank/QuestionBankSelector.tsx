@@ -6,6 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Plus, Check, ExternalLink } from "lucide-react";
 
+interface Question {
+  id: string;
+  question_text: string;
+  options: string[];
+  correct_answer: string;
+  article_url?: string;
+}
+
 interface QuestionBankSelectorProps {
   contestId: string;
   onQuestionSelect: (questionId: string) => void;
@@ -27,7 +35,7 @@ const QuestionBankSelector = ({ contestId, onQuestionSelect, selectedQuestions }
         console.error('Error fetching questions:', error);
         throw error;
       }
-      return data;
+      return data as Question[];
     }
   });
 
@@ -102,13 +110,16 @@ const QuestionBankSelector = ({ contestId, onQuestionSelect, selectedQuestions }
               className="mt-4"
             >
               {selectedQuestions.includes(question.id) ? (
-                <Check className="h-4 w-4" />
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Ajoutée
+                </>
               ) : (
-                <Plus className="h-4 w-4" />
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter
+                </>
               )}
-              <span className="ml-2">
-                {selectedQuestions.includes(question.id) ? "Ajoutée" : "Ajouter"}
-              </span>
             </Button>
           </CardContent>
         </Card>
