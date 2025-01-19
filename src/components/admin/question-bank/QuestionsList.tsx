@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Trash, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const QuestionsList = () => {
   const { toast } = useToast();
@@ -19,7 +30,10 @@ const QuestionsList = () => {
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
       return data;
     }
   });
@@ -36,9 +50,8 @@ const QuestionsList = () => {
         throw error;
       }
 
-      // Immediately invalidate and refetch
       await queryClient.invalidateQueries({ queryKey: ['questions-list'] });
-
+      
       toast({
         title: "Succès",
         description: "Question supprimée avec succès",
@@ -70,13 +83,33 @@ const QuestionsList = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-start">
                     <h3 className="font-medium">{question.question_text}</h3>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(question.id)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="ml-2"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Êtes-vous sûr de vouloir supprimer cette question ? Cette action est irréversible.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(question.id)}
+                          >
+                            Supprimer
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                   
                   <div className="space-y-2">
