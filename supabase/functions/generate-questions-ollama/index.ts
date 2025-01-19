@@ -55,12 +55,14 @@ serve(async (req) => {
     for (const url of urls) {
       console.log(`Processing URL: ${url}`);
       const prompt = `Create 4 multiple choice questions based on the content from this URL: ${url}. 
-      Format each question as a JSON object with these fields:
-      - question_text: the question
-      - options: array of 4 possible answers
-      - correct_answer: the correct answer (must be one of the options)
-      - article_url: the source URL
-      Return an array of these question objects.`;
+      Format your response as a valid JSON array of objects. Each object should have these exact fields:
+      {
+        "question_text": "the question text",
+        "options": ["option1", "option2", "option3", "option4"],
+        "correct_answer": "the correct option (must be one of the options)",
+        "article_url": "${url}"
+      }
+      Make sure to return ONLY the JSON array, no other text.`;
 
       console.log('Sending request to Ollama...');
       try {
@@ -87,13 +89,32 @@ serve(async (req) => {
         console.log('Received response from Ollama:', data);
         
         try {
-          const generatedQuestions = JSON.parse(data.response);
+          // Clean up the response to ensure it's valid JSON
+          const cleanedResponse = data.response.replace(/```json\n?|\n?```/g, '').trim();
+          console.log('Cleaned response:', cleanedResponse);
+          
+          const generatedQuestions = JSON.parse(cleanedResponse);
           console.log('Parsed questions:', generatedQuestions);
+          
+          if (!Array.isArray(generatedQuestions)) {
+            throw new Error('Response is not an array');
+          }
+          
+          // Validate each question object
+          generatedQuestions.forEach((q, index) => {
+            if (!q.question_text || !Array.isArray(q.options) || !q.correct_answer || !q.article_url) {
+              throw new Error(`Invalid question object at index ${index}`);
+            }
+            if (!q.options.includes(q.correct_answer)) {
+              throw new Error(`Correct answer not found in options at index ${index}`);
+            }
+          });
+          
           questions.push(...generatedQuestions);
         } catch (error) {
           console.error('Error parsing questions:', error);
           console.log('Raw response:', data.response);
-          throw new Error('Failed to parse generated questions');
+          throw new Error(`Failed to parse generated questions: ${error.message}`);
         }
       } catch (error) {
         console.error('Error making request to Ollama:', error);
