@@ -18,6 +18,7 @@ const Layout = () => {
   const location = useLocation();
   const { toast } = useToast();
 
+  // Vérification du rôle admin avec React Query
   const { data: isAdmin = false } = useQuery({
     queryKey: ['admin-check', user?.id],
     queryFn: async () => {
@@ -61,10 +62,15 @@ const Layout = () => {
   });
 
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/register';
 
-  // Redirect non-admin users trying to access admin routes
+  // Redirect logic
   React.useEffect(() => {
-    if (isAdminRoute && !isAdmin && user) {
+    if (!user && !isAuthRoute) {
+      navigate('/login');
+    } else if (user && isAuthRoute) {
+      navigate(isAdmin ? '/admin' : '/dashboard');
+    } else if (isAdminRoute && !isAdmin && user) {
       navigate('/dashboard');
       toast({
         variant: "destructive",
@@ -72,7 +78,7 @@ const Layout = () => {
         description: "Vous n'avez pas les droits d'accès à l'administration.",
       });
     }
-  }, [isAdminRoute, isAdmin, user, navigate, toast]);
+  }, [user, isAdmin, isAdminRoute, isAuthRoute, navigate, toast]);
 
   const adminLinks = [
     { icon: Grid, label: 'Dashboard', path: '/admin' },
