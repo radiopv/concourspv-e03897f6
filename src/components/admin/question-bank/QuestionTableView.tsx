@@ -76,6 +76,25 @@ const QuestionTableView = () => {
 
       if (fetchError) throw fetchError;
 
+      // Vérifier si une question avec le même URL existe déjà dans le concours
+      if (questionData.article_url) {
+        const { data: existingQuestions, error: checkError } = await supabase
+          .from('questions')
+          .select('id, article_url')
+          .eq('contest_id', contestId)
+          .not('article_url', 'is', null);
+
+        if (checkError) throw checkError;
+
+        const duplicateArticle = existingQuestions?.some(
+          q => q.article_url === questionData.article_url
+        );
+
+        if (duplicateArticle) {
+          throw new Error('Une question avec le même URL d\'article existe déjà dans ce concours');
+        }
+      }
+
       // Créer la question dans le concours
       const { error: insertError } = await supabase
         .from('questions')
@@ -97,10 +116,10 @@ const QuestionTableView = () => {
         description: "La question a été ajoutée au concours avec succès",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: "Impossible d'ajouter la question au concours",
+        description: error.message || "Impossible d'ajouter la question au concours",
         variant: "destructive",
       });
     }
