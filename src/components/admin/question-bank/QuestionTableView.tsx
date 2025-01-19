@@ -57,11 +57,21 @@ const QuestionTableView = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contests')
-        .select('id, title, questions(count)')
-        .eq('status', 'active');
+        .select(`
+          id,
+          title,
+          questions:questions(count)
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Contest[];
+
+      return data.map((contest: any) => ({
+        id: contest.id,
+        title: contest.title,
+        questions: { count: contest.questions[0]?.count || 0 }
+      })) as Contest[];
     }
   });
 
@@ -333,7 +343,7 @@ const QuestionTableView = () => {
                         <SelectContent>
                           {contests?.map((contest) => (
                             <SelectItem key={contest.id} value={contest.id}>
-                              {contest.title} ({contest.questions?.count || 0} questions)
+                              {contest.title} ({contest.questions.count} questions)
                             </SelectItem>
                           ))}
                         </SelectContent>
