@@ -3,12 +3,13 @@ import { Routes, Route, useParams } from 'react-router-dom';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import EditContestForm from './EditContestForm';
 import ContestList from './ContestList';
+import AdminDashboard from './AdminDashboard';
 import QuestionForm from './QuestionForm';
 
 const AdminRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<div>Admin Dashboard</div>} />
+      <Route path="/" element={<AdminDashboard />} />
       <Route path="/prizes" element={<PrizeCatalogManager />} />
       <Route 
         path="/contests" 
