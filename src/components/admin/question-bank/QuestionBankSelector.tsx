@@ -14,11 +14,10 @@ interface QuestionBankSelectorProps {
 
 const QuestionBankSelector = ({ contestId, onQuestionSelect, selectedQuestions }: QuestionBankSelectorProps) => {
   const { toast } = useToast();
-  
+
   const { data: questions, isLoading } = useQuery({
     queryKey: ['question-bank'],
     queryFn: async () => {
-      // Remove the status filter to get all questions
       const { data, error } = await supabase
         .from('question_bank')
         .select('*')
@@ -66,34 +65,27 @@ const QuestionBankSelector = ({ contestId, onQuestionSelect, selectedQuestions }
   };
 
   if (isLoading) {
-    return <div>Chargement de la banque de questions...</div>;
+    return <div>Chargement des questions...</div>;
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {questions?.map((question) => (
-        <Card 
-          key={question.id}
-          className={`relative transition-all duration-200 ${
-            selectedQuestions.includes(question.id) 
-              ? 'border-green-500 bg-green-50' 
-              : 'hover:border-blue-200'
-          }`}
-        >
+        <Card key={question.id} className="relative">
           <CardContent className="p-4">
             <h3 className="font-semibold mb-2">{question.question_text}</h3>
             <div className="space-y-1">
               {Array.isArray(question.options) && question.options.map((option: string, index: number) => (
                 <p 
                   key={index}
-                  className={option === question.correct_answer ? "text-green-600" : ""}
+                  className={`${option === question.correct_answer ? "text-green-600 font-medium" : ""}`}
                 >
                   {option}
                 </p>
               ))}
             </div>
             {question.article_url && (
-              <a 
+              <a
                 href={question.article_url}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -103,21 +95,20 @@ const QuestionBankSelector = ({ contestId, onQuestionSelect, selectedQuestions }
               </a>
             )}
             <Button
+              variant={selectedQuestions.includes(question.id) ? "secondary" : "default"}
+              size="sm"
               onClick={() => handleQuestionSelect(question.id)}
-              className="mt-4 w-full"
               disabled={selectedQuestions.includes(question.id)}
+              className="mt-4"
             >
               {selectedQuestions.includes(question.id) ? (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  Ajoutée
-                </>
+                <Check className="h-4 w-4" />
               ) : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter au concours
-                </>
+                <Plus className="h-4 w-4" />
               )}
+              <span className="ml-2">
+                {selectedQuestions.includes(question.id) ? "Ajoutée" : "Ajouter"}
+              </span>
             </Button>
           </CardContent>
         </Card>
