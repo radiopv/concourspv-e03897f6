@@ -1,10 +1,9 @@
 import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import QuestionBankList from "./QuestionBankList";
 import AddQuestionForm from "./AddQuestionForm";
+import QuestionGenerator from "./QuestionGenerator";
 import { supabase } from "@/lib/supabase";
 
 const QuestionBankManager = () => {
@@ -28,20 +27,17 @@ const QuestionBankManager = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Banque de Questions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AddQuestionForm />
-          <div className="mt-4">
-            <Button variant="outline" className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter une Question
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid md:grid-cols-2 gap-6">
+        <QuestionGenerator />
+        <Card>
+          <CardHeader>
+            <CardTitle>Ajouter une question manuellement</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AddQuestionForm />
+          </CardContent>
+        </Card>
+      </div>
       <QuestionBankList />
     </div>
   );
