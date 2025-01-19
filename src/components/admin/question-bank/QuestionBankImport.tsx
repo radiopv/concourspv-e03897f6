@@ -1,85 +1,124 @@
-import { useState } from "react";
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
-import * as XLSX from 'xlsx';
-import { supabase } from "../../../lib/supabase";
-import { validateAndParseQuestions } from "../../../utils/excelImport";
-import { useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { Loader2 } from "lucide-react";
 
 const QuestionBankImport = () => {
+  const [urls, setUrls] = useState<string[]>(['']);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [isImporting, setIsImporting] = useState(false);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleUrlChange = (index: number, value: string) => {
+    const newUrls = [...urls];
+    newUrls[index] = value;
+    setUrls(newUrls);
+  };
 
-    try {
-      setIsImporting(true);
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        
-        const questions = validateAndParseQuestions(worksheet);
+  const addUrlField = () => {
+    setUrls([...urls, '']);
+  };
 
-        const { error: questionsError } = await supabase
-          .from('question_bank')
-          .insert(questions.map(q => ({
-            question_text: q.question_text,
-            options: q.options,
-            correct_answer: q.correct_answer,
-            article_url: q.article_url,
-            status: 'available'
-          })));
+  const removeUrlField = (index: number) => {
+    const newUrls = urls.filter((_, i) => i !== index);
+    setUrls(newUrls);
+  };
 
-        if (questionsError) throw questionsError;
-
-        await queryClient.invalidateQueries({ queryKey: ['question-bank'] });
-
-        toast({
-          title: "Succès",
-          description: `${questions.length} questions ont été importées avec succès.`,
-        });
-
-        if (event.target) {
-          event.target.value = '';
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    } catch (error) {
-      console.error('Error importing questions:', error);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validUrls = urls.filter(url => url.trim() !== '');
+    
+    if (validUrls.length === 0) {
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors de l'importation des questions",
+        description: "Veuillez entrer au moins une URL valide",
         variant: "destructive",
       });
-      if (event.target) {
-        event.target.value = '';
-      }
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-questions-ollama', {
+        body: { urls: validUrls }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: data.message,
+      });
+
+      // Reset form
+      setUrls(['']);
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer les questions. Vérifiez qu'Ollama est bien lancé.",
+        variant: "destructive",
+      });
     } finally {
-      setIsImporting(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <Label htmlFor="file-upload">Importer des questions (Excel)</Label>
-      <p className="text-sm text-gray-500">
-        Le fichier doit contenir les colonnes: Question, Choix A, Choix B, Choix C, Choix D, Réponse correcte, Lien Article (optionnel)
-      </p>
-      <Input
-        id="file-upload"
-        type="file"
-        accept=".xlsx,.xls"
-        onChange={handleFileUpload}
-        disabled={isImporting}
-      />
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Importer des questions depuis des URLs</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {urls.map((url, index) => (
+            <div key={index} className="flex gap-2">
+              <Input
+                type="url"
+                value={url}
+                onChange={(e) => handleUrlChange(index, e.target.value)}
+                placeholder="https://..."
+                disabled={isLoading}
+              />
+              {urls.length > 1 && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => removeUrlField(index)}
+                  disabled={isLoading}
+                >
+                  Supprimer
+                </Button>
+              )}
+            </div>
+          ))}
+          
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addUrlField}
+              disabled={isLoading}
+            >
+              Ajouter une URL
+            </Button>
+            
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Génération en cours...
+                </>
+              ) : (
+                'Générer les questions'
+              )}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
