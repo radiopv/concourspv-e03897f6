@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 
 const QuestionsList = () => {
   const { toast } = useToast();
-  const { data: questions, isLoading, refetch } = useQuery({
+  const queryClient = useQueryClient();
+  
+  const { data: questions, isLoading } = useQuery({
     queryKey: ['questions-list'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -31,12 +33,13 @@ const QuestionsList = () => {
 
       if (error) throw error;
 
+      // Invalidate and refetch
+      await queryClient.invalidateQueries({ queryKey: ['questions-list'] });
+
       toast({
         title: "Succès",
         description: "Question supprimée avec succès",
       });
-
-      refetch();
     } catch (error) {
       console.error('Error deleting question:', error);
       toast({
