@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy } from "lucide-react";
+import { Trophy, Users, Target, Star, Coins } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -10,7 +10,7 @@ import ContestStats from "./ContestStats";
 import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
 import ParticipationStats from "./contest-card/ParticipationStats";
-import { Skeleton } from "@/components/ui/skeleton";
+import { calculateWinningChance } from "../../utils/contestCalculations";
 
 interface ContestCardProps {
   contest: {
@@ -26,166 +26,116 @@ interface ContestCardProps {
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
-  const { data: prizes, isLoading: isPrizesLoading } = useQuery({
-    queryKey: ['contest-prizes', contest.id],
+  // Fetch detailed stats for the contest
+  const { data: stats } = useQuery({
+    queryKey: ['contest-detailed-stats', contest.id],
     queryFn: async () => {
-      console.log('Fetching prizes for contest:', contest.id);
-      const { data: prizesData, error } = await supabase
-        .from('prizes')
-        .select(`
-          *,
-          catalog_item:prize_catalog(
-            name,
-            image_url,
-            shop_url,
-            value
-          )
-        `)
-        .eq('contest_id', contest.id);
-
-      if (error) throw error;
-      return prizesData || [];
-    },
-  });
-
-  const { data: settings, isLoading: isSettingsLoading } = useQuery({
-    queryKey: ['global-settings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (error) throw error;
-      return data?.[0] || null;
-    }
-  });
-
-  const { data: userParticipation, isLoading: isParticipationLoading } = useQuery({
-    queryKey: ['user-participation', contest.id],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return null;
-
-      const { data, error } = await supabase
+      const { data: participants } = await supabase
         .from('participants')
-        .select('*')
+        .select('score, status')
         .eq('contest_id', contest.id)
-        .eq('id', session.user.id)
-        .maybeSingle();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+        .not('score', 'is', null);
+
+      if (!participants) return null;
+
+      const qualifiedParticipants = participants.filter(p => p.score >= 90);
+      const averageScore = participants.length > 0
+        ? Math.round(participants.reduce((acc, p) => acc + (p.score || 0), 0) / participants.length)
+        : 0;
+
+      return {
+        totalParticipants: participants.length,
+        qualifiedParticipants: qualifiedParticipants.length,
+        averageScore,
+        winningChance: calculateWinningChance(qualifiedParticipants.length)
+      };
     }
   });
-
-  const remainingAttempts = settings?.default_attempts 
-    ? Math.max(0, settings.default_attempts - (userParticipation?.attempts || 0))
-    : 0;
-
-  const mainPrize = prizes?.[0]?.catalog_item;
-
-  const isLoading = isPrizesLoading || isSettingsLoading || isParticipationLoading;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="h-full"
+      className={`w-full max-w-4xl mx-auto ${contest.participants?.count === 1 ? 'md:w-2/3 lg:w-1/2' : ''}`}
     >
-      <Card 
-        className="h-full flex flex-col hover:shadow-lg transition-shadow glass-card float"
-        role="article"
-        aria-labelledby={`contest-title-${contest.id}`}
-      >
-        <CardHeader>
-          <div className="flex justify-between items-start mb-2">
-            <CardTitle 
-              id={`contest-title-${contest.id}`}
-              className="text-xl font-bold"
-            >
+      <Card className="bg-gradient-to-br from-[#1A1F2C] to-[#2D243B] text-white shadow-xl hover:shadow-2xl transition-all duration-300 border-[#9b87f5]/20">
+        <CardHeader className="border-b border-[#9b87f5]/20 pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-[#9b87f5] to-[#F97316] bg-clip-text text-transparent">
               {contest.title}
             </CardTitle>
-            {contest.is_new && (
-              <Badge 
-                variant="secondary" 
-                className="bg-blue-500 text-white"
-                aria-label="Nouveau concours"
-              >
-                Nouveau
-              </Badge>
-            )}
+            <div className="flex gap-2">
+              {contest.is_new && (
+                <Badge className="bg-[#F97316] text-white">
+                  Nouveau
+                </Badge>
+              )}
+              {contest.has_big_prizes && (
+                <Badge className="bg-[#9b87f5] text-white">
+                  Gros Lots
+                </Badge>
+              )}
+            </div>
           </div>
-          {contest.has_big_prizes && (
-            <Badge 
-              variant="secondary" 
-              className="bg-amber-500 text-white flex items-center gap-1 w-fit"
-              aria-label="Gros lots disponibles"
-            >
-              <Trophy className="w-4 h-4" aria-hidden="true" />
-              Gros lots à gagner
-            </Badge>
+          {contest.description && (
+            <p className="text-gray-300 mt-2">{contest.description}</p>
           )}
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          {isLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : (
-            <>
-              {contest.description && (
-                <p className="text-gray-600 mb-6">
-                  {contest.description}
-                </p>
-              )}
 
-              {mainPrize && mainPrize.image_url && (
-                <div className="mb-6">
-                  <div className="relative aspect-video rounded-lg overflow-hidden">
-                    <img
-                      src={mainPrize.image_url}
-                      alt={mainPrize.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                </div>
-              )}
-              
-              <ContestStats contestId={contest.id} />
-
-              <UserProgress
-                userParticipation={userParticipation}
-                settings={settings}
-                remainingAttempts={remainingAttempts}
-              />
-              
-              <ContestPrizes prizes={prizes || []} />
-
-              <div className="mt-4 space-y-4">
-                <ParticipationStats
-                  participantsCount={contest.participants?.count || 0}
-                />
-
-                <Button 
-                  onClick={() => onSelect(contest.id)}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3"
-                  disabled={remainingAttempts <= 0}
-                  aria-label={remainingAttempts > 0 ? 
-                    `Participer au concours ${contest.title}` : 
-                    'Plus de tentatives disponibles pour ce concours'}
-                >
-                  {remainingAttempts > 0 ? 'Participer' : 'Plus de tentatives disponibles'}
-                </Button>
+        <CardContent className="pt-6 space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
+                <Users className="w-4 h-4" />
+                <h3 className="font-medium">Participants</h3>
               </div>
-            </>
-          )}
+              <p className="text-2xl font-bold text-white">
+                {stats?.totalParticipants || 0}
+              </p>
+            </div>
+
+            <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-[#F97316] mb-2">
+                <Star className="w-4 h-4" />
+                <h3 className="font-medium">Score Moyen</h3>
+              </div>
+              <p className="text-2xl font-bold text-white">
+                {stats?.averageScore || 0}%
+              </p>
+            </div>
+
+            <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
+                <Trophy className="w-4 h-4" />
+                <h3 className="font-medium">Participants Éligibles</h3>
+              </div>
+              <p className="text-2xl font-bold text-white">
+                {stats?.qualifiedParticipants || 0}
+              </p>
+            </div>
+
+            <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-[#F97316] mb-2">
+                <Coins className="w-4 h-4" />
+                <h3 className="font-medium">Chances de Gagner</h3>
+              </div>
+              <p className="text-2xl font-bold text-white">
+                {stats?.winningChance || 100}%
+              </p>
+            </div>
+          </div>
+
+          <ContestPrizes prizes={contest.prizes || []} />
+
+          <div className="mt-8 flex justify-center">
+            <Button
+              onClick={() => onSelect(contest.id)}
+              className="bg-gradient-to-r from-[#9b87f5] to-[#F97316] hover:from-[#8B5CF6] hover:to-[#D946EF] text-white font-bold py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none"
+            >
+              Participer Maintenant
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </motion.div>
