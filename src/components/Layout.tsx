@@ -62,6 +62,18 @@ const Layout = () => {
 
   const isAdminRoute = location.pathname.startsWith('/admin');
 
+  // Redirect non-admin users trying to access admin routes
+  React.useEffect(() => {
+    if (isAdminRoute && !isAdmin && user) {
+      navigate('/dashboard');
+      toast({
+        variant: "destructive",
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits d'accès à l'administration.",
+      });
+    }
+  }, [isAdminRoute, isAdmin, user, navigate, toast]);
+
   const adminLinks = [
     { icon: Grid, label: 'Dashboard', path: '/admin' },
     { icon: Edit, label: 'Concours', path: '/admin/contests' },
