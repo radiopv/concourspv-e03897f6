@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface CreateUrlQuestionProps {
-  contestId: string;
+  contestId?: string;
 }
 
 const CreateUrlQuestion: React.FC<CreateUrlQuestionProps> = ({ contestId }) => {
@@ -25,7 +25,10 @@ const CreateUrlQuestion: React.FC<CreateUrlQuestionProps> = ({ contestId }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ urls: [url], contestId }),
+        body: JSON.stringify({ 
+          urls: [url],
+          contestId: contestId // Maintenant optionnel
+        }),
       });
 
       if (!response.ok) {
@@ -41,7 +44,11 @@ const CreateUrlQuestion: React.FC<CreateUrlQuestionProps> = ({ contestId }) => {
         });
         
         // Refresh questions list
-        queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+        if (contestId) {
+          queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+        } else {
+          queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+        }
         setUrl('');
       } else {
         throw new Error(data.error || 'Failed to generate questions');
