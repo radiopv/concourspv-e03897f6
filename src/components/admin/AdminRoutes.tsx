@@ -25,6 +25,10 @@ const AdminRoutes = () => {
         element={<QuestionsManagerWrapper />}
       />
       <Route 
+        path="/questions" 
+        element={<QuestionsManager contestId="" />}
+      />
+      <Route 
         path="/questions/new" 
         element={
           <QuestionForm 
