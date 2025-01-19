@@ -19,7 +19,7 @@ serve(async (req) => {
 
     console.log('Generating questions for topic:', topic);
 
-    const response = await fetch('https://api.grok.ai/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${GROK_API_KEY}`,
