@@ -10,11 +10,13 @@ import CreateUrlQuestion from '../question-bank/CreateUrlQuestion';
 
 const ContestQuestionManager = () => {
   const { contestId } = useParams();
-  const [activeTab, setActiveTab] = useState('existing');
+  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
 
   const { data: contest } = useQuery({
     queryKey: ['contest', contestId],
     queryFn: async () => {
+      if (!contestId) throw new Error('Contest ID is required');
+      
       const { data, error } = await supabase
         .from('contests')
         .select('*')
@@ -26,6 +28,14 @@ const ContestQuestionManager = () => {
     },
     enabled: !!contestId,
   });
+
+  const handleQuestionSelect = (questionId: string) => {
+    setSelectedQuestions(prev => [...prev, questionId]);
+  };
+
+  if (!contestId) {
+    return <div>L'ID du concours est requis</div>;
+  }
 
   return (
     <div className="container mx-auto p-6">
@@ -42,15 +52,19 @@ const ContestQuestionManager = () => {
             </TabsList>
             
             <TabsContent value="existing">
-              {contestId && <QuestionsList contestId={contestId} />}
+              <QuestionsList contestId={contestId} />
             </TabsContent>
             
             <TabsContent value="bank">
-              {contestId && <QuestionBankSelector contestId={contestId} onQuestionSelect={() => {}} selectedQuestions={[]} />}
+              <QuestionBankSelector 
+                contestId={contestId}
+                onQuestionSelect={handleQuestionSelect}
+                selectedQuestions={selectedQuestions}
+              />
             </TabsContent>
             
             <TabsContent value="url">
-              {contestId && <CreateUrlQuestion contestId={contestId} />}
+              <CreateUrlQuestion contestId={contestId} />
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -1,73 +1,56 @@
 import React, { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link, ExternalLink } from "lucide-react";
 
-const CreateUrlQuestion = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+interface CreateUrlQuestionProps {
+  contestId: string;
+}
+
+const CreateUrlQuestion: React.FC<CreateUrlQuestionProps> = ({ contestId }) => {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    question_text: '',
-    options: ['', '', '', ''],
-    correct_answer: '',
-    article_url: '',
-  });
-
-  const handleOptionChange = (index: number, value: string) => {
-    const newOptions = [...formData.options];
-    newOptions[index] = value;
-    setFormData({ ...formData, options: newOptions });
-  };
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (!formData.question_text || formData.options.some(opt => !opt) || !formData.correct_answer || !url) {
-        throw new Error('Veuillez remplir tous les champs obligatoires');
+      const response = await fetch('/api/generate-questions-from-urls', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ urls: [url], contestId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate questions');
       }
 
-      const { error } = await supabase
-        .from('question_bank')
-        .insert([{
-          question_text: formData.question_text,
-          options: formData.options,
-          correct_answer: formData.correct_answer,
-          article_url: url,
-          status: 'available'
-        }]);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['questions-list'] });
+      const data = await response.json();
       
-      toast({
-        title: "Succès",
-        description: "Question ajoutée à la banque de questions",
-      });
-
-      // Reset form
-      setFormData({
-        question_text: '',
-        options: ['', '', '', ''],
-        correct_answer: '',
-        article_url: '',
-      });
-      setUrl('');
-
+      if (data.success) {
+        toast({
+          title: "Questions générées",
+          description: data.message,
+        });
+        
+        // Refresh questions list
+        queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+        setUrl('');
+      } else {
+        throw new Error(data.error || 'Failed to generate questions');
+      }
     } catch (error) {
-      console.error('Error adding question:', error);
+      console.error('Error generating questions:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible d'ajouter la question",
+        description: "Impossible de générer les questions",
         variant: "destructive",
       });
     } finally {
@@ -77,74 +60,21 @@ const CreateUrlQuestion = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Link className="h-5 w-5" />
-          Créer une question basée sur une URL
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="url">URL de l'article</Label>
-            <div className="flex gap-2">
-              <Input
-                id="url"
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://..."
-                className="flex-1"
-              />
-              {url && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => window.open(url, '_blank')}
-                  className="flex items-center gap-2"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Voir
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="question">Question</Label>
+          <div className="flex gap-4">
             <Input
-              id="question"
-              value={formData.question_text}
-              onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
-              placeholder="Entrez votre question..."
+              type="url"
+              placeholder="Entrez l'URL de l'article"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              required
+              className="flex-1"
             />
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Génération...' : 'Générer des questions'}
+            </Button>
           </div>
-
-          <div className="space-y-2">
-            <Label>Options de réponse</Label>
-            {formData.options.map((option, index) => (
-              <Input
-                key={index}
-                value={option}
-                onChange={(e) => handleOptionChange(index, e.target.value)}
-                placeholder={`Option ${index + 1}`}
-              />
-            ))}
-          </div>
-
-          <div>
-            <Label htmlFor="correct">Réponse correcte</Label>
-            <Input
-              id="correct"
-              value={formData.correct_answer}
-              onChange={(e) => setFormData({ ...formData, correct_answer: e.target.value })}
-              placeholder="Entrez la réponse correcte"
-            />
-          </div>
-
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? 'Création...' : 'Créer la question'}
-          </Button>
         </form>
       </CardContent>
     </Card>
