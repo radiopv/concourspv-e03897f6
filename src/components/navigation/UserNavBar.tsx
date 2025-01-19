@@ -27,26 +27,24 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               <Trophy className="h-6 w-6" />
               <span className="font-bold text-lg">Passion Varadero</span>
             </Link>
-            {user && (
-              <div className="hidden md:flex space-x-4">
-                <Link to="/instructions" className="text-white hover:text-amber-100">
-                  <span className="flex items-center">
-                    <BookOpen className="h-4 w-4 mr-1" />
-                    Instructions
-                  </span>
-                </Link>
-                <Link to="/contests" className="text-white hover:text-amber-100">
-                  Concours
-                </Link>
-                <Link to="/prizes" className="text-white hover:text-amber-100 flex items-center">
-                  <Gift className="h-4 w-4 mr-1" />
-                  Prix à Gagner
-                </Link>
-                <Link to="/points" className="text-white hover:text-amber-100">
-                  Points
-                </Link>
-              </div>
-            )}
+            <div className="hidden md:flex space-x-4">
+              <Link to="/instructions" className="text-white hover:text-amber-100">
+                <span className="flex items-center">
+                  <BookOpen className="h-4 w-4 mr-1" />
+                  Instructions
+                </span>
+              </Link>
+              <Link to="/contests" className="text-white hover:text-amber-100">
+                Concours
+              </Link>
+              <Link to="/prizes" className="text-white hover:text-amber-100 flex items-center">
+                <Gift className="h-4 w-4 mr-1" />
+                Prix à Gagner
+              </Link>
+              <Link to="/points" className="text-white hover:text-amber-100">
+                Points
+              </Link>
+            </div>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -70,23 +68,22 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                   )}
                   <Button 
                     variant="ghost" 
-                    className="text-white hover:text-amber-100 flex items-center" 
+                    className="text-white hover:text-amber-100" 
                     onClick={handleLogout}
                   >
-                    <LogOut className="h-5 w-5 mr-2" />
-                    Déconnexion
+                    <LogOut className="h-5 w-5" />
                   </Button>
                 </div>
               </>
             ) : (
               <div className="space-x-2">
                 <Link to="/login">
-                  <Button variant="secondary" className="text-rose-600 hover:text-rose-700 bg-white hover:bg-gray-100">
+                  <Button variant="ghost" className="text-white hover:text-amber-100">
                     Connexion
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button variant="outline" className="text-white border-white hover:bg-white/10">
+                  <Button variant="ghost" className="text-white hover:text-amber-100">
                     Inscription
                   </Button>
                 </Link>

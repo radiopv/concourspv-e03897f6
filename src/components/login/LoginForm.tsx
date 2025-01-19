@@ -51,7 +51,7 @@ export const LoginForm = () => {
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
-      console.log("Tentative de connexion avec:", values.email);
+      console.log("Tentative de connexion avec:", values.email); // Debug log
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
@@ -59,7 +59,7 @@ export const LoginForm = () => {
       });
 
       if (error) {
-        console.error("Erreur de connexion:", error);
+        console.error("Erreur de connexion:", error); // Debug log
         let errorMessage = "Email ou mot de passe incorrect.";
         
         if (error.message.includes("Email not confirmed")) {
@@ -74,22 +74,9 @@ export const LoginForm = () => {
         return;
       }
 
-      console.log("Réponse de connexion:", data);
+      console.log("Réponse de connexion:", data); // Debug log
 
       if (data?.user) {
-        // Vérifier le rôle admin immédiatement après la connexion
-        const { data: memberData, error: memberError } = await supabase
-          .from('members')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
-
-        if (memberError) {
-          console.error("Erreur lors de la vérification du rôle:", memberError);
-        } else {
-          console.log("Rôle de l'utilisateur:", memberData?.role);
-        }
-
         toast({
           title: "Connexion réussie",
           description: "Bienvenue sur votre espace membre !",

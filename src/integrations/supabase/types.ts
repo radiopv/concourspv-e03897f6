@@ -9,61 +9,38 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admin_users: {
+      contest_prizes: {
         Row: {
+          contest_id: string | null
           created_at: string
           id: string
+          product_id: string | null
         }
         Insert: {
+          contest_id?: string | null
           created_at?: string
-          id: string
+          id?: string
+          product_id?: string | null
         }
         Update: {
+          contest_id?: string | null
           created_at?: string
           id?: string
-        }
-        Relationships: []
-      }
-      booking_stats: {
-        Row: {
-          cancelled_rides: number | null
-          completed_rides: number | null
-          created_at: string
-          id: string
-          month: string
-          taxi_id: string | null
-          total_bookings: number | null
-          total_revenue: number | null
-          updated_at: string
-        }
-        Insert: {
-          cancelled_rides?: number | null
-          completed_rides?: number | null
-          created_at?: string
-          id?: string
-          month: string
-          taxi_id?: string | null
-          total_bookings?: number | null
-          total_revenue?: number | null
-          updated_at?: string
-        }
-        Update: {
-          cancelled_rides?: number | null
-          completed_rides?: number | null
-          created_at?: string
-          id?: string
-          month?: string
-          taxi_id?: string | null
-          total_bookings?: number | null
-          total_revenue?: number | null
-          updated_at?: string
+          product_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "booking_stats_taxi_id_fkey"
-            columns: ["taxi_id"]
+            foreignKeyName: "contest_prizes_contest_id_fkey"
+            columns: ["contest_id"]
             isOneToOne: false
-            referencedRelation: "taxis"
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contest_prizes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -140,42 +117,6 @@ export type Database = {
           draw_date?: string
           id?: string
           participant_id?: string
-        }
-        Relationships: []
-      }
-      drivers: {
-        Row: {
-          created_at: string
-          email: string | null
-          full_name: string
-          id: string
-          phone: string | null
-          preferred_channel: string | null
-          qr_code_url: string | null
-          temp_password: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email?: string | null
-          full_name: string
-          id?: string
-          phone?: string | null
-          preferred_channel?: string | null
-          qr_code_url?: string | null
-          temp_password?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string | null
-          full_name?: string
-          id?: string
-          phone?: string | null
-          preferred_channel?: string | null
-          qr_code_url?: string | null
-          temp_password?: string | null
-          updated_at?: string
         }
         Relationships: []
       }
@@ -275,35 +216,89 @@ export type Database = {
         }
         Relationships: []
       }
-      participant_answers: {
+      old_participants: {
         Row: {
-          answer: string | null
-          attempt_number: number
+          attempts: number | null
+          completed_at: string | null
+          contest_id: string | null
           created_at: string | null
-          id: number
-          is_correct: boolean | null
-          participant_id: string
-          question_id: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          participation_id: string | null
+          score: number | null
+          status: string | null
         }
         Insert: {
-          answer?: string | null
-          attempt_number: number
+          attempts?: number | null
+          completed_at?: string | null
+          contest_id?: string | null
           created_at?: string | null
-          id?: number
-          is_correct?: boolean | null
-          participant_id: string
-          question_id: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          participation_id?: string | null
+          score?: number | null
+          status?: string | null
         }
         Update: {
-          answer?: string | null
-          attempt_number?: number
+          attempts?: number | null
+          completed_at?: string | null
+          contest_id?: string | null
           created_at?: string | null
-          id?: number
-          is_correct?: boolean | null
-          participant_id?: string
-          question_id?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          participation_id?: string | null
+          score?: number | null
+          status?: string | null
         }
         Relationships: []
+      }
+      participant_answers: {
+        Row: {
+          answer: string
+          created_at: string | null
+          id: string
+          is_correct: boolean | null
+          participant_id: string | null
+          question_id: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          participant_id?: string | null
+          question_id?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          participant_id?: string | null
+          question_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participant_answers_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["participation_id"]
+          },
+          {
+            foreignKeyName: "participant_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       participant_prizes: {
         Row: {
@@ -341,6 +336,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["participation_id"]
+          },
+          {
+            foreignKeyName: "participant_prizes_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "prizes"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -497,11 +499,9 @@ export type Database = {
           is_active: boolean | null
           is_archived: boolean | null
           is_hidden: boolean | null
-          is_visible: boolean | null
           main_image_url: string | null
           name: string
           shop_url: string | null
-          status: string | null
           stock: number | null
           value: number | null
         }
@@ -515,11 +515,9 @@ export type Database = {
           is_active?: boolean | null
           is_archived?: boolean | null
           is_hidden?: boolean | null
-          is_visible?: boolean | null
           main_image_url?: string | null
           name: string
           shop_url?: string | null
-          status?: string | null
           stock?: number | null
           value?: number | null
         }
@@ -533,11 +531,9 @@ export type Database = {
           is_active?: boolean | null
           is_archived?: boolean | null
           is_hidden?: boolean | null
-          is_visible?: boolean | null
           main_image_url?: string | null
           name?: string
           shop_url?: string | null
-          status?: string | null
           stock?: number | null
           value?: number | null
         }
@@ -545,92 +541,69 @@ export type Database = {
       }
       prizes: {
         Row: {
-          catalog_item_id: number | null
-          contest_id: string | null
+          catalog_item_id: string
+          contest_id: string
           created_at: string
           id: string
-          is_choice: boolean | null
-          prize_catalog_id: string
         }
         Insert: {
-          catalog_item_id?: number | null
-          contest_id?: string | null
+          catalog_item_id: string
+          contest_id: string
           created_at?: string
           id?: string
-          is_choice?: boolean | null
-          prize_catalog_id: string
         }
         Update: {
-          catalog_item_id?: number | null
-          contest_id?: string | null
+          catalog_item_id?: string
+          contest_id?: string
           created_at?: string
           id?: string
-          is_choice?: boolean | null
-          prize_catalog_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "fk_prize_catalog"
-            columns: ["prize_catalog_id"]
-            isOneToOne: false
-            referencedRelation: "prize_catalog"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "prizes_contest_id_fkey"
+            foreignKeyName: "fk_contest"
             columns: ["contest_id"]
             isOneToOne: false
             referencedRelation: "contests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_prize_catalog"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "prize_catalog"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      promotions: {
+      products: {
         Row: {
           created_at: string
           description: string | null
-          discount_percentage: number | null
-          end_date: string
           id: string
-          is_active: boolean | null
-          start_date: string
-          taxi_id: string | null
-          title: string
-          updated_at: string
+          image_url: string | null
+          name: string
+          price: number | null
+          printful_id: string
         }
         Insert: {
           created_at?: string
           description?: string | null
-          discount_percentage?: number | null
-          end_date: string
           id?: string
-          is_active?: boolean | null
-          start_date: string
-          taxi_id?: string | null
-          title: string
-          updated_at?: string
+          image_url?: string | null
+          name: string
+          price?: number | null
+          printful_id: string
         }
         Update: {
           created_at?: string
           description?: string | null
-          discount_percentage?: number | null
-          end_date?: string
           id?: string
-          is_active?: boolean | null
-          start_date?: string
-          taxi_id?: string | null
-          title?: string
-          updated_at?: string
+          image_url?: string | null
+          name?: string
+          price?: number | null
+          printful_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "promotions_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: false
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       question_bank: {
         Row: {
@@ -661,6 +634,41 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      questionnaires: {
+        Row: {
+          contest_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          contest_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          contest_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questionnaires_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       questions: {
         Row: {
@@ -710,42 +718,60 @@ export type Database = {
             referencedRelation: "contests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "questions_questionnaire_id_fkey"
+            columns: ["questionnaire_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaires"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      reviews: {
+      responses: {
         Row: {
-          content: string
-          created_at: string
+          answer_text: string
+          contest_id: string
+          created_at: string | null
           id: string
-          status: string
-          taxi_id: string | null
-          updated_at: string
-          user_id: string | null
+          participant_id: string
+          question_id: string
         }
         Insert: {
-          content: string
-          created_at?: string
+          answer_text: string
+          contest_id: string
+          created_at?: string | null
           id?: string
-          status?: string
-          taxi_id?: string | null
-          updated_at?: string
-          user_id?: string | null
+          participant_id: string
+          question_id: string
         }
         Update: {
-          content?: string
-          created_at?: string
+          answer_text?: string
+          contest_id?: string
+          created_at?: string | null
           id?: string
-          status?: string
-          taxi_id?: string | null
-          updated_at?: string
-          user_id?: string | null
+          participant_id?: string
+          question_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "reviews_taxi_id_fkey"
-            columns: ["taxi_id"]
+            foreignKeyName: "responses_contest_id_fkey"
+            columns: ["contest_id"]
             isOneToOne: false
-            referencedRelation: "taxis"
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "responses_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
             referencedColumns: ["id"]
           },
         ]
@@ -773,217 +799,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      taxi_contacts: {
-        Row: {
-          created_at: string
-          facebook: string | null
-          id: string
-          messenger: string | null
-          phone: string
-          taxi_id: string
-          updated_at: string
-          whatsapp: string | null
-        }
-        Insert: {
-          created_at?: string
-          facebook?: string | null
-          id?: string
-          messenger?: string | null
-          phone: string
-          taxi_id: string
-          updated_at?: string
-          whatsapp?: string | null
-        }
-        Update: {
-          created_at?: string
-          facebook?: string | null
-          id?: string
-          messenger?: string | null
-          phone?: string
-          taxi_id?: string
-          updated_at?: string
-          whatsapp?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "taxi_contacts_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: true
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      taxi_currencies: {
-        Row: {
-          currency: string
-          taxi_id: string
-        }
-        Insert: {
-          currency: string
-          taxi_id: string
-        }
-        Update: {
-          currency?: string
-          taxi_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "taxi_currencies_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: false
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      taxi_ratings: {
-        Row: {
-          comment: string | null
-          courtesy_rating: number | null
-          created_at: string
-          id: string
-          price_rating: number | null
-          punctuality_rating: number | null
-          service_rating: number | null
-          taxi_id: string | null
-          user_id: string | null
-          vehicle_condition_rating: number | null
-        }
-        Insert: {
-          comment?: string | null
-          courtesy_rating?: number | null
-          created_at?: string
-          id?: string
-          price_rating?: number | null
-          punctuality_rating?: number | null
-          service_rating?: number | null
-          taxi_id?: string | null
-          user_id?: string | null
-          vehicle_condition_rating?: number | null
-        }
-        Update: {
-          comment?: string | null
-          courtesy_rating?: number | null
-          created_at?: string
-          id?: string
-          price_rating?: number | null
-          punctuality_rating?: number | null
-          service_rating?: number | null
-          taxi_id?: string | null
-          user_id?: string | null
-          vehicle_condition_rating?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "taxi_ratings_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: false
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      taxi_working_hours: {
-        Row: {
-          created_at: string
-          day_of_week: number
-          end_time: string
-          id: string
-          is_closed: boolean | null
-          start_time: string
-          taxi_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          day_of_week: number
-          end_time: string
-          id?: string
-          is_closed?: boolean | null
-          start_time: string
-          taxi_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          day_of_week?: number
-          end_time?: string
-          id?: string
-          is_closed?: boolean | null
-          start_time?: string
-          taxi_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "taxi_working_hours_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: false
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      taxis: {
-        Row: {
-          available: boolean | null
-          category: string
-          created_at: string
-          description: string | null
-          driver_id: string | null
-          driver_name: string
-          id: string
-          images: string[] | null
-          is_certified: boolean | null
-          license_plate: string | null
-          location: string | null
-          photo_url: string
-          updated_at: string
-          website: string | null
-        }
-        Insert: {
-          available?: boolean | null
-          category: string
-          created_at?: string
-          description?: string | null
-          driver_id?: string | null
-          driver_name: string
-          id?: string
-          images?: string[] | null
-          is_certified?: boolean | null
-          license_plate?: string | null
-          location?: string | null
-          photo_url: string
-          updated_at?: string
-          website?: string | null
-        }
-        Update: {
-          available?: boolean | null
-          category?: string
-          created_at?: string
-          description?: string | null
-          driver_id?: string | null
-          driver_name?: string
-          id?: string
-          images?: string[] | null
-          is_certified?: boolean | null
-          license_plate?: string | null
-          location?: string | null
-          photo_url?: string
-          updated_at?: string
-          website?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "taxis_driver_id_fkey"
-            columns: ["driver_id"]
-            isOneToOne: false
-            referencedRelation: "drivers"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_points: {
         Row: {
@@ -1016,15 +831,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_user_points_member"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {

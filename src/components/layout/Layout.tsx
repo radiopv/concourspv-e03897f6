@@ -1,11 +1,11 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import UserNavBar from './navigation/UserNavBar';
-import MobileNavBar from './navigation/MobileNavBar';
-import { Toaster } from './ui/toaster';
+import { useAuth } from '@/contexts/AuthContext';
+import UserNavBar from '../navigation/UserNavBar';
+import MobileNavBar from '../navigation/MobileNavBar';
+import { Toaster } from '../ui/toaster';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Grid, Users, Settings, Database, Edit, Gift, BookOpen, Trophy } from 'lucide-react';
-import { Button } from './ui/button';
+import { Grid, Users, Settings, Database, Edit, Gift, BookOpen } from 'lucide-react';
+import { Button } from '../ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -29,8 +29,6 @@ const Layout = ({ children }: LayoutProps) => {
         return;
       }
 
-      console.log('Checking admin rights for:', user.email);
-
       const { data: memberData, error } = await supabase
         .from('members')
         .select('role')
@@ -48,7 +46,6 @@ const Layout = ({ children }: LayoutProps) => {
         return;
       }
 
-      console.log('Member data:', memberData);
       const isUserAdmin = memberData?.role === 'admin';
       setIsAdmin(isUserAdmin);
 
@@ -72,17 +69,17 @@ const Layout = ({ children }: LayoutProps) => {
     { icon: Edit, label: 'Concours', path: '/admin/contests' },
     { icon: BookOpen, label: 'Questions', path: '/admin/questions' },
     { icon: Gift, label: 'Prix', path: '/admin/prizes' },
-    { icon: Trophy, label: 'Gagnants', path: '/admin/winners' },
     { icon: Users, label: 'Utilisateurs', path: '/admin/users' },
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
+      {user && <MobileNavBar isAdmin={isAdmin} />}
       <UserNavBar isAdmin={isAdmin} />
       
       {isAdmin && isAdminRoute && (
-        <div className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-md sticky top-0 z-50 border-b border-amber-100/20">
+        <div className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-md sticky top-14 z-40 border-b border-amber-100/20">
           <div className="container mx-auto px-4">
             <div className="flex items-center space-x-4 overflow-x-auto py-4">
               {adminLinks.map((link) => (
@@ -101,10 +98,9 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       )}
 
-      <main className={`container mx-auto ${isMobile ? 'px-2 pb-20' : 'px-4'} py-8`}>
+      <main className={`container mx-auto ${isMobile ? 'px-2 pb-4 mt-14' : 'px-4'} py-8`}>
         {children}
       </main>
-      {user && <MobileNavBar isAdmin={isAdmin} />}
       <Toaster />
     </div>
   );
