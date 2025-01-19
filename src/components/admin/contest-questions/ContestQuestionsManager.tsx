@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Check, ArrowLeft } from "lucide-react";
+import { Plus, Check, ArrowLeft, ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ContestQuestionsManager = () => {
@@ -149,6 +149,16 @@ const ContestQuestionsManager = () => {
                             </p>
                           ))}
                         </div>
+                        {question.article_url && (
+                          <a
+                            href={question.article_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                          >
+                            Voir l'article <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
                       </div>
                       <Button
                         variant={isQuestionInContest(question.id) ? "secondary" : "default"}
@@ -190,6 +200,16 @@ const ContestQuestionsManager = () => {
                             </p>
                           ))}
                         </div>
+                        {question.article_url && (
+                          <a
+                            href={question.article_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                          >
+                            Voir l'article <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
                       </div>
                       <Button
                         variant="destructive"
