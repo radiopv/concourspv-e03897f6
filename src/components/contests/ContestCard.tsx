@@ -11,6 +11,7 @@ import UserProgress from "./contest-card/UserProgress";
 import ContestPrizes from "./contest-card/ContestPrizes";
 import ParticipationStats from "./contest-card/ParticipationStats";
 import { calculateWinningChance } from "../../utils/contestCalculations";
+import { Prize } from "@/types/prize";
 
 interface ContestCardProps {
   contest: {
@@ -20,6 +21,7 @@ interface ContestCardProps {
     is_new: boolean;
     has_big_prizes: boolean;
     participants?: { count: number };
+    prizes?: Prize[];
   };
   onSelect: (id: string) => void;
   index: number;
