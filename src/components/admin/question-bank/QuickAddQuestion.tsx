@@ -18,41 +18,42 @@ const QuickAddQuestion = () => {
     setIsLoading(true);
 
     try {
-      const parsedQuestion = parseQuestionText(questionText);
+      const parsedQuestions = parseQuestionText(questionText);
       
-      if (!parsedQuestion) {
+      if (parsedQuestions.length === 0) {
         toast({
           title: "Erreur de format",
-          description: "Le format de la question n'est pas valide. Veuillez vérifier la structure.",
+          description: "Le format des questions n'est pas valide. Veuillez vérifier la structure.",
           variant: "destructive",
         });
         return;
       }
 
+      // Insérer toutes les questions
       const { error } = await supabase
         .from('question_bank')
-        .insert([{
-          question_text: parsedQuestion.question_text,
-          options: parsedQuestion.options,
-          correct_answer: parsedQuestion.correct_answer,
-          article_url: parsedQuestion.article_url,
+        .insert(parsedQuestions.map(q => ({
+          question_text: q.question_text,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          article_url: q.article_url,
           status: 'available'
-        }]);
+        })));
 
       if (error) throw error;
 
       toast({
         title: "Succès",
-        description: "La question a été ajoutée à la banque de questions",
+        description: `${parsedQuestions.length} question(s) ajoutée(s) à la banque de questions`,
       });
 
       setQuestionText('');
       queryClient.invalidateQueries({ queryKey: ['question-bank'] });
     } catch (error) {
-      console.error('Error adding question:', error);
+      console.error('Error adding questions:', error);
       toast({
         title: "Erreur",
-        description: "Impossible d'ajouter la question",
+        description: "Impossible d'ajouter les questions",
         variant: "destructive",
       });
     } finally {
@@ -63,7 +64,7 @@ const QuickAddQuestion = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ajout rapide de question</CardTitle>
+        <CardTitle>Ajout rapide de questions</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,7 +72,10 @@ const QuickAddQuestion = () => {
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
             placeholder={`Format attendu:
-Question: Votre question ici
+
+Question : Votre question ici ?
+
+Source : https://...
 
 Réponses proposées:
 Option 1
@@ -79,13 +83,11 @@ Option 2
 Option 3
 Option 4
 
-Réponse correcte: La réponse correcte
-
-URL de l'article: https://...`}
+Réponse correcte: La réponse correcte`}
             className="min-h-[300px]"
           />
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Ajout en cours...' : 'Ajouter la question'}
+            {isLoading ? 'Ajout en cours...' : 'Ajouter les questions'}
           </Button>
         </form>
       </CardContent>
