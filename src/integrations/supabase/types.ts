@@ -361,7 +361,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
-          participation_id: string | null
+          participation_id: string
           score: number | null
           status: string | null
           updated_at: string | null
@@ -375,7 +375,7 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
-          participation_id?: string | null
+          participation_id?: string
           score?: number | null
           status?: string | null
           updated_at?: string | null
@@ -389,7 +389,7 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
-          participation_id?: string | null
+          participation_id?: string
           score?: number | null
           status?: string | null
           updated_at?: string | null
@@ -451,7 +451,7 @@ export type Database = {
             columns: ["participant_id"]
             isOneToOne: false
             referencedRelation: "participants"
-            referencedColumns: ["id"]
+            referencedColumns: ["participation_id"]
           },
         ]
       }

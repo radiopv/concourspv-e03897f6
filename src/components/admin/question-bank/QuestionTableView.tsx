@@ -4,8 +4,9 @@ import { supabase } from '@/lib/supabase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Pencil, Save, Trash2, X, ExternalLink } from 'lucide-react';
+import { Pencil, Save, Trash2, X, ExternalLink, Plus } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,12 @@ interface Question {
   article_url?: string;
 }
 
+interface Contest {
+  id: string;
+  title: string;
+  questions: { count: number };
+}
+
 const QuestionTableView = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -42,6 +49,60 @@ const QuestionTableView = () => {
       
       if (error) throw error;
       return data;
+    }
+  });
+
+  const { data: contests } = useQuery({
+    queryKey: ['contests-with-questions-count'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contests')
+        .select('id, title, questions(count)')
+        .eq('status', 'active');
+      
+      if (error) throw error;
+      return data as Contest[];
+    }
+  });
+
+  const addToContestMutation = useMutation({
+    mutationFn: async ({ questionId, contestId }: { questionId: string, contestId: string }) => {
+      // Récupérer d'abord la question depuis la banque de questions
+      const { data: questionData, error: fetchError } = await supabase
+        .from('question_bank')
+        .select('*')
+        .eq('id', questionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Créer la question dans le concours
+      const { error: insertError } = await supabase
+        .from('questions')
+        .insert([{
+          contest_id: contestId,
+          question_text: questionData.question_text,
+          options: questionData.options,
+          correct_answer: questionData.correct_answer,
+          article_url: questionData.article_url,
+          type: 'multiple_choice'
+        }]);
+
+      if (insertError) throw insertError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contests-with-questions-count'] });
+      toast({
+        title: "Question ajoutée",
+        description: "La question a été ajoutée au concours avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter la question au concours",
+        variant: "destructive",
+      });
     }
   });
 
@@ -133,7 +194,7 @@ const QuestionTableView = () => {
             <TableHead className="w-[200px]">Réponse correcte</TableHead>
             <TableHead className="w-[300px]">Options</TableHead>
             <TableHead className="w-[200px]">URL Article</TableHead>
-            <TableHead className="w-[150px]">Actions</TableHead>
+            <TableHead className="w-[250px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -239,6 +300,25 @@ const QuestionTableView = () => {
                     </>
                   ) : (
                     <>
+                      <Select
+                        onValueChange={(contestId) => {
+                          addToContestMutation.mutate({ 
+                            questionId: question.id, 
+                            contestId 
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Ajouter au concours" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {contests?.map((contest) => (
+                            <SelectItem key={contest.id} value={contest.id}>
+                              {contest.title} ({contest.questions?.count || 0} questions)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Button
                         variant="ghost"
                         size="icon"
