@@ -5,6 +5,7 @@ import EditContestForm from './EditContestForm';
 import ContestList from './ContestList';
 import AdminDashboard from './AdminDashboard';
 import QuestionForm from './QuestionForm';
+import AdminContestManager from './AdminContestManager';
 
 const AdminRoutes = () => {
   return (
@@ -13,18 +14,11 @@ const AdminRoutes = () => {
       <Route path="/prizes" element={<PrizeCatalogManager />} />
       <Route 
         path="/contests" 
-        element={
-          <ContestList 
-            contests={[]} 
-            onSelectContest={() => {}}
-          />
-        } 
+        element={<AdminContestManager />}
       />
       <Route 
         path="/contests/:contestId" 
-        element={
-          <EditContestFormWrapper />
-        }
+        element={<EditContestFormWrapper />}
       />
       <Route 
         path="/questions/new" 
