@@ -17,19 +17,31 @@ serve(async (req) => {
     const { urls } = await req.json()
     console.log('Received URLs:', urls)
 
-    if (!Array.isArray(urls) || urls.length === 0) {
-      throw new Error('No URLs provided')
-    }
-
     const ollamaUrl = Deno.env.get('OLLAMA_URL')
     if (!ollamaUrl) {
       throw new Error('OLLAMA_URL not configured')
     }
 
     console.log('Using Ollama URL:', ollamaUrl)
+    console.log('Testing Ollama connection...')
+    
+    // Test the connection to Ollama
+    try {
+      const testResponse = await fetch(`${ollamaUrl}/api/tags`)
+      if (!testResponse.ok) {
+        console.error('Failed to connect to Ollama:', testResponse.status, testResponse.statusText)
+        throw new Error(`Cannot connect to Ollama: ${testResponse.statusText}`)
+      }
+      console.log('Successfully connected to Ollama')
+    } catch (error) {
+      console.error('Error connecting to Ollama:', error)
+      throw new Error(`Failed to connect to Ollama: ${error.message}`)
+    }
+
     const questions = []
 
     for (const url of urls) {
+      console.log(`Processing URL: ${url}`)
       const prompt = `Create 4 multiple choice questions based on the content from this URL: ${url}. 
       Format each question as a JSON object with these fields:
       - question_text: the question
@@ -53,14 +65,17 @@ serve(async (req) => {
 
       if (!response.ok) {
         console.error('Ollama response not OK:', response.status, response.statusText)
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
         throw new Error(`Failed to generate questions: ${response.statusText}`)
       }
 
       const data = await response.json()
-      console.log('Ollama response:', data)
+      console.log('Received response from Ollama:', data)
       
       try {
         const generatedQuestions = JSON.parse(data.response)
+        console.log('Parsed questions:', generatedQuestions)
         questions.push(...generatedQuestions)
       } catch (error) {
         console.error('Error parsing questions:', error)
@@ -75,6 +90,8 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    console.log('Saving questions to database:', questions)
+
     const { error } = await supabase
       .from('question_bank')
       .insert(questions.map(q => ({
@@ -86,8 +103,11 @@ serve(async (req) => {
       })))
 
     if (error) {
+      console.error('Error saving to database:', error)
       throw error
     }
+
+    console.log('Successfully saved questions to database')
 
     return new Response(
       JSON.stringify({ 
