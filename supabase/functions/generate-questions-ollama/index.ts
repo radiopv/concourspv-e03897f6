@@ -10,7 +10,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -28,17 +27,10 @@ serve(async (req) => {
     }
 
     console.log('Using Ollama URL:', ollamaUrl);
-    console.log('Testing Ollama connection...');
     
-    // Test the connection to Ollama
     try {
       console.log('Attempting to connect to Ollama at:', ollamaUrl);
-      const testResponse = await fetch(`${ollamaUrl}/api/tags`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const testResponse = await fetch(`${ollamaUrl}/api/tags`);
       
       if (!testResponse.ok) {
         console.error('Failed to connect to Ollama:', testResponse.status, testResponse.statusText);
@@ -49,7 +41,6 @@ serve(async (req) => {
       
       const models = await testResponse.json();
       console.log('Available Ollama models:', models);
-      console.log('Successfully connected to Ollama');
     } catch (error) {
       console.error('Error connecting to Ollama:', error);
       throw new Error(`Failed to connect to Ollama: ${error.message}`);
@@ -59,15 +50,15 @@ serve(async (req) => {
 
     for (const url of urls) {
       console.log(`Processing URL: ${url}`);
-      const prompt = `Create 4 multiple choice questions based on the content from this URL: ${url}. 
-      Format your response as a valid JSON array of objects. Each object should have these exact fields:
+      const prompt = `Crée 4 questions à choix multiples en français basées sur le contenu de cette URL: ${url}. 
+      Formate ta réponse comme un tableau JSON d'objets. Chaque objet doit avoir exactement ces champs:
       {
-        "question_text": "the question text",
-        "options": ["option1", "option2", "option3", "option4"],
-        "correct_answer": "the correct option (must be one of the options)",
+        "question_text": "le texte de la question en français",
+        "options": ["option1 en français", "option2 en français", "option3 en français", "option4 en français"],
+        "correct_answer": "la bonne réponse (doit être une des options)",
         "article_url": "${url}"
       }
-      Make sure to return ONLY the JSON array, no other text.`;
+      Retourne UNIQUEMENT le tableau JSON, sans autre texte.`;
 
       console.log('Sending request to Ollama...');
       try {
@@ -94,7 +85,6 @@ serve(async (req) => {
         console.log('Received response from Ollama:', data);
         
         try {
-          // Clean up the response to ensure it's valid JSON
           const cleanedResponse = data.response.replace(/```json\n?|\n?```/g, '').trim();
           console.log('Cleaned response:', cleanedResponse);
           
@@ -105,7 +95,6 @@ serve(async (req) => {
             throw new Error('Response is not an array');
           }
           
-          // Validate each question object
           generatedQuestions.forEach((q, index) => {
             if (!q.question_text || !Array.isArray(q.options) || !q.correct_answer || !q.article_url) {
               throw new Error(`Invalid question object at index ${index}`);
@@ -127,7 +116,6 @@ serve(async (req) => {
       }
     }
 
-    // Save questions to the question bank
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -155,7 +143,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Generated and saved ${questions.length} questions`,
+        message: `${questions.length} questions ont été générées et sauvegardées`,
         questions 
       }),
       { 

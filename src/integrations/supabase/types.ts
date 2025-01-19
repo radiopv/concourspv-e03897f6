@@ -342,6 +342,13 @@ export type Database = {
             referencedRelation: "participants"
             referencedColumns: ["participation_id"]
           },
+          {
+            foreignKeyName: "participant_prizes_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "prizes"
+            referencedColumns: ["id"]
+          },
         ]
       }
       participants: {
