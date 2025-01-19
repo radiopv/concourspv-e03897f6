@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import QuestionBankSelector from '../question-bank/QuestionBankSelector';
-import QuestionsManager from '../QuestionsManager';
+import QuestionsList from '../questions/QuestionsList';
 import CreateUrlQuestion from '../question-bank/CreateUrlQuestion';
 
 const ContestQuestionManager = () => {
@@ -52,7 +52,7 @@ const ContestQuestionManager = () => {
             </TabsList>
             
             <TabsContent value="existing">
-              <QuestionsManager contestId={contestId} />
+              <QuestionsList contestId={contestId} />
             </TabsContent>
             
             <TabsContent value="bank">
