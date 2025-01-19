@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import QuestionBankList from "./QuestionBankList";
 import AddQuestionForm from "./AddQuestionForm";
+import QuestionBankImport from "./QuestionBankImport";
 import { supabase } from "@/lib/supabase";
 
 const QuestionBankManager = () => {
@@ -14,7 +15,7 @@ const QuestionBankManager = () => {
         .select('*')
         .eq('status', 'available')
         .order('created_at', { ascending: false });
-
+      
       if (error) throw error;
       return data;
     }
@@ -26,14 +27,8 @@ const QuestionBankManager = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Ajouter une question manuellement</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AddQuestionForm />
-        </CardContent>
-      </Card>
+      <QuestionBankImport />
+      <AddQuestionForm />
       <QuestionBankList />
     </div>
   );
