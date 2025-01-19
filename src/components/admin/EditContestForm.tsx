@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EditQuestionsList from './EditQuestionsList';
 import ContestBasicForm from './ContestBasicForm';
+import ContestPrizeManager from './ContestPrizeManager';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
 
@@ -137,10 +138,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
         })
         .eq('id', contestId);
 
-      if (error) {
-        console.error('Error updating contest:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ['contests'] });
       await queryClient.invalidateQueries({ queryKey: ['contest', contestId] });
@@ -194,6 +192,15 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Prix du concours</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ContestPrizeManager contestId={contestId} />
         </CardContent>
       </Card>
 
