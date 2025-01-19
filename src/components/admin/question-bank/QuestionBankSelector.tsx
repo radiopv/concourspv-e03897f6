@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Plus, Check } from "lucide-react";
+import { Plus, Check, ExternalLink } from "lucide-react";
 
 interface QuestionBankSelectorProps {
   contestId: string;
@@ -18,25 +18,34 @@ const QuestionBankSelector = ({ contestId, onQuestionSelect, selectedQuestions }
   const { data: questions, isLoading } = useQuery({
     queryKey: ['question-bank'],
     queryFn: async () => {
+      // Remove the status filter to get all questions
       const { data, error } = await supabase
         .from('question_bank')
         .select('*')
-        .eq('status', 'available')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
       return data;
     }
   });
 
   const handleQuestionSelect = async (questionId: string) => {
     try {
+      const questionToAdd = questions?.find(q => q.id === questionId);
+      if (!questionToAdd) return;
+
       const { error } = await supabase
         .from('questions')
         .insert([{
           contest_id: contestId,
-          question_bank_id: questionId,
-          status: 'active'
+          question_text: questionToAdd.question_text,
+          options: questionToAdd.options,
+          correct_answer: questionToAdd.correct_answer,
+          article_url: questionToAdd.article_url,
+          type: 'multiple_choice'
         }]);
 
       if (error) throw error;
@@ -74,7 +83,7 @@ const QuestionBankSelector = ({ contestId, onQuestionSelect, selectedQuestions }
           <CardContent className="p-4">
             <h3 className="font-semibold mb-2">{question.question_text}</h3>
             <div className="space-y-1">
-              {question.options.map((option: string, index: number) => (
+              {Array.isArray(question.options) && question.options.map((option: string, index: number) => (
                 <p 
                   key={index}
                   className={option === question.correct_answer ? "text-green-600" : ""}
@@ -88,9 +97,9 @@ const QuestionBankSelector = ({ contestId, onQuestionSelect, selectedQuestions }
                 href={question.article_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500 hover:underline mt-2 block"
+                className="text-blue-500 hover:underline mt-2 flex items-center gap-1"
               >
-                Lien vers l'article
+                Voir l'article <ExternalLink className="h-4 w-4" />
               </a>
             )}
             <Button
