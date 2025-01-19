@@ -5,11 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
+import { useQueryClient } from '@tanstack/react-query';
 
 const QuestionBankImport = () => {
   const [urls, setUrls] = useState<string[]>(['']);
   const [isLoading, setIsLoading] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleUrlChange = (index: number, value: string) => {
     const newUrls = [...urls];
@@ -47,12 +50,17 @@ const QuestionBankImport = () => {
 
       if (error) throw error;
 
+      setGeneratedQuestions(data.questions || []);
+      
       toast({
         title: "Succès",
         description: data.message,
       });
 
-      // Reset form
+      // Refresh the questions list
+      queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+
+      // Reset form only on success
       setUrls(['']);
     } catch (error) {
       console.error('Error generating questions:', error);
@@ -67,58 +75,97 @@ const QuestionBankImport = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Importer des questions depuis des URLs</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {urls.map((url, index) => (
-            <div key={index} className="flex gap-2">
-              <Input
-                type="url"
-                value={url}
-                onChange={(e) => handleUrlChange(index, e.target.value)}
-                placeholder="https://..."
-                disabled={isLoading}
-              />
-              {urls.length > 1 && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => removeUrlField(index)}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Importer des questions depuis des URLs</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {urls.map((url, index) => (
+              <div key={index} className="flex gap-2">
+                <Input
+                  type="url"
+                  value={url}
+                  onChange={(e) => handleUrlChange(index, e.target.value)}
+                  placeholder="https://..."
                   disabled={isLoading}
-                >
-                  Supprimer
-                </Button>
-              )}
-            </div>
-          ))}
-          
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addUrlField}
-              disabled={isLoading}
-            >
-              Ajouter une URL
-            </Button>
+                />
+                {urls.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => removeUrlField(index)}
+                    disabled={isLoading}
+                  >
+                    Supprimer
+                  </Button>
+                )}
+              </div>
+            ))}
             
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Génération en cours...
-                </>
-              ) : (
-                'Générer les questions'
-              )}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addUrlField}
+                disabled={isLoading}
+              >
+                Ajouter une URL
+              </Button>
+              
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Génération en cours...
+                  </>
+                ) : (
+                  'Générer les questions'
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {generatedQuestions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Questions générées</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {generatedQuestions.map((question, index) => (
+                <div key={index} className="p-4 border rounded-lg">
+                  <h3 className="font-medium mb-2">{question.question_text}</h3>
+                  <div className="space-y-1">
+                    {question.options.map((option: string, optIndex: number) => (
+                      <p 
+                        key={optIndex}
+                        className={option === question.correct_answer ? "text-green-600 font-medium" : ""}
+                      >
+                        {option}
+                      </p>
+                    ))}
+                  </div>
+                  {question.article_url && (
+                    <a 
+                      href={question.article_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline mt-2 block"
+                    >
+                      Lien vers l'article
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
