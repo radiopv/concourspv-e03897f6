@@ -15,6 +15,11 @@ interface Prize {
   shop_url?: string;
 }
 
+interface ContestPrize {
+  id: string;
+  prize_catalog: Prize;
+}
+
 const ContestPrizeManager = ({ contestId }: { contestId: string }) => {
   const [showPrizeCatalog, setShowPrizeCatalog] = React.useState(false);
 
@@ -26,7 +31,6 @@ const ContestPrizeManager = ({ contestId }: { contestId: string }) => {
         .from('prizes')
         .select(`
           id,
-          prize_catalog_id,
           prize_catalog (
             id,
             name,
@@ -40,7 +44,7 @@ const ContestPrizeManager = ({ contestId }: { contestId: string }) => {
 
       if (error) throw error;
       console.log('Contest prizes data:', data);
-      return data;
+      return data as ContestPrize[];
     },
   });
 
