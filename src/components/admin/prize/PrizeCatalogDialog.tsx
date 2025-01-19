@@ -1,85 +1,111 @@
-import { Button } from "@/components/ui/button";
-import { Award } from "lucide-react";
+import React from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface PrizeCatalogDialogProps {
-  onSelectPrize: (catalogItemId: string) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  contestId: string;
 }
 
-export const PrizeCatalogDialog = ({ onSelectPrize }: PrizeCatalogDialogProps) => {
-  const { data: catalogPrizes, isLoading } = useQuery({
+const PrizeCatalogDialog = ({ open, onOpenChange, contestId }: PrizeCatalogDialogProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: catalogItems } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
-        .order('name');
-      
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
       if (error) throw error;
       return data;
-    }
+    },
   });
 
-  if (isLoading) return null;
+  const addPrizeMutation = useMutation({
+    mutationFn: async (prizeId: string) => {
+      const { error } = await supabase
+        .from('prizes')
+        .insert([
+          {
+            contest_id: contestId,
+            prize_catalog_id: prizeId,
+          },
+        ]);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contest-prizes', contestId] });
+      toast({
+        title: 'Prix ajouté',
+        description: 'Le prix a été ajouté au concours avec succès.',
+      });
+      onOpenChange(false);
+    },
+    onError: () => {
+      toast({
+        title: 'Erreur',
+        description: "Impossible d'ajouter le prix au concours.",
+        variant: 'destructive',
+      });
+    },
+  });
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button className="tropical-button w-full">
-          <Award className="w-4 h-4 mr-2" />
-          Ajouter un prix du catalogue
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Catalogue des prix</DialogTitle>
+          <DialogTitle>Sélectionner un prix</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[500px] pr-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {catalogPrizes?.map((prize) => (
-              <Card key={prize.id} className="tropical-card">
-                <CardContent className="pt-6">
-                  {prize.image_url && (
-                    <div className="aspect-square relative mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+          {catalogItems?.map((item) => (
+            <Card key={item.id} className="flex flex-col">
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <div className="aspect-w-16 aspect-h-9 relative">
+                    {item.image_url && (
                       <img
-                        src={prize.image_url}
-                        alt={prize.name}
-                        className="object-cover rounded-lg w-full h-full"
+                        src={item.image_url}
+                        alt={item.name}
+                        className="object-cover rounded-lg w-full h-32"
                       />
-                    </div>
-                  )}
-                  <h3 className="font-semibold mb-2">{prize.name}</h3>
-                  {prize.description && (
-                    <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">
-                      {prize.value ? `${prize.value}€` : 'Prix non défini'}
-                    </span>
-                    <Button
-                      onClick={() => onSelectPrize(prize.id)}
-                      size="sm"
-                      className="tropical-button"
-                    >
-                      Ajouter
-                    </Button>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </ScrollArea>
+                  <h3 className="font-semibold">{item.name}</h3>
+                  {item.description && (
+                    <p className="text-sm text-gray-600">{item.description}</p>
+                  )}
+                  {item.value && (
+                    <p className="text-sm font-medium">Valeur : {item.value} €</p>
+                  )}
+                  <Button
+                    className="w-full mt-2"
+                    onClick={() => addPrizeMutation.mutate(item.id)}
+                  >
+                    Sélectionner
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </DialogContent>
     </Dialog>
   );
 };
+
+export default PrizeCatalogDialog;
