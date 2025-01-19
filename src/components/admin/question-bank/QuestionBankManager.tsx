@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import QuestionBankList from "./QuestionBankList";
 import AddQuestionForm from "./AddQuestionForm";
 import QuestionGenerator from "./QuestionGenerator";
+import UrlQuestionGenerator from "./UrlQuestionGenerator";
 import { supabase } from "@/lib/supabase";
 
 const QuestionBankManager = () => {
@@ -29,15 +30,16 @@ const QuestionBankManager = () => {
     <div className="space-y-6 p-6">
       <div className="grid md:grid-cols-2 gap-6">
         <QuestionGenerator />
-        <Card>
-          <CardHeader>
-            <CardTitle>Ajouter une question manuellement</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AddQuestionForm />
-          </CardContent>
-        </Card>
+        <UrlQuestionGenerator />
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Ajouter une question manuellement</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AddQuestionForm />
+        </CardContent>
+      </Card>
       <QuestionBankList />
     </div>
   );
