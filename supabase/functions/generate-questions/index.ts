@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const GROK_API_KEY = Deno.env.get('GROK_API_KEY');
 
@@ -23,14 +23,14 @@ serve(async (req) => {
       throw new Error('GROK_API_KEY is not configured');
     }
 
-    const response = await fetch('https://api.groq.com/v1/chat/completions', {
+    const response = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${GROK_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "grok-2",
+        model: "grok-2-latest",
         messages: [
           {
             role: "system",
@@ -41,6 +41,7 @@ serve(async (req) => {
             content: `Generate ${count} multiple choice questions about ${topic}. Make sure each question has exactly 4 options and one correct answer. Format the response as JSON.`
           }
         ],
+        stream: false,
         temperature: 0.7,
         max_tokens: 1000,
       })
