@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, List, RefreshCw } from "lucide-react";
+import { Edit, Trash2, List, RefreshCw, BookOpen } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -203,6 +203,14 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
           )}
 
           <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/admin/contests/${contest.id}/questions`)}
+              className="hover:bg-blue-50"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              Gérer les questions
+            </Button>
             {onEdit && (
               <Button
                 variant="outline"
