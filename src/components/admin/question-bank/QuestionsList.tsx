@@ -31,9 +31,12 @@ const QuestionsList = () => {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting question:', error);
+        throw error;
+      }
 
-      // Invalidate and refetch
+      // Immediately invalidate and refetch
       await queryClient.invalidateQueries({ queryKey: ['questions-list'] });
 
       toast({
