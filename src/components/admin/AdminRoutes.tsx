@@ -1,4 +1,3 @@
-```tsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
@@ -29,4 +28,3 @@ const AdminRoutes = () => {
 };
 
 export default AdminRoutes;
-```
