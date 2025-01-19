@@ -3,15 +3,22 @@ import { Routes, Route, useParams } from 'react-router-dom';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import EditContestForm from './EditContestForm';
 import ContestList from './ContestList';
-import Dashboard from './Dashboard';
 import QuestionForm from './QuestionForm';
 
 const AdminRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
+      <Route path="/" element={<div>Admin Dashboard</div>} />
       <Route path="/prizes" element={<PrizeCatalogManager />} />
-      <Route path="/contests" element={<ContestList />} />
+      <Route 
+        path="/contests" 
+        element={
+          <ContestList 
+            contests={[]} 
+            onSelectContest={() => {}}
+          />
+        } 
+      />
       <Route 
         path="/contests/:contestId" 
         element={
