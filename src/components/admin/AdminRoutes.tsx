@@ -2,8 +2,8 @@ import React from 'react';
 import { Routes, Route, useParams } from 'react-router-dom';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import EditContestForm from './EditContestForm';
-import ContestList from './contest-list/ContestList';
-import Dashboard from './dashboard/Dashboard';
+import ContestList from './ContestList';
+import Dashboard from './Dashboard';
 import QuestionForm from './QuestionForm';
 
 const AdminRoutes = () => {
