@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface ContestPrizeManagerProps {
-  contestId: string;
+  contestId?: string;
 }
 
 const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
@@ -33,13 +33,19 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     queryKey: ['prizes', contestId],
     queryFn: async () => {
       console.log('Fetching contest prizes...');
-      const { data, error } = await supabase
+      let query = supabase
         .from('prizes')
         .select(`
           *,
           catalog_item:prize_catalog(*)
-        `)
-        .eq('contest_id', contestId);
+        `);
+      
+      // Only add the contest_id filter if contestId is provided
+      if (contestId) {
+        query = query.eq('contest_id', contestId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Error fetching contest prizes:', error);
@@ -47,7 +53,8 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
       }
       console.log('Contest prizes data:', data);
       return data;
-    }
+    },
+    enabled: true // The query will run even if contestId is undefined
   });
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,7 +101,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
       const { error } = await supabase
         .from('prizes')
         .insert([{
-          contest_id: contestId,
+          contest_id: contestId, // This will be null if contestId is undefined
           catalog_item_id: catalogItemId
         }]);
       
