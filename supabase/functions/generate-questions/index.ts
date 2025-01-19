@@ -19,6 +19,10 @@ serve(async (req) => {
 
     console.log('Generating questions for topic:', topic);
 
+    if (!GROK_API_KEY) {
+      throw new Error('GROK_API_KEY is not configured');
+    }
+
     const response = await fetch('https://api.groq.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -34,27 +38,66 @@ serve(async (req) => {
           },
           {
             role: "user",
-            content: `Generate ${count} multiple choice questions about ${topic}. Make sure each question has exactly 4 options and one correct answer.`
+            content: `Generate ${count} multiple choice questions about ${topic}. Make sure each question has exactly 4 options and one correct answer. Format the response as JSON.`
           }
         ],
-        temperature: 0.7
+        temperature: 0.7,
+        max_tokens: 1000,
       })
     });
+
+    if (!response.ok) {
+      console.error('Grok API error:', await response.text());
+      throw new Error(`Grok API returned status ${response.status}`);
+    }
 
     const data = await response.json();
     console.log('Grok API response:', data);
 
-    // Parse the response to extract questions
-    const generatedQuestions = JSON.parse(data.choices[0].message.content).questions;
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response format from Grok API');
+    }
 
-    return new Response(JSON.stringify({ questions: generatedQuestions }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Parse the response and validate it's in the correct format
+    let generatedQuestions;
+    try {
+      const content = data.choices[0].message.content;
+      generatedQuestions = JSON.parse(content);
+      
+      if (!generatedQuestions.questions || !Array.isArray(generatedQuestions.questions)) {
+        throw new Error('Invalid questions format');
+      }
+    } catch (error) {
+      console.error('Error parsing questions:', error);
+      throw new Error('Failed to parse generated questions');
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        questions: generatedQuestions.questions 
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    );
   } catch (error) {
     console.error('Error generating questions:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }),
+      { 
+        status: 500,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    );
   }
 });
