@@ -38,7 +38,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'mistral',
+          model: 'qwen2.5:7b',
           prompt: prompt,
           stream: false,
         }),
@@ -49,15 +49,23 @@ serve(async (req) => {
       }
 
       const data = await response.json()
-      const generatedQuestions = JSON.parse(data.response)
-      questions.push(...generatedQuestions)
+      console.log('Ollama response:', data)
+      
+      try {
+        const generatedQuestions = JSON.parse(data.response)
+        questions.push(...generatedQuestions)
+      } catch (error) {
+        console.error('Error parsing questions:', error)
+        console.log('Raw response:', data.response)
+        throw new Error('Failed to parse generated questions')
+      }
     }
 
     // Save questions to the question bank
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const { data: session } = await supabase.auth.getSession()
+    if (!session?.session?.access_token) {
+      throw new Error('Not authenticated')
+    }
 
     const { error } = await supabase
       .from('question_bank')
