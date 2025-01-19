@@ -9,21 +9,21 @@ import { Button } from './ui/button';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 
 const Layout = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isAdmin, setIsAdmin] = React.useState(false);
   const { toast } = useToast();
 
-  React.useEffect(() => {
-    const checkAdminRole = async () => {
+  const { data: isAdmin = false } = useQuery({
+    queryKey: ['admin-check', user?.id],
+    queryFn: async () => {
       if (!user) {
         console.log("No user found, setting isAdmin to false");
-        setIsAdmin(false);
-        return;
+        return false;
       }
 
       console.log("Checking admin rights for user:", user.id);
@@ -32,8 +32,7 @@ const Layout = () => {
       // Vérification directe pour l'email spécifique
       if (user.email === 'renaudcanuel@me.com') {
         console.log("Admin email match found, setting isAdmin to true");
-        setIsAdmin(true);
-        return;
+        return true;
       }
 
       // Vérification dans la table members comme backup
@@ -50,18 +49,16 @@ const Layout = () => {
           title: "Erreur",
           description: "Impossible de vérifier vos droits d'administrateur",
         });
-        setIsAdmin(false);
-        return;
+        return false;
       }
 
       console.log("Member data received:", memberData);
       const isUserAdmin = memberData?.role === 'admin';
       console.log("Is user admin?", isUserAdmin);
-      setIsAdmin(isUserAdmin);
-    };
-
-    checkAdminRole();
-  }, [user, toast]);
+      return isUserAdmin;
+    },
+    enabled: !!user,
+  });
 
   const isAdminRoute = location.pathname.startsWith('/admin');
 
