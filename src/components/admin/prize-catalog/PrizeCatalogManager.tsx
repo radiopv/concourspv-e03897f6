@@ -10,11 +10,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-interface ContestPrizeManagerProps {
-  contestId?: string;
+interface Prize {
+  id: string;
+  name: string;
+  description?: string;
+  value?: number;
+  image_url?: string;
+  shop_url?: string;
 }
 
-const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
+const PrizeCatalogManager = () => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -28,33 +33,23 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     shop_url: '',
   });
 
-  // Query to fetch prizes with catalog information
-  const { data: contestPrizes, isLoading } = useQuery({
-    queryKey: ['prizes', contestId],
+  // Query to fetch prize catalog
+  const { data: prizeCatalog, isLoading } = useQuery({
+    queryKey: ['prize-catalog'],
     queryFn: async () => {
-      console.log('Fetching contest prizes...');
-      let query = supabase
-        .from('prizes')
-        .select(`
-          *,
-          catalog_item:prize_catalog(*)
-        `);
-      
-      // Only add the contest_id filter if contestId is provided
-      if (contestId) {
-        query = query.eq('contest_id', contestId);
-      }
-      
-      const { data, error } = await query;
+      console.log('Fetching prize catalog...');
+      const { data, error } = await supabase
+        .from('prize_catalog')
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('Error fetching contest prizes:', error);
+        console.error('Error fetching prize catalog:', error);
         throw error;
       }
-      console.log('Contest prizes data:', data);
-      return data;
-    },
-    enabled: true // The query will run even if contestId is undefined
+      console.log('Prize catalog data:', data);
+      return data as Prize[];
+    }
   });
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,22 +91,16 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
   };
 
   const addPrizeMutation = useMutation({
-    mutationFn: async (catalogItemId: string) => {
-      console.log('Adding prize to contest:', { contestId, catalogItemId });
+    mutationFn: async (data: Omit<Prize, 'id'>) => {
+      console.log('Adding prize to catalog:', data);
       const { error } = await supabase
-        .from('prizes')
-        .insert([{
-          contest_id: contestId, // This will be null if contestId is undefined
-          catalog_item_id: catalogItemId
-        }]);
+        .from('prize_catalog')
+        .insert([data]);
       
-      if (error) {
-        console.error('Error adding prize:', error);
-        throw error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
       setIsFormOpen(false);
       setFormData({
         name: '',
@@ -122,7 +111,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
       });
       toast({
         title: "Succès",
-        description: "Le prix a été ajouté au concours",
+        description: "Le prix a été ajouté au catalogue",
       });
     },
     onError: (error) => {
@@ -135,34 +124,61 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
     }
   });
 
-  const deletePrizeMutation = useMutation({
-    mutationFn: async (prizeId: string) => {
+  const updatePrizeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Prize> }) => {
       const { error } = await supabase
-        .from('prizes')
-        .delete()
-        .eq('id', prizeId);
+        .from('prize_catalog')
+        .update(data)
+        .eq('id', id);
       
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      setEditingPrize(null);
       toast({
         title: "Succès",
-        description: "Le prix a été retiré du concours",
+        description: "Le prix a été mis à jour",
+      });
+    },
+    onError: (error) => {
+      console.error("Update prize error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le prix",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deletePrizeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('prize_catalog')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prize-catalog'] });
+      toast({
+        title: "Succès",
+        description: "Le prix a été supprimé du catalogue",
       });
     },
     onError: (error) => {
       console.error("Delete prize error:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de retirer le prix",
+        description: "Impossible de supprimer le prix",
         variant: "destructive",
       });
     }
   });
 
   if (isLoading) {
-    return <div>Chargement des prix...</div>;
+    return <div>Chargement du catalogue...</div>;
   }
 
   return (
@@ -202,7 +218,7 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="value">Valeur ($)</Label>
+                  <Label htmlFor="value">Valeur (€)</Label>
                   <Input
                     id="value"
                     type="number"
@@ -247,7 +263,14 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
                   className="w-full"
                   onClick={(e) => {
                     e.preventDefault();
-                    addPrizeMutation.mutate(formData.name);
+                    if (editingPrize) {
+                      updatePrizeMutation.mutate({
+                        id: editingPrize,
+                        data: formData
+                      });
+                    } else {
+                      addPrizeMutation.mutate(formData);
+                    }
                   }}
                   disabled={uploading}
                 >
@@ -260,32 +283,29 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
       </Collapsible>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {contestPrizes?.map((prize) => (
+        {prizeCatalog?.map((prize) => (
           <Card key={prize.id} className="hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
-              {prize.catalog_item?.image_url && (
+              {prize.image_url && (
                 <div className="aspect-square relative mb-4">
                   <img
-                    src={prize.catalog_item.image_url}
-                    alt={prize.catalog_item.name}
+                    src={prize.image_url}
+                    alt={prize.name}
                     className="object-cover rounded-lg w-full h-full"
                   />
                 </div>
               )}
-              <h3 className="font-semibold mb-2">{prize.catalog_item?.name}</h3>
-              {prize.catalog_item?.description && (
-                <div 
-                  className="text-sm text-gray-500 mb-2"
-                  dangerouslySetInnerHTML={{ __html: prize.catalog_item.description }}
-                />
+              <h3 className="font-semibold mb-2">{prize.name}</h3>
+              {prize.description && (
+                <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
               )}
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">
-                  {prize.catalog_item?.value ? `${prize.catalog_item.value}€` : 'Prix non défini'}
+                  {prize.value ? `${prize.value}€` : 'Prix non défini'}
                 </span>
-                {prize.catalog_item?.shop_url && (
+                {prize.shop_url && (
                   <a
-                    href={prize.catalog_item.shop_url}
+                    href={prize.shop_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800"
@@ -294,12 +314,32 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
                   </a>
                 )}
               </div>
-              <button
-                onClick={() => deletePrizeMutation.mutate(prize.id)}
-                className="mt-4 w-full px-4 py-2 text-sm text-red-600 hover:text-red-800 border border-red-600 hover:border-red-800 rounded-md transition-colors"
-              >
-                Retirer ce prix
-              </button>
+              <div className="mt-4 space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setEditingPrize(prize.id);
+                    setFormData({
+                      name: prize.name,
+                      description: prize.description || '',
+                      value: prize.value?.toString() || '',
+                      image_url: prize.image_url || '',
+                      shop_url: prize.shop_url || '',
+                    });
+                    setIsFormOpen(true);
+                  }}
+                >
+                  Modifier
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => deletePrizeMutation.mutate(prize.id)}
+                >
+                  Supprimer
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -308,4 +348,4 @@ const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
   );
 };
 
-export default ContestPrizeManager;
+export default PrizeCatalogManager;
