@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,7 +21,12 @@ serve(async (req) => {
       throw new Error('No URLs provided')
     }
 
-    const ollamaUrl = Deno.env.get('OLLAMA_URL') || 'http://localhost:11434'
+    const ollamaUrl = Deno.env.get('OLLAMA_URL')
+    if (!ollamaUrl) {
+      throw new Error('OLLAMA_URL not configured')
+    }
+
+    console.log('Using Ollama URL:', ollamaUrl)
     const questions = []
 
     for (const url of urls) {
@@ -32,6 +38,7 @@ serve(async (req) => {
       - article_url: the source URL
       Return an array of these question objects.`
 
+      console.log('Sending request to Ollama...')
       const response = await fetch(`${ollamaUrl}/api/generate`, {
         method: 'POST',
         headers: {
@@ -45,6 +52,7 @@ serve(async (req) => {
       })
 
       if (!response.ok) {
+        console.error('Ollama response not OK:', response.status, response.statusText)
         throw new Error(`Failed to generate questions: ${response.statusText}`)
       }
 
@@ -62,10 +70,10 @@ serve(async (req) => {
     }
 
     // Save questions to the question bank
-    const { data: session } = await supabase.auth.getSession()
-    if (!session?.session?.access_token) {
-      throw new Error('Not authenticated')
-    }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
     const { error } = await supabase
       .from('question_bank')
