@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +13,7 @@ const ContestQuestionsManager = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
 
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ['question-bank'],
@@ -104,15 +105,15 @@ const ContestQuestionsManager = () => {
     }
   };
 
-  if (questionsLoading || contestQuestionsLoading) {
-    return <div>Chargement...</div>;
-  }
-
   const isQuestionInContest = (questionBankId: string) => {
     return contestQuestions?.some(q => 
       q.question_text === questions?.find(bq => bq.id === questionBankId)?.question_text
     );
   };
+
+  if (questionsLoading || contestQuestionsLoading) {
+    return <div>Chargement...</div>;
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
