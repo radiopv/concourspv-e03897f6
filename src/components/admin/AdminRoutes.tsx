@@ -1,14 +1,10 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useParams } from 'react-router-dom';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import EditContestForm from './EditContestForm';
-import ContestList from './ContestList';
-import ContestForm from './ContestForm';
-import ContestQuestionManager from './ContestQuestionManager';
-import ParticipantList from './ParticipantList';
-import QuestionList from './QuestionList';
+import ContestList from './contest-list/ContestList';
+import Dashboard from './dashboard/Dashboard';
 import QuestionForm from './QuestionForm';
-import Dashboard from './Dashboard';
 
 const AdminRoutes = () => {
   return (
@@ -16,14 +12,58 @@ const AdminRoutes = () => {
       <Route path="/" element={<Dashboard />} />
       <Route path="/prizes" element={<PrizeCatalogManager />} />
       <Route path="/contests" element={<ContestList />} />
-      <Route path="/contests/new" element={<ContestForm />} />
-      <Route path="/contests/:contestId" element={<EditContestForm />} />
-      <Route path="/contests/:contestId/questions" element={<ContestQuestionManager />} />
-      <Route path="/contests/:contestId/participants" element={<ParticipantList />} />
-      <Route path="/questions" element={<QuestionList />} />
-      <Route path="/questions/new" element={<QuestionForm />} />
-      <Route path="/questions/:questionId" element={<QuestionForm />} />
+      <Route 
+        path="/contests/:contestId" 
+        element={
+          <EditContestFormWrapper />
+        }
+      />
+      <Route 
+        path="/questions/new" 
+        element={
+          <QuestionForm 
+            question={{
+              id: '',
+              question_text: '',
+              options: [],
+              correct_answer: '',
+              article_url: '',
+              image_url: ''
+            }}
+            onSave={() => {}}
+            onCancel={() => {}}
+          />
+        }
+      />
+      <Route 
+        path="/questions/:questionId" 
+        element={
+          <QuestionForm 
+            question={{
+              id: '',
+              question_text: '',
+              options: [],
+              correct_answer: '',
+              article_url: '',
+              image_url: ''
+            }}
+            onSave={() => {}}
+            onCancel={() => {}}
+          />
+        }
+      />
     </Routes>
+  );
+};
+
+// Wrapper component to provide contestId from URL params
+const EditContestFormWrapper = () => {
+  const { contestId } = useParams();
+  return (
+    <EditContestForm 
+      contestId={contestId || ''} 
+      onClose={() => {}}
+    />
   );
 };
 
