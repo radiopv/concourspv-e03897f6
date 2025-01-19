@@ -1,26 +1,32 @@
+```tsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import AdminDashboard from './AdminDashboard';
-import ContestQuestionsManager from './contest-questions/ContestQuestionsManager';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
-import QuestionBankManager from './question-bank/QuestionBankManager';
-import GlobalSettings from './GlobalSettings';
-import UserManager from './users/UserManager';
-import AdminWinnersList from './winners/WinnersList';
+import EditContestForm from './EditContestForm';
+import ContestList from './ContestList';
+import ContestForm from './ContestForm';
+import ContestQuestionManager from './ContestQuestionManager';
+import ParticipantList from './ParticipantList';
+import QuestionList from './QuestionList';
+import QuestionForm from './QuestionForm';
+import Dashboard from './Dashboard';
 
 const AdminRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<AdminDashboard />} />
-      <Route path="/contests" element={<AdminDashboard />} />
-      <Route path="/contests/:contestId/questions" element={<ContestQuestionsManager />} />
-      <Route path="/questions" element={<QuestionBankManager />} />
-      <Route path="/prizes" element={<PrizeCatalogManager contestId={null} />} />
-      <Route path="/settings" element={<GlobalSettings />} />
-      <Route path="/users" element={<UserManager />} />
-      <Route path="/winners" element={<AdminWinnersList />} />
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/prizes" element={<PrizeCatalogManager />} />
+      <Route path="/contests" element={<ContestList />} />
+      <Route path="/contests/new" element={<ContestForm />} />
+      <Route path="/contests/:contestId" element={<EditContestForm />} />
+      <Route path="/contests/:contestId/questions" element={<ContestQuestionManager />} />
+      <Route path="/contests/:contestId/participants" element={<ParticipantList />} />
+      <Route path="/questions" element={<QuestionList />} />
+      <Route path="/questions/new" element={<QuestionForm />} />
+      <Route path="/questions/:questionId" element={<QuestionForm />} />
     </Routes>
   );
 };
 
 export default AdminRoutes;
+```

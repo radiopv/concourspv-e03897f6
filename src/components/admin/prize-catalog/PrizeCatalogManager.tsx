@@ -9,15 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
-interface Prize {
-  id: string;
-  name: string;
-  description?: string;
-  value?: number;
-  image_url?: string;
-  shop_url?: string;
-}
+import { Prize } from "@/types/prize";
 
 const PrizeCatalogManager = () => {
   const [uploading, setUploading] = useState(false);
@@ -92,10 +84,14 @@ const PrizeCatalogManager = () => {
 
   const addPrizeMutation = useMutation({
     mutationFn: async (data: Omit<Prize, 'id'>) => {
-      console.log('Adding prize to catalog:', data);
+      const formattedData = {
+        ...data,
+        value: data.value ? Number(data.value) : null
+      };
+      
       const { error } = await supabase
         .from('prize_catalog')
-        .insert([data]);
+        .insert([formattedData]);
       
       if (error) throw error;
     },
@@ -126,9 +122,14 @@ const PrizeCatalogManager = () => {
 
   const updatePrizeMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Prize> }) => {
+      const formattedData = {
+        ...data,
+        value: data.value ? Number(data.value) : null
+      };
+      
       const { error } = await supabase
         .from('prize_catalog')
-        .update(data)
+        .update(formattedData)
         .eq('id', id);
       
       if (error) throw error;

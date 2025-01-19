@@ -5,22 +5,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import PrizeCatalogDialog from './prize/PrizeCatalogDialog';
+import { ContestPrize, Prize } from '@/types/prize';
 
-interface Prize {
-  id: string;
-  name: string;
-  description?: string;
-  value?: number;
-  image_url?: string;
-  shop_url?: string;
+interface ContestPrizeManagerProps {
+  contestId: string;
 }
 
-interface ContestPrize {
-  id: string;
-  prize_catalog: Prize;
-}
-
-const ContestPrizeManager = ({ contestId }: { contestId: string }) => {
+const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
   const [showPrizeCatalog, setShowPrizeCatalog] = React.useState(false);
 
   const { data: prizes } = useQuery({
@@ -44,7 +35,10 @@ const ContestPrizeManager = ({ contestId }: { contestId: string }) => {
 
       if (error) throw error;
       console.log('Contest prizes data:', data);
-      return data as ContestPrize[];
+      return (data as any[]).map(prize => ({
+        id: prize.id,
+        prize_catalog: prize.prize_catalog as Prize
+      })) as ContestPrize[];
     },
   });
 
