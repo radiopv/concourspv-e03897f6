@@ -7,23 +7,18 @@ import { supabase } from "@/lib/supabase";
 import { Plus } from "lucide-react";
 import QuestionCard from './QuestionCard';
 
-interface QuestionsListProps {
-  contestId: string;
-}
-
-const QuestionsList = ({ contestId }: QuestionsListProps) => {
+const QuestionsList = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
 
   const { data: questions, isLoading } = useQuery({
-    queryKey: ['questions', contestId],
+    queryKey: ['questions'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
         .select('*')
-        .eq('contest_id', contestId)
-        .order('order_number');
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data;
@@ -35,17 +30,15 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
       const { error } = await supabase
         .from('questions')
         .insert([{
-          contest_id: contestId,
           question_text: "Nouvelle question",
           options: ["Option 1", "Option 2", "Option 3", "Option 4"],
           correct_answer: "Option 1",
-          order_number: (questions?.length || 0) + 1,
           type: 'multiple_choice'
         }]);
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['questions'] });
       
       toast({
         title: "Succès",
@@ -70,7 +63,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['questions'] });
       
       toast({
         title: "Succès",
@@ -95,7 +88,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['questions'] });
       setEditingQuestionId(null);
       
       toast({
@@ -119,7 +112,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Questions du concours</CardTitle>
+        <CardTitle>Gestion des questions</CardTitle>
         <Button
           onClick={handleAddQuestion}
           className="flex items-center gap-2"
