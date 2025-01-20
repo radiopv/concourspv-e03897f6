@@ -79,6 +79,7 @@ export type Database = {
           is_featured: boolean | null
           is_new: boolean | null
           prize_image_url: string | null
+          share_image_url: string | null
           shop_url: string | null
           start_date: string
           status: string | null
@@ -95,6 +96,7 @@ export type Database = {
           is_featured?: boolean | null
           is_new?: boolean | null
           prize_image_url?: string | null
+          share_image_url?: string | null
           shop_url?: string | null
           start_date: string
           status?: string | null
@@ -111,6 +113,7 @@ export type Database = {
           is_featured?: boolean | null
           is_new?: boolean | null
           prize_image_url?: string | null
+          share_image_url?: string | null
           shop_url?: string | null
           start_date?: string
           status?: string | null
@@ -1038,6 +1041,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_contest_share_metadata: {
+        Args: {
+          contest_id: string
+        }
+        Returns: {
+          title: string
+          description: string
+          image_url: string
+          prize_value: number
+        }[]
+      }
       handle_facebook_share: {
         Args: {
           user_id: string
