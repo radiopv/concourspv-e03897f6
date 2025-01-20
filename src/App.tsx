@@ -14,13 +14,14 @@ import QuizCompletion from "./pages/QuizCompletion";
 import Winners from "./pages/Winners";
 import WinnersList from "./pages/WinnersList";
 import Prizes from "./pages/Prizes";
+import Points from "./pages/Points";
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
-    <Router>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <Router>
         <AuthProvider>
           <Routes>
             <Route element={<Layout><Outlet /></Layout>}>
@@ -36,11 +37,12 @@ function App() {
               <Route path="winners" element={<Winners />} />
               <Route path="winners-list" element={<WinnersList />} />
               <Route path="prizes" element={<Prizes />} />
+              <Route path="points" element={<Points />} />
             </Route>
           </Routes>
         </AuthProvider>
-      </QueryClientProvider>
-    </Router>
+      </Router>
+    </QueryClientProvider>
   );
 }
 
