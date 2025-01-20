@@ -2,12 +2,28 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import PageMetadata from '@/components/seo/PageMetadata';
 
 const Home = () => {
   const navigate = useNavigate();
+  const canonicalUrl = window.location.origin;
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <PageMetadata
+        title="Passion Varadero - Concours en ligne et prix à gagner"
+        description="Participez à nos concours exclusifs et gagnez des cadeaux formidables. Une expérience unique de jeux-concours avec des lots exceptionnels à gagner."
+        pageUrl={canonicalUrl}
+        keywords={[
+          "passion varadero",
+          "concours en ligne",
+          "jeux concours",
+          "gagner des prix",
+          "cadeaux à gagner",
+          "participation gratuite"
+        ]}
+      />
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

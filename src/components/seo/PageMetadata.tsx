@@ -23,9 +23,9 @@ const PageMetadata = ({
   description, 
   imageUrl, 
   pageUrl,
-  siteName = "Concours en ligne",
+  siteName = "Passion Varadero - Concours en ligne",
   type = "website",
-  author = "Concours en ligne",
+  author = "Passion Varadero",
   keywords = [],
   publishedTime,
   modifiedTime,
@@ -74,7 +74,7 @@ const PageMetadata = ({
           <meta property="og:image:alt" content={title} />
         </>
       )}
-      <meta property="fb:app_id" content="1234567890" /> {/* Replace with your actual Facebook App ID */}
+      <meta property="fb:app_id" content="1234567890" /> {/* Remplacer par votre Facebook App ID */}
       
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />

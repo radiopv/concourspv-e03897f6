@@ -7,11 +7,13 @@ import { motion } from "framer-motion";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import ContestCard from "@/components/contests/ContestCard";
 import { useContests } from "@/hooks/useContests";
+import PageMetadata from "@/components/seo/PageMetadata";
 
 const ContestsList = () => {
   const navigate = useNavigate();
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
   const { data: contests, isLoading } = useContests();
+  const canonicalUrl = `${window.location.origin}/contests`;
 
   if (selectedContestId) {
     return <QuestionnaireComponent contestId={selectedContestId} />;
@@ -28,6 +30,11 @@ const ContestsList = () => {
   if (!contests || contests.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] flex items-center justify-center p-4">
+        <PageMetadata
+          title="Concours - Aucun concours disponible"
+          description="Revenez plus tard pour découvrir nos nouveaux concours et tenter de gagner des prix exceptionnels."
+          pageUrl={canonicalUrl}
+        />
         <Card className="max-w-lg w-full bg-black/30 border-[#9b87f5]/20">
           <CardContent className="text-center py-12">
             <Trophy className="w-16 h-16 text-[#F97316] mx-auto mb-6 animate-bounce" />
@@ -52,6 +59,18 @@ const ContestsList = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] py-12">
+      <PageMetadata
+        title="Concours en ligne - Participez et gagnez des prix"
+        description="Découvrez nos concours en ligne, participez et tentez de gagner des prix exceptionnels. Nouveaux concours ajoutés régulièrement."
+        pageUrl={canonicalUrl}
+        keywords={[
+          "concours en ligne",
+          "jeux concours",
+          "gagner des prix",
+          "participation gratuite",
+          "concours du moment"
+        ]}
+      />
       <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
