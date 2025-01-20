@@ -1054,7 +1054,7 @@ export type Database = {
       }
       handle_facebook_share: {
         Args: {
-          user_id: string
+          input_user_id: string
           share_type: string
           contest_id?: string
         }
