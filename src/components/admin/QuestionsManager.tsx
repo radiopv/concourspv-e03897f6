@@ -34,18 +34,28 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
         throw new Error("Not authenticated");
       }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('questions')
         .select('*')
-        .eq('contest_id', contestId)
         .order('order_number');
+      
+      // Only add the contest_id filter if contestId is provided
+      if (contestId) {
+        query = query.eq('contest_id', contestId);
+      } else {
+        // If no contestId is provided, fetch questions without a contest_id
+        query = query.is('contest_id', null);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error("Error fetching questions:", error);
         throw error;
       }
       return data;
-    }
+    },
+    enabled: true // Always enable the query since we handle both cases
   });
 
   const handleImageUpload = async (file: File) => {
@@ -84,20 +94,20 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
         return;
       }
 
+      const questionData = {
+        contest_id: contestId || null, // Use null if contestId is empty
+        question_text: newQuestion.question_text,
+        type: newQuestion.type,
+        options: newQuestion.options,
+        correct_answer: newQuestion.correct_answer,
+        article_url: newQuestion.article_url,
+        image_url: newQuestion.image_url,
+        order_number: (questions?.length || 0) + 1
+      };
+
       const { error } = await supabase
         .from('questions')
-        .insert([
-          {
-            contest_id: contestId,
-            question_text: newQuestion.question_text,
-            type: newQuestion.type,
-            options: newQuestion.options,
-            correct_answer: newQuestion.correct_answer,
-            article_url: newQuestion.article_url,
-            image_url: newQuestion.image_url,
-            order_number: (questions?.length || 0) + 1
-          }
-        ]);
+        .insert([questionData]);
 
       if (error) throw error;
 
@@ -151,19 +161,13 @@ const QuestionsManager = ({ contestId }: QuestionsManagerProps) => {
     }
   };
 
-  if (isError) {
-    return (
-      <div className="p-4 text-center">
-        <p className="text-red-500">Erreur lors du chargement des questions</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Ajouter une question</CardTitle>
+          <CardTitle>
+            {contestId ? "Questions du concours" : "Banque de questions"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
