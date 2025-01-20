@@ -3,9 +3,9 @@ import { Routes, Route, useParams } from 'react-router-dom';
 import PrizeCatalogManager from './prize-catalog/PrizeCatalogManager';
 import EditContestForm from './EditContestForm';
 import AdminDashboard from './AdminDashboard';
-import QuestionForm from './QuestionForm';
 import AdminContestManager from './AdminContestManager';
 import QuestionsManager from './QuestionsManager';
+import QuestionBankManager from './question-bank/QuestionBankManager';
 
 const AdminRoutes = () => {
   return (
@@ -26,41 +26,7 @@ const AdminRoutes = () => {
       />
       <Route 
         path="/questions" 
-        element={<QuestionsManager contestId="" />}
-      />
-      <Route 
-        path="/questions/new" 
-        element={
-          <QuestionForm 
-            question={{
-              id: '',
-              question_text: '',
-              options: [],
-              correct_answer: '',
-              article_url: '',
-              image_url: ''
-            }}
-            onSave={() => {}}
-            onCancel={() => {}}
-          />
-        }
-      />
-      <Route 
-        path="/questions/:questionId" 
-        element={
-          <QuestionForm 
-            question={{
-              id: '',
-              question_text: '',
-              options: [],
-              correct_answer: '',
-              article_url: '',
-              image_url: ''
-            }}
-            onSave={() => {}}
-            onCancel={() => {}}
-          />
-        }
+        element={<QuestionBankManager />}
       />
     </Routes>
   );
