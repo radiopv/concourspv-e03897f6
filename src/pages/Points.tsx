@@ -9,6 +9,8 @@ const Points = () => {
   const { data: stats } = useQuery({
     queryKey: ['community-stats'],
     queryFn: async () => {
+      console.log('Fetching community stats...');
+      
       // Récupérer le nombre total de participants
       const { count: participantsCount } = await supabase
         .from('participants')
@@ -21,17 +23,23 @@ const Points = () => {
         .eq('status', 'active');
 
       // Récupérer le meilleur score
-      const { data: topScore } = await supabase
+      const { data: topScoreData } = await supabase
         .from('participants')
         .select('score')
         .order('score', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
+
+      console.log('Stats fetched:', {
+        participantsCount,
+        contestsCount,
+        topScoreData
+      });
 
       return {
         totalParticipants: participantsCount || 0,
         totalContests: contestsCount || 0,
-        topScore: topScore?.score || 0
+        topScore: topScoreData?.score || 0
       };
     }
   });
