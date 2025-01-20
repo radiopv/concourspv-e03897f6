@@ -2,55 +2,35 @@ import { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 export const drawService = {
-  async endContestAndDraw(contestId: string, queryClient: QueryClient) {
+  async performDraw(contestId: string, queryClient: QueryClient) {
     try {
-      // First check if we have a valid session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("Session expired - please login again");
-      }
-
-      // Get the required percentage from settings
-      const { data: settings, error: settingsError } = await supabase
-        .from('settings')
-        .select('required_percentage')
-        .single();
-
-      if (settingsError) throw settingsError;
-
-      const requiredPercentage = settings?.required_percentage || 70;
-      console.log(`Using required percentage: ${requiredPercentage}%`);
-
-      // Update contest status
-      const now = new Date().toISOString();
-      const { error: updateError } = await supabase
-        .from('contests')
-        .update({ 
-          end_date: now,
-          draw_date: now,
-          status: 'completed'
-        })
-        .eq('id', contestId);
-
-      if (updateError) throw updateError;
-
-      // Get eligible participants (only check score, not status)
-      const { data: eligibleParticipants, error: participantsError } = await supabase
+      // Get all eligible participants
+      const { data: participants, error: participantsError } = await supabase
         .from('participants')
         .select('*')
         .eq('contest_id', contestId)
-        .gte('score', requiredPercentage);
+        .eq('status', 'completed')
+        .gte('score', 90);
 
       if (participantsError) throw participantsError;
-      
-      console.log('Eligible participants:', eligibleParticipants);
 
-      if (!eligibleParticipants?.length) {
-        throw new Error(`Aucun participant n'a obtenu un score suffisant (minimum ${requiredPercentage}%)`);
+      if (!participants || participants.length === 0) {
+        throw new Error('No eligible participants found');
       }
 
-      // Select random winner
-      const winner = eligibleParticipants[Math.floor(Math.random() * eligibleParticipants.length)];
+      // Randomly select a winner
+      const randomIndex = Math.floor(Math.random() * participants.length);
+      const winner = participants[randomIndex];
+
+      // Record the draw in history
+      const { error: historyError } = await supabase
+        .from('draw_history')
+        .insert({
+          contest_id: contestId,
+          participant_id: winner.id,
+        });
+
+      if (historyError) throw historyError;
 
       // Update winner status
       const { error: winnerError } = await supabase
@@ -60,13 +40,13 @@ export const drawService = {
 
       if (winnerError) throw winnerError;
 
-      // Refresh queries
-      await queryClient.invalidateQueries({ queryKey: ['contests'] });
-      await queryClient.invalidateQueries({ queryKey: ['contest-winners', contestId] });
+      // Invalidate relevant queries
+      await queryClient.invalidateQueries({ queryKey: ['participants'] });
+      await queryClient.invalidateQueries({ queryKey: ['draw-history'] });
 
       return winner;
     } catch (error) {
-      console.error('Error in endContestAndDraw:', error);
+      console.error('Error performing draw:', error);
       throw error;
     }
   }
