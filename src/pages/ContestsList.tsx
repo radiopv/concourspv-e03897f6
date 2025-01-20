@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Trophy, Diamond, Coins, Star, Sparkles } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import ContestCard from "@/components/contests/ContestCard";
 import { useContests } from "@/hooks/useContests";
-import { RANKS } from "@/services/pointsService";
 
 const ContestsList = () => {
   const navigate = useNavigate();
@@ -66,7 +65,7 @@ const ContestsList = () => {
             </h1>
           </div>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Découvrez nos concours exceptionnels et leurs lots incroyables à gagner !
+            Découvrez nos concours exceptionnels !
           </p>
         </motion.div>
 

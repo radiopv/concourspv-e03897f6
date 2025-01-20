@@ -42,7 +42,8 @@ export const useContests = () => {
             )
           )
         `)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .eq('participants.status', 'completed');
 
       if (error) {
         console.error('Error fetching contests:', error);
