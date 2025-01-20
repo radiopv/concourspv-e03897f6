@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet";
 import ContestHeader from "@/components/contest/ContestHeader";
 import ContestStats from "@/components/contest/ContestStats";
 import ContestPrizes from "@/components/contest/ContestPrizes";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
+import PageMetadata from "@/components/seo/PageMetadata";
 
 const Contest = () => {
   const { id } = useParams();
@@ -114,57 +114,24 @@ const Contest = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
-      <Helmet>
-        <title>{contest.title} - Participez et gagnez des prix</title>
-        <meta name="description" content={contest.description || `Participez au concours "${contest.title}" et tentez de gagner des prix exceptionnels !`} />
-        <link rel="canonical" href={canonicalUrl} />
-        
-        <meta property="og:title" content={contest.title} />
-        <meta property="og:description" content={contest.description || `Participez et tentez de gagner ${prizeValue ? `${prizeValue}$ en prix` : 'des prix exceptionnels'} !`} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={canonicalUrl} />
-        {mainPrizeImage && (
-          <>
-            <meta property="og:image" content={mainPrizeImage} />
-            <meta property="og:image:width" content="1200" />
-            <meta property="og:image:height" content="630" />
-          </>
-        )}
-        
-        {prizeValue && (
-          <>
-            <meta property="product:price:amount" content={prizeValue.toString()} />
-            <meta property="product:price:currency" content="CAD" />
-          </>
-        )}
-        
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={contest.title} />
-        <meta name="twitter:description" content={contest.description || `Participez et gagnez des prix exceptionnels !`} />
-        {mainPrizeImage && <meta name="twitter:image" content={mainPrizeImage} />}
-        
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Event",
-            "name": contest.title,
-            "description": contest.description,
-            "image": mainPrizeImage,
-            "startDate": contest.start_date,
-            "endDate": contest.end_date,
-            "location": {
-              "@type": "VirtualLocation",
-              "url": canonicalUrl
-            },
-            "offers": prizeValue ? {
-              "@type": "Offer",
-              "price": prizeValue,
-              "priceCurrency": "CAD",
-              "description": prizeDescription
-            } : undefined
-          })}
-        </script>
-      </Helmet>
+      <PageMetadata 
+        title={`${contest.title} - Participez et gagnez des prix`}
+        description={contest.description || `Participez au concours "${contest.title}" et tentez de gagner des prix exceptionnels !`}
+        imageUrl={mainPrizeImage}
+        pageUrl={canonicalUrl}
+        type="article"
+        publishedTime={contest.created_at}
+        modifiedTime={contest.updated_at}
+        keywords={[
+          contest.title,
+          "concours",
+          "prix à gagner",
+          "participation gratuite",
+          prizeDescription ? prizeDescription.slice(0, 50) : ""
+        ]}
+        priceAmount={prizeValue}
+        section="Concours actifs"
+      />
 
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto space-y-8">
