@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, List, RefreshCw, BookOpen, Gift } from "lucide-react";
+import { Edit, Trash2, List, RefreshCw, BookOpen, Gift, ExternalLink } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -50,6 +50,29 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
   const [showPrizes, setShowPrizes] = React.useState(false);
   const { resetContestMutation } = useContestMutations();
 
+  // Fetch prizes for this contest
+  const { data: prizes } = useQuery({
+    queryKey: ['contest-prizes', contest.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('prizes')
+        .select(`
+          *,
+          prize_catalog (
+            name,
+            description,
+            value,
+            image_url,
+            shop_url
+          )
+        `)
+        .eq('contest_id', contest.id);
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const { data: participantsData } = useQuery({
     queryKey: ['contest-participants', contest.id],
     queryFn: async () => {
@@ -72,7 +95,6 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
     }
   });
 
-  // Fetch questions count
   const { data: questionsCount } = useQuery({
     queryKey: ['contest-questions', contest.id],
     queryFn: async () => {
@@ -203,6 +225,60 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
               </p>
             </div>
           </div>
+
+          {/* Prix du concours */}
+          {prizes && prizes.length > 0 && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-gray-700 mb-4">Prix à gagner</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {prizes.map((prize, index) => (
+                  <div key={prize.id} className="bg-white p-4 rounded-lg shadow">
+                    {prize.prize_catalog?.image_url && (
+                      <div className="aspect-video relative mb-3">
+                        <img
+                          src={prize.prize_catalog.image_url}
+                          alt={prize.prize_catalog.name}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <h4 className="font-medium text-gray-800">
+                          {prize.prize_catalog?.name}
+                        </h4>
+                        {index === 1 && (
+                          <Badge variant="secondary">Prix au choix</Badge>
+                        )}
+                      </div>
+                      {prize.prize_catalog?.description && (
+                        <p className="text-sm text-gray-600">
+                          {prize.prize_catalog.description}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">
+                          {prize.prize_catalog?.value 
+                            ? `${prize.prize_catalog.value}€` 
+                            : 'Prix non défini'}
+                        </span>
+                        {prize.prize_catalog?.shop_url && (
+                          <a
+                            href={prize.prize_catalog.shop_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {userId && (
             <ParticipantInfo 
