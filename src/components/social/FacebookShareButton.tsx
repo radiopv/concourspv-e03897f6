@@ -23,42 +23,28 @@ const FacebookShareButton = ({ url, title, type, contestId }: FacebookShareButto
       window.open(shareUrl, '_blank', 'width=600,height=400');
 
       if (user) {
-        // Enregistrer le partage et attribuer les points
-        const { error } = await supabase
-          .from('point_history')
-          .insert([
-            {
-              user_id: user.id,
-              points: 5, // Points pour le partage
-              source: `facebook_share_${type}`,
-              contest_id: contestId
-            }
-          ]);
+        // Call the RPC function to handle rewards
+        const { data, error } = await supabase.rpc('handle_facebook_share', {
+          user_id: user.id,
+          share_type: type,
+          contest_id: contestId
+        });
 
         if (error) throw error;
 
-        // Mettre à jour les points de l'utilisateur
-        const { error: updateError } = await supabase
-          .rpc('increment_user_points', {
-            user_id: user.id,
-            points_to_add: 5
-          });
+        // Show appropriate toast message based on the result
+        const message = type === 'contest'
+          ? "Vous avez gagné 5 points et une participation bonus !"
+          : "Vous avez gagné 5 points pour votre partage !";
 
-        if (updateError) throw updateError;
-
-        // Si c'est un partage de concours, ajouter une participation bonus
-        if (type === 'contest' && contestId) {
-          const { error: participationError } = await supabase
-            .from('user_points')
-            .update({ extra_participations: supabase.sql`extra_participations + 1` })
-            .eq('user_id', user.id);
-
-          if (participationError) throw participationError;
-        }
+        // If monthly bonus was awarded, add it to the message
+        const bonusMessage = data.bonus_awarded > 0
+          ? "\n+15 points bonus pour 5 partages ce mois-ci !"
+          : "";
 
         toast({
           title: "Partage réussi !",
-          description: "Vous avez gagné 5 points et une participation bonus !",
+          description: message + bonusMessage,
           duration: 5000,
         });
       }
