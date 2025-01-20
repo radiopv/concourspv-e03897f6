@@ -11,6 +11,7 @@ import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
 import CountdownTimer from './questionnaire/CountdownTimer';
 import ParticipantCheck from './questionnaire/ParticipantCheck';
 import { calculateFinalScore } from '@/utils/scoreCalculations';
+import type { Participant } from '@/types/participant';
 
 const QuestionnaireComponent = () => {
   const { contestId = '' } = useParams();
@@ -21,7 +22,6 @@ const QuestionnaireComponent = () => {
   const [countdown, setCountdown] = useState(5);
   const [showQuestions, setShowQuestions] = useState(false);
 
-  // Récupérer les paramètres globaux
   const { data: settings } = useQuery({
     queryKey: ['global-settings'],
     queryFn: async () => {
@@ -36,23 +36,22 @@ const QuestionnaireComponent = () => {
     }
   });
 
-  // Vérifier si le participant a déjà complété le quiz ou atteint la limite de tentatives
   const { data: participant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return null;
+      const { data: { user } } = await supabase.auth.getSession();
+      if (!user?.id) return null;
 
       const { data, error } = await supabase
         .from('participants')
-        .select('status, score, attempts')
+        .select('*')
         .eq('contest_id', contestId)
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .maybeSingle();
 
       if (error && error.code === 'PGRST116') return null;
       if (error) throw error;
-      return data;
+      return data as Participant;
     }
   });
 
@@ -80,8 +79,8 @@ const QuestionnaireComponent = () => {
   useEffect(() => {
     const initializeParticipant = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user?.id) {
+        const { data: { user } } = await supabase.auth.getSession();
+        if (!user?.id) {
           toast({
             title: "Erreur",
             description: "Vous devez être connecté pour participer",
@@ -91,11 +90,10 @@ const QuestionnaireComponent = () => {
           return;
         }
 
-        // Get user profile data first
         const { data: userProfile } = await supabase
           .from('members')
           .select('first_name, last_name, email')
-          .eq('id', session.session.user.id)
+          .eq('id', user.id)
           .single();
 
         if (!userProfile) {
@@ -108,21 +106,18 @@ const QuestionnaireComponent = () => {
           return;
         }
 
-        // First, check if participant exists
         const { data: existingParticipant, error: checkError } = await supabase
           .from('participants')
           .select('participation_id, attempts')
-          .eq('id', session.session.user.id)
+          .eq('id', user.id)
           .eq('contest_id', contestId)
           .maybeSingle();
 
-        // Handle case where no participant exists
         if (checkError && checkError.code !== 'PGRST116') {
           throw checkError;
         }
 
         if (existingParticipant?.participation_id) {
-          // Update existing participant
           const { error: updateError } = await supabase
             .from('participants')
             .update({
@@ -138,13 +133,12 @@ const QuestionnaireComponent = () => {
 
           if (updateError) throw updateError;
         } else {
-          // Create new participant with a new UUID
           const participation_id = crypto.randomUUID();
           const { error: insertError } = await supabase
             .from('participants')
             .insert({
               participation_id,
-              id: session.session.user.id,
+              id: user.id,
               contest_id: contestId,
               status: 'pending',
               attempts: 1,
@@ -188,7 +182,7 @@ const QuestionnaireComponent = () => {
         console.log('Starting quiz completion process...');
         
         const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user?.id) {
+        if (!session?.user?.id) {
           throw new Error("User not authenticated");
         }
 
@@ -196,7 +190,7 @@ const QuestionnaireComponent = () => {
           .from('participants')
           .select('participation_id, attempts')
           .eq('contest_id', contestId)
-          .eq('id', session.session.user.id)
+          .eq('id', session.user.id)
           .single();
 
         if (participantError || !participant?.participation_id) {
@@ -218,7 +212,7 @@ const QuestionnaireComponent = () => {
             attempts: (participant.attempts || 0) + 1
           })
           .eq('contest_id', contestId)
-          .eq('id', session.session.user.id);
+          .eq('id', session.user.id);
 
         if (updateError) {
           console.error('Error updating participant:', updateError);

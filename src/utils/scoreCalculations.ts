@@ -1,3 +1,13 @@
+import { supabase } from "@/lib/supabase";
+
+export const calculateCorrectAnswers = (score: number, totalQuestions: number): number => {
+  return Math.round((score / 100) * totalQuestions);
+};
+
+export const isQualifiedForDraw = (score: number, requiredPercentage: number = 90): boolean => {
+  return score >= requiredPercentage;
+};
+
 export const calculateFinalScore = async (participationId: string): Promise<number> => {
   const { data: answers, error } = await supabase
     .from('participant_answers')

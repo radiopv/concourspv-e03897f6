@@ -16,4 +16,5 @@ export interface Participant {
   status: ParticipantStatus | null;
   contest_id: string;
   completed_at?: string;
+  participation_id?: string;
 }
