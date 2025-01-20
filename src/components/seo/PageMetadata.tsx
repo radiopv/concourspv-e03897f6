@@ -20,8 +20,10 @@ const PageMetadata = ({
 }: PageMetadataProps) => {
   return (
     <Helmet>
+      {/* Basic SEO */}
       <title>{title}</title>
       <meta name="description" content={description} />
+      <link rel="canonical" href={pageUrl} />
       
       {/* OpenGraph / Facebook */}
       <meta property="og:type" content={type} />
@@ -32,6 +34,7 @@ const PageMetadata = ({
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="og:site_name" content={siteName} />
+      <meta property="fb:app_id" content="1234567890" /> {/* Replace with your actual Facebook App ID */}
       
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
@@ -39,9 +42,6 @@ const PageMetadata = ({
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       {imageUrl && <meta name="twitter:image" content={imageUrl} />}
-
-      {/* Autres métadonnées importantes */}
-      <link rel="canonical" href={pageUrl} />
     </Helmet>
   );
 };
