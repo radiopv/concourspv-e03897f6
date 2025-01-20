@@ -5,12 +5,9 @@ import { motion } from 'framer-motion';
 import { Gift, Trophy, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 
 const Prizes = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   
   const { data: prizes, isLoading, error } = useQuery({
     queryKey: ['prizes-catalog'],
@@ -50,29 +47,21 @@ const Prizes = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
       <div className="container mx-auto px-4 py-12">
-        <div className="flex justify-between items-center mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center flex-1"
-          >
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 bg-clip-text text-transparent mb-6">
-              🎰 Prix Exceptionnels à Gagner! 🎲
-            </h1>
-            <p className="text-xl text-amber-800 max-w-2xl mx-auto">
-              Participez à nos concours et tentez de remporter ces cadeaux incroyables. Plus vous participez, plus vous augmentez vos chances de gagner!
-            </p>
-          </motion.div>
-          <Button 
-            onClick={() => navigate('/admin/prizes')}
-            className="bg-amber-500 hover:bg-amber-600 text-white"
-          >
-            Gérer les prix
-          </Button>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 bg-clip-text text-transparent mb-6">
+            🎰 Prix Exceptionnels à Gagner! 🎲
+          </h1>
+          <p className="text-xl text-amber-800 max-w-2xl mx-auto">
+            Participez à nos concours et tentez de remporter ces cadeaux incroyables. Plus vous participez, plus vous augmentez vos chances de gagner!
+          </p>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
           {prizes?.map((prize) => (
             <motion.div
               key={prize.id}
