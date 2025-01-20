@@ -1,11 +1,16 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Participant } from "@/types/participant";
+
+interface Settings {
+  default_attempts: number;
+  required_percentage: number;
+}
 
 interface ParticipantCheckProps {
   participant: Participant | null;
-  settings: { default_attempts: number } | undefined;
+  settings: Settings | undefined;
   contestId: string;
   questionsLength: number;
 }

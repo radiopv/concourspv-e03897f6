@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery } from "@tanstack/react-query";
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 import QuestionDisplay from './questionnaire/QuestionDisplay';
 import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
 import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
@@ -9,9 +10,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
 import CountdownTimer from './questionnaire/CountdownTimer';
 import ParticipantCheck from './questionnaire/ParticipantCheck';
+import { calculateFinalScore } from '@/utils/scoreCalculations';
 
 const QuestionnaireComponent = () => {
   const { contestId = '' } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const state = useQuestionnaireState();
   const [countdown, setCountdown] = useState(5);
   const [showQuestions, setShowQuestions] = useState(false);
 
@@ -35,13 +41,13 @@ const QuestionnaireComponent = () => {
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
+      if (!session?.user?.id) return null;
 
       const { data, error } = await supabase
         .from('participants')
         .select('status, score, attempts')
         .eq('contest_id', contestId)
-        .eq('id', session.session.user.id)
+        .eq('id', session.user.id)
         .maybeSingle();
 
       if (error && error.code === 'PGRST116') return null;
@@ -74,8 +80,8 @@ const QuestionnaireComponent = () => {
   useEffect(() => {
     const initializeParticipant = async () => {
       try {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user?.id) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) {
           toast({
             title: "Erreur",
             description: "Vous devez être connecté pour participer",

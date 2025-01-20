@@ -16,7 +16,7 @@ const ContestsList = () => {
   const canonicalUrl = `${window.location.origin}/contests`;
 
   if (selectedContestId) {
-    return <QuestionnaireComponent contestId={selectedContestId} />;
+    return <QuestionnaireComponent />;  // Remove contestId prop as it's accessed via useParams
   }
 
   if (isLoading) {
