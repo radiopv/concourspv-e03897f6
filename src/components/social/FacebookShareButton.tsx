@@ -70,20 +70,23 @@ const FacebookShareButton = ({ url, title, type, contestId, imageUrl }: Facebook
         }
 
         // Show appropriate toast message based on the result
-        const message = type === 'contest'
-          ? "Vous avez gagné 5 points et une participation bonus !"
-          : "Vous avez gagné 5 points pour votre partage !";
+        if (data.points_awarded > 0) {
+          const message = type === 'contest'
+            ? "Vous avez gagné 5 points et une participation bonus !"
+            : "Vous avez gagné 5 points pour votre partage !";
 
-        // If monthly bonus was awarded, add it to the message
-        const bonusMessage = data.bonus_awarded > 0
-          ? "\n+15 points bonus pour 5 partages ce mois-ci !"
-          : "";
-
-        toast({
-          title: "Partage réussi !",
-          description: message + bonusMessage,
-          duration: 5000,
-        });
+          toast({
+            title: "Partage réussi !",
+            description: message,
+            duration: 5000,
+          });
+        } else {
+          toast({
+            title: "Partage réussi !",
+            description: "Vous avez atteint la limite de partages récompensés pour ce mois-ci.",
+            duration: 5000,
+          });
+        }
       }
     } catch (error) {
       console.error('Erreur lors du partage:', error);

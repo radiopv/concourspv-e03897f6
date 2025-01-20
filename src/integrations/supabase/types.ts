@@ -1002,6 +1002,7 @@ export type Database = {
           current_rank: string | null
           current_streak: number | null
           extra_participations: number | null
+          monthly_shares: number | null
           total_points: number | null
           updated_at: string
           user_id: string
@@ -1012,6 +1013,7 @@ export type Database = {
           current_rank?: string | null
           current_streak?: number | null
           extra_participations?: number | null
+          monthly_shares?: number | null
           total_points?: number | null
           updated_at?: string
           user_id: string
@@ -1022,6 +1024,7 @@ export type Database = {
           current_rank?: string | null
           current_streak?: number | null
           extra_participations?: number | null
+          monthly_shares?: number | null
           total_points?: number | null
           updated_at?: string
           user_id?: string

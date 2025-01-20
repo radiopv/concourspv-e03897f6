@@ -51,10 +51,30 @@ const ShareScore = ({ score, totalQuestions, contestId }: ShareScoreProps) => {
         `width=${width},height=${height},top=${top},left=${left}`
       );
 
-      toast({
-        title: "Partage réussi !",
-        description: "Merci d'avoir partagé votre score !",
+      // Call the updated RPC function to handle rewards
+      const { data, error } = await supabase.rpc('handle_facebook_share', {
+        input_user_id: (await supabase.auth.getUser()).data.user?.id,
+        share_type: 'score',
+        contest_id: contestId
       });
+
+      if (error) {
+        console.error('Error handling share rewards:', error);
+        throw error;
+      }
+
+      // Show appropriate toast message based on the result
+      if (data.points_awarded > 0) {
+        toast({
+          title: "Partage réussi !",
+          description: `Vous avez gagné ${data.points_awarded} points pour votre partage !`,
+        });
+      } else {
+        toast({
+          title: "Partage réussi !",
+          description: "Vous avez atteint la limite de partages récompensés pour ce mois-ci.",
+        });
+      }
     } catch (error) {
       console.error('Error sharing:', error);
       toast({
