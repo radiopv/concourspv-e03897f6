@@ -21,7 +21,7 @@ interface QuestionDisplayProps {
   isLastQuestion: boolean;
 }
 
-const QuestionDisplay = ({
+const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
   questionText,
   articleUrl,
   options,
@@ -35,8 +35,7 @@ const QuestionDisplay = ({
   onSubmitAnswer,
   onNextQuestion,
   isLastQuestion
-}: QuestionDisplayProps) => {
-
+}) => {
   return (
     <div className="space-y-4">
       {!hasClickedLink && articleUrl && (
@@ -72,7 +71,7 @@ const QuestionDisplay = ({
           </div>
 
           <AnswerOptions
-            options={options}
+            options={Array.isArray(options) ? options : []}
             selectedAnswer={selectedAnswer}
             correctAnswer={hasAnswered ? correctAnswer : undefined}
             hasAnswered={hasAnswered}
@@ -84,7 +83,6 @@ const QuestionDisplay = ({
             <Button
               onClick={() => {
                 onSubmitAnswer();
-                // Attendre un court instant pour que l'utilisateur voie le résultat
                 setTimeout(() => {
                   onNextQuestion();
                 }, 1000);
