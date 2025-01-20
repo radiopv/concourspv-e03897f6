@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Star, Target } from "lucide-react";
+import { Trophy, Users, Star, Target, Gift, ExternalLink, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -118,7 +118,56 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             </div>
           </div>
 
-          <ContestPrizes prizes={contest.prizes || []} />
+          {contest.prizes && contest.prizes.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-[#F97316] justify-center">
+                <Gift className="w-5 h-5" />
+                Prix à gagner
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                {contest.prizes.map((prize) => (
+                  <div 
+                    key={prize.id} 
+                    className="group relative overflow-hidden rounded-lg border border-[#9b87f5]/20 bg-black/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                  >
+                    {prize.image_url && (
+                      <div className="aspect-video relative">
+                        <img
+                          src={prize.image_url}
+                          alt={prize.name}
+                          className="w-full h-full object-cover transform transition-transform group-hover:scale-105"
+                        />
+                      </div>
+                    )}
+                    <div className="p-4 space-y-3">
+                      <h4 className="font-semibold text-lg text-[#9b87f5] text-center">
+                        {prize.name}
+                      </h4>
+                      {prize.value && (
+                        <p className="flex items-center justify-center gap-1 text-[#F97316] font-medium">
+                          <DollarSign className="w-4 h-4" />
+                          Valeur: {prize.value} CAD $
+                        </p>
+                      )}
+                      {prize.shop_url && (
+                        <div className="text-center">
+                          <a
+                            href={prize.shop_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1 text-sm text-[#9b87f5] hover:text-[#F97316] transition-colors bg-black/20 px-4 py-2 rounded-full hover:bg-black/40"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Voir le cadeau
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-8 flex justify-center">
             <Button
