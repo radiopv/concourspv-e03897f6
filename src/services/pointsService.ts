@@ -148,7 +148,7 @@ export const awardPoints = async (
 
     if (pointsError) throw pointsError;
 
-    // Calculer les points avec le nouveau système
+    // Calculer les points avec le nouveau système de bonus
     let bonusMultiplier = 1;
     if (streak) {
       if (streak >= 5) bonusMultiplier = 1.5;
@@ -157,8 +157,8 @@ export const awardPoints = async (
       if (streak >= 20) bonusMultiplier = 3;
     }
 
-    // Réduire les points de base et appliquer le multiplicateur
-    const points = Math.round((basePoints * 0.5) * bonusMultiplier);
+    // Ne plus réduire les points de base, appliquer directement le multiplicateur
+    const points = Math.round(basePoints * bonusMultiplier);
     const newTotalPoints = (currentPoints?.total_points || 0) + points;
     const newBestStreak = Math.max(streak || 0, currentPoints?.best_streak || 0);
 
