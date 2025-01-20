@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, List, RefreshCw, BookOpen } from "lucide-react";
+import { Edit, Trash2, List, RefreshCw, BookOpen, Gift } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import ParticipantInfo from './participants/ParticipantInfo';
 import ParticipantsList from './ParticipantsList';
 import { useContestMutations } from './hooks/useContestMutations';
+import ContestPrizeManager from './ContestPrizeManager';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface ContestCardProps {
   contest: {
@@ -39,6 +47,7 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showParticipants, setShowParticipants] = React.useState(false);
+  const [showPrizes, setShowPrizes] = React.useState(false);
   const { resetContestMutation } = useContestMutations();
 
   const { data: participantsData } = useQuery({
@@ -211,6 +220,25 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
               <BookOpen className="h-4 w-4 mr-2" />
               Gérer les questions
             </Button>
+
+            <Dialog open={showPrizes} onOpenChange={setShowPrizes}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="hover:bg-purple-50"
+                >
+                  <Gift className="h-4 w-4 mr-2" />
+                  Gérer les prix
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Gestion des prix du concours</DialogTitle>
+                </DialogHeader>
+                <ContestPrizeManager contestId={contest.id} />
+              </DialogContent>
+            </Dialog>
+
             {onEdit && (
               <Button
                 variant="outline"
