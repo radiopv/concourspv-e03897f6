@@ -1,30 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { useQuestions } from './questionnaire/useQuestions';
-import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
-import { calculateFinalScore } from './questionnaire/QuestionnaireManager';
-import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
-import QuestionDisplay from './questionnaire/QuestionDisplay';
-import { useAttempts } from './questionnaire/hooks/useAttempts';
-import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import QuestionDisplay from './questionnaire/QuestionDisplay';
+import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
+import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
+import { Card, CardContent } from "@/components/ui/card";
+import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
+import CountdownTimer from './questionnaire/CountdownTimer';
+import ParticipantCheck from './questionnaire/ParticipantCheck';
 
-interface QuestionnaireComponentProps {
-  contestId: string;
-}
-
-const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const state = useQuestionnaireState();
-  const { data: questions } = useQuestions(contestId);
-  const { handleSubmitAnswer } = useAnswerSubmission(contestId);
-  const currentQuestion = questions?.[state.currentQuestionIndex];
+const QuestionnaireComponent = () => {
+  const { contestId = '' } = useParams();
   const [countdown, setCountdown] = useState(5);
   const [showQuestions, setShowQuestions] = useState(false);
 
@@ -35,11 +22,11 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       const { data, error } = await supabase
         .from('settings')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
+        .limit(1)
+        .single();
+
       if (error) throw error;
-      return data?.[0];
+      return data;
     }
   });
 
@@ -47,8 +34,8 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const { data: participant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user?.id) return null;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
 
       const { data, error } = await supabase
         .from('participants')
@@ -63,46 +50,26 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     }
   });
 
-  useEffect(() => {
-    // Vérifier les tentatives avant de démarrer le compte à rebours
-    if (participant?.attempts >= (settings?.default_attempts || 3)) {
-      toast({
-        title: "Limite de tentatives atteinte",
-        description: "Vous avez atteint le nombre maximum de tentatives autorisées pour ce concours.",
-        variant: "destructive",
-      });
-      navigate('/contests');
-      return;
-    }
+  const { data: questions } = useQuery({
+    queryKey: ['questions', contestId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('contest_id', contestId)
+        .order('order_number', { ascending: true });
 
-    if (participant?.status === 'completed') {
-      navigate('/quiz-completion', {
-        state: {
-          score: participant.score,
-          totalQuestions: questions?.length || 0,
-          contestId: contestId,
-          requiredPercentage: settings?.required_percentage || 90
-        }
-      });
-      return;
+      if (error) throw error;
+      return data;
     }
-  }, [participant, navigate, questions?.length, contestId, settings, toast]);
+  });
 
-  // Countdown effect - only start if participant hasn't reached attempt limit
-  useEffect(() => {
-    if (participant?.attempts >= (settings?.default_attempts || 3)) {
-      return;
-    }
-
-    if (countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown(prev => prev - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
+  const handleCountdownComplete = () => {
+    setCountdown(prev => prev - 1);
+    if (countdown <= 1) {
       setShowQuestions(true);
     }
-  }, [countdown, participant?.attempts, settings?.default_attempts]);
+  };
 
   useEffect(() => {
     const initializeParticipant = async () => {
@@ -282,58 +249,68 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
   if (!questions || questions.length === 0) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card>
         <CardContent className="p-6">
-          <div className="text-center">
-            <p className="text-lg text-gray-600">Aucune question disponible.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!showQuestions) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-6">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold mb-4">Préparez-vous !</h2>
-            <p className="text-6xl font-bold text-indigo-600 mb-4">{countdown}</p>
-            <p className="text-lg text-gray-600">Le quiz commence dans quelques secondes...</p>
-          </div>
+          <p className="text-center">Aucune question n'est disponible pour ce concours.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto animate-fadeIn">
-      <CardHeader>
-        <QuestionnaireProgress
-          currentQuestionIndex={state.currentQuestionIndex}
-          totalQuestions={questions?.length || 0}
-          score={state.score}
-          totalAnswered={state.totalAnswered}
+    <div className="container mx-auto p-4 space-y-6">
+      <ParticipantCheck
+        participant={participant}
+        settings={settings}
+        contestId={contestId}
+        questionsLength={questions.length}
+      />
+
+      {!showQuestions ? (
+        <CountdownTimer
+          countdown={countdown}
+          onCountdownComplete={handleCountdownComplete}
+          isDisabled={participant?.attempts >= (settings?.default_attempts || 3)}
         />
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <QuestionDisplay
-          questionText={currentQuestion?.question_text || ""}
-          articleUrl={currentQuestion?.article_url}
-          options={currentQuestion?.options || []}
-          selectedAnswer={state.selectedAnswer}
-          correctAnswer={currentQuestion?.correct_answer}
-          hasClickedLink={state.hasClickedLink}
-          hasAnswered={state.hasAnswered}
-          isSubmitting={state.isSubmitting}
-          onArticleRead={() => state.setHasClickedLink(true)}
-          onAnswerSelect={state.setSelectedAnswer}
-          onSubmitAnswer={() => handleSubmitAnswer(currentQuestion)}
-          onNextQuestion={handleNextQuestion}
-          isLastQuestion={state.currentQuestionIndex === questions?.length - 1}
-        />
-      </CardContent>
-    </Card>
+      ) : (
+        <Card>
+          <CardContent className="p-6 space-y-6">
+            <QuestionnaireProgress
+              currentQuestionIndex={useQuestionnaireState.getState().currentQuestionIndex}
+              totalQuestions={questions.length}
+              score={useQuestionnaireState.getState().score}
+              totalAnswered={useQuestionnaireState.getState().totalAnswered}
+            />
+            <QuestionDisplay
+              questionText={questions[useQuestionnaireState.getState().currentQuestionIndex].question_text}
+              articleUrl={questions[useQuestionnaireState.getState().currentQuestionIndex].article_url}
+              options={questions[useQuestionnaireState.getState().currentQuestionIndex].options}
+              selectedAnswer={useQuestionnaireState.getState().selectedAnswer}
+              correctAnswer={useQuestionnaireState.getState().hasAnswered ? 
+                questions[useQuestionnaireState.getState().currentQuestionIndex].correct_answer : 
+                undefined}
+              hasClickedLink={useQuestionnaireState.getState().hasClickedLink}
+              hasAnswered={useQuestionnaireState.getState().hasAnswered}
+              isSubmitting={useQuestionnaireState.getState().isSubmitting}
+              onArticleRead={() => useQuestionnaireState.getState().setHasClickedLink(true)}
+              onAnswerSelect={(answer) => useQuestionnaireState.getState().setSelectedAnswer(answer)}
+              onSubmitAnswer={() => useAnswerSubmission(contestId).handleSubmitAnswer(
+                questions[useQuestionnaireState.getState().currentQuestionIndex]
+              )}
+              onNextQuestion={() => {
+                if (useQuestionnaireState.getState().currentQuestionIndex < questions.length - 1) {
+                  useQuestionnaireState.getState().setCurrentQuestionIndex(prev => prev + 1);
+                  useQuestionnaireState.getState().setSelectedAnswer('');
+                  useQuestionnaireState.getState().setHasClickedLink(false);
+                  useQuestionnaireState.getState().setHasAnswered(false);
+                }
+              }}
+              isLastQuestion={useQuestionnaireState.getState().currentQuestionIndex === questions.length - 1}
+            />
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
