@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from 'framer-motion';
-import { Trophy, Gift, Users } from 'lucide-react';
+import { Trophy, Gift } from 'lucide-react';
 
 const QuickActions = () => {
   const navigate = useNavigate();
@@ -21,18 +21,11 @@ const QuickActions = () => {
       icon: Gift,
       path: "/prizes",
       gradient: "from-orange-500 to-rose-500"
-    },
-    {
-      title: "Communauté",
-      description: "Rejoignez les autres participants",
-      icon: Users,
-      path: "/community",
-      gradient: "from-rose-500 to-amber-500"
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {actions.map((action, index) => (
         <motion.div
           key={action.path}
