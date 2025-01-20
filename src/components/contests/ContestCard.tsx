@@ -33,6 +33,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         .from('participants')
         .select('score, status')
         .eq('contest_id', contest.id)
+        .eq('status', 'completed')
         .not('score', 'is', null);
 
       if (!participants) return null;
@@ -54,6 +55,9 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     ? "w-full max-w-4xl mx-auto" 
     : "w-full";
 
+  // Remove "Connaissance de base" from the title if it appears twice
+  const cleanTitle = contest.title.replace(/Connaissance de base/g, '').trim();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -65,7 +69,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         <CardHeader className="border-b border-[#9b87f5]/20 pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-[#9b87f5] to-[#F97316] bg-clip-text text-transparent">
-              {contest.title}
+              {cleanTitle}
             </CardTitle>
             <div className="flex gap-2">
               {contest.is_new && (
