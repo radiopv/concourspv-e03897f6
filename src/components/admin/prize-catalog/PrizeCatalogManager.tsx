@@ -3,14 +3,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
-import { ExternalLink, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import PrizeForm from "./PrizeForm";
-import PrizeGrid from "./PrizeGrid";
 import PrizeTabs from "./PrizeTabs";
 
 const PrizeCatalogManager = () => {
@@ -30,12 +26,17 @@ const PrizeCatalogManager = () => {
   const { data: prizes, isLoading } = useQuery({
     queryKey: ['prize-catalog'],
     queryFn: async () => {
+      console.log('Fetching prize catalog...');
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching prize catalog:', error);
+        throw error;
+      }
+      console.log('Prize catalog data:', data);
       return data;
     }
   });
@@ -80,6 +81,7 @@ const PrizeCatalogManager = () => {
 
   const addPrizeMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      console.log('Adding prize to catalog:', data);
       const { error } = await supabase
         .from('prize_catalog')
         .insert([data]);
@@ -113,6 +115,7 @@ const PrizeCatalogManager = () => {
 
   const updatePrizeMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      console.log('Updating prize:', id, data);
       const { error } = await supabase
         .from('prize_catalog')
         .update(data)
@@ -147,6 +150,7 @@ const PrizeCatalogManager = () => {
 
   const deletePrizeMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting prize:', id);
       const { error } = await supabase
         .from('prize_catalog')
         .delete()
@@ -180,6 +184,7 @@ const PrizeCatalogManager = () => {
       image_url: prize.image_url || '',
       shop_url: prize.shop_url || '',
     });
+    setIsFormOpen(true);
   };
 
   const handleArchive = async (id: string, status: 'active' | 'archived') => {
