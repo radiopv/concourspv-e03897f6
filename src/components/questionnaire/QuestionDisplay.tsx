@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import ArticleLink from './ArticleLink';
 
 interface QuestionDisplayProps {
@@ -42,7 +41,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
         {articleUrl && (
           <ArticleLink
             url={articleUrl}
-            hasClicked={hasClickedLink}
+            isRead={hasClickedLink}
             onArticleRead={onArticleRead}
           />
         )}

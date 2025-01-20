@@ -40,7 +40,7 @@ const QuestionnaireComponent = () => {
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session?.user?.id) return null;
+      if (!sessionData.session?.user?.id) return null;
 
       const { data, error } = await supabase
         .from('participants')
@@ -80,7 +80,7 @@ const QuestionnaireComponent = () => {
     const initializeParticipant = async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session?.user?.id) {
+        if (!sessionData.session?.user?.id) {
           toast({
             title: "Erreur",
             description: "Vous devez être connecté pour participer",

@@ -1,5 +1,4 @@
 import { QueryClient } from "@tanstack/react-query";
-import { PARTICIPANT_STATUS } from "@/types/participant";
 import { supabase } from "@/lib/supabase";
 
 export const drawService = {
@@ -56,7 +55,7 @@ export const drawService = {
       // Update winner status
       const { error: winnerError } = await supabase
         .from('participants')
-        .update({ status: PARTICIPANT_STATUS.WINNER })
+        .update({ status: 'winner' })
         .eq('id', winner.id);
 
       if (winnerError) throw winnerError;
