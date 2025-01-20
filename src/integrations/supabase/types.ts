@@ -78,6 +78,7 @@ export type Database = {
           id: string
           is_featured: boolean | null
           is_new: boolean | null
+          main_image_url: string | null
           prize_image_url: string | null
           share_image_url: string | null
           shop_url: string | null
@@ -95,6 +96,7 @@ export type Database = {
           id?: string
           is_featured?: boolean | null
           is_new?: boolean | null
+          main_image_url?: string | null
           prize_image_url?: string | null
           share_image_url?: string | null
           shop_url?: string | null
@@ -112,6 +114,7 @@ export type Database = {
           id?: string
           is_featured?: boolean | null
           is_new?: boolean | null
+          main_image_url?: string | null
           prize_image_url?: string | null
           share_image_url?: string | null
           shop_url?: string | null

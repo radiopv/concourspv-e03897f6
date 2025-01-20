@@ -46,12 +46,11 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
     has_big_prizes: false,
     shop_url: '',
     prize_image_url: '',
+    main_image_url: '',
   });
 
-  // Update form data when contest data is loaded
   useEffect(() => {
     if (contest) {
-      // Format dates to YYYY-MM-DD for input type="date"
       const formatDate = (dateString: string) => {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -69,6 +68,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
         has_big_prizes: contest.has_big_prizes || false,
         shop_url: contest.shop_url || '',
         prize_image_url: contest.prize_image_url || '',
+        main_image_url: contest.main_image_url || '',
       });
     }
   }, [contest]);
@@ -95,12 +95,12 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
 
       const { error: updateError } = await supabase
         .from('contests')
-        .update({ prize_image_url: publicUrl })
+        .update({ main_image_url: publicUrl })
         .eq('id', contestId);
 
       if (updateError) throw updateError;
 
-      setFormData(prev => ({ ...prev, prize_image_url: publicUrl }));
+      setFormData(prev => ({ ...prev, main_image_url: publicUrl }));
       queryClient.invalidateQueries({ queryKey: ['contest', contestId] });
       toast({
         title: "Succès",
@@ -121,7 +121,38 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log('Submitting form data:', formData);
+      // Validate dates
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(formData.end_date);
+      const drawDate = new Date(formData.draw_date);
+
+      if (endDate < startDate) {
+        toast({
+          title: "Erreur",
+          description: "La date de fin doit être postérieure à la date de début",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (drawDate < endDate) {
+        toast({
+          title: "Erreur",
+          description: "La date de tirage doit être postérieure à la date de fin",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate description length
+      if (formData.description && formData.description.length > 500) {
+        toast({
+          title: "Erreur",
+          description: "La description ne doit pas dépasser 500 caractères",
+          variant: "destructive",
+        });
+        return;
+      }
       
       const { error } = await supabase
         .from('contests')

@@ -17,6 +17,7 @@ interface ContestBasicFormProps {
     has_big_prizes: boolean;
     shop_url?: string;
     prize_image_url?: string;
+    main_image_url?: string;
   };
   setFormData: (data: any) => void;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -42,7 +43,12 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
           id="description"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          maxLength={500}
+          className="h-32"
         />
+        <p className="text-sm text-gray-500 mt-1">
+          {formData.description?.length || 0}/500 caractères
+        </p>
       </div>
 
       <div>
@@ -57,21 +63,23 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
       </div>
 
       <div>
-        <Label htmlFor="prize_image">Image du prix</Label>
-        <Input
-          id="prize_image"
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          disabled={uploading}
-        />
-        {formData.prize_image_url && (
-          <img 
-            src={formData.prize_image_url} 
-            alt="Prix du concours" 
-            className="mt-2 max-w-xs rounded-lg"
+        <Label htmlFor="main_image">Image principale</Label>
+        <div className="space-y-2">
+          {formData.main_image_url && (
+            <img 
+              src={formData.main_image_url} 
+              alt="Image principale du concours" 
+              className="max-w-xs rounded-lg"
+            />
+          )}
+          <Input
+            id="main_image"
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            disabled={uploading}
           />
-        )}
+        </div>
       </div>
 
       <div>
