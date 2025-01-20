@@ -34,5 +34,4 @@ export interface Contest {
   prizes?: Prize[];
   shop_url?: string;
   prize_image_url?: string;
-  main_image_url?: string;
 }

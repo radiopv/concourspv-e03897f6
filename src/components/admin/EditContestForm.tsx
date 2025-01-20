@@ -44,6 +44,8 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
     is_featured: false,
     is_new: false,
     has_big_prizes: false,
+    shop_url: '',
+    prize_image_url: '',
     main_image_url: '',
   });
 
@@ -64,6 +66,8 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
         is_featured: contest.is_featured || false,
         is_new: contest.is_new || false,
         has_big_prizes: contest.has_big_prizes || false,
+        shop_url: contest.shop_url || '',
+        prize_image_url: contest.prize_image_url || '',
         main_image_url: contest.main_image_url || '',
       });
     }
@@ -161,6 +165,7 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
           is_featured: formData.is_featured,
           is_new: formData.is_new,
           has_big_prizes: formData.has_big_prizes,
+          shop_url: formData.shop_url,
         })
         .eq('id', contestId);
 
