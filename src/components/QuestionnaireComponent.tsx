@@ -28,20 +28,6 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   const [countdown, setCountdown] = useState(5);
   const [showQuestions, setShowQuestions] = useState(false);
 
-  useAttempts(contestId);
-
-  // Countdown effect
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown(prev => prev - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setShowQuestions(true);
-    }
-  }, [countdown]);
-
   // Récupérer les paramètres globaux
   const { data: settings } = useQuery({
     queryKey: ['global-settings'],
@@ -57,7 +43,7 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
     }
   });
 
-  // Vérifier si le participant a déjà complété le quiz
+  // Vérifier si le participant a déjà complété le quiz ou atteint la limite de tentatives
   const { data: participant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
@@ -66,12 +52,11 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
 
       const { data, error } = await supabase
         .from('participants')
-        .select('status, score')
+        .select('status, score, attempts')
         .eq('contest_id', contestId)
         .eq('id', session.session.user.id)
         .maybeSingle();
 
-      // If no participant found, return null instead of throwing
       if (error && error.code === 'PGRST116') return null;
       if (error) throw error;
       return data;
@@ -79,6 +64,17 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
   });
 
   useEffect(() => {
+    // Vérifier les tentatives avant de démarrer le compte à rebours
+    if (participant?.attempts >= (settings?.default_attempts || 3)) {
+      toast({
+        title: "Limite de tentatives atteinte",
+        description: "Vous avez atteint le nombre maximum de tentatives autorisées pour ce concours.",
+        variant: "destructive",
+      });
+      navigate('/contests');
+      return;
+    }
+
     if (participant?.status === 'completed') {
       navigate('/quiz-completion', {
         state: {
@@ -90,7 +86,23 @@ const QuestionnaireComponent = ({ contestId }: QuestionnaireComponentProps) => {
       });
       return;
     }
-  }, [participant, navigate, questions?.length, contestId, settings]);
+  }, [participant, navigate, questions?.length, contestId, settings, toast]);
+
+  // Countdown effect - only start if participant hasn't reached attempt limit
+  useEffect(() => {
+    if (participant?.attempts >= (settings?.default_attempts || 3)) {
+      return;
+    }
+
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowQuestions(true);
+    }
+  }, [countdown, participant?.attempts, settings?.default_attempts]);
 
   useEffect(() => {
     const initializeParticipant = async () => {
