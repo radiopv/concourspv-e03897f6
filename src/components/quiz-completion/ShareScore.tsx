@@ -25,10 +25,15 @@ const ShareScore = ({ score, contestTitle, contestId }: ShareScoreProps) => {
           input_contest_id: contestId
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching contest metadata:', error);
+        throw error;
+      }
       return data?.[0];
     }
   });
+
+  console.log('Contest metadata for sharing:', metadata); // Debug log
 
   return (
     <>
@@ -38,14 +43,20 @@ const ShareScore = ({ score, contestTitle, contestId }: ShareScoreProps) => {
         <meta property="og:type" content="article" />
         <meta property="og:url" content={shareUrl} />
         {metadata?.image_url && (
-          <meta property="og:image" content={metadata.image_url} />
+          <>
+            <meta property="og:image" content={metadata.image_url} />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+          </>
         )}
         <meta property="og:site_name" content="Concours Quiz" />
         {metadata?.prize_value && (
-          <meta property="og:price:amount" content={metadata.prize_value.toString()} />
+          <>
+            <meta property="og:price:amount" content={metadata.prize_value.toString()} />
+            <meta property="og:price:currency" content="CAD" />
+          </>
         )}
-        <meta property="og:price:currency" content="CAD" />
-        <meta property="fb:app_id" content="your-fb-app-id" />
+        <meta property="fb:app_id" content="1103960937264123" />
       </Helmet>
       
       <Card className="bg-gradient-to-br from-purple-50 to-pink-50">
