@@ -4,6 +4,7 @@ import * as z from "zod";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { AuthError, AuthApiError } from '@supabase/supabase-js';
 
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -49,9 +50,31 @@ export const LoginForm = () => {
     }
   }, [state?.message, toast]);
 
+  const getErrorMessage = (error: AuthError) => {
+    if (error instanceof AuthApiError) {
+      switch (error.status) {
+        case 400:
+          if (error.message.includes('Email not confirmed')) {
+            return "Veuillez vérifier votre email pour activer votre compte.";
+          }
+          if (error.message.includes('Invalid login credentials')) {
+            return "Email ou mot de passe incorrect.";
+          }
+          return "Une erreur est survenue lors de la connexion.";
+        case 422:
+          return "Format d'email invalide.";
+        case 429:
+          return "Trop de tentatives de connexion. Veuillez réessayer plus tard.";
+        default:
+          return error.message;
+      }
+    }
+    return "Une erreur inattendue est survenue. Veuillez réessayer.";
+  };
+
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
-      console.log("Tentative de connexion avec:", values.email); // Debug log
+      console.log("Tentative de connexion avec:", values.email);
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
@@ -59,22 +82,16 @@ export const LoginForm = () => {
       });
 
       if (error) {
-        console.error("Erreur de connexion:", error); // Debug log
-        let errorMessage = "Email ou mot de passe incorrect.";
-        
-        if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Veuillez vérifier votre email pour activer votre compte.";
-        }
-
+        console.error("Erreur de connexion:", error);
         toast({
           variant: "destructive",
           title: "Erreur de connexion",
-          description: errorMessage,
+          description: getErrorMessage(error),
         });
         return;
       }
 
-      console.log("Réponse de connexion:", data); // Debug log
+      console.log("Réponse de connexion:", data);
 
       if (data?.user) {
         toast({
@@ -89,7 +106,7 @@ export const LoginForm = () => {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de la connexion. Veuillez réessayer.",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la connexion",
       });
     }
   };
