@@ -1043,7 +1043,7 @@ export type Database = {
     Functions: {
       get_contest_share_metadata: {
         Args: {
-          contest_id: string
+          input_contest_id: string
         }
         Returns: {
           title: string

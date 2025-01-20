@@ -25,7 +25,7 @@ const FacebookShareButton = ({ url, title, type, contestId, imageUrl }: Facebook
       // Get contest metadata if sharing a contest
       if (type === 'contest' && contestId) {
         const { data: metadata, error } = await supabase.rpc('get_contest_share_metadata', {
-          contest_id: contestId
+          input_contest_id: contestId // Updated parameter name to match SQL function
         });
 
         if (error) {
