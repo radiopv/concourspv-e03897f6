@@ -109,3 +109,5 @@ export const PrizeForm = ({
     </form>
   );
 };
+
+export default PrizeForm;
