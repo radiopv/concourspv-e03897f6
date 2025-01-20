@@ -229,10 +229,15 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
           {/* Prix du concours */}
           {prizes && prizes.length > 0 && (
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-gray-700 mb-4">Prix à gagner</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <h3 className="font-semibold text-gray-700 mb-4 text-center">Prix à gagner</h3>
+              {prizes.length > 1 && (
+                <p className="text-center text-gray-600 mb-4 italic">
+                  Le gagnant pourra choisir l'un des deux prix suivants
+                </p>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
                 {prizes.map((prize, index) => (
-                  <div key={prize.id} className="bg-white p-4 rounded-lg shadow">
+                  <div key={prize.id} className="bg-white p-4 rounded-lg shadow flex flex-col">
                     {prize.prize_catalog?.image_url && (
                       <div className="aspect-video relative mb-3">
                         <img
@@ -242,24 +247,24 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
                         />
                       </div>
                     )}
-                    <div className="space-y-2">
+                    <div className="space-y-2 flex-grow">
                       <div className="flex items-start justify-between">
-                        <h4 className="font-medium text-gray-800">
+                        <h4 className="font-medium text-gray-800 text-center w-full">
                           {prize.prize_catalog?.name}
                         </h4>
-                        {index === 1 && (
-                          <Badge variant="secondary">Prix au choix</Badge>
-                        )}
                       </div>
                       {prize.prize_catalog?.description && (
-                        <p className="text-sm text-gray-600">
-                          {prize.prize_catalog.description}
-                        </p>
+                        <div 
+                          className="text-sm text-gray-600 text-center"
+                          dangerouslySetInnerHTML={{ 
+                            __html: prize.prize_catalog.description 
+                          }}
+                        />
                       )}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-center gap-4 mt-auto pt-2">
                         <span className="text-sm font-medium text-gray-700">
                           {prize.prize_catalog?.value 
-                            ? `${prize.prize_catalog.value}€` 
+                            ? `${prize.prize_catalog.value} CAD $` 
                             : 'Prix non défini'}
                         </span>
                         {prize.prize_catalog?.shop_url && (
