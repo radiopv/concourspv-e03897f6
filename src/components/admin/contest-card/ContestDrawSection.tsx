@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { drawService } from '../services/drawService';
 import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface ContestDrawSectionProps {
   contestId: string;
@@ -19,7 +19,7 @@ const ContestDrawSection = ({ contestId, status, drawDate, winners }: ContestDra
 
   const handleDraw = async () => {
     try {
-      const winner = await drawService.endContestAndDraw(contestId, queryClient);
+      const winner = await drawService.performDraw(contestId, queryClient);
       toast({
         title: "Tirage effectué",
         description: `Le gagnant est ${winner.first_name} ${winner.last_name} avec un score de ${winner.score}%`,
