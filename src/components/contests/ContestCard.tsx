@@ -26,15 +26,13 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       >
         <CardContent className="p-0">
           {/* Image principale du concours */}
-          {contest.main_image_url && (
-            <div className="aspect-video relative">
-              <img
-                src={contest.main_image_url}
-                alt={contest.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
+          <div className="aspect-video relative">
+            <img
+              src={contest.main_image_url || '/placeholder.svg'}
+              alt={contest.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
 
           <div className="p-6 space-y-4">
             <div className="space-y-2">
