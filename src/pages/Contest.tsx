@@ -10,7 +10,6 @@ import ContestHeader from "@/components/contest/ContestHeader";
 import ContestStats from "@/components/contest/ContestStats";
 import ContestPrizes from "@/components/contest/ContestPrizes";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
-import FacebookShareButton from "@/components/social/FacebookShareButton";
 
 const Contest = () => {
   const { id } = useParams();
@@ -116,12 +115,10 @@ const Contest = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
       <Helmet>
-        {/* Balises SEO de base */}
         <title>{contest.title} - Participez et gagnez des prix</title>
         <meta name="description" content={contest.description || `Participez au concours "${contest.title}" et tentez de gagner des prix exceptionnels !`} />
         <link rel="canonical" href={canonicalUrl} />
         
-        {/* Balises Open Graph pour Facebook */}
         <meta property="og:title" content={contest.title} />
         <meta property="og:description" content={contest.description || `Participez et tentez de gagner ${prizeValue ? `${prizeValue}$ en prix` : 'des prix exceptionnels'} !`} />
         <meta property="og:type" content="website" />
@@ -134,7 +131,6 @@ const Contest = () => {
           </>
         )}
         
-        {/* Balises pour le prix si disponible */}
         {prizeValue && (
           <>
             <meta property="product:price:amount" content={prizeValue.toString()} />
@@ -142,13 +138,11 @@ const Contest = () => {
           </>
         )}
         
-        {/* Balises Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={contest.title} />
         <meta name="twitter:description" content={contest.description || `Participez et gagnez des prix exceptionnels !`} />
         {mainPrizeImage && <meta name="twitter:image" content={mainPrizeImage} />}
         
-        {/* Balises structurées pour Google */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -189,7 +183,7 @@ const Contest = () => {
 
           <ContestPrizes prizes={contest?.prizes || []} />
 
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center">
             <Button
               size="lg"
               onClick={() => setShowQuestionnaire(true)}
@@ -197,14 +191,6 @@ const Contest = () => {
             >
               Participer maintenant
             </Button>
-
-            <FacebookShareButton
-              url={canonicalUrl}
-              title={`Participez au concours "${contest?.title}" et gagnez des prix exceptionnels !`}
-              type="contest"
-              contestId={id}
-              imageUrl={mainPrizeImage}
-            />
           </div>
         </div>
       </div>
