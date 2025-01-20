@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import ContestPrizes from "./contest-card/ContestPrizes";
 import { calculateWinningChance } from "../../utils/contestCalculations";
 import { Prize } from "@/types/prize";
+import FacebookShareButton from '../social/FacebookShareButton';
 
 interface ContestCardProps {
   contest: {
@@ -78,6 +79,12 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                   Gros Lots
                 </Badge>
               )}
+              <FacebookShareButton
+                url={`${window.location.origin}/contests/${contest.id}`}
+                title={`Participez au concours "${contest.title}" et gagnez des prix exceptionnels !`}
+                type="contest"
+                contestId={contest.id}
+              />
             </div>
           </div>
           {contest.description && (
