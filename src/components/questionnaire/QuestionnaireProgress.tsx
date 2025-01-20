@@ -1,5 +1,7 @@
 import React from 'react';
-import { CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 interface QuestionnaireProgressProps {
   currentQuestionIndex: number;
@@ -8,40 +10,59 @@ interface QuestionnaireProgressProps {
   totalAnswered: number;
 }
 
-const QuestionnaireProgress = ({ 
-  currentQuestionIndex, 
+const QuestionnaireProgress = ({
+  currentQuestionIndex,
   totalQuestions,
   score,
-  totalAnswered
+  totalAnswered,
 }: QuestionnaireProgressProps) => {
-  const calculateProgress = () => {
-    if (!totalQuestions) return 0;
-    return Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100);
-  };
+  const { data: userPoints } = useQuery({
+    queryKey: ['user-points'],
+    queryFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.user?.id) return null;
 
-  const progress = calculateProgress();
-  const currentScore = totalAnswered > 0 ? Math.round((score / totalAnswered) * 100) : 0;
+      const { data, error } = await supabase
+        .from('user_points')
+        .select('extra_participations')
+        .eq('user_id', sessionData.session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user points:', error);
+        return null;
+      }
+
+      return data;
+    }
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ['global-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('default_attempts')
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const maxAttempts = (settings?.default_attempts || 3) + (userPoints?.extra_participations || 0);
 
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between items-center">
-        <CardTitle className="text-2xl font-bold">
-          Question {currentQuestionIndex + 1} sur {totalQuestions}
-        </CardTitle>
-        <div className="text-sm space-y-1">
-          <div className="text-muted-foreground">
-            {progress}% complété
-          </div>
-          <div className="text-primary font-medium">
-            Score actuel: {currentScore}%
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center text-sm text-gray-600">
+        <span>Question {currentQuestionIndex + 1} sur {totalQuestions}</span>
+        <span>Score: {score}%</span>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2.5">
-        <div 
-          className="bg-primary h-2.5 rounded-full transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
+      <Progress value={(currentQuestionIndex / totalQuestions) * 100} />
+      <div className="flex justify-between text-sm text-gray-600">
+        <span>Questions répondues: {totalAnswered}/{totalQuestions}</span>
+        <span>Tentatives: {settings?.default_attempts || 3}/{maxAttempts}</span>
       </div>
     </div>
   );
