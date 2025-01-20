@@ -1,85 +1,103 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy } from "lucide-react";
-import FacebookShareButton from '../social/FacebookShareButton';
 import { Helmet } from 'react-helmet';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { Button } from "@/components/ui/button";
+import { Facebook } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useQuery } from "@tanstack/react-query";
 
 interface ShareScoreProps {
   score: number;
-  contestTitle: string;
+  totalQuestions: number;
   contestId: string;
 }
 
-const ShareScore = ({ score, contestTitle, contestId }: ShareScoreProps) => {
-  const shareUrl = `${window.location.origin}/contests/${contestId}`;
-  const shareTitle = `Je viens d'obtenir ${score}% au concours "${contestTitle}" ! Participez vous aussi pour gagner des prix exceptionnels !`;
+const ShareScore = ({ score, totalQuestions, contestId }: ShareScoreProps) => {
+  const { toast } = useToast();
+  const currentUrl = window.location.href;
 
-  // Fetch contest metadata for OG tags
   const { data: metadata } = useQuery({
-    queryKey: ['contest-metadata', contestId],
+    queryKey: ['contest-share-metadata', contestId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .rpc('get_contest_share_metadata', {
-          input_contest_id: contestId
-        });
+      console.log('Fetching contest metadata for sharing...');
+      const { data, error } = await supabase.rpc('get_contest_share_metadata', {
+        input_contest_id: contestId
+      });
 
       if (error) {
         console.error('Error fetching contest metadata:', error);
         throw error;
       }
-      return data?.[0];
+
+      console.log('Contest metadata received:', data);
+      return data[0];
     }
   });
 
-  console.log('Contest metadata for sharing:', metadata); // Debug log
+  const handleShare = async () => {
+    try {
+      // Construct share URL with metadata
+      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
+      
+      // Open Facebook share dialog
+      const width = 626;
+      const height = 436;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+      
+      window.open(
+        shareUrl,
+        'facebook-share-dialog',
+        `width=${width},height=${height},top=${top},left=${left}`
+      );
+
+      toast({
+        title: "Partage réussi !",
+        description: "Merci d'avoir partagé votre score !",
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors du partage",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const shareTitle = metadata?.title 
+    ? `J'ai obtenu ${score}/${totalQuestions} au quiz "${metadata.title}" !`
+    : `J'ai obtenu ${score}/${totalQuestions} au quiz !`;
+
+  const shareDescription = metadata?.description || 
+    "Participez vous aussi et tentez de gagner des prix exceptionnels !";
+
+  const shareImage = metadata?.image_url || 'https://votre-site.com/default-share-image.jpg';
 
   return (
     <>
       <Helmet>
-        <meta property="og:title" content={`${score}% - ${contestTitle}`} />
-        <meta property="og:description" content={shareTitle} />
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content={shareUrl} />
-        {metadata?.image_url && (
-          <>
-            <meta property="og:image" content={metadata.image_url} />
-            <meta property="og:image:width" content="1200" />
-            <meta property="og:image:height" content="630" />
-          </>
-        )}
-        <meta property="og:site_name" content="Concours Quiz" />
+        <meta property="og:title" content={shareTitle} />
+        <meta property="og:description" content={shareDescription} />
+        <meta property="og:url" content={currentUrl} />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content={shareImage} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="fb:app_id" content="your-fb-app-id" />
         {metadata?.prize_value && (
-          <>
-            <meta property="og:price:amount" content={metadata.prize_value.toString()} />
-            <meta property="og:price:currency" content="CAD" />
-          </>
+          <meta property="og:price:amount" content={metadata.prize_value.toString()} />
         )}
-        <meta property="fb:app_id" content="1103960937264123" />
+        <meta property="og:price:currency" content="CAD" />
       </Helmet>
-      
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-purple-500" />
-            Partagez votre score !
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-center text-gray-600">
-            Partagez votre score avec vos amis et gagnez 5 points bonus !
-          </p>
-          <div className="flex justify-center">
-            <FacebookShareButton
-              url={shareUrl}
-              title={shareTitle}
-              type="score"
-              contestId={contestId}
-            />
-          </div>
-        </CardContent>
-      </Card>
+
+      <Button 
+        onClick={handleShare}
+        className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white"
+      >
+        <Facebook className="w-5 h-5 mr-2" />
+        Partager sur Facebook
+      </Button>
     </>
   );
 };
