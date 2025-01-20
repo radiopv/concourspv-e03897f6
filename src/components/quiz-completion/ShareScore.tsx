@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy } from "lucide-react";
 import FacebookShareButton from '../social/FacebookShareButton';
 import { Helmet } from 'react-helmet';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 
 interface ShareScoreProps {
   score: number;
@@ -14,13 +16,36 @@ const ShareScore = ({ score, contestTitle, contestId }: ShareScoreProps) => {
   const shareUrl = `${window.location.origin}/contests/${contestId}`;
   const shareTitle = `Je viens d'obtenir ${score}% au concours "${contestTitle}" ! Participez vous aussi pour gagner des prix exceptionnels !`;
 
+  // Fetch contest metadata for OG tags
+  const { data: metadata } = useQuery({
+    queryKey: ['contest-metadata', contestId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .rpc('get_contest_share_metadata', {
+          input_contest_id: contestId
+        });
+
+      if (error) throw error;
+      return data?.[0];
+    }
+  });
+
   return (
     <>
       <Helmet>
-        <meta property="og:title" content={`Score: ${score}% - ${contestTitle}`} />
+        <meta property="og:title" content={`${score}% - ${contestTitle}`} />
         <meta property="og:description" content={shareTitle} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={shareUrl} />
+        {metadata?.image_url && (
+          <meta property="og:image" content={metadata.image_url} />
+        )}
+        <meta property="og:site_name" content="Concours Quiz" />
+        {metadata?.prize_value && (
+          <meta property="og:price:amount" content={metadata.prize_value.toString()} />
+        )}
+        <meta property="og:price:currency" content="CAD" />
+        <meta property="fb:app_id" content="your-fb-app-id" />
       </Helmet>
       
       <Card className="bg-gradient-to-br from-purple-50 to-pink-50">
