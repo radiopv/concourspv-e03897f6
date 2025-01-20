@@ -1,32 +1,34 @@
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RANKS } from "@/services/pointsService";
-import { motion } from "framer-motion";
 
 const RanksList = () => {
   return (
-    <Card className="bg-gradient-to-br from-amber-50 to-red-50 border-amber-200">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-red-600 bg-clip-text text-transparent">
-          Niveaux & Avantages
-        </CardTitle>
+        <CardTitle className="text-2xl">Niveaux et Avantages</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {RANKS.map((rank, index) => (
-            <motion.div
-              key={rank.rank}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-white/50 backdrop-blur-sm p-4 rounded-lg text-center hover:shadow-md transition-all"
-            >
-              <div className="text-2xl mb-2">{rank.badge}</div>
-              <div className="font-bold text-amber-800">{rank.rank}</div>
-              <div className="text-sm text-amber-600">
-                {rank.minPoints} pts
-              </div>
-            </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {RANKS.map((rank) => (
+            <Card key={rank.rank} className="bg-white/50">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-2xl">{rank.badge}</span>
+                  <h3 className="text-lg font-semibold">{rank.rank}</h3>
+                </div>
+                <div className="text-sm text-gray-600 mb-4">
+                  {rank.minPoints} - {rank.maxPoints === Infinity ? '∞' : rank.maxPoints} points
+                </div>
+                <ul className="space-y-2 text-sm">
+                  {rank.benefits.map((benefit, index) => (
+                    <li key={index} className="flex items-center gap-2">
+                      <span className="text-green-500">✓</span>
+                      {benefit}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </CardContent>
