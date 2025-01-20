@@ -65,7 +65,7 @@ const ContestsList = () => {
             </h1>
           </div>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Découvrez nos concours exceptionnels !
+            Découvrez nos concours exceptionnels
           </p>
         </motion.div>
 

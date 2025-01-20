@@ -33,8 +33,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         .from('participants')
         .select('score, status')
         .eq('contest_id', contest.id)
-        .eq('status', 'completed')
-        .not('score', 'is', null);
+        .eq('status', 'completed');
 
       if (!participants) return null;
 
@@ -55,8 +54,8 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     ? "w-full max-w-4xl mx-auto" 
     : "w-full";
 
-  // Remove "Connaissance de base" from the title if it appears twice
-  const cleanTitle = contest.title.replace(/Connaissance de base/g, '').trim();
+  // Remove duplicate "Connaissance de base" from title
+  const cleanTitle = contest.title.replace(/Connaissance de base/g, '').replace(/\s+-\s+$/, '').trim();
 
   return (
     <motion.div
