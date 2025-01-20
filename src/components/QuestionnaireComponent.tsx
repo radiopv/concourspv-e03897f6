@@ -39,14 +39,14 @@ const QuestionnaireComponent = () => {
   const { data: participant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getSession();
-      if (!user?.id) return null;
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.user?.id) return null;
 
       const { data, error } = await supabase
         .from('participants')
         .select('*')
         .eq('contest_id', contestId)
-        .eq('id', user.id)
+        .eq('id', sessionData.session.user.id)
         .maybeSingle();
 
       if (error && error.code === 'PGRST116') return null;
@@ -79,8 +79,8 @@ const QuestionnaireComponent = () => {
   useEffect(() => {
     const initializeParticipant = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getSession();
-        if (!user?.id) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session?.user?.id) {
           toast({
             title: "Erreur",
             description: "Vous devez être connecté pour participer",
@@ -93,7 +93,7 @@ const QuestionnaireComponent = () => {
         const { data: userProfile } = await supabase
           .from('members')
           .select('first_name, last_name, email')
-          .eq('id', user.id)
+          .eq('id', sessionData.session.user.id)
           .single();
 
         if (!userProfile) {
@@ -109,7 +109,7 @@ const QuestionnaireComponent = () => {
         const { data: existingParticipant, error: checkError } = await supabase
           .from('participants')
           .select('participation_id, attempts')
-          .eq('id', user.id)
+          .eq('id', sessionData.session.user.id)
           .eq('contest_id', contestId)
           .maybeSingle();
 
@@ -138,7 +138,7 @@ const QuestionnaireComponent = () => {
             .from('participants')
             .insert({
               participation_id,
-              id: user.id,
+              id: sessionData.session.user.id,
               contest_id: contestId,
               status: 'pending',
               attempts: 1,
@@ -263,7 +263,7 @@ const QuestionnaireComponent = () => {
         participant={participant}
         settings={settings}
         contestId={contestId}
-        questionsLength={questions.length}
+        questionsLength={questions?.length || 0}
       />
 
       {!showQuestions ? (
@@ -277,7 +277,7 @@ const QuestionnaireComponent = () => {
           <CardContent className="p-6 space-y-6">
             <QuestionnaireProgress
               currentQuestionIndex={useQuestionnaireState.getState().currentQuestionIndex}
-              totalQuestions={questions.length}
+              totalQuestions={questions?.length || 0}
               score={useQuestionnaireState.getState().score}
               totalAnswered={useQuestionnaireState.getState().totalAnswered}
             />
@@ -297,14 +297,7 @@ const QuestionnaireComponent = () => {
               onSubmitAnswer={() => useAnswerSubmission(contestId).handleSubmitAnswer(
                 questions[useQuestionnaireState.getState().currentQuestionIndex]
               )}
-              onNextQuestion={() => {
-                if (useQuestionnaireState.getState().currentQuestionIndex < questions.length - 1) {
-                  useQuestionnaireState.getState().setCurrentQuestionIndex(prev => prev + 1);
-                  useQuestionnaireState.getState().setSelectedAnswer('');
-                  useQuestionnaireState.getState().setHasClickedLink(false);
-                  useQuestionnaireState.getState().setHasAnswered(false);
-                }
-              }}
+              onNextQuestion={handleNextQuestion}
               isLastQuestion={useQuestionnaireState.getState().currentQuestionIndex === questions.length - 1}
             />
           </CardContent>
