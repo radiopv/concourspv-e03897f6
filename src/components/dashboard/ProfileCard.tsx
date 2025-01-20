@@ -12,12 +12,22 @@ interface ProfileCardProps {
     email: string;
     first_name: string;
     last_name: string;
+    phone_number?: string;
+    street_address?: string;
+    city?: string;
+    postal_code?: string;
+    country?: string;
   };
   isEditing: boolean;
   formData: {
     first_name: string;
     last_name: string;
     email: string;
+    phone_number?: string;
+    street_address?: string;
+    city?: string;
+    postal_code?: string;
+    country?: string;
   };
   setFormData: (data: any) => void;
   setIsEditing: (editing: boolean) => void;
@@ -52,7 +62,12 @@ const ProfileCard = ({
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
-          email: formData.email
+          email: formData.email,
+          phone_number: formData.phone_number,
+          street_address: formData.street_address,
+          city: formData.city,
+          postal_code: formData.postal_code,
+          country: formData.country || 'France'
         })
         .eq("id", userId);
 
@@ -143,6 +158,45 @@ const ProfileCard = ({
               disabled={!isEditing}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Téléphone</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone_number || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="address">Adresse</Label>
+            <Input
+              id="address"
+              value={formData.street_address || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, street_address: e.target.value }))}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="city">Ville</Label>
+              <Input
+                id="city"
+                value={formData.city || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                disabled={!isEditing}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="postalCode">Code postal</Label>
+              <Input
+                id="postalCode"
+                value={formData.postal_code || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, postal_code: e.target.value }))}
+                disabled={!isEditing}
+              />
+            </div>
+          </div>
           <div className="flex justify-end gap-4">
             {!isEditing ? (
               <Button onClick={() => setIsEditing(true)}>
@@ -155,7 +209,12 @@ const ProfileCard = ({
                   setFormData({
                     first_name: userProfile.first_name,
                     last_name: userProfile.last_name,
-                    email: userProfile.email
+                    email: userProfile.email,
+                    phone_number: userProfile.phone_number,
+                    street_address: userProfile.street_address,
+                    city: userProfile.city,
+                    postal_code: userProfile.postal_code,
+                    country: userProfile.country
                   });
                 }}>
                   Annuler
