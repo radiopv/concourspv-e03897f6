@@ -19,37 +19,18 @@ const FacebookShareButton = ({ url, title, type, contestId, imageUrl }: Facebook
 
   const handleShare = async () => {
     try {
-      let shareUrl = url;
-      let shareTitle = title;
+      // Construire l'URL avec les paramètres pour le débogage Facebook
+      const debugUrl = `${url}${url.includes('?') ? '&' : '?'}_fb_debug=true`;
       
-      // Get contest metadata if sharing a contest
-      if (type === 'contest' && contestId) {
-        const { data: metadata, error } = await supabase.rpc('get_contest_share_metadata', {
-          input_contest_id: contestId // Updated parameter name to match SQL function
-        });
-
-        if (error) {
-          console.error('Error fetching contest metadata:', error);
-          throw error;
-        }
-
-        if (metadata && metadata.length > 0) {
-          const contestData = metadata[0];
-          shareTitle = contestData.title;
-          if (contestData.image_url) {
-            shareUrl = `${url}?image=${encodeURIComponent(contestData.image_url)}`;
-          }
-        }
-      }
-
-      // Construct Facebook share URL
-      const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareTitle)}`;
+      // Construire l'URL de partage Facebook
+      const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(debugUrl)}`;
       
-      // Open Facebook share dialog
+      // Ouvrir la fenêtre de partage Facebook
       const width = 626;
       const height = 436;
       const left = (window.innerWidth - width) / 2;
       const top = (window.innerHeight - height) / 2;
+      
       window.open(
         fbShareUrl,
         'facebook-share-dialog',
@@ -57,7 +38,7 @@ const FacebookShareButton = ({ url, title, type, contestId, imageUrl }: Facebook
       );
 
       if (user) {
-        // Call the updated RPC function to handle rewards
+        // Gérer les points de partage
         const { data, error } = await supabase.rpc('handle_facebook_share', {
           input_user_id: user.id,
           share_type: type,
@@ -65,11 +46,11 @@ const FacebookShareButton = ({ url, title, type, contestId, imageUrl }: Facebook
         });
 
         if (error) {
-          console.error('Error handling share rewards:', error);
+          console.error('Erreur lors du partage:', error);
           throw error;
         }
 
-        // Show appropriate toast message based on the result
+        // Afficher le message approprié selon le résultat
         if (data.points_awarded > 0) {
           const message = type === 'contest'
             ? "Vous avez gagné 5 points et une participation bonus !"
