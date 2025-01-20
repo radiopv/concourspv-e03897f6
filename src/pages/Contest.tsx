@@ -2,10 +2,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet";
 import ContestHeader from "@/components/contest/ContestHeader";
 import ContestStats from "@/components/contest/ContestStats";
 import ContestPrizes from "@/components/contest/ContestPrizes";
@@ -109,9 +109,69 @@ const Contest = () => {
   }
 
   const mainPrizeImage = contest?.prizes?.[0]?.prize_catalog?.image_url || contest?.prize_image_url;
+  const canonicalUrl = `${window.location.origin}/contests/${id}`;
+  const prizeValue = contest?.prizes?.[0]?.prize_catalog?.value;
+  const prizeDescription = contest?.prizes?.[0]?.prize_catalog?.description;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
+      <Helmet>
+        {/* Balises SEO de base */}
+        <title>{contest.title} - Participez et gagnez des prix</title>
+        <meta name="description" content={contest.description || `Participez au concours "${contest.title}" et tentez de gagner des prix exceptionnels !`} />
+        <link rel="canonical" href={canonicalUrl} />
+        
+        {/* Balises Open Graph pour Facebook */}
+        <meta property="og:title" content={contest.title} />
+        <meta property="og:description" content={contest.description || `Participez et tentez de gagner ${prizeValue ? `${prizeValue}$ en prix` : 'des prix exceptionnels'} !`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonicalUrl} />
+        {mainPrizeImage && (
+          <>
+            <meta property="og:image" content={mainPrizeImage} />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+          </>
+        )}
+        
+        {/* Balises pour le prix si disponible */}
+        {prizeValue && (
+          <>
+            <meta property="product:price:amount" content={prizeValue.toString()} />
+            <meta property="product:price:currency" content="CAD" />
+          </>
+        )}
+        
+        {/* Balises Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={contest.title} />
+        <meta name="twitter:description" content={contest.description || `Participez et gagnez des prix exceptionnels !`} />
+        {mainPrizeImage && <meta name="twitter:image" content={mainPrizeImage} />}
+        
+        {/* Balises structurées pour Google */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Event",
+            "name": contest.title,
+            "description": contest.description,
+            "image": mainPrizeImage,
+            "startDate": contest.start_date,
+            "endDate": contest.end_date,
+            "location": {
+              "@type": "VirtualLocation",
+              "url": canonicalUrl
+            },
+            "offers": prizeValue ? {
+              "@type": "Offer",
+              "price": prizeValue,
+              "priceCurrency": "CAD",
+              "description": prizeDescription
+            } : undefined
+          })}
+        </script>
+      </Helmet>
+
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto space-y-8">
           <ContestHeader 
@@ -139,7 +199,7 @@ const Contest = () => {
             </Button>
 
             <FacebookShareButton
-              url={window.location.href}
+              url={canonicalUrl}
               title={`Participez au concours "${contest?.title}" et gagnez des prix exceptionnels !`}
               type="contest"
               contestId={id}
