@@ -10,42 +10,51 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-interface Prize {
-  id: string;
-  name: string;
-  description?: string;
-  value: number;
-  image_url?: string;
-  shop_url?: string;
-  is_visible?: boolean;
-  status?: 'active' | 'archived';
+interface ContestPrizeManagerProps {
+  contestId?: string;
 }
 
-const PrizeCatalogManager = () => {
+const ContestPrizeManager = ({ contestId }: ContestPrizeManagerProps) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPrize, setEditingPrize] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Omit<Prize, 'id'>>({
+  const [formData, setFormData] = useState({
     name: '',
     description: '',
-    value: 0,
+    value: '',
     image_url: '',
     shop_url: '',
   });
 
-  const { data: prizes, isLoading } = useQuery({
-    queryKey: ['prize_catalog'],
+  // Query to fetch prizes with catalog information
+  const { data: contestPrizes, isLoading } = useQuery({
+    queryKey: ['prizes', contestId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('prize_catalog')
-        .select('*')
-        .order('created_at', { ascending: false });
+      console.log('Fetching contest prizes...');
+      let query = supabase
+        .from('prizes')
+        .select(`
+          *,
+          catalog_item:prize_catalog(*)
+        `);
       
-      if (error) throw error;
-      return data as Prize[];
-    }
+      // Only add the contest_id filter if contestId is provided
+      if (contestId) {
+        query = query.eq('contest_id', contestId);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching contest prizes:', error);
+        throw error;
+      }
+      console.log('Contest prizes data:', data);
+      return data;
+    },
+    enabled: true // The query will run even if contestId is undefined
   });
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,7 +77,7 @@ const PrizeCatalogManager = () => {
         .from('prizes')
         .getPublicUrl(filePath);
 
-      setFormData(prev => ({ ...prev, image_url: publicUrl }));
+      setFormData({ ...formData, image_url: publicUrl });
       
       toast({
         title: "Succès",
@@ -87,26 +96,33 @@ const PrizeCatalogManager = () => {
   };
 
   const addPrizeMutation = useMutation({
-    mutationFn: async (prizeData: Omit<Prize, 'id'>) => {
+    mutationFn: async (catalogItemId: string) => {
+      console.log('Adding prize to contest:', { contestId, catalogItemId });
       const { error } = await supabase
-        .from('prize_catalog')
-        .insert([prizeData]);
+        .from('prizes')
+        .insert([{
+          contest_id: contestId, // This will be null if contestId is undefined
+          catalog_item_id: catalogItemId
+        }]);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding prize:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize_catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
       setIsFormOpen(false);
       setFormData({
         name: '',
         description: '',
-        value: 0,
+        value: '',
         image_url: '',
         shop_url: '',
       });
       toast({
         title: "Succès",
-        description: "Le prix a été ajouté au catalogue",
+        description: "Le prix a été ajouté au concours",
       });
     },
     onError: (error) => {
@@ -122,24 +138,24 @@ const PrizeCatalogManager = () => {
   const deletePrizeMutation = useMutation({
     mutationFn: async (prizeId: string) => {
       const { error } = await supabase
-        .from('prize_catalog')
+        .from('prizes')
         .delete()
         .eq('id', prizeId);
       
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prize_catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['prizes', contestId] });
       toast({
         title: "Succès",
-        description: "Le prix a été supprimé du catalogue",
+        description: "Le prix a été retiré du concours",
       });
     },
     onError: (error) => {
       console.error("Delete prize error:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer le prix",
+        description: "Impossible de retirer le prix",
         variant: "destructive",
       });
     }
@@ -148,26 +164,6 @@ const PrizeCatalogManager = () => {
   if (isLoading) {
     return <div>Chargement des prix...</div>;
   }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const numericValue = parseFloat(formData.value.toString());
-    if (isNaN(numericValue)) {
-      toast({
-        title: "Erreur",
-        description: "La valeur doit être un nombre",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const prizeData = {
-      ...formData,
-      value: numericValue,
-    };
-    
-    addPrizeMutation.mutate(prizeData);
-  };
 
   return (
     <div className="space-y-6">
@@ -185,7 +181,7 @@ const PrizeCatalogManager = () => {
         <CollapsibleContent className="mt-4">
           <Card>
             <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form className="space-y-4">
                 <div>
                   <Label htmlFor="name">Nom du prix</Label>
                   <Input
@@ -212,7 +208,7 @@ const PrizeCatalogManager = () => {
                     type="number"
                     step="0.01"
                     value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                   />
                 </div>
 
@@ -245,9 +241,14 @@ const PrizeCatalogManager = () => {
                     </div>
                   )}
                 </div>
+
                 <Button 
                   type="submit" 
                   className="w-full"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    addPrizeMutation.mutate(formData.name);
+                  }}
                   disabled={uploading}
                 >
                   {editingPrize ? 'Mettre à jour' : 'Ajouter au catalogue'}
@@ -259,29 +260,32 @@ const PrizeCatalogManager = () => {
       </Collapsible>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {prizes?.map((prize) => (
+        {contestPrizes?.map((prize) => (
           <Card key={prize.id} className="hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
-              {prize.image_url && (
+              {prize.catalog_item?.image_url && (
                 <div className="aspect-square relative mb-4">
                   <img
-                    src={prize.image_url}
-                    alt={prize.name}
+                    src={prize.catalog_item.image_url}
+                    alt={prize.catalog_item.name}
                     className="object-cover rounded-lg w-full h-full"
                   />
                 </div>
               )}
-              <h3 className="font-semibold mb-2">{prize.name}</h3>
-              {prize.description && (
-                <p className="text-sm text-gray-500 mb-2">{prize.description}</p>
+              <h3 className="font-semibold mb-2">{prize.catalog_item?.name}</h3>
+              {prize.catalog_item?.description && (
+                <div 
+                  className="text-sm text-gray-500 mb-2"
+                  dangerouslySetInnerHTML={{ __html: prize.catalog_item.description }}
+                />
               )}
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">
-                  {prize.value ? `$${prize.value}` : 'Prix non défini'}
+                  {prize.catalog_item?.value ? `${prize.catalog_item.value}€` : 'Prix non défini'}
                 </span>
-                {prize.shop_url && (
+                {prize.catalog_item?.shop_url && (
                   <a
-                    href={prize.shop_url}
+                    href={prize.catalog_item.shop_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800"
@@ -294,7 +298,7 @@ const PrizeCatalogManager = () => {
                 onClick={() => deletePrizeMutation.mutate(prize.id)}
                 className="mt-4 w-full px-4 py-2 text-sm text-red-600 hover:text-red-800 border border-red-600 hover:border-red-800 rounded-md transition-colors"
               >
-                Supprimer ce prix
+                Retirer ce prix
               </button>
             </CardContent>
           </Card>
@@ -304,4 +308,4 @@ const PrizeCatalogManager = () => {
   );
 };
 
-export default PrizeCatalogManager;
+export default ContestPrizeManager;

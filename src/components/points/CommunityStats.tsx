@@ -1,5 +1,6 @@
-import { Users, Trophy, Calendar } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Trophy, Star } from "lucide-react";
 
 interface CommunityStatsProps {
   totalParticipants: number;
@@ -7,36 +8,46 @@ interface CommunityStatsProps {
   topScore: number;
 }
 
-const CommunityStats = ({ totalParticipants, totalContests, topScore }: CommunityStatsProps) => {
+const CommunityStats: React.FC<CommunityStatsProps> = ({
+  totalParticipants,
+  totalContests,
+  topScore
+}) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-      <Card className="bg-white/50 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="flex flex-col items-center">
-            <Users className="h-8 w-8 text-indigo-600 mb-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Participants</h3>
-            <p className="text-3xl font-bold text-indigo-600">{totalParticipants}</p>
-          </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <Card className="bg-gradient-to-br from-amber-50 to-red-50 border-amber-200">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-amber-700 font-medium text-sm">
+            Participants
+          </CardTitle>
+          <Users className="h-4 w-4 text-amber-600" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-amber-900">{totalParticipants}</div>
         </CardContent>
       </Card>
-
-      <Card className="bg-white/50 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="flex flex-col items-center">
-            <Trophy className="h-8 w-8 text-amber-600 mb-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Meilleur Score</h3>
-            <p className="text-3xl font-bold text-amber-600">{topScore}%</p>
-          </div>
+      
+      <Card className="bg-gradient-to-br from-amber-50 to-red-50 border-amber-200">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-amber-700 font-medium text-sm">
+            Concours Actifs
+          </CardTitle>
+          <Trophy className="h-4 w-4 text-amber-600" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-amber-900">{totalContests}</div>
         </CardContent>
       </Card>
-
-      <Card className="bg-white/50 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="flex flex-col items-center">
-            <Calendar className="h-8 w-8 text-green-600 mb-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Concours Actifs</h3>
-            <p className="text-3xl font-bold text-green-600">{totalContests}</p>
-          </div>
+      
+      <Card className="bg-gradient-to-br from-amber-50 to-red-50 border-amber-200">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-amber-700 font-medium text-sm">
+            Meilleur Score
+          </CardTitle>
+          <Star className="h-4 w-4 text-amber-600" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-amber-900">{topScore}</div>
         </CardContent>
       </Card>
     </div>

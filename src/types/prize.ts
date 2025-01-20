@@ -9,5 +9,5 @@ export type Prize = {
 
 export type ContestPrize = {
   id: string;
-  prize_catalog: Prize;
+  catalog_item: Prize;
 };

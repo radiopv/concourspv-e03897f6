@@ -11,18 +11,18 @@ const PointsSystem = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['community-stats'],
     queryFn: async () => {
-      // Get total participants count
+      // Récupérer le nombre total de participants
       const { count: participantsCount } = await supabase
         .from('participants')
         .select('*', { count: 'exact', head: true });
 
-      // Get active contests count
+      // Récupérer le nombre de concours actifs
       const { count: contestsCount } = await supabase
         .from('contests')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
 
-      // Get top score
+      // Récupérer le meilleur score
       const { data: topScore } = await supabase
         .from('participants')
         .select('score')
