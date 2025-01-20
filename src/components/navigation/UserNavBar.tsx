@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Settings, LogOut, User, Trophy, BookOpen, Gift } from 'lucide-react';
 import UserPoints from './UserPoints';
@@ -12,6 +12,7 @@ interface UserNavBarProps {
 const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await signOut();
@@ -76,18 +77,13 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                 </div>
               </>
             ) : (
-              <div className="space-x-2">
-                <Link to="/login">
-                  <Button variant="ghost" className="text-white hover:text-amber-100">
-                    Connexion
-                  </Button>
-                </Link>
+              location.pathname !== '/login' && (
                 <Link to="/register">
-                  <Button variant="ghost" className="text-white hover:text-amber-100">
+                  <Button variant="secondary" className="font-semibold">
                     Inscription
                   </Button>
                 </Link>
-              </div>
+              )
             )}
           </div>
         </div>
