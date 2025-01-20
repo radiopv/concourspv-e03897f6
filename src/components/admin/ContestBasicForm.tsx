@@ -15,8 +15,6 @@ interface ContestBasicFormProps {
     is_featured: boolean;
     is_new: boolean;
     has_big_prizes: boolean;
-    shop_url?: string;
-    prize_image_url?: string;
     main_image_url?: string;
   };
   setFormData: (data: any) => void;
@@ -49,17 +47,6 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
         <p className="text-sm text-gray-500 mt-1">
           {formData.description?.length || 0}/500 caractères
         </p>
-      </div>
-
-      <div>
-        <Label htmlFor="shop_url">Lien vers la boutique</Label>
-        <Input
-          id="shop_url"
-          type="url"
-          value={formData.shop_url}
-          onChange={(e) => setFormData({ ...formData, shop_url: e.target.value })}
-          placeholder="https://..."
-        />
       </div>
 
       <div>
