@@ -10,17 +10,46 @@ interface FacebookShareButtonProps {
   title: string;
   type: 'contest' | 'score' | 'general';
   contestId?: string;
+  imageUrl?: string;
 }
 
-const FacebookShareButton = ({ url, title, type, contestId }: FacebookShareButtonProps) => {
+const FacebookShareButton = ({ url, title, type, contestId, imageUrl }: FacebookShareButtonProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
 
   const handleShare = async () => {
     try {
-      // Ouvrir la fenêtre de partage Facebook
-      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}`;
-      window.open(shareUrl, '_blank', 'width=600,height=400');
+      // Get contest metadata if sharing a contest
+      let shareUrl = url;
+      let shareTitle = title;
+      
+      if (type === 'contest' && contestId) {
+        const { data, error } = await supabase.rpc('get_contest_share_metadata', {
+          contest_id: contestId
+        });
+
+        if (!error && data && data.length > 0) {
+          const metadata = data[0];
+          shareTitle = metadata.title;
+          if (metadata.image_url) {
+            shareUrl = `${url}?image=${encodeURIComponent(metadata.image_url)}`;
+          }
+        }
+      }
+
+      // Construct Facebook share URL with OG metadata
+      const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareTitle)}`;
+      
+      // Open Facebook share dialog
+      const width = 626;
+      const height = 436;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+      window.open(
+        fbShareUrl,
+        'facebook-share-dialog',
+        `width=${width},height=${height},top=${top},left=${left}`
+      );
 
       if (user) {
         // Call the RPC function to handle rewards

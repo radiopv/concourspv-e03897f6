@@ -1038,7 +1038,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      handle_facebook_share: {
+        Args: {
+          user_id: string
+          share_type: string
+          contest_id?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

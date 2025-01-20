@@ -10,34 +10,13 @@ import ContestHeader from "@/components/contest/ContestHeader";
 import ContestStats from "@/components/contest/ContestStats";
 import ContestPrizes from "@/components/contest/ContestPrizes";
 import QuestionnaireComponent from "@/components/QuestionnaireComponent";
+import FacebookShareButton from "@/components/social/FacebookShareButton";
 
 const Contest = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
-
-  // Add validation for contest ID
-  if (!id) {
-    console.error("No contest ID provided");
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center">
-        <Card className="max-w-lg w-full mx-4">
-          <CardContent className="text-center py-12">
-            <h2 className="text-2xl font-semibold mb-4">
-              Concours non trouvé
-            </h2>
-            <p className="text-gray-600 mb-6">
-              L'identifiant du concours est manquant.
-            </p>
-            <Button onClick={() => navigate('/contests')}>
-              Voir les concours disponibles
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const { data: contest, isLoading: contestLoading } = useQuery({
     queryKey: ['contest', id],
@@ -47,7 +26,16 @@ const Contest = () => {
         .from('contests')
         .select(`
           *,
-          prizes (*),
+          prizes (
+            *,
+            prize_catalog (
+              name,
+              description,
+              image_url,
+              value,
+              shop_url
+            )
+          ),
           participants (count)
         `)
         .eq('id', id)
@@ -61,7 +49,7 @@ const Contest = () => {
       console.log("Contest data retrieved:", data);
       return data;
     },
-    enabled: !!id // Only run query if we have an ID
+    enabled: !!id
   });
 
   useEffect(() => {
@@ -120,29 +108,28 @@ const Contest = () => {
     return <QuestionnaireComponent contestId={id} />;
   }
 
-  const successPercentage = contest.participants_count > 0 && contest.stats
-    ? Math.round((contest.stats.successCount / contest.participants_count) * 100)
-    : 0;
+  const mainPrizeImage = contest?.prizes?.[0]?.prize_catalog?.image_url || contest?.prize_image_url;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-12">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto space-y-8">
           <ContestHeader 
-            title={contest.title}
-            description={contest.description}
+            title={contest?.title || ''}
+            description={contest?.description}
+            imageUrl={mainPrizeImage}
           />
 
           <ContestStats
-            participantsCount={contest.participants_count || 0}
-            successPercentage={successPercentage}
+            participantsCount={contest?.participants?.[0]?.count || 0}
+            successPercentage={0}
             timeLeft={timeLeft}
-            endDate={contest.end_date}
+            endDate={contest?.end_date}
           />
 
-          <ContestPrizes prizes={contest.prizes || []} />
+          <ContestPrizes prizes={contest?.prizes || []} />
 
-          <div className="text-center">
+          <div className="flex justify-center gap-4">
             <Button
               size="lg"
               onClick={() => setShowQuestionnaire(true)}
@@ -150,6 +137,14 @@ const Contest = () => {
             >
               Participer maintenant
             </Button>
+
+            <FacebookShareButton
+              url={window.location.href}
+              title={`Participez au concours "${contest?.title}" et gagnez des prix exceptionnels !`}
+              type="contest"
+              contestId={id}
+              imageUrl={mainPrizeImage}
+            />
           </div>
         </div>
       </div>
@@ -158,4 +153,3 @@ const Contest = () => {
 };
 
 export default Contest;
-
