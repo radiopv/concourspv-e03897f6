@@ -124,6 +124,9 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                 <Gift className="w-5 h-5" />
                 Prix à gagner
               </h3>
+              <p className="text-center text-gray-300 italic mb-4">
+                Le gagnant pourra choisir l'un des deux prix suivants
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
                 {contest.prizes.map((prize) => (
                   <div 
