@@ -2,23 +2,16 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import QuestionForm from './QuestionForm';
-
-interface Question {
-  id: string;
-  question_text: string;
-  options: string[];
-  correct_answer: string;
-  article_url?: string;
-  image_url?: string;
-}
+import { Question } from '@/types/database';
 
 interface QuestionListProps {
   questions: Question[];
+  contestId: string;
   onEdit: (id: string, data: any) => void;
   onDelete: (id: string) => void;
 }
 
-const QuestionList = ({ questions, onEdit, onDelete }: QuestionListProps) => {
+const QuestionList = ({ questions, contestId, onEdit, onDelete }: QuestionListProps) => {
   const [editingId, setEditingId] = React.useState<string | null>(null);
 
   return (
@@ -29,6 +22,7 @@ const QuestionList = ({ questions, onEdit, onDelete }: QuestionListProps) => {
             {editingId === question.id ? (
               <QuestionForm
                 initialQuestion={question}
+                contestId={contestId}
                 onSubmit={(data) => {
                   onEdit(question.id, data);
                   setEditingId(null);

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Plus } from "lucide-react";
 import QuestionCard from './QuestionCard';
+import { Question } from '@/types/database';
 
 interface QuestionsListProps {
   contestId: string;
@@ -14,11 +15,12 @@ interface QuestionsListProps {
 const QuestionsList = ({ contestId }: QuestionsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = React.useState<string | null>(null);
 
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
+      console.log('Fetching questions for contest:', contestId);
       const { data, error } = await supabase
         .from('questions')
         .select('*')
@@ -26,7 +28,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         .order('order_number');
       
       if (error) throw error;
-      return data;
+      return data as Question[];
     }
   });
 
@@ -86,7 +88,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
     }
   };
 
-  const handleSave = async (questionId: string, updatedQuestion: any) => {
+  const handleSave = async (questionId: string, updatedQuestion: Omit<Question, "id">) => {
     try {
       const { error } = await supabase
         .from('questions')
@@ -132,6 +134,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
           <QuestionCard
             key={question.id}
             question={question}
+            contestId={contestId}
             isEditing={editingQuestionId === question.id}
             onEdit={() => setEditingQuestionId(question.id)}
             onDelete={() => handleDelete(question.id)}
