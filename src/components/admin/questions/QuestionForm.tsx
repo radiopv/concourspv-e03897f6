@@ -28,9 +28,11 @@ const QuestionForm = ({ initialQuestion, onSubmit, onCancel }: QuestionFormProps
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // We don't include contest_id here as it will be added by the parent component
     onSubmit({
       ...formData,
-      type: 'multiple_choice' as const
+      type: 'multiple_choice' as const,
+      contest_id: '' // This will be overwritten by the parent component
     });
   };
 
