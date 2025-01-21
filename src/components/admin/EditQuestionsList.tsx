@@ -29,6 +29,8 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propCo
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', finalContestId],
     queryFn: async () => {
+      if (!finalContestId) throw new Error('Contest ID is required');
+
       const { data, error } = await supabase
         .from('questions')
         .select('*')
@@ -43,13 +45,24 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propCo
 
   const addQuestionMutation = useMutation({
     mutationFn: async (questionData: Omit<Question, 'id'>) => {
+      if (!finalContestId) throw new Error('Contest ID is required');
+
+      console.log('Adding question with contest_id:', finalContestId);
+      
       const { data, error } = await supabase
         .from('questions')
-        .insert([{ ...questionData, contest_id: finalContestId }])
+        .insert([{ 
+          ...questionData, 
+          contest_id: finalContestId,
+          type: 'multiple_choice'
+        }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding question:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -66,6 +79,7 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propCo
       });
     },
     onError: (error) => {
+      console.error('Error in mutation:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible d\'ajouter la question.',
@@ -108,7 +122,14 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propCo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!finalContestId) return;
+    if (!finalContestId) {
+      toast({
+        title: 'Erreur',
+        description: 'ID du concours manquant',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     addQuestionMutation.mutate({
       question_text: newQuestion.question_text,
@@ -116,6 +137,7 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propCo
       options: newQuestion.options,
       article_url: newQuestion.article_url,
       contest_id: finalContestId,
+      type: 'multiple_choice',
     });
   };
 
