@@ -1,132 +1,122 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Question } from '@/types/database';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import QuestionForm from './questions/QuestionForm';
-import { Trash2 } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { Plus } from "lucide-react";
+import QuestionCard from './questions/QuestionCard';
 
-interface EditQuestionsListProps {
+interface QuestionsListProps {
   contestId: string;
 }
 
-const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
+const QuestionsList = ({ contestId }: QuestionsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showAddForm, setShowAddForm] = useState(false);
-
-  console.log('Contest ID in EditQuestionsList:', contestId); // Debug log
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
 
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
-      if (!contestId) {
-        console.error('No contest ID provided');
-        return [];
-      }
-
+      console.log('Fetching questions for contest:', contestId); // Debug log
       const { data, error } = await supabase
         .from('questions')
         .select('*')
         .eq('contest_id', contestId)
         .order('order_number');
-
-      if (error) {
-        console.error('Error fetching questions:', error);
-        throw error;
-      }
-
+      
+      if (error) throw error;
+      console.log('Questions fetched:', data); // Debug log
       return data;
-    },
-    enabled: !!contestId,
+    }
   });
 
-  const addQuestionMutation = useMutation({
-    mutationFn: async (questionData: Omit<Question, 'id'>) => {
-      if (!contestId) {
-        throw new Error('Contest ID is required');
-      }
-
-      console.log('Adding question with contest_id:', contestId); // Debug log
-
-      const { data, error } = await supabase
+  const handleAddQuestion = async () => {
+    try {
+      console.log('Adding question for contest:', contestId); // Debug log
+      const { error } = await supabase
         .from('questions')
-        .insert([{ 
-          ...questionData, 
+        .insert([{
           contest_id: contestId,
-          type: 'multiple_choice' as const
-        }])
-        .select()
-        .single();
+          question_text: "Nouvelle question",
+          options: ["Option 1", "Option 2", "Option 3", "Option 4"],
+          correct_answer: "Option 1",
+          order_number: (questions?.length || 0) + 1,
+          type: 'multiple_choice'
+        }]);
 
-      if (error) {
-        console.error('Error adding question:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      
       toast({
-        title: "Question ajoutée",
-        description: "La question a été ajoutée avec succès",
+        title: "Succès",
+        description: "La question a été ajoutée",
       });
-      setShowAddForm(false);
-    },
-    onError: (error) => {
-      console.error('Mutation error:', error);
+    } catch (error) {
+      console.error('Error adding question:', error);
       toast({
         title: "Erreur",
         description: "Impossible d'ajouter la question",
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
-  const deleteQuestionMutation = useMutation({
-    mutationFn: async (questionId: string) => {
+  const handleDelete = async (questionId: string) => {
+    try {
       const { error } = await supabase
         .from('questions')
         .delete()
         .eq('id', questionId);
 
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+
+      await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      
       toast({
-        title: "Question supprimée",
-        description: "La question a été supprimée avec succès",
+        title: "Succès",
+        description: "La question a été supprimée",
       });
-    },
-    onError: () => {
+    } catch (error) {
+      console.error('Error deleting question:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer la question",
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
-  const handleAddQuestion = (formData: Omit<Question, 'id'>) => {
-    if (!contestId) {
-      console.error('No contest ID provided for adding question');
+  const handleSave = async (questionId: string, updatedQuestion: any) => {
+    try {
+      console.log('Saving question with contest_id:', contestId); // Debug log
+      const { error } = await supabase
+        .from('questions')
+        .update({
+          ...updatedQuestion,
+          contest_id: contestId // S'assurer que le contest_id est inclus
+        })
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
+      setEditingQuestionId(null);
+      
+      toast({
+        title: "Succès",
+        description: "La question a été mise à jour",
+      });
+    } catch (error) {
+      console.error('Error updating question:', error);
       toast({
         title: "Erreur",
-        description: "ID du concours manquant",
+        description: "Impossible de mettre à jour la question",
         variant: "destructive",
       });
-      return;
     }
-
-    addQuestionMutation.mutate({
-      ...formData,
-      contest_id: contestId,
-      type: 'multiple_choice' as const
-    });
   };
 
   if (isLoading) {
@@ -134,80 +124,32 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   }
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Questions du concours</CardTitle>
+        <Button
+          onClick={handleAddQuestion}
+          className="flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" /> Ajouter une question
+        </Button>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {questions && questions.length > 0 ? (
-            <div className="space-y-4">
-              {questions.map((question, index) => (
-                <Card key={question.id} className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-2">
-                        Question {index + 1}: {question.question_text}
-                      </h3>
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-600">
-                          Réponse correcte: {question.correct_answer}
-                        </p>
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">Options:</p>
-                          <ul className="list-disc list-inside">
-                            {question.options.map((option, i) => (
-                              <li key={i} className="text-sm text-gray-600">
-                                {option}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        {question.article_url && (
-                          <p className="text-sm text-blue-600">
-                            <a href={question.article_url} target="_blank" rel="noopener noreferrer">
-                              Article lié
-                            </a>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => deleteQuestionMutation.mutate(question.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">
-              Aucune question n'a encore été ajoutée à ce concours.
-            </p>
-          )}
-
-          {showAddForm ? (
-            <div className="mt-4">
-              <QuestionForm
-                onSubmit={handleAddQuestion}
-                onCancel={() => setShowAddForm(false)}
-              />
-            </div>
-          ) : (
-            <Button
-              onClick={() => setShowAddForm(true)}
-              className="w-full mt-4"
-            >
-              Ajouter une question
-            </Button>
-          )}
-        </div>
+      <CardContent className="space-y-4">
+        {questions?.map((question) => (
+          <QuestionCard
+            key={question.id}
+            question={question}
+            isEditing={editingQuestionId === question.id}
+            onEdit={() => setEditingQuestionId(question.id)}
+            onDelete={() => handleDelete(question.id)}
+            onSave={(updatedQuestion) => handleSave(question.id, updatedQuestion)}
+            onCancel={() => setEditingQuestionId(null)}
+            contestId={contestId}
+          />
+        ))}
       </CardContent>
     </Card>
   );
 };
 
-export default EditQuestionsList;
+export default QuestionsList;

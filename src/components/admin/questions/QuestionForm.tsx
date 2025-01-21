@@ -13,11 +13,12 @@ export interface QuestionFormProps {
     article_url?: string;
     image_url?: string;
   };
+  contestId: string; // Ajout de la prop contestId
   onSubmit: (formData: Omit<Question, "id">) => void;
   onCancel?: () => void;
 }
 
-const QuestionForm = ({ initialQuestion, onSubmit, onCancel }: QuestionFormProps) => {
+const QuestionForm = ({ initialQuestion, contestId, onSubmit, onCancel }: QuestionFormProps) => {
   const [formData, setFormData] = useState({
     question_text: initialQuestion?.question_text || '',
     options: initialQuestion?.options || ['', '', '', ''],
@@ -28,11 +29,11 @@ const QuestionForm = ({ initialQuestion, onSubmit, onCancel }: QuestionFormProps
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // We don't include contest_id here as it will be added by the parent component
+    console.log('Submitting question with contest_id:', contestId); // Debug log
     onSubmit({
       ...formData,
       type: 'multiple_choice' as const,
-      contest_id: '' // This will be overwritten by the parent component
+      contest_id: contestId
     });
   };
 
