@@ -1,59 +1,61 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { Question } from '@/types/database';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import QuestionForm from './QuestionForm';
+import { Trash2 } from 'lucide-react';
 
 interface EditQuestionsListProps {
-  contestId?: string;
+  contestId: string;
 }
 
-const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propContestId }) => {
-  const { contestId: urlContestId } = useParams();
-  const finalContestId = propContestId || urlContestId;
+const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [newQuestion, setNewQuestion] = React.useState({
-    question_text: '',
-    correct_answer: '',
-    options: ['', '', '', ''],
-    article_url: '',
-  });
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  console.log('Contest ID in EditQuestionsList:', contestId); // Debug log
 
   const { data: questions, isLoading } = useQuery({
-    queryKey: ['questions', finalContestId],
+    queryKey: ['questions', contestId],
     queryFn: async () => {
-      if (!finalContestId) throw new Error('Contest ID is required');
+      if (!contestId) {
+        console.error('No contest ID provided');
+        return [];
+      }
 
       const { data, error } = await supabase
         .from('questions')
         .select('*')
-        .eq('contest_id', finalContestId)
-        .order('created_at', { ascending: true });
+        .eq('contest_id', contestId)
+        .order('order_number');
 
-      if (error) throw error;
-      return data as Question[];
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
+
+      return data;
     },
-    enabled: !!finalContestId,
+    enabled: !!contestId,
   });
 
   const addQuestionMutation = useMutation({
     mutationFn: async (questionData: Omit<Question, 'id'>) => {
-      if (!finalContestId) throw new Error('Contest ID is required');
+      if (!contestId) {
+        throw new Error('Contest ID is required');
+      }
 
-      console.log('Adding question with contest_id:', finalContestId);
-      
+      console.log('Adding question with contest_id:', contestId); // Debug log
+
       const { data, error } = await supabase
         .from('questions')
         .insert([{ 
           ...questionData, 
-          contest_id: finalContestId,
+          contest_id: contestId,
           type: 'multiple_choice' as const
         }])
         .select()
@@ -63,27 +65,23 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propCo
         console.error('Error adding question:', error);
         throw error;
       }
+
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions', finalContestId] });
-      setNewQuestion({
-        question_text: '',
-        correct_answer: '',
-        options: ['', '', '', ''],
-        article_url: '',
-      });
+      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
       toast({
-        title: 'Question ajoutée',
-        description: 'La question a été ajoutée avec succès.',
+        title: "Question ajoutée",
+        description: "La question a été ajoutée avec succès",
       });
+      setShowAddForm(false);
     },
     onError: (error) => {
-      console.error('Error in mutation:', error);
+      console.error('Mutation error:', error);
       toast({
-        title: 'Erreur',
-        description: 'Impossible d\'ajouter la question.',
-        variant: 'destructive',
+        title: "Erreur",
+        description: "Impossible d'ajouter la question",
+        variant: "destructive",
       });
     },
   });
@@ -98,35 +96,28 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propCo
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions', finalContestId] });
+      queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
       toast({
-        title: 'Question supprimée',
-        description: 'La question a été supprimée avec succès.',
+        title: "Question supprimée",
+        description: "La question a été supprimée avec succès",
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
-        title: 'Erreur',
-        description: 'Impossible de supprimer la question.',
-        variant: 'destructive',
+        title: "Erreur",
+        description: "Impossible de supprimer la question",
+        variant: "destructive",
       });
     },
   });
 
-  const handleOptionChange = (index: number, value: string) => {
-    setNewQuestion(prev => ({
-      ...prev,
-      options: prev.options.map((opt, i) => i === index ? value : opt),
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!finalContestId) {
+  const handleAddQuestion = (newQuestion: Omit<Question, 'id'>) => {
+    if (!contestId) {
+      console.error('No contest ID provided for adding question');
       toast({
-        title: 'Erreur',
-        description: 'ID du concours manquant',
-        variant: 'destructive',
+        title: "Erreur",
+        description: "ID du concours manquant",
+        variant: "destructive",
       });
       return;
     }
@@ -136,123 +127,89 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propCo
       correct_answer: newQuestion.correct_answer,
       options: newQuestion.options,
       article_url: newQuestion.article_url,
-      contest_id: finalContestId,
-      type: 'multiple_choice'
+      contest_id: contestId,
+      type: 'multiple_choice' as const
     });
   };
-
-  if (!finalContestId) {
-    return <div>L'ID du concours est requis</div>;
-  }
 
   if (isLoading) {
     return <div>Chargement des questions...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Ajouter une question</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="question">Question</Label>
-              <Textarea
-                id="question"
-                value={newQuestion.question_text}
-                onChange={(e) => setNewQuestion(prev => ({ ...prev, question_text: e.target.value }))}
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="correct_answer">Réponse correcte</Label>
-              <Input
-                id="correct_answer"
-                value={newQuestion.correct_answer}
-                onChange={(e) => setNewQuestion(prev => ({ ...prev, correct_answer: e.target.value }))}
-                required
-              />
-            </div>
-
-            {newQuestion.options.map((option, index) => (
-              <div key={index}>
-                <Label htmlFor={`option-${index}`}>Option {index + 1}</Label>
-                <Input
-                  id={`option-${index}`}
-                  value={option}
-                  onChange={(e) => handleOptionChange(index, e.target.value)}
-                  required
-                />
-              </div>
-            ))}
-
-            <div>
-              <Label htmlFor="article_url">URL de l'article (optionnel)</Label>
-              <Input
-                id="article_url"
-                type="url"
-                value={newQuestion.article_url}
-                onChange={(e) => setNewQuestion(prev => ({ ...prev, article_url: e.target.value }))}
-              />
-            </div>
-
-            <Button type="submit">Ajouter la question</Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Questions existantes</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>Questions du concours</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
           {questions && questions.length > 0 ? (
             <div className="space-y-4">
-              {questions.map((question) => (
-                <div key={question.id} className="p-4 border rounded-lg">
+              {questions.map((question, index) => (
+                <Card key={question.id} className="p-4">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium">{question.question_text}</h3>
-                      <p className="text-sm text-green-600">Réponse correcte: {question.correct_answer}</p>
-                      <div className="mt-2">
-                        <p className="text-sm font-medium">Options:</p>
-                        <ul className="list-disc list-inside">
-                          {question.options.map((option, index) => (
-                            <li key={index} className="text-sm">{option}</li>
-                          ))}
-                        </ul>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-2">
+                        Question {index + 1}: {question.question_text}
+                      </h3>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">
+                          Réponse correcte: {question.correct_answer}
+                        </p>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">Options:</p>
+                          <ul className="list-disc list-inside">
+                            {question.options.map((option, i) => (
+                              <li key={i} className="text-sm text-gray-600">
+                                {option}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        {question.article_url && (
+                          <p className="text-sm text-blue-600">
+                            <a href={question.article_url} target="_blank" rel="noopener noreferrer">
+                              Article lié
+                            </a>
+                          </p>
+                        )}
                       </div>
-                      {question.article_url && (
-                        <a
-                          href={question.article_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline mt-2 block"
-                        >
-                          Lien vers l'article
-                        </a>
-                      )}
                     </div>
                     <Button
                       variant="destructive"
-                      size="sm"
+                      size="icon"
                       onClick={() => deleteQuestionMutation.mutate(question.id)}
                     >
-                      Supprimer
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground">Aucune question n'a été ajoutée</p>
+            <p className="text-gray-500 text-center py-4">
+              Aucune question n'a encore été ajoutée à ce concours.
+            </p>
           )}
-        </CardContent>
-      </Card>
-    </div>
+
+          {showAddForm ? (
+            <div className="mt-4">
+              <QuestionForm
+                onSubmit={handleAddQuestion}
+                onCancel={() => setShowAddForm(false)}
+              />
+            </div>
+          ) : (
+            <Button
+              onClick={() => setShowAddForm(true)}
+              className="w-full mt-4"
+            >
+              Ajouter une question
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
