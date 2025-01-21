@@ -54,7 +54,7 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propCo
         .insert([{ 
           ...questionData, 
           contest_id: finalContestId,
-          type: 'multiple_choice'
+          type: 'multiple_choice' as const
         }])
         .select()
         .single();
@@ -137,7 +137,7 @@ const EditQuestionsList: React.FC<EditQuestionsListProps> = ({ contestId: propCo
       options: newQuestion.options,
       article_url: newQuestion.article_url,
       contest_id: finalContestId,
-      type: 'multiple_choice',
+      type: 'multiple_choice'
     });
   };
 

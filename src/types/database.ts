@@ -27,4 +27,5 @@ export interface Question {
   correct_answer: string;
   options: string[];
   article_url?: string;
+  type: 'multiple_choice' | 'text';
 }
