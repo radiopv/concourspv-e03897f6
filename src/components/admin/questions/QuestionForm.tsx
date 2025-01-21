@@ -5,15 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Question } from '@/types/database';
 
 export interface QuestionFormProps {
-  initialQuestion?: {
-    id?: string;
-    question_text: string;
-    options: string[];
-    correct_answer: string;
-    article_url?: string;
-    image_url?: string;
-  };
-  contestId: string; // Ajout de la prop contestId
+  initialQuestion?: Question;
+  contestId: string;
   onSubmit: (formData: Omit<Question, "id">) => void;
   onCancel?: () => void;
 }
@@ -24,7 +17,7 @@ const QuestionForm = ({ initialQuestion, contestId, onSubmit, onCancel }: Questi
     options: initialQuestion?.options || ['', '', '', ''],
     correct_answer: initialQuestion?.correct_answer || '',
     article_url: initialQuestion?.article_url || '',
-    image_url: initialQuestion?.image_url || '',
+    type: 'multiple_choice' as const,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,15 +25,9 @@ const QuestionForm = ({ initialQuestion, contestId, onSubmit, onCancel }: Questi
     console.log('Submitting question with contest_id:', contestId); // Debug log
     onSubmit({
       ...formData,
-      type: 'multiple_choice' as const,
-      contest_id: contestId
+      contest_id: contestId,
+      type: 'multiple_choice'
     });
-  };
-
-  const handleOptionChange = (index: number, value: string) => {
-    const newOptions = [...formData.options];
-    newOptions[index] = value;
-    setFormData({ ...formData, options: newOptions });
   };
 
   return (
@@ -62,7 +49,11 @@ const QuestionForm = ({ initialQuestion, contestId, onSubmit, onCancel }: Questi
           <Input
             key={index}
             value={option}
-            onChange={(e) => handleOptionChange(index, e.target.value)}
+            onChange={(e) => {
+              const newOptions = [...formData.options];
+              newOptions[index] = e.target.value;
+              setFormData({ ...formData, options: newOptions });
+            }}
             placeholder={`Option ${index + 1}`}
             required
           />

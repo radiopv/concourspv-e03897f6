@@ -3,77 +3,38 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pencil, Trash2, Save, X } from "lucide-react";
+import QuestionForm from './QuestionForm';
+import { Question } from '@/types/database';
 
 interface QuestionCardProps {
-  question: {
-    id: string;
-    question_text: string;
-    options: string[];
-    correct_answer: string;
-    article_url?: string;
-  };
+  question: Question;
   isEditing: boolean;
+  contestId: string; // Add contestId to props
   onEdit: () => void;
   onDelete: () => void;
-  onSave: (updatedQuestion: any) => void;
+  onSave: (updatedQuestion: Omit<Question, "id">) => void;
   onCancel: () => void;
 }
 
 const QuestionCard = ({
   question,
   isEditing,
+  contestId,
   onEdit,
   onDelete,
   onSave,
   onCancel
 }: QuestionCardProps) => {
-  const [editedQuestion, setEditedQuestion] = useState(question);
-
-  const handleOptionChange = (index: number, value: string) => {
-    const newOptions = [...editedQuestion.options];
-    newOptions[index] = value;
-    setEditedQuestion({ ...editedQuestion, options: newOptions });
-  };
-
   if (isEditing) {
     return (
       <Card>
-        <CardContent className="p-4 space-y-4">
-          <Input
-            value={editedQuestion.question_text}
-            onChange={(e) => setEditedQuestion({ ...editedQuestion, question_text: e.target.value })}
-            placeholder="Question"
+        <CardContent className="p-4">
+          <QuestionForm
+            initialQuestion={question}
+            contestId={contestId}
+            onSubmit={onSave}
+            onCancel={onCancel}
           />
-          {editedQuestion.options.map((option, index) => (
-            <div key={index} className="flex gap-2">
-              <Input
-                value={option}
-                onChange={(e) => handleOptionChange(index, e.target.value)}
-                placeholder={`Option ${index + 1}`}
-              />
-              <Button
-                variant={option === editedQuestion.correct_answer ? "default" : "outline"}
-                onClick={() => setEditedQuestion({ ...editedQuestion, correct_answer: option })}
-              >
-                Correcte
-              </Button>
-            </div>
-          ))}
-          <Input
-            value={editedQuestion.article_url || ''}
-            onChange={(e) => setEditedQuestion({ ...editedQuestion, article_url: e.target.value })}
-            placeholder="URL de l'article"
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onCancel}>
-              <X className="w-4 h-4 mr-2" />
-              Annuler
-            </Button>
-            <Button onClick={() => onSave(editedQuestion)}>
-              <Save className="w-4 h-4 mr-2" />
-              Enregistrer
-            </Button>
-          </div>
         </CardContent>
       </Card>
     );

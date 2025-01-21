@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Plus } from "lucide-react";
 import QuestionCard from './questions/QuestionCard';
+import { Question } from '@/types/database';
 
 interface QuestionsListProps {
   contestId: string;
@@ -28,7 +29,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
       
       if (error) throw error;
       console.log('Questions fetched:', data); // Debug log
-      return data;
+      return data as Question[];
     }
   });
 
@@ -89,14 +90,14 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
     }
   };
 
-  const handleSave = async (questionId: string, updatedQuestion: any) => {
+  const handleSave = async (questionId: string, updatedQuestion: Omit<Question, "id">) => {
     try {
       console.log('Saving question with contest_id:', contestId); // Debug log
       const { error } = await supabase
         .from('questions')
         .update({
           ...updatedQuestion,
-          contest_id: contestId // S'assurer que le contest_id est inclus
+          contest_id: contestId
         })
         .eq('id', questionId);
 
@@ -139,12 +140,12 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
           <QuestionCard
             key={question.id}
             question={question}
+            contestId={contestId}
             isEditing={editingQuestionId === question.id}
             onEdit={() => setEditingQuestionId(question.id)}
             onDelete={() => handleDelete(question.id)}
             onSave={(updatedQuestion) => handleSave(question.id, updatedQuestion)}
             onCancel={() => setEditingQuestionId(null)}
-            contestId={contestId}
           />
         ))}
       </CardContent>
