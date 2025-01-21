@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Question } from '@/types/database';
 
 export interface QuestionFormProps {
   initialQuestion?: {
@@ -12,7 +13,7 @@ export interface QuestionFormProps {
     article_url?: string;
     image_url?: string;
   };
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: Omit<Question, "id">) => void;
   onCancel?: () => void;
 }
 
@@ -27,7 +28,10 @@ const QuestionForm = ({ initialQuestion, onSubmit, onCancel }: QuestionFormProps
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      type: 'multiple_choice' as const
+    });
   };
 
   const handleOptionChange = (index: number, value: string) => {

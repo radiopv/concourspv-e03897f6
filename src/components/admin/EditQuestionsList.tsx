@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Question } from '@/types/database';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import QuestionForm from './QuestionForm';
+import QuestionForm from './questions/QuestionForm';
 import { Trash2 } from 'lucide-react';
 
 interface EditQuestionsListProps {
@@ -111,7 +111,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     },
   });
 
-  const handleAddQuestion = (newQuestion: Omit<Question, 'id'>) => {
+  const handleAddQuestion = (formData: Omit<Question, 'id'>) => {
     if (!contestId) {
       console.error('No contest ID provided for adding question');
       toast({
@@ -123,10 +123,7 @@ const EditQuestionsList = ({ contestId }: EditQuestionsListProps) => {
     }
 
     addQuestionMutation.mutate({
-      question_text: newQuestion.question_text,
-      correct_answer: newQuestion.correct_answer,
-      options: newQuestion.options,
-      article_url: newQuestion.article_url,
+      ...formData,
       contest_id: contestId,
       type: 'multiple_choice' as const
     });
