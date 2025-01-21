@@ -14,13 +14,26 @@ import { calculateFinalScore } from '@/utils/scoreCalculations';
 import type { Participant } from '@/types/participant';
 
 const QuestionnaireComponent = () => {
-  const { contestId = '' } = useParams();
+  const { contestId } = useParams<{ contestId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const state = useQuestionnaireState();
   const [countdown, setCountdown] = useState(5);
   const [showQuestions, setShowQuestions] = useState(false);
+
+  // Redirect if no contestId
+  useEffect(() => {
+    if (!contestId) {
+      toast({
+        title: "Erreur",
+        description: "ID du concours manquant",
+        variant: "destructive",
+      });
+      navigate('/contests');
+      return;
+    }
+  }, [contestId, navigate, toast]);
 
   const { data: settings } = useQuery({
     queryKey: ['global-settings'],
@@ -39,6 +52,8 @@ const QuestionnaireComponent = () => {
   const { data: participant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
+      if (!contestId) return null;
+      
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return null;
 
@@ -52,12 +67,15 @@ const QuestionnaireComponent = () => {
       if (error && error.code === 'PGRST116') return null;
       if (error) throw error;
       return data as Participant;
-    }
+    },
+    enabled: !!contestId
   });
 
   const { data: questions } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
+      if (!contestId) throw new Error('Contest ID is required');
+      
       const { data, error } = await supabase
         .from('questions')
         .select('*')
@@ -66,7 +84,8 @@ const QuestionnaireComponent = () => {
 
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!contestId
   });
 
   const handleCountdownComplete = () => {
@@ -78,6 +97,8 @@ const QuestionnaireComponent = () => {
 
   useEffect(() => {
     const initializeParticipant = async () => {
+      if (!contestId) return;
+
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user?.id) {
@@ -170,6 +191,8 @@ const QuestionnaireComponent = () => {
   }, [contestId, navigate, toast, queryClient]);
 
   const handleNextQuestion = async () => {
+    if (!contestId) return;
+
     if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
       state.setCurrentQuestionIndex(prev => prev + 1);
       state.setSelectedAnswer("");
@@ -246,6 +269,10 @@ const QuestionnaireComponent = () => {
       }
     }
   };
+
+  if (!contestId) {
+    return null;
+  }
 
   if (!questions || questions.length === 0) {
     return (

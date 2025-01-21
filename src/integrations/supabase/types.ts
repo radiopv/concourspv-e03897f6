@@ -950,6 +950,7 @@ export type Database = {
           id: string
           images: string[] | null
           is_certified: boolean | null
+          is_visible: boolean | null
           license_plate: string | null
           location: string | null
           photo_url: string
@@ -966,6 +967,7 @@ export type Database = {
           id?: string
           images?: string[] | null
           is_certified?: boolean | null
+          is_visible?: boolean | null
           license_plate?: string | null
           location?: string | null
           photo_url: string
@@ -982,6 +984,7 @@ export type Database = {
           id?: string
           images?: string[] | null
           is_certified?: boolean | null
+          is_visible?: boolean | null
           license_plate?: string | null
           location?: string | null
           photo_url?: string
@@ -1047,6 +1050,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_user_points: {
+        Args: {
+          input_user_id: string
+        }
+        Returns: number
+      }
       get_contest_share_metadata: {
         Args: {
           input_contest_id: string
@@ -1058,6 +1067,16 @@ export type Database = {
           prize_value: number
         }[]
       }
+      get_user_profile: {
+        Args: {
+          input_user_id: string
+        }
+        Returns: {
+          username: string
+          email: string
+          bio: string
+        }[]
+      }
       handle_facebook_share: {
         Args: {
           input_user_id: string
@@ -1065,6 +1084,13 @@ export type Database = {
           contest_id?: string
         }
         Returns: Json
+      }
+      log_user_activity: {
+        Args: {
+          input_user_id: string
+          activity: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
