@@ -176,6 +176,38 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     // Update total correct answers if the answer is correct
     if (isCorrect) {
       state.setTotalAnswered(prev => prev + 1);
+      
+      // Award points for correct answer
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { error: pointsError } = await supabase
+            .from('point_history')
+            .insert([{
+              user_id: session.user.id,
+              points: 10, // Award 10 points per correct answer
+              source: 'contest_answer',
+              contest_id: contestId,
+              streak: state.totalAnswered + 1
+            }]);
+
+          if (pointsError) throw pointsError;
+
+          // Update user_points
+          const { error: updateError } = await supabase
+            .from('user_points')
+            .upsert([{
+              user_id: session.user.id,
+              total_points: state.totalAnswered * 10, // Calculate total points
+              current_streak: state.totalAnswered + 1,
+              best_streak: Math.max(state.totalAnswered + 1, state.totalAnswered)
+            }]);
+
+          if (updateError) throw updateError;
+        }
+      } catch (error) {
+        console.error('Error awarding points:', error);
+      }
     }
 
     // Calculate current score based on total correct answers
@@ -207,11 +239,6 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
         // Calculate final score based on total correct answers
         const finalScore = Math.round((state.totalAnswered / (questions?.length || 1)) * 100);
-        console.log('Final score:', {
-          totalAnswered: state.totalAnswered,
-          questionsLength: questions?.length,
-          finalScore
-        });
 
         const { error: updateError } = await supabase
           .from('participants')
