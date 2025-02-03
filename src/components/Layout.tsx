@@ -25,17 +25,15 @@ const Layout = ({ children }: LayoutProps) => {
   React.useEffect(() => {
     const checkAdminRole = async () => {
       if (!user) {
-        console.log('No user logged in');
         setIsAdmin(false);
         return;
       }
 
-      console.log('Checking admin rights for user:', user);
-      console.log('User email:', user.email);
+      console.log('Checking admin rights for:', user.email);
 
       const { data: memberData, error } = await supabase
         .from('members')
-        .select('role, email')
+        .select('role')
         .eq('id', user.id)
         .single();
 
@@ -50,9 +48,8 @@ const Layout = ({ children }: LayoutProps) => {
         return;
       }
 
-      console.log('Member data found:', memberData);
-      const isUserAdmin = memberData?.role === 'admin' || memberData?.email === 'renaudcanuel@me.com';
-      console.log('Is user admin?', isUserAdmin);
+      console.log('Member data:', memberData);
+      const isUserAdmin = memberData?.role === 'admin';
       setIsAdmin(isUserAdmin);
 
       if (!isUserAdmin && location.pathname.startsWith('/admin')) {

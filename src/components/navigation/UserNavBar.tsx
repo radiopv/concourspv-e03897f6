@@ -77,19 +77,12 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                 </div>
               </>
             ) : (
-              location.pathname !== '/login' && location.pathname !== '/register' && (
-                <div className="flex space-x-2">
-                  <Link to="/login">
-                    <Button variant="ghost" className="text-white hover:text-amber-100">
-                      Connexion
-                    </Button>
-                  </Link>
-                  <Link to="/register">
-                    <Button variant="secondary" className="font-semibold">
-                      Inscription
-                    </Button>
-                  </Link>
-                </div>
+              location.pathname !== '/login' && (
+                <Link to="/register">
+                  <Button variant="secondary" className="font-semibold">
+                    Inscription
+                  </Button>
+                </Link>
               )
             )}
           </div>

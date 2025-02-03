@@ -15,14 +15,9 @@ const ContestsList = () => {
   const { data: contests, isLoading } = useContests();
   const canonicalUrl = `${window.location.origin}/contests`;
 
-  const handleContestSelect = (contestId: string) => {
-    if (!contestId) {
-      console.error('Invalid contest ID:', contestId);
-      return;
-    }
-    setSelectedContestId(contestId);
-    navigate(`/contests/${contestId}`);
-  };
+  if (selectedContestId) {
+    return <QuestionnaireComponent />;  // Remove contestId prop as it's accessed via useParams
+  }
 
   if (isLoading) {
     return (
@@ -58,6 +53,10 @@ const ContestsList = () => {
     );
   }
 
+  const containerClass = contests.length === 1 
+    ? "max-w-4xl mx-auto px-4" 
+    : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4";
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] py-12">
       <PageMetadata
@@ -89,12 +88,12 @@ const ContestsList = () => {
           </p>
         </motion.div>
 
-        <div className={contests?.length === 1 ? "max-w-4xl mx-auto px-4" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4"}>
-          {contests?.map((contest, index) => (
+        <div className={containerClass}>
+          {contests.map((contest, index) => (
             <ContestCard
               key={contest.id}
               contest={contest}
-              onSelect={handleContestSelect}
+              onSelect={setSelectedContestId}
               index={index}
             />
           ))}
