@@ -105,7 +105,20 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // Get the last participation for this contest
+        // First, update any existing 'pending' participations to 'completed'
+        const { error: updateError } = await supabase
+          .from('participants')
+          .update({ status: 'completed' })
+          .eq('contest_id', contestId)
+          .eq('id', session.user.id)
+          .eq('status', 'pending');
+
+        if (updateError) {
+          console.error('Error updating existing participations:', updateError);
+          throw updateError;
+        }
+
+        // Get the last participation to calculate next attempt number
         const { data: lastParticipation, error: lastPartError } = await supabase
           .from('participants')
           .select('*')
@@ -117,22 +130,6 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
         if (lastPartError && lastPartError.code !== 'PGRST116') {
           throw lastPartError;
-        }
-
-        // Check for active participation
-        const { data: activeParticipation, error: activeError } = await supabase
-          .from('participants')
-          .select('*')
-          .eq('contest_id', contestId)
-          .eq('id', session.user.id)
-          .eq('status', 'pending')
-          .maybeSingle();
-
-        if (activeError) throw activeError;
-
-        if (activeParticipation) {
-          console.log('Active participation found:', activeParticipation);
-          return;
         }
 
         // Calculate next attempt number
