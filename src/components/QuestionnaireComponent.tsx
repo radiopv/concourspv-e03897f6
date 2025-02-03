@@ -36,6 +36,23 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     }
   });
 
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('members')
+        .select('first_name, last_name, email')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const { data: participant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
@@ -86,6 +103,12 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
+        // Vérifier si le profil utilisateur est chargé
+        if (!userProfile) {
+          console.log('Waiting for user profile data...');
+          return;
+        }
+
         const { data: existingParticipant, error: fetchError } = await supabase
           .from('participants')
           .select('*')
@@ -96,6 +119,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
         if (fetchError) throw fetchError;
 
         if (!existingParticipant) {
+          console.log('Creating new participant with profile:', userProfile);
           const { error: insertError } = await supabase
             .from('participants')
             .insert([
@@ -103,7 +127,10 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
                 id: session.user.id,
                 contest_id: contestId,
                 status: 'pending',
-                attempts: 0
+                attempts: 0,
+                first_name: userProfile.first_name,
+                last_name: userProfile.last_name,
+                email: userProfile.email
               }
             ]);
 
@@ -121,10 +148,10 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       }
     };
 
-    if (contestId) {
+    if (contestId && userProfile) {
       initializeParticipant();
     }
-  }, [contestId, queryClient, toast, navigate]);
+  }, [contestId, queryClient, toast, navigate, userProfile]);
 
   const handleNextQuestion = async () => {
     if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
@@ -222,6 +249,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       </div>
     </div>
   );
+
 };
 
 export default QuestionnaireComponent;
