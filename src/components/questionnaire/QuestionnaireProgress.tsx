@@ -51,7 +51,31 @@ const QuestionnaireProgress = ({
     }
   });
 
+  const { data: participant } = useQuery({
+    queryKey: ['current-participant'],
+    queryFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('participants')
+        .select('attempts')
+        .eq('id', sessionData.session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error('Error fetching participant:', error);
+        return null;
+      }
+
+      return data;
+    }
+  });
+
   const maxAttempts = (settings?.default_attempts || 3) + (userPoints?.extra_participations || 0);
+  const currentAttempt = participant?.attempts || 1;
   
   // Ensure currentQuestionIndex doesn't exceed totalQuestions
   const displayQuestionNumber = Math.min(currentQuestionIndex, totalQuestions);
@@ -65,7 +89,7 @@ const QuestionnaireProgress = ({
       <Progress value={(displayQuestionNumber / totalQuestions) * 100} />
       <div className="flex justify-between text-sm text-gray-600">
         <span>Questions répondues: {totalAnswered}/{totalQuestions}</span>
-        <span>Tentatives: {settings?.default_attempts || 3}/{maxAttempts}</span>
+        <span>Tentative: {currentAttempt}/{maxAttempts}</span>
       </div>
     </div>
   );

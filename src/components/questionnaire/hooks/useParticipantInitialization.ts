@@ -69,6 +69,24 @@ export const useParticipantInitialization = (
 
         const nextAttemptNumber = (latestParticipation?.attempts || 0) + 1;
 
+        // Get settings for max attempts
+        const { data: settings } = await supabase
+          .from('settings')
+          .select('default_attempts')
+          .single();
+
+        const maxAttempts = settings?.default_attempts || 3;
+
+        if (nextAttemptNumber > maxAttempts) {
+          toast({
+            title: "Limite de tentatives atteinte",
+            description: `Vous avez atteint le nombre maximum de tentatives (${maxAttempts}) pour ce concours.`,
+            variant: "destructive",
+          });
+          navigate('/contests');
+          return;
+        }
+
         // Create new participation
         const { data: newParticipation, error: insertError } = await supabase
           .from('participants')
@@ -104,6 +122,10 @@ export const useParticipantInitialization = (
         if (newParticipation) {
           console.log('Successfully created new participation:', newParticipation);
           await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
+          toast({
+            title: `Tentative ${nextAttemptNumber}/${maxAttempts}`,
+            description: "Bonne chance !",
+          });
         }
 
       } catch (error: any) {
