@@ -18,22 +18,7 @@ const QuestionnaireComponent = () => {
   const queryClient = useQueryClient();
   const state = useQuestionnaireState();
 
-  // Vérification immédiate de l'ID du concours
-  if (!contestId) {
-    console.error('No contest ID provided in URL params');
-    return (
-      <div className="p-4 text-center">
-        <h2 className="text-xl font-bold text-red-600">Erreur</h2>
-        <p className="mt-2">ID du concours manquant. Impossible de charger le questionnaire.</p>
-        <button 
-          onClick={() => navigate('/contests')}
-          className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
-        >
-          Retour aux concours
-        </button>
-      </div>
-    );
-  }
+  console.log('Current contestId:', contestId); // Ajout d'un log pour debug
 
   const { data: settings } = useQuery({
     queryKey: ['global-settings'],
@@ -70,6 +55,8 @@ const QuestionnaireComponent = () => {
   const { data: questions } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
+      if (!contestId) throw new Error('Contest ID is required');
+      
       const { data, error } = await supabase
         .from('questions')
         .select('*')
@@ -188,12 +175,14 @@ const QuestionnaireComponent = () => {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <div className="space-y-8">
-        <ParticipantCheck 
-          participant={participant} 
-          settings={settings}
-          contestId={contestId}
-          questionsLength={questions?.length || 0}
-        />
+        {contestId && (
+          <ParticipantCheck 
+            participant={participant} 
+            settings={settings}
+            contestId={contestId}
+            questionsLength={questions?.length || 0}
+          />
+        )}
         
         {participant && questions && questions.length > 0 && (
           <>
