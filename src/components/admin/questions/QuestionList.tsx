@@ -2,7 +2,7 @@ import React from 'react';
 import { Question, QuestionFormProps } from '@/types/database';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Image } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 
 interface QuestionListProps {
   questions: Question[];
@@ -27,7 +27,11 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                 <h3 className="font-semibold mb-2">{question.question_text}</h3>
                 {question.image_url && (
                   <div className="mb-4">
-                    <Image className="w-full max-w-md rounded-lg" src={question.image_url} alt="Question image" />
+                    <img 
+                      className="w-full max-w-md rounded-lg" 
+                      src={question.image_url} 
+                      alt="Question image" 
+                    />
                   </div>
                 )}
                 <div className="space-y-2">
