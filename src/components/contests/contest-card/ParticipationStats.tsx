@@ -3,9 +3,10 @@ import { calculateWinningChance } from "../../../utils/contestCalculations";
 
 interface ParticipationStatsProps {
   participantsCount: number;
+  questionsCount: number;
 }
 
-const ParticipationStats = ({ participantsCount }: ParticipationStatsProps) => {
+const ParticipationStats = ({ participantsCount, questionsCount }: ParticipationStatsProps) => {
   return (
     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-6">
       <div className="bg-white/50 p-4 rounded-lg">
