@@ -57,6 +57,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       console.error('Contest ID is missing');
       return;
     }
+    console.log('Navigating to contest with ID:', contest.id);
     navigate(`/contest/${contest.id}`);
   };
 
