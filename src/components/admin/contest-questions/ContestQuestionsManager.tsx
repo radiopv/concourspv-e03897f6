@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Check, ArrowLeft, ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Question } from "@/types/database";
 
 const ContestQuestionsManager = () => {
   const { contestId } = useParams();
@@ -113,12 +114,14 @@ const ContestQuestionsManager = () => {
     }
   };
 
-  const isQuestionInContest = (questionBankId: string) => {
+  const isQuestionInContest = (questionBankId: string): boolean => {
     if (!Array.isArray(contestQuestions) || !Array.isArray(questions)) return false;
     
     const questionFromBank = questions.find(q => q.id === questionBankId);
+    if (!questionFromBank) return false;
+    
     return contestQuestions.some(q => 
-      q.question_text === questionFromBank?.question_text
+      q.question_text === questionFromBank.question_text
     );
   };
 
