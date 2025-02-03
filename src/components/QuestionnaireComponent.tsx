@@ -105,7 +105,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // First, update any existing 'pending' participations to 'completed'
+        // First, complete ALL pending participations for this user and contest
         const { error: updateError } = await supabase
           .from('participants')
           .update({ 
@@ -120,6 +120,9 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           console.error('Error updating existing participations:', updateError);
           throw updateError;
         }
+
+        // Wait a moment for the update to complete
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Get all participations to calculate next attempt number
         const { data: existingParticipations, error: existingError } = await supabase
