@@ -21,8 +21,9 @@ const ContestQuestionsManager = () => {
     queryFn: async () => {
       console.log('Fetching questions from question bank');
       const { data, error } = await supabase
-        .from('question_bank')
+        .from('questions')
         .select('*')
+        .is('contest_id', null)
         .eq('status', 'available');
       
       if (error) {
@@ -62,14 +63,8 @@ const ContestQuestionsManager = () => {
 
       const { error } = await supabase
         .from('questions')
-        .insert([{
-          contest_id: contestId,
-          question_text: questionToAdd.question_text,
-          options: questionToAdd.options,
-          correct_answer: questionToAdd.correct_answer,
-          article_url: questionToAdd.article_url,
-          type: 'multiple_choice'
-        }]);
+        .update({ contest_id: contestId })
+        .eq('id', questionBankId);
 
       if (error) throw error;
 
@@ -79,6 +74,7 @@ const ContestQuestionsManager = () => {
       });
 
       queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
+      queryClient.invalidateQueries({ queryKey: ['question-bank'] });
     } catch (error) {
       console.error('Error adding question:', error);
       toast({
@@ -93,7 +89,7 @@ const ContestQuestionsManager = () => {
     try {
       const { error } = await supabase
         .from('questions')
-        .delete()
+        .update({ contest_id: null })
         .eq('id', questionId);
 
       if (error) throw error;
@@ -104,6 +100,7 @@ const ContestQuestionsManager = () => {
       });
 
       queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
+      queryClient.invalidateQueries({ queryKey: ['question-bank'] });
     } catch (error) {
       console.error('Error removing question:', error);
       toast({
