@@ -43,8 +43,9 @@ const QuestionTableView = () => {
     queryKey: ['questions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('question_bank')
+        .from('questions')
         .select('*')
+        .is('contest_id', null) // Only get questions not associated with a contest
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -77,16 +78,16 @@ const QuestionTableView = () => {
 
   const addToContestMutation = useMutation({
     mutationFn: async ({ questionId, contestId }: { questionId: string, contestId: string }) => {
-      // Récupérer d'abord la question depuis la banque de questions
+      // Get the question from the questions table
       const { data: questionData, error: fetchError } = await supabase
-        .from('question_bank')
+        .from('questions')
         .select('*')
         .eq('id', questionId)
         .single();
 
       if (fetchError) throw fetchError;
 
-      // Vérifier si une question avec le même URL existe déjà dans le concours
+      // Check if a question with the same URL exists in the contest
       if (questionData.article_url) {
         const { data: existingQuestions, error: checkError } = await supabase
           .from('questions')
@@ -105,7 +106,7 @@ const QuestionTableView = () => {
         }
       }
 
-      // Créer la question dans le concours
+      // Create a new question for the contest
       const { error: insertError } = await supabase
         .from('questions')
         .insert([{
@@ -138,7 +139,7 @@ const QuestionTableView = () => {
   const updateMutation = useMutation({
     mutationFn: async (question: Partial<Question> & { id: string }) => {
       const { error } = await supabase
-        .from('question_bank')
+        .from('questions')
         .update({
           question_text: question.question_text,
           options: question.options,
@@ -169,7 +170,7 @@ const QuestionTableView = () => {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('question_bank')
+        .from('questions')
         .delete()
         .eq('id', id);
 

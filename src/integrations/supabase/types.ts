@@ -518,36 +518,6 @@ export type Database = {
           },
         ]
       }
-      question_bank: {
-        Row: {
-          article_url: string | null
-          correct_answer: string
-          created_at: string
-          id: string
-          options: Json
-          question_text: string
-          status: string
-        }
-        Insert: {
-          article_url?: string | null
-          correct_answer: string
-          created_at?: string
-          id?: string
-          options: Json
-          question_text: string
-          status?: string
-        }
-        Update: {
-          article_url?: string | null
-          correct_answer?: string
-          created_at?: string
-          id?: string
-          options?: Json
-          question_text?: string
-          status?: string
-        }
-        Relationships: []
-      }
       questions: {
         Row: {
           article_url: string | null
@@ -559,6 +529,7 @@ export type Database = {
           order_number: number | null
           question_text: string
           questionnaire_id: string | null
+          status: string | null
           type: string
           updated_at: string | null
         }
@@ -572,6 +543,7 @@ export type Database = {
           order_number?: number | null
           question_text: string
           questionnaire_id?: string | null
+          status?: string | null
           type?: string
           updated_at?: string | null
         }
@@ -585,6 +557,7 @@ export type Database = {
           order_number?: number | null
           question_text?: string
           questionnaire_id?: string | null
+          status?: string | null
           type?: string
           updated_at?: string | null
         }
