@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import ArticleLink from './ArticleLink';
+import AnswerOptions from './AnswerOptions';
 
 interface QuestionDisplayProps {
   questionText: string;
@@ -46,27 +47,14 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
           />
         )}
 
-        <div className="space-y-2">
-          {Array.isArray(options) && options.map((option, index) => (
-            <Button
-              key={index}
-              variant={selectedAnswer === option ? "default" : "outline"}
-              className={`w-full justify-start ${
-                hasAnswered
-                  ? option === correctAnswer
-                    ? "bg-green-500 hover:bg-green-600 text-white"
-                    : option === selectedAnswer
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : ""
-                  : ""
-              }`}
-              onClick={() => !hasAnswered && onAnswerSelect(option)}
-              disabled={hasAnswered || isSubmitting}
-            >
-              {option}
-            </Button>
-          ))}
-        </div>
+        <AnswerOptions
+          options={options}
+          selectedAnswer={selectedAnswer}
+          correctAnswer={correctAnswer}
+          hasAnswered={hasAnswered}
+          isDisabled={isSubmitting}
+          onAnswerSelect={onAnswerSelect}
+        />
       </div>
 
       <div className="flex justify-end space-x-2">
