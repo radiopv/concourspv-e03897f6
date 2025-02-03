@@ -60,6 +60,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
         .select('*')
         .eq('contest_id', contestId)
         .eq('id', session.user.id)
+        .order('created_at', { ascending: false })
         .maybeSingle();
 
       if (error) throw error;
@@ -104,37 +105,42 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
+        // Vérifier si une participation active existe déjà
         const { data: existingParticipant, error: checkError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
+          .eq('status', 'pending')
           .maybeSingle();
 
         if (checkError) throw checkError;
 
-        if (existingParticipant?.status === 'completed') {
+        if (existingParticipant) {
+          console.log('Participation active trouvée:', existingParticipant);
           return;
         }
 
-        if (!existingParticipant) {
-          console.log('Creating new participant with profile:', userProfile);
-          const { error: insertError } = await supabase
-            .from('participants')
-            .insert([
-              {
-                id: session.user.id,
-                contest_id: contestId,
-                status: 'pending',
-                attempts: 1,
-                first_name: userProfile.first_name,
-                last_name: userProfile.last_name,
-                email: userProfile.email,
-                score: 0
-              }
-            ]);
+        // Créer une nouvelle participation
+        console.log('Creating new participant with profile:', userProfile);
+        const { error: insertError } = await supabase
+          .from('participants')
+          .insert([
+            {
+              id: session.user.id,
+              contest_id: contestId,
+              status: 'pending',
+              attempts: 1,
+              first_name: userProfile.first_name,
+              last_name: userProfile.last_name,
+              email: userProfile.email,
+              score: 0
+            }
+          ]);
 
-          if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error creating participant:', insertError);
+          throw insertError;
         }
 
         await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
