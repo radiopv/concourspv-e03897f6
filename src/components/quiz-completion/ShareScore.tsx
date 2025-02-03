@@ -14,7 +14,8 @@ interface ShareScoreProps {
 
 const ShareScore = ({ score, totalQuestions, contestId }: ShareScoreProps) => {
   const { toast } = useToast();
-  const currentUrl = window.location.href;
+  const shareUrl = "https://www.passionvaradero.com/concours-passion-varadero";
+  const shareImage = "/lovable-uploads/b5427ec6-4d0e-4d29-b9e6-203e1456cd4c.png";
 
   const { data: metadata } = useQuery({
     queryKey: ['contest-share-metadata', contestId],
@@ -37,7 +38,7 @@ const ShareScore = ({ score, totalQuestions, contestId }: ShareScoreProps) => {
   const handleShare = async () => {
     try {
       // Construct share URL with metadata
-      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
+      const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
       
       // Open Facebook share dialog
       const width = 626;
@@ -46,7 +47,7 @@ const ShareScore = ({ score, totalQuestions, contestId }: ShareScoreProps) => {
       const top = (window.innerHeight - height) / 2;
       
       window.open(
-        shareUrl,
+        fbShareUrl,
         'facebook-share-dialog',
         `width=${width},height=${height},top=${top},left=${left}`
       );
@@ -92,14 +93,12 @@ const ShareScore = ({ score, totalQuestions, contestId }: ShareScoreProps) => {
   const shareDescription = metadata?.description || 
     "Participez vous aussi et tentez de gagner des prix exceptionnels !";
 
-  const shareImage = metadata?.image_url || 'https://votre-site.com/default-share-image.jpg';
-
   return (
     <>
       <Helmet>
         <meta property="og:title" content={shareTitle} />
         <meta property="og:description" content={shareDescription} />
-        <meta property="og:url" content={currentUrl} />
+        <meta property="og:url" content={shareUrl} />
         <meta property="og:type" content="website" />
         <meta property="og:image" content={shareImage} />
         <meta property="og:image:width" content="1200" />
