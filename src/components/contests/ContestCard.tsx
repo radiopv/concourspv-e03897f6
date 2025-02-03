@@ -61,6 +61,18 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   // Remove duplicate "Connaissance de base" from title
   const cleanTitle = contest.title.replace(/Connaissance de base/g, '').replace(/\s+-\s+$/, '').trim();
 
+  // Rotate between different soft background colors based on index
+  const backgroundColors = [
+    'from-[#F2FCE2] to-[#E5F5D3]', // Soft Green
+    'from-[#FEF7CD] to-[#FDF0B0]', // Soft Yellow
+    'from-[#E5DEFF] to-[#D6BCFA]', // Soft Purple
+    'from-[#D3E4FD] to-[#B9D5FC]', // Soft Blue
+    'from-[#FFDEE2] to-[#FFD0D6]', // Soft Pink
+    'from-[#FDE1D3] to-[#FCD1BA]'  // Soft Peach
+  ];
+
+  const bgColorClass = backgroundColors[index % backgroundColors.length];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -68,27 +80,27 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="h-full"
     >
-      <Card className="bg-gradient-to-br from-[#1A1F2C] to-[#2D243B] text-white shadow-xl hover:shadow-2xl transition-all duration-300 border-[#9b87f5]/20 h-full flex flex-col">
-        <CardHeader className="border-b border-[#9b87f5]/20 pb-4">
+      <Card className={`bg-gradient-to-br ${bgColorClass} shadow-xl hover:shadow-2xl transition-all duration-300 border-gray-200/20 h-full flex flex-col`}>
+        <CardHeader className="border-b border-gray-200/20 pb-4">
           <div className="flex flex-col gap-3">
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-[#9b87f5] to-[#F97316] bg-clip-text text-transparent">
+            <CardTitle className="text-2xl font-bold text-gray-800">
               {cleanTitle}
             </CardTitle>
             <div className="flex flex-wrap gap-2">
               {contest.is_new && (
-                <Badge className="bg-[#F97316] text-white">
+                <Badge className="bg-blue-500 text-white">
                   Nouveau
                 </Badge>
               )}
               {contest.has_big_prizes && (
-                <Badge className="bg-[#9b87f5] text-white">
+                <Badge className="bg-amber-500 text-white">
                   Gros Lots
                 </Badge>
               )}
             </div>
           </div>
           {contest.description && (
-            <p className="text-gray-300 mt-2 text-sm leading-relaxed">
+            <p className="text-gray-700 mt-2 text-sm leading-relaxed">
               {contest.description}
             </p>
           )}
@@ -96,32 +108,32 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
 
         <CardContent className="pt-6 space-y-6 flex-grow">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
+            <div className="bg-white/50 p-4 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-blue-600 mb-2">
                 <Users className="w-4 h-4" />
                 <h3 className="font-medium">Participants</h3>
               </div>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-800">
                 {stats?.totalParticipants || 0}
               </p>
             </div>
 
-            <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-[#F97316] mb-2">
+            <div className="bg-white/50 p-4 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-amber-600 mb-2">
                 <Star className="w-4 h-4" />
                 <h3 className="font-medium">Score Moyen</h3>
               </div>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-800">
                 {stats?.averageScore || 0}%
               </p>
             </div>
 
-            <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
+            <div className="bg-white/50 p-4 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-purple-600 mb-2">
                 <Trophy className="w-4 h-4" />
                 <h3 className="font-medium">Éligibles</h3>
               </div>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-800">
                 {stats?.qualifiedParticipants || 0}
               </p>
             </div>
@@ -129,7 +141,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
 
           {contest.prizes && contest.prizes.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2 text-[#F97316] justify-center">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 justify-center">
                 <Gift className="w-5 h-5" />
                 Prix à gagner
               </h3>
@@ -137,7 +149,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                 {contest.prizes.map((prize) => (
                   <div 
                     key={prize.id} 
-                    className="group relative overflow-hidden rounded-lg border border-[#9b87f5]/20 bg-black/30 backdrop-blur-sm p-4"
+                    className="group relative overflow-hidden rounded-lg border border-gray-200/20 bg-white/70 backdrop-blur-sm p-4"
                   >
                     <div className="flex items-center gap-4">
                       {prize.image_url && (
@@ -150,11 +162,11 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                         </div>
                       )}
                       <div className="flex-grow">
-                        <h4 className="font-semibold text-[#9b87f5]">
+                        <h4 className="font-semibold text-gray-800">
                           {prize.name}
                         </h4>
                         {prize.value && (
-                          <p className="flex items-center gap-1 text-[#F97316] text-sm mt-1">
+                          <p className="flex items-center gap-1 text-green-600 text-sm mt-1">
                             <DollarSign className="w-4 h-4" />
                             Valeur: {prize.value} CAD $
                           </p>
@@ -164,7 +176,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
                             href={prize.shop_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm text-[#9b87f5] hover:text-[#F97316] transition-colors mt-2"
+                            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors mt-2"
                           >
                             <ExternalLink className="w-4 h-4" />
                             Voir le cadeau
@@ -181,7 +193,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
           <div className="mt-8 flex justify-center">
             <Button
               onClick={handleParticipate}
-              className="bg-gradient-to-r from-[#9b87f5] to-[#F97316] hover:from-[#8B5CF6] hover:to-[#D946EF] text-white font-bold py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none w-full sm:w-auto"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none w-full sm:w-auto"
             >
               Participer Maintenant
             </Button>
