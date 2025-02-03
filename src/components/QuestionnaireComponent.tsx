@@ -49,7 +49,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     }
   });
 
-  const { data: participant } = useQuery({
+  const { data: participant, refetch: refetchParticipant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -105,7 +105,23 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // Get all participations for this contest to check status
+        // First, update any existing 'pending' participations to 'completed'
+        const { error: updateError } = await supabase
+          .from('participants')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('contest_id', contestId)
+          .eq('id', session.user.id)
+          .eq('status', 'pending');
+
+        if (updateError) {
+          console.error('Error updating existing participations:', updateError);
+          throw updateError;
+        }
+
+        // Get all participations to calculate next attempt number
         const { data: existingParticipations, error: existingError } = await supabase
           .from('participants')
           .select('*')
@@ -118,14 +134,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           throw existingError;
         }
 
-        // Check for pending participation
-        const pendingParticipation = existingParticipations?.find(p => p.status === 'pending');
-        if (pendingParticipation) {
-          console.log('Found pending participation:', pendingParticipation);
-          return; // Use existing pending participation
-        }
-
-        // Calculate next attempt number from all participations
+        // Calculate next attempt number
         const nextAttempt = existingParticipations?.length ? existingParticipations.length + 1 : 1;
         console.log('Calculated next attempt number:', nextAttempt);
 
@@ -154,6 +163,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
         console.log('Successfully created new participation:', newParticipation);
         await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
+        await refetchParticipant();
 
       } catch (error) {
         console.error('Error initializing participant:', error);
