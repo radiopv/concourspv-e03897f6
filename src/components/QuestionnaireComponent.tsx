@@ -41,7 +41,7 @@ const QuestionnaireComponent = () => {
       const { data, error } = await supabase
         .from('settings')
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
