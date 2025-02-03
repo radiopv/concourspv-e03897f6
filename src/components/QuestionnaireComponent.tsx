@@ -105,7 +105,6 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // Vérifier si un participant existe déjà
         const { data: existingParticipant, error: checkError } = await supabase
           .from('participants')
           .select('*')
@@ -115,12 +114,10 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
         if (checkError) throw checkError;
 
-        // Si le participant existe et a un statut 'completed', ne rien faire
         if (existingParticipant?.status === 'completed') {
           return;
         }
 
-        // Si le participant n'existe pas, le créer
         if (!existingParticipant) {
           console.log('Creating new participant with profile:', userProfile);
           const { error: insertError } = await supabase
@@ -184,7 +181,8 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        const finalScore = calculateFinalScore(state.score.toString());
+        // Ensure score is a number between 0 and 100
+        const finalScore = Math.min(Math.max(parseInt(state.score.toString()) || 0, 0), 100);
 
         const { error: updateError } = await supabase
           .from('participants')
