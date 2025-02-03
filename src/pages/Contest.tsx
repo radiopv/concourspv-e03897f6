@@ -5,7 +5,7 @@ import QuestionnaireComponent from '@/components/QuestionnaireComponent';
 const Contest = () => {
   const params = useParams();
   const navigate = useNavigate();
-  const contestId = params.contestId;
+  const contestId = params.id; // Changement ici : on utilise params.id au lieu de params.contestId
 
   console.log('Contest component - actual params:', params);
   console.log('Contest component - contestId:', contestId);
