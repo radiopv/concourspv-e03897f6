@@ -32,24 +32,44 @@ export const useParticipantInitialization = (
           return;
         }
 
-        const { data: existingActive, error: checkError } = await supabase
+        // First, check for any existing active participation
+        const { data: existingParticipations, error: checkError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
           .eq('status', 'pending')
-          .is('completed_at', null);
+          .is('completed_at', null)
+          .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no rows are found
 
         if (checkError) {
           console.error('Error checking existing participation:', checkError);
           return;
         }
 
-        if (existingActive && existingActive.length > 0) {
-          console.log('Found existing active participation:', existingActive[0]);
+        if (existingParticipations) {
+          console.log('Found existing active participation:', existingParticipations);
           await refetchParticipant();
           return;
         }
+
+        // Check for completed participations to determine attempt number
+        const { data: completedParticipations, error: completedError } = await supabase
+          .from('participants')
+          .select('attempts')
+          .eq('contest_id', contestId)
+          .eq('id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (completedError) {
+          console.error('Error checking completed participations:', completedError);
+          return;
+        }
+
+        const currentAttempt = completedParticipations?.[0]?.attempts 
+          ? completedParticipations[0].attempts + 1 
+          : 1;
 
         try {
           const { data: newParticipation, error: insertError } = await supabase
@@ -61,13 +81,16 @@ export const useParticipantInitialization = (
               first_name: userProfile.first_name,
               last_name: userProfile.last_name,
               email: userProfile.email,
-              score: 0
+              score: 0,
+              attempts: currentAttempt
             })
             .select()
-            .single();
+            .maybeSingle();
 
           if (insertError) {
             if (insertError.message.includes('already has an active participation')) {
+              // If there's a race condition and a participation was created,
+              // just refetch the participant data
               await refetchParticipant();
               return;
             }
