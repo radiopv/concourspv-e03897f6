@@ -164,7 +164,6 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
       } catch (error: any) {
         console.error('Error initializing participant:', error);
-        // Only show error toast if it's not the uniqueness constraint
         if (error.message !== 'User already has an active participation in this contest') {
           toast({
             title: "Erreur",
@@ -190,7 +189,12 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       return;
     }
 
-    const currentQuestion = questions?.[state.currentQuestionIndex];
+    if (!questions || !questions.length) {
+      console.error('No questions available');
+      return;
+    }
+
+    const currentQuestion = questions[state.currentQuestionIndex];
     
     // Validate answer against the question's correct_answer
     const isCorrect = currentQuestion?.correct_answer === state.selectedAnswer;
@@ -238,16 +242,16 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     }
 
     // Calculate current score based on total correct answers
-    const newScore = Math.round((state.totalAnswered / (questions?.length || 1)) * 100);
+    const newScore = Math.round((state.totalAnswered / questions.length) * 100);
     state.setScore(newScore);
 
     console.log('Score calculation:', {
       totalAnswered: state.totalAnswered,
-      questionsLength: questions?.length,
+      questionsLength: questions.length,
       newScore
     });
 
-    if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
+    if (state.currentQuestionIndex < questions.length - 1) {
       state.setCurrentQuestionIndex(prev => prev + 1);
       state.setSelectedAnswer('');
       state.setHasAnswered(false);
@@ -265,7 +269,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
         }
 
         // Calculate final score based on total correct answers
-        const finalScore = Math.round((state.totalAnswered / (questions?.length || 1)) * 100);
+        const finalScore = Math.round((state.totalAnswered / questions.length) * 100);
 
         const { error: updateError } = await supabase
           .from('participants')
@@ -281,7 +285,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
         // Save answers to participant_answers
         if (participant?.participation_id) {
-          const answersToSave = questions?.map((question, index) => ({
+          const answersToSave = questions.map((question, index) => ({
             participant_id: participant.participation_id,
             question_id: question.id,
             answer: state.selectedAnswer,
@@ -289,21 +293,19 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
             attempt_number: 1
           }));
 
-          if (answersToSave?.length) {
-            const { error: answersError } = await supabase
-              .from('participant_answers')
-              .insert(answersToSave);
+          const { error: answersError } = await supabase
+            .from('participant_answers')
+            .insert(answersToSave);
 
-            if (answersError) {
-              console.error('Error saving answers:', answersError);
-            }
+          if (answersError) {
+            console.error('Error saving answers:', answersError);
           }
         }
 
         navigate('/quiz-completion', {
           state: {
             score: finalScore,
-            totalQuestions: questions?.length || 0,
+            totalQuestions: questions.length,
             contestId,
             requiredPercentage: settings?.required_percentage || 90
           }
