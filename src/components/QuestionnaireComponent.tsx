@@ -105,8 +105,22 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // Vérifier si une participation active existe déjà
-        const { data: existingParticipant, error: checkError } = await supabase
+        // Get the last participation for this contest
+        const { data: lastParticipation, error: lastPartError } = await supabase
+          .from('participants')
+          .select('*')
+          .eq('contest_id', contestId)
+          .eq('id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (lastPartError && lastPartError.code !== 'PGRST116') {
+          throw lastPartError;
+        }
+
+        // Check for active participation
+        const { data: activeParticipation, error: activeError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
@@ -114,15 +128,18 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           .eq('status', 'pending')
           .maybeSingle();
 
-        if (checkError) throw checkError;
+        if (activeError) throw activeError;
 
-        if (existingParticipant) {
-          console.log('Participation active trouvée:', existingParticipant);
+        if (activeParticipation) {
+          console.log('Active participation found:', activeParticipation);
           return;
         }
 
-        // Créer une nouvelle participation
-        console.log('Creating new participant with profile:', userProfile);
+        // Calculate next attempt number
+        const nextAttempt = lastParticipation ? (lastParticipation.attempts || 0) + 1 : 1;
+
+        // Create new participation
+        console.log('Creating new participant with profile:', userProfile, 'attempt:', nextAttempt);
         const { error: insertError } = await supabase
           .from('participants')
           .insert([
@@ -130,7 +147,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
               id: session.user.id,
               contest_id: contestId,
               status: 'pending',
-              attempts: 1,
+              attempts: nextAttempt,
               first_name: userProfile.first_name,
               last_name: userProfile.last_name,
               email: userProfile.email,
@@ -340,6 +357,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       </div>
     </div>
   );
+
 };
 
 export default QuestionnaireComponent;
