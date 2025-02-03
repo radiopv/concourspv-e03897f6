@@ -33,22 +33,21 @@ export const useParticipantInitialization = (
         }
 
         // First, check for any existing active participation
-        const { data: existingParticipation, error: checkError } = await supabase
+        const { data: existingParticipations, error: checkError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
           .eq('status', 'pending')
-          .is('completed_at', null)
-          .maybeSingle();
+          .is('completed_at', null);
 
         if (checkError) {
           console.error('Error checking existing participation:', checkError);
           return;
         }
 
-        if (existingParticipation) {
-          console.log('Found existing active participation:', existingParticipation);
+        if (existingParticipations && existingParticipations.length > 0) {
+          console.log('Found existing active participation:', existingParticipations[0]);
           await refetchParticipant();
           return;
         }
@@ -70,7 +69,7 @@ export const useParticipantInitialization = (
 
         const nextAttemptNumber = (latestParticipation?.attempts || 0) + 1;
 
-        // Create new participation with transaction-like check
+        // Create new participation
         const { data: newParticipation, error: insertError } = await supabase
           .from('participants')
           .insert({
@@ -87,8 +86,7 @@ export const useParticipantInitialization = (
           .maybeSingle();
 
         if (insertError) {
-          // If there's a race condition and a participation was created in the meantime
-          if (insertError.message.includes('already has an active participation')) {
+          if (insertError.message.includes('active participation')) {
             console.log('Race condition detected, refetching participant data');
             await refetchParticipant();
             return;
