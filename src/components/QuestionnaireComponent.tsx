@@ -18,7 +18,6 @@ const QuestionnaireComponent = () => {
   const queryClient = useQueryClient();
   const state = useQuestionnaireState();
 
-  // Redirect if no contestId
   useEffect(() => {
     if (!contestId) {
       console.error('No contest ID provided');
@@ -31,7 +30,6 @@ const QuestionnaireComponent = () => {
     }
   }, [contestId, navigate, toast]);
 
-  // Fetch contest settings
   const { data: settings } = useQuery({
     queryKey: ['global-settings'],
     queryFn: async () => {
@@ -45,7 +43,6 @@ const QuestionnaireComponent = () => {
     }
   });
 
-  // Fetch participant status
   const { data: participant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
@@ -70,7 +67,6 @@ const QuestionnaireComponent = () => {
     enabled: !!contestId
   });
 
-  // Fetch questions
   const { data: questions } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
@@ -91,7 +87,6 @@ const QuestionnaireComponent = () => {
     enabled: !!contestId
   });
 
-  // Initialize participant
   useEffect(() => {
     const initializeParticipant = async () => {
       if (!contestId) {
@@ -162,8 +157,8 @@ const QuestionnaireComponent = () => {
           return;
         }
 
-        // Calculate final score
-        const finalScore = calculateFinalScore(questions?.length || 0, state.score);
+        // Calculate final score - fixed to use only state.score
+        const finalScore = calculateFinalScore(state.score);
 
         // Update participant status
         const { error: updateError } = await supabase
