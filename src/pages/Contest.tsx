@@ -3,12 +3,14 @@ import { useParams } from 'react-router-dom';
 import QuestionnaireComponent from '@/components/QuestionnaireComponent';
 
 const Contest = () => {
-  const { contestId } = useParams();
+  const { contestId } = useParams<{ contestId: string }>();
+
+  if (!contestId) {
+    return <div>ID du concours manquant</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Contest Details</h1>
-      <p>Contest ID: {contestId}</p>
       <QuestionnaireComponent />
     </div>
   );

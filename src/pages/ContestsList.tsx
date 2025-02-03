@@ -1,23 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from "react-router-dom";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import QuestionnaireComponent from "@/components/QuestionnaireComponent";
 import ContestCard from "@/components/contests/ContestCard";
 import { useContests } from "@/hooks/useContests";
 import PageMetadata from "@/components/seo/PageMetadata";
 
 const ContestsList = () => {
   const navigate = useNavigate();
-  const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
   const { data: contests, isLoading } = useContests();
   const canonicalUrl = `${window.location.origin}/contests`;
-
-  if (selectedContestId) {
-    return <QuestionnaireComponent />;  // Remove contestId prop as it's accessed via useParams
-  }
 
   if (isLoading) {
     return (
@@ -93,7 +87,7 @@ const ContestsList = () => {
             <ContestCard
               key={contest.id}
               contest={contest}
-              onSelect={setSelectedContestId}
+              onSelect={(id) => navigate(`/contest/${id}`)}
               index={index}
             />
           ))}

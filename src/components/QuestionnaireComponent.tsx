@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
+import React, { useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
+import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
 import QuestionDisplay from './questionnaire/QuestionDisplay';
 import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
-import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
-import { Card, CardContent } from "@/components/ui/card";
-import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
 import CountdownTimer from './questionnaire/CountdownTimer';
 import ParticipantCheck from './questionnaire/ParticipantCheck';
 import { calculateFinalScore } from '@/utils/scoreCalculations';
@@ -19,8 +17,6 @@ const QuestionnaireComponent = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const state = useQuestionnaireState();
-  const [countdown, setCountdown] = useState(5);
-  const [showQuestions, setShowQuestions] = useState(false);
 
   // Redirect if no contestId
   useEffect(() => {
@@ -29,10 +25,9 @@ const QuestionnaireComponent = () => {
       toast({
         title: "Erreur",
         description: "ID du concours manquant",
-        variant: "destructive",
+        variant: "destructive"
       });
       navigate('/contests');
-      return;
     }
   }, [contestId, navigate, toast]);
 
@@ -43,8 +38,7 @@ const QuestionnaireComponent = () => {
       const { data, error } = await supabase
         .from('settings')
         .select('*')
-        .limit(1)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       return data;
@@ -55,8 +49,11 @@ const QuestionnaireComponent = () => {
   const { data: participant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
-      if (!contestId) return null;
-      
+      if (!contestId) {
+        console.log('No contest ID, returning null');
+        return null;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return null;
 
@@ -65,11 +62,10 @@ const QuestionnaireComponent = () => {
         .select('*')
         .eq('contest_id', contestId)
         .eq('id', session.user.id)
-        .maybeSingle();
+        .single();
 
-      if (error && error.code === 'PGRST116') return null;
-      if (error) throw error;
-      return data as Participant;
+      if (error && error.code !== 'PGRST116') throw error;
+      return data as Participant | null;
     },
     enabled: !!contestId
   });
@@ -95,13 +91,7 @@ const QuestionnaireComponent = () => {
     enabled: !!contestId
   });
 
-  const handleCountdownComplete = () => {
-    setCountdown(prev => prev - 1);
-    if (countdown <= 1) {
-      setShowQuestions(true);
-    }
-  };
-
+  // Initialize participant
   useEffect(() => {
     const initializeParticipant = async () => {
       if (!contestId) {
@@ -111,94 +101,45 @@ const QuestionnaireComponent = () => {
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user?.id) {
-          toast({
-            title: "Erreur",
-            description: "Vous devez être connecté pour participer",
-            variant: "destructive",
-          });
-          navigate('/login');
-          return;
-        }
+        if (!session?.user?.id) return;
 
-        const { data: userProfile } = await supabase
-          .from('members')
-          .select('first_name, last_name, email')
+        const { data: existingParticipant, error: fetchError } = await supabase
+          .from('participants')
+          .select('*')
+          .eq('contest_id', contestId)
           .eq('id', session.user.id)
           .single();
 
-        if (!userProfile) {
-          console.error('User profile not found');
-          toast({
-            title: "Erreur",
-            description: "Profil utilisateur non trouvé",
-            variant: "destructive",
-          });
-          return;
-        }
+        if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
-        const { data: existingParticipant, error: checkError } = await supabase
-          .from('participants')
-          .select('participation_id, attempts')
-          .eq('id', session.user.id)
-          .eq('contest_id', contestId)
-          .maybeSingle();
-
-        if (checkError && checkError.code !== 'PGRST116') {
-          throw checkError;
-        }
-
-        if (existingParticipant?.participation_id) {
-          const { error: updateError } = await supabase
-            .from('participants')
-            .update({
-              status: 'pending',
-              attempts: (existingParticipant.attempts || 0) + 1,
-              score: 0,
-              first_name: userProfile.first_name,
-              last_name: userProfile.last_name,
-              email: userProfile.email,
-              updated_at: new Date().toISOString()
-            })
-            .eq('participation_id', existingParticipant.participation_id);
-
-          if (updateError) throw updateError;
-        } else {
-          const participation_id = crypto.randomUUID();
+        if (!existingParticipant) {
           const { error: insertError } = await supabase
             .from('participants')
-            .insert({
-              participation_id,
-              id: session.user.id,
-              contest_id: contestId,
-              status: 'pending',
-              attempts: 1,
-              score: 0,
-              first_name: userProfile.first_name,
-              last_name: userProfile.last_name,
-              email: userProfile.email,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
+            .insert([
+              {
+                id: session.user.id,
+                contest_id: contestId,
+                status: 'pending',
+                attempts: 0
+              }
+            ]);
 
           if (insertError) throw insertError;
         }
 
         await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
-        console.log('Participant initialized successfully');
-
       } catch (error) {
         console.error('Error initializing participant:', error);
         toast({
           title: "Erreur",
-          description: "Une erreur est survenue lors de l'initialisation",
-          variant: "destructive",
+          description: "Impossible d'initialiser la participation",
+          variant: "destructive"
         });
       }
     };
 
     initializeParticipant();
-  }, [contestId, navigate, toast, queryClient]);
+  }, [contestId, queryClient, toast]);
 
   const handleNextQuestion = async () => {
     if (!contestId) {
@@ -208,37 +149,26 @@ const QuestionnaireComponent = () => {
 
     if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
       state.setCurrentQuestionIndex(prev => prev + 1);
-      state.setSelectedAnswer("");
-      state.setHasClickedLink(false);
-      state.setHasAnswered(false);
-      state.setIsCorrect(null);
     } else {
-      state.setIsSubmitting(true);
+      // Quiz completed
       try {
-        console.log('Starting quiz completion process...');
-        
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user?.id) {
-          throw new Error("User not authenticated");
+          toast({
+            title: "Erreur",
+            description: "Vous devez être connecté pour terminer le quiz",
+            variant: "destructive"
+          });
+          return;
         }
 
-        const { data: participant, error: participantError } = await supabase
-          .from('participants')
-          .select('participation_id, attempts')
-          .eq('contest_id', contestId)
-          .eq('id', session.user.id)
-          .single();
+        // Calculate final score
+        const finalScore = calculateFinalScore(
+          questions?.length || 0,
+          state.correctAnswers
+        );
 
-        if (participantError || !participant?.participation_id) {
-          console.error('Error fetching participant:', participantError);
-          throw new Error("Participant not found");
-        }
-
-        console.log('Participant found:', participant);
-
-        const finalScore = await calculateFinalScore(participant.participation_id);
-        console.log('Final score calculated:', finalScore);
-
+        // Update participant status
         const { error: updateError } = await supabase
           .from('participants')
           .update({ 
@@ -249,35 +179,25 @@ const QuestionnaireComponent = () => {
           .eq('contest_id', contestId)
           .eq('id', session.user.id);
 
-        if (updateError) {
-          console.error('Error updating participant:', updateError);
-          throw updateError;
-        }
+        if (updateError) throw updateError;
 
-        await queryClient.invalidateQueries({ queryKey: ['contests'] });
-        await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
-        await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
-
-        console.log('Quiz completed successfully. Navigating to completion page with score:', finalScore);
-
+        // Navigate to completion page
         navigate('/quiz-completion', {
           state: {
             score: finalScore,
             totalQuestions: questions?.length || 0,
-            contestId: contestId,
+            contestId,
             requiredPercentage: settings?.required_percentage || 90
           }
         });
 
       } catch (error) {
-        console.error('Error completing questionnaire:', error);
+        console.error('Error completing quiz:', error);
         toast({
           title: "Erreur",
-          description: "Une erreur est survenue lors de la finalisation du questionnaire",
-          variant: "destructive",
+          description: "Impossible de terminer le quiz",
+          variant: "destructive"
         });
-      } finally {
-        state.setIsSubmitting(false);
       }
     }
   };
@@ -287,60 +207,34 @@ const QuestionnaireComponent = () => {
     return null;
   }
 
-  if (!questions || questions.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-center">Aucune question n'est disponible pour ce concours.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const currentQuestion = questions[state.currentQuestionIndex];
-
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <ParticipantCheck
-        participant={participant}
-        settings={settings}
-        contestId={contestId}
-        questionsLength={questions?.length || 0}
-      />
-
-      {!showQuestions ? (
-        <CountdownTimer
-          countdown={countdown}
-          onCountdownComplete={handleCountdownComplete}
-          isDisabled={participant?.attempts >= (settings?.default_attempts || 3)}
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="space-y-8">
+        <ParticipantCheck 
+          participant={participant} 
+          settings={settings}
         />
-      ) : (
-        <Card>
-          <CardContent className="p-6 space-y-6">
-            <QuestionnaireProgress
-              currentQuestionIndex={state.currentQuestionIndex}
+        
+        {participant && questions && questions.length > 0 && (
+          <>
+            <QuestionnaireProgress 
+              currentQuestion={state.currentQuestionIndex + 1}
               totalQuestions={questions.length}
-              score={state.score}
-              totalAnswered={state.totalAnswered}
             />
+            
+            <CountdownTimer 
+              duration={300} 
+              onTimeUp={handleNextQuestion}
+            />
+
             <QuestionDisplay
-              questionText={currentQuestion.question_text}
-              articleUrl={currentQuestion.article_url}
-              options={currentQuestion.options}
-              selectedAnswer={state.selectedAnswer}
-              correctAnswer={state.hasAnswered ? currentQuestion.correct_answer : undefined}
-              hasClickedLink={state.hasClickedLink}
-              hasAnswered={state.hasAnswered}
-              isSubmitting={state.isSubmitting}
-              onArticleRead={() => state.setHasClickedLink(true)}
-              onAnswerSelect={(answer) => state.setSelectedAnswer(answer)}
-              onSubmitAnswer={() => useAnswerSubmission(contestId).handleSubmitAnswer(currentQuestion)}
-              onNextQuestion={handleNextQuestion}
-              isLastQuestion={state.currentQuestionIndex === questions.length - 1}
+              question={questions[state.currentQuestionIndex]}
+              onAnswer={handleNextQuestion}
+              state={state}
             />
-          </CardContent>
-        </Card>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
