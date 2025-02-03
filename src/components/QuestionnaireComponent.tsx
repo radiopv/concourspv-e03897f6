@@ -161,8 +161,20 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   }, [contestId, queryClient, toast, navigate, userProfile]);
 
   const handleNextQuestion = async () => {
+    if (!state.selectedAnswer) {
+      toast({
+        title: "Attention",
+        description: "Veuillez sélectionner une réponse avant de continuer",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
       state.setCurrentQuestionIndex(prev => prev + 1);
+      state.setSelectedAnswer('');
+      state.setHasAnswered(false);
+      state.setHasClickedLink(false);
     } else {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -233,7 +245,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
             <CountdownTimer 
               countdown={300} 
               onCountdownComplete={handleNextQuestion}
-              isDisabled={false}
+              isDisabled={!state.selectedAnswer}
             />
 
             <QuestionDisplay
@@ -256,7 +268,6 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       </div>
     </div>
   );
-
 };
 
 export default QuestionnaireComponent;
