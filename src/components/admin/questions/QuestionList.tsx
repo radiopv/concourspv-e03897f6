@@ -1,8 +1,8 @@
 import React from 'react';
-import { Question, QuestionFormProps } from '@/types/database';
+import { Question } from '@/types/database';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, ImageIcon } from 'lucide-react';
+import { Pencil, Trash2, ImageIcon, ExternalLink } from 'lucide-react';
 
 interface QuestionListProps {
   questions: Question[];
@@ -27,12 +27,15 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                 <h3 className="font-semibold mb-2">{question.question_text}</h3>
                 {question.image_url && (
                   <div className="mb-4">
-                    <ImageIcon className="w-full max-w-md rounded-lg" />
-                    <img src={question.image_url} alt="Question image" className="mt-2" />
+                    <img 
+                      src={question.image_url} 
+                      alt="Question" 
+                      className="max-w-md rounded-lg object-cover"
+                    />
                   </div>
                 )}
                 <div className="space-y-2">
-                  {question.options.map((option, index) => (
+                  {Array.isArray(question.options) && question.options.map((option, index) => (
                     <div
                       key={index}
                       className={`p-2 rounded ${
@@ -50,9 +53,9 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                     href={question.article_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline mt-2 block"
+                    className="text-blue-600 hover:underline mt-2 inline-flex items-center gap-1"
                   >
-                    Article source
+                    Article source <ExternalLink className="h-4 w-4" />
                   </a>
                 )}
               </div>
