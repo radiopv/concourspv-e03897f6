@@ -83,6 +83,23 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     enabled: !!contestId
   });
 
+  const { data: questions } = useQuery({
+    queryKey: ['questions', contestId],
+    queryFn: async () => {
+      if (!contestId) throw new Error('Contest ID is required');
+      
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('contest_id', contestId)
+        .order('order_number', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contestId
+  });
+
   useEffect(() => {
     const initializeParticipant = async () => {
       try {
@@ -344,7 +361,6 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       </div>
     </div>
   );
-
 };
 
 export default QuestionnaireComponent;
