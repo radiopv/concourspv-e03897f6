@@ -27,7 +27,8 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const { toast } = useToast();
 
   const handleParticipate = () => {
-    if (!contest.id) {
+    if (!contest?.id) {
+      console.error('Contest ID missing:', contest);
       toast({
         title: "Erreur",
         description: "ID du concours manquant",
@@ -35,6 +36,8 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       });
       return;
     }
+    
+    console.log('Navigating to contest:', contest.id);
     navigate(`/contest/${contest.id}`);
   };
 
