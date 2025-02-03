@@ -62,7 +62,7 @@ const ParticipantCheck = ({ participant, settings, contestId, questionsLength }:
           contestId,
           score: participant.score,
           totalQuestions: questionsLength,
-          requiredPercentage: settings?.required_percentage || 70,
+          requiredPercentage: settings?.required_percentage || 90, // Default to 90% if not set
         }
       });
       return;

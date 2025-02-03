@@ -8,11 +8,17 @@ import { ScoreCard } from '@/components/quiz-completion/ScoreCard';
 import { AnswersCard } from '@/components/quiz-completion/AnswersCard';
 import { StatusCard } from '@/components/quiz-completion/StatusCard';
 import { isQualifiedForDraw } from '@/utils/scoreCalculations';
+import ShareScore from '@/components/quiz-completion/ShareScore';
 
 const QuizCompletion = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { score = 0, totalQuestions = 0, contestId, requiredPercentage = 90 } = location.state || {};
+  const { 
+    score = 0, 
+    totalQuestions = 0, 
+    contestId, 
+    requiredPercentage = 90 // Default to 90% if not provided
+  } = location.state || {};
 
   // Calculer directement le nombre de bonnes réponses à partir du score
   const correctAnswers = Math.round((score / 100) * totalQuestions);
@@ -22,6 +28,7 @@ const QuizCompletion = () => {
     score,
     totalQuestions,
     correctAnswers,
+    requiredPercentage,
     isQualified
   });
 
@@ -109,6 +116,16 @@ const QuizCompletion = () => {
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
+        
+        {isQualified && contestId && (
+          <div className="mt-8">
+            <ShareScore 
+              score={score} 
+              totalQuestions={totalQuestions} 
+              contestId={contestId} 
+            />
+          </div>
+        )}
       </motion.div>
     </div>
   );
