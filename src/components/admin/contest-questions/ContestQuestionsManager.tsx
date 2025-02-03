@@ -18,13 +18,17 @@ const ContestQuestionsManager = () => {
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ['question-bank'],
     queryFn: async () => {
+      console.log('Fetching questions from question bank');
       const { data, error } = await supabase
         .from('question_bank')
         .select('*')
         .eq('status', 'available');
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
+      return data || [];
     }
   });
 
@@ -33,13 +37,17 @@ const ContestQuestionsManager = () => {
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
       
+      console.log('Fetching questions for contest:', contestId);
       const { data, error } = await supabase
         .from('questions')
         .select('*')
         .eq('contest_id', contestId);
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching contest questions:', error);
+        throw error;
+      }
+      return data || [];
     },
     enabled: !!contestId
   });
@@ -106,8 +114,11 @@ const ContestQuestionsManager = () => {
   };
 
   const isQuestionInContest = (questionBankId: string) => {
-    return contestQuestions?.some(q => 
-      q.question_text === questions?.find(bq => bq.id === questionBankId)?.question_text
+    if (!Array.isArray(contestQuestions) || !Array.isArray(questions)) return false;
+    
+    const questionFromBank = questions.find(q => q.id === questionBankId);
+    return contestQuestions.some(q => 
+      q.question_text === questionFromBank?.question_text
     );
   };
 
@@ -138,7 +149,7 @@ const ContestQuestionsManager = () => {
           <CardContent>
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-4">
-                {questions?.map((question) => (
+                {Array.isArray(questions) && questions.map((question) => (
                   <Card key={question.id} className="p-4">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
@@ -189,7 +200,7 @@ const ContestQuestionsManager = () => {
           <CardContent>
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-4">
-                {contestQuestions?.map((question) => (
+                {Array.isArray(contestQuestions) && contestQuestions.map((question) => (
                   <Card key={question.id} className="p-4">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
