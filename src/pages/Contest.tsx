@@ -6,6 +6,8 @@ const Contest = () => {
   const { contestId } = useParams<{ contestId: string }>();
   const navigate = useNavigate();
 
+  console.log('Contest component - contestId:', contestId);
+
   if (!contestId) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -25,7 +27,7 @@ const Contest = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <QuestionnaireComponent />
+      <QuestionnaireComponent key={contestId} />
     </div>
   );
 };
