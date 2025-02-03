@@ -1,25 +1,11 @@
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import QuestionnaireComponent from '@/components/QuestionnaireComponent';
-import { useToast } from "@/hooks/use-toast";
 
 const Contest = () => {
   const { contestId } = useParams<{ contestId: string }>();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  React.useEffect(() => {
-    if (!contestId) {
-      console.error('Contest ID is missing from URL params');
-      toast({
-        title: "Erreur",
-        description: "ID du concours manquant",
-        variant: "destructive",
-      });
-      navigate('/contests');
-      return;
-    }
-  }, [contestId, navigate, toast]);
+  
+  console.log('Contest page - contestId:', contestId);
 
   if (!contestId) {
     return (
