@@ -1,5 +1,5 @@
 import React from 'react';
-import { Question, QuestionFormProps } from '@/types/database';
+import { Question } from '@/types/database';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -30,12 +30,12 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                     <img 
                       className="w-full max-w-md rounded-lg" 
                       src={question.image_url} 
-                      alt="Question image" 
+                      alt="Question" 
                     />
                   </div>
                 )}
                 <div className="space-y-2">
-                  {question.options.map((option, index) => (
+                  {Array.isArray(question.options) && question.options.map((option, index) => (
                     <div
                       key={index}
                       className={`p-2 rounded ${
