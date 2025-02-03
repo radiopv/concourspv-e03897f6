@@ -11,7 +11,7 @@ import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
 import CountdownTimer from './questionnaire/CountdownTimer';
 import ParticipantCheck from './questionnaire/ParticipantCheck';
 import { calculateFinalScore } from '@/utils/scoreCalculations';
-import type { Participant } from '@/types/participant';
+import type { Participant } from '@/types/database';
 
 const QuestionnaireComponent = () => {
   const { contestId } = useParams<{ contestId: string }>();
@@ -25,6 +25,7 @@ const QuestionnaireComponent = () => {
   // Redirect if no contestId
   useEffect(() => {
     if (!contestId) {
+      console.error('No contest ID provided');
       toast({
         title: "Erreur",
         description: "ID du concours manquant",
@@ -35,6 +36,7 @@ const QuestionnaireComponent = () => {
     }
   }, [contestId, navigate, toast]);
 
+  // Fetch contest settings
   const { data: settings } = useQuery({
     queryKey: ['global-settings'],
     queryFn: async () => {
@@ -49,6 +51,7 @@ const QuestionnaireComponent = () => {
     }
   });
 
+  // Fetch participant status
   const { data: participant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
@@ -71,10 +74,14 @@ const QuestionnaireComponent = () => {
     enabled: !!contestId
   });
 
+  // Fetch questions
   const { data: questions } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
-      if (!contestId) throw new Error('Contest ID is required');
+      if (!contestId) {
+        console.error('Contest ID is required for fetching questions');
+        throw new Error('Contest ID is required');
+      }
       
       const { data, error } = await supabase
         .from('questions')
@@ -97,7 +104,10 @@ const QuestionnaireComponent = () => {
 
   useEffect(() => {
     const initializeParticipant = async () => {
-      if (!contestId) return;
+      if (!contestId) {
+        console.error('Cannot initialize participant without contest ID');
+        return;
+      }
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -191,7 +201,10 @@ const QuestionnaireComponent = () => {
   }, [contestId, navigate, toast, queryClient]);
 
   const handleNextQuestion = async () => {
-    if (!contestId) return;
+    if (!contestId) {
+      console.error('Cannot handle next question without contest ID');
+      return;
+    }
 
     if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
       state.setCurrentQuestionIndex(prev => prev + 1);
@@ -231,8 +244,7 @@ const QuestionnaireComponent = () => {
           .update({ 
             score: finalScore,
             status: 'completed',
-            completed_at: new Date().toISOString(),
-            attempts: (participant.attempts || 0) + 1
+            completed_at: new Date().toISOString()
           })
           .eq('contest_id', contestId)
           .eq('id', session.user.id);
@@ -271,6 +283,7 @@ const QuestionnaireComponent = () => {
   };
 
   if (!contestId) {
+    console.log('No contest ID, returning null');
     return null;
   }
 

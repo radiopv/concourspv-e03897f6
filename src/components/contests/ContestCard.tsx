@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Star, Target, Gift, ExternalLink, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import ContestPrizes from "./contest-card/ContestPrizes";
 import { calculateWinningChance } from "../../utils/contestCalculations";
 import { Prize } from "@/types/prize";
 
@@ -25,6 +25,8 @@ interface ContestCardProps {
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
+  const navigate = useNavigate();
+
   const { data: stats } = useQuery({
     queryKey: ['contest-detailed-stats', contest.id],
     queryFn: async () => {
@@ -49,6 +51,14 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       };
     }
   });
+
+  const handleParticipate = () => {
+    if (!contest.id) {
+      console.error('Contest ID is missing');
+      return;
+    }
+    navigate(`/contest/${contest.id}`);
+  };
 
   const containerClass = contest.participants?.count === 1 
     ? "w-full max-w-4xl mx-auto" 
@@ -177,7 +187,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
 
           <div className="mt-8 flex justify-center">
             <Button
-              onClick={() => onSelect(contest.id)}
+              onClick={handleParticipate}
               className="bg-gradient-to-r from-[#9b87f5] to-[#F97316] hover:from-[#8B5CF6] hover:to-[#D946EF] text-white font-bold py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none"
             >
               Participer Maintenant
