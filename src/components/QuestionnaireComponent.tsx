@@ -105,39 +105,32 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // First, update any existing 'pending' participations to 'completed'
-        const { error: updateError } = await supabase
-          .from('participants')
-          .update({ status: 'completed' })
-          .eq('contest_id', contestId)
-          .eq('id', session.user.id)
-          .eq('status', 'pending');
-
-        if (updateError) {
-          console.error('Error updating existing participations:', updateError);
-          throw updateError;
-        }
-
-        // Get the last participation to calculate next attempt number
-        const { data: lastParticipation, error: lastPartError } = await supabase
+        // Get all participations for this contest to check status
+        const { data: existingParticipations, error: existingError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+          .order('created_at', { ascending: false });
 
-        if (lastPartError && lastPartError.code !== 'PGRST116') {
-          throw lastPartError;
+        if (existingError) {
+          console.error('Error checking existing participations:', existingError);
+          throw existingError;
         }
 
-        // Calculate next attempt number
-        const nextAttempt = lastParticipation ? (lastParticipation.attempts || 0) + 1 : 1;
+        // Check for pending participation
+        const pendingParticipation = existingParticipations?.find(p => p.status === 'pending');
+        if (pendingParticipation) {
+          console.log('Found pending participation:', pendingParticipation);
+          return; // Use existing pending participation
+        }
+
+        // Calculate next attempt number from all participations
+        const nextAttempt = existingParticipations?.length ? existingParticipations.length + 1 : 1;
+        console.log('Calculated next attempt number:', nextAttempt);
 
         // Create new participation
-        console.log('Creating new participant with profile:', userProfile, 'attempt:', nextAttempt);
-        const { error: insertError } = await supabase
+        const { data: newParticipation, error: insertError } = await supabase
           .from('participants')
           .insert([
             {
@@ -150,14 +143,18 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
               email: userProfile.email,
               score: 0
             }
-          ]);
+          ])
+          .select()
+          .single();
 
         if (insertError) {
           console.error('Error creating participant:', insertError);
           throw insertError;
         }
 
+        console.log('Successfully created new participation:', newParticipation);
         await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
+
       } catch (error) {
         console.error('Error initializing participant:', error);
         toast({
