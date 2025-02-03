@@ -4,11 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Star, Target, Gift, ExternalLink, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import ContestPrizes from "./contest-card/ContestPrizes";
-import { calculateWinningChance } from "../../utils/contestCalculations";
-import { Prize } from "@/types/prize";
+import { useNavigate } from 'react-router-dom';
+import { Prize } from '@/types/contest';
 
 interface ContestCardProps {
   contest: {
@@ -25,50 +22,24 @@ interface ContestCardProps {
 }
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
-  const { data: stats } = useQuery({
-    queryKey: ['contest-detailed-stats', contest.id],
-    queryFn: async () => {
-      console.log('Fetching detailed stats for contest:', contest.id);
-      const { data: participants } = await supabase
-        .from('participants')
-        .select('score, status')
-        .eq('contest_id', contest.id)
-        .eq('status', 'completed');
+  const navigate = useNavigate();
 
-      if (!participants) return null;
-
-      const qualifiedParticipants = participants.filter(p => p.score >= 90);
-      const averageScore = participants.length > 0
-        ? Math.round(participants.reduce((acc, p) => acc + (p.score || 0), 0) / participants.length)
-        : 0;
-
-      return {
-        totalParticipants: participants.length,
-        qualifiedParticipants: qualifiedParticipants.length,
-        averageScore
-      };
-    }
-  });
-
-  const containerClass = contest.participants?.count === 1 
-    ? "w-full max-w-4xl mx-auto" 
-    : "w-full";
-
-  // Remove duplicate "Connaissance de base" from title
-  const cleanTitle = contest.title.replace(/Connaissance de base/g, '').replace(/\s+-\s+$/, '').trim();
+  const handleParticipate = () => {
+    navigate(`/contest/${contest.id}`);
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className={containerClass}
+      className="w-full"
     >
       <Card className="bg-gradient-to-br from-[#1A1F2C] to-[#2D243B] text-white shadow-xl hover:shadow-2xl transition-all duration-300 border-[#9b87f5]/20">
         <CardHeader className="border-b border-[#9b87f5]/20 pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-[#9b87f5] to-[#F97316] bg-clip-text text-transparent">
-              {cleanTitle}
+              {contest.title}
             </CardTitle>
             <div className="flex gap-2">
               {contest.is_new && (
@@ -89,36 +60,14 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
         </CardHeader>
 
         <CardContent className="pt-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
-                <Users className="w-4 h-4" />
-                <h3 className="font-medium">Participants</h3>
-              </div>
-              <p className="text-2xl font-bold text-white">
-                {stats?.totalParticipants || 0}
-              </p>
+          <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
+            <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
+              <Users className="w-4 h-4" />
+              <h3 className="font-medium">Participants</h3>
             </div>
-
-            <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-[#F97316] mb-2">
-                <Star className="w-4 h-4" />
-                <h3 className="font-medium">Score Moyen</h3>
-              </div>
-              <p className="text-2xl font-bold text-white">
-                {stats?.averageScore || 0}%
-              </p>
-            </div>
-
-            <div className="bg-black/30 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
-                <Trophy className="w-4 h-4" />
-                <h3 className="font-medium">Participants Éligibles</h3>
-              </div>
-              <p className="text-2xl font-bold text-white">
-                {stats?.qualifiedParticipants || 0}
-              </p>
-            </div>
+            <p className="text-2xl font-bold text-white">
+              {contest.participants?.count || 0}
+            </p>
           </div>
 
           {contest.prizes && contest.prizes.length > 0 && (
@@ -177,7 +126,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
 
           <div className="mt-8 flex justify-center">
             <Button
-              onClick={() => onSelect(contest.id)}
+              onClick={handleParticipate}
               className="bg-gradient-to-r from-[#9b87f5] to-[#F97316] hover:from-[#8B5CF6] hover:to-[#D946EF] text-white font-bold py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none"
             >
               Participer Maintenant
