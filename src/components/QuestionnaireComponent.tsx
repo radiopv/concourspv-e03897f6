@@ -55,7 +55,21 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return null;
 
-      const { data, error } = await supabase
+      // First, try to find an active participation
+      const { data: activeParticipation, error: activeError } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('contest_id', contestId)
+        .eq('id', session.user.id)
+        .eq('status', 'pending')
+        .is('completed_at', null)
+        .maybeSingle();
+
+      if (activeError) throw activeError;
+      if (activeParticipation) return activeParticipation;
+
+      // If no active participation, get the most recent one
+      const { data: recentParticipation, error: recentError } = await supabase
         .from('participants')
         .select('*')
         .eq('contest_id', contestId)
@@ -63,8 +77,8 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
         .order('created_at', { ascending: false })
         .maybeSingle();
 
-      if (error) throw error;
-      return data as Participant | null;
+      if (recentError) throw recentError;
+      return recentParticipation;
     },
     enabled: !!contestId
   });
@@ -105,24 +119,21 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // First, complete ALL pending participations for this user and contest
-        const { error: updateError } = await supabase
+        // Check for existing active participation
+        const { data: existingActive } = await supabase
           .from('participants')
-          .update({ 
-            status: 'completed',
-            completed_at: new Date().toISOString()
-          })
+          .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
-          .eq('status', 'pending');
+          .eq('status', 'pending')
+          .is('completed_at', null)
+          .maybeSingle();
 
-        if (updateError) {
-          console.error('Error updating existing participations:', updateError);
-          throw updateError;
+        if (existingActive) {
+          console.log('Found existing active participation:', existingActive);
+          await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
+          return;
         }
-
-        // Wait a moment for the update to complete
-        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Get all participations to calculate next attempt number
         const { data: existingParticipations, error: existingError } = await supabase
@@ -132,44 +143,39 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           .eq('id', session.user.id)
           .order('created_at', { ascending: false });
 
-        if (existingError) {
-          console.error('Error checking existing participations:', existingError);
-          throw existingError;
-        }
+        if (existingError) throw existingError;
 
-        // Calculate next attempt number
         const nextAttempt = existingParticipations?.length ? existingParticipations.length + 1 : 1;
         console.log('Calculated next attempt number:', nextAttempt);
 
         // Create new participation
         const { data: newParticipation, error: insertError } = await supabase
           .from('participants')
-          .insert([
-            {
-              id: session.user.id,
-              contest_id: contestId,
-              status: 'pending',
-              attempts: nextAttempt,
-              first_name: userProfile.first_name,
-              last_name: userProfile.last_name,
-              email: userProfile.email,
-              score: 0
-            }
-          ])
+          .insert([{
+            id: session.user.id,
+            contest_id: contestId,
+            status: 'pending',
+            attempts: nextAttempt,
+            first_name: userProfile.first_name,
+            last_name: userProfile.last_name,
+            email: userProfile.email,
+            score: 0
+          }])
           .select()
           .single();
 
-        if (insertError) {
-          console.error('Error creating participant:', insertError);
-          throw insertError;
-        }
+        if (insertError) throw insertError;
 
         console.log('Successfully created new participation:', newParticipation);
         await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
         await refetchParticipant();
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error initializing participant:', error);
+        if (error.message === 'User already has an active participation in this contest') {
+          await refetchParticipant();
+          return;
+        }
         toast({
           title: "Erreur",
           description: "Impossible d'initialiser la participation",
