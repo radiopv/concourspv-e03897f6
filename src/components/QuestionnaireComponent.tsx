@@ -164,16 +164,29 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     }
 
     const currentQuestion = questions?.[state.currentQuestionIndex];
-    const isCorrect = currentQuestion && state.selectedAnswer === currentQuestion.correct_answer;
+    
+    // Validate answer against the question's correct_answer
+    const isCorrect = currentQuestion?.correct_answer === state.selectedAnswer;
+    console.log('Answer validation:', {
+      selectedAnswer: state.selectedAnswer,
+      correctAnswer: currentQuestion?.correct_answer,
+      isCorrect
+    });
 
-    // Update score if answer is correct
+    // Update total correct answers if the answer is correct
     if (isCorrect) {
-      const newScore = ((state.totalAnswered + 1) / (questions?.length || 1)) * 100;
-      state.setScore(Math.round(newScore));
+      state.setTotalAnswered(prev => prev + 1);
     }
 
-    // Increment total answered questions
-    state.setTotalAnswered(prev => prev + 1);
+    // Calculate current score based on total correct answers
+    const newScore = Math.round((state.totalAnswered / (questions?.length || 1)) * 100);
+    state.setScore(newScore);
+
+    console.log('Score calculation:', {
+      totalAnswered: state.totalAnswered,
+      questionsLength: questions?.length,
+      newScore
+    });
 
     if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
       state.setCurrentQuestionIndex(prev => prev + 1);
@@ -192,18 +205,11 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // Calculate final score based on correct answers
-        const correctAnswers = questions?.reduce((count, question, index) => {
-          const answer = state.selectedAnswer; // Get the answer for this question
-          return count + (answer === question.correct_answer ? 1 : 0);
-        }, 0) || 0;
-
-        const totalQuestions = questions?.length || 0;
-        const finalScore = Math.round((correctAnswers / totalQuestions) * 100);
-
-        console.log('Final score calculation:', {
-          correctAnswers,
-          totalQuestions,
+        // Calculate final score based on total correct answers
+        const finalScore = Math.round((state.totalAnswered / (questions?.length || 1)) * 100);
+        console.log('Final score:', {
+          totalAnswered: state.totalAnswered,
+          questionsLength: questions?.length,
           finalScore
         });
 
@@ -219,36 +225,31 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
         if (updateError) throw updateError;
 
-        // Save each answer to participant_answers
-        const { data: participant } = await supabase
-          .from('participants')
-          .select('participation_id')
-          .eq('contest_id', contestId)
-          .eq('id', session.user.id)
-          .single();
-
+        // Save answers to participant_answers
         if (participant?.participation_id) {
-          const { error: answersError } = await supabase
-            .from('participant_answers')
-            .insert(
-              questions?.map((question, index) => ({
-                participant_id: participant.participation_id,
-                question_id: question.id,
-                answer: state.selectedAnswer,
-                is_correct: state.selectedAnswer === question.correct_answer,
-                attempt_number: 1
-              })) || []
-            );
+          const answersToSave = questions?.map((question, index) => ({
+            participant_id: participant.participation_id,
+            question_id: question.id,
+            answer: state.selectedAnswer,
+            is_correct: state.selectedAnswer === question.correct_answer,
+            attempt_number: 1
+          }));
 
-          if (answersError) {
-            console.error('Error saving answers:', answersError);
+          if (answersToSave?.length) {
+            const { error: answersError } = await supabase
+              .from('participant_answers')
+              .insert(answersToSave);
+
+            if (answersError) {
+              console.error('Error saving answers:', answersError);
+            }
           }
         }
 
         navigate('/quiz-completion', {
           state: {
             score: finalScore,
-            totalQuestions,
+            totalQuestions: questions?.length || 0,
             contestId,
             requiredPercentage: settings?.required_percentage || 90
           }
