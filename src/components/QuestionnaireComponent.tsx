@@ -52,34 +52,39 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   const { data: participant, refetch: refetchParticipant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return null;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) return null;
 
-      // First, try to find an active participation
-      const { data: activeParticipations, error: activeError } = await supabase
-        .from('participants')
-        .select('*')
-        .eq('contest_id', contestId)
-        .eq('id', session.user.id)
-        .eq('status', 'pending')
-        .is('completed_at', null);
+        // First, try to find an active participation
+        const { data: activeParticipations, error: activeError } = await supabase
+          .from('participants')
+          .select('*')
+          .eq('contest_id', contestId)
+          .eq('id', session.user.id)
+          .eq('status', 'pending')
+          .is('completed_at', null);
 
-      if (activeError) throw activeError;
-      if (activeParticipations && activeParticipations.length > 0) {
-        return activeParticipations[0];
+        if (activeError) throw activeError;
+        if (activeParticipations && activeParticipations.length > 0) {
+          return activeParticipations[0];
+        }
+
+        // If no active participation found, get the most recent one
+        const { data: recentParticipations, error: recentError } = await supabase
+          .from('participants')
+          .select('*')
+          .eq('contest_id', contestId)
+          .eq('id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (recentError) throw recentError;
+        return recentParticipations?.[0] || null;
+      } catch (error: any) {
+        console.error('Error fetching participant:', error);
+        return null;
       }
-
-      // If no active participation found, get the most recent one
-      const { data: recentParticipation, error: recentError } = await supabase
-        .from('participants')
-        .select('*')
-        .eq('contest_id', contestId)
-        .eq('id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (recentError) throw recentError;
-      return recentParticipation?.[0] || null;
     },
     enabled: !!contestId
   });
@@ -120,8 +125,8 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // First check for an active participation
-        const { data: existingActive } = await supabase
+        // Check for existing active participation
+        const { data: existingActive, error: checkError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
@@ -129,48 +134,56 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           .eq('status', 'pending')
           .is('completed_at', null);
 
+        if (checkError) {
+          console.error('Error checking existing participation:', checkError);
+          return;
+        }
+
         if (existingActive && existingActive.length > 0) {
           console.log('Found existing active participation:', existingActive[0]);
           await refetchParticipant();
           return;
         }
 
-        // If no active participation, create a new one
-        const { data: newParticipation, error: insertError } = await supabase
-          .from('participants')
-          .insert({
-            id: session.user.id,
-            contest_id: contestId,
-            status: 'pending',
-            first_name: userProfile.first_name,
-            last_name: userProfile.last_name,
-            email: userProfile.email,
-            score: 0
-          })
-          .select()
-          .single();
+        // If no active participation, try to create a new one
+        try {
+          const { data: newParticipation, error: insertError } = await supabase
+            .from('participants')
+            .insert({
+              id: session.user.id,
+              contest_id: contestId,
+              status: 'pending',
+              first_name: userProfile.first_name,
+              last_name: userProfile.last_name,
+              email: userProfile.email,
+              score: 0
+            })
+            .select()
+            .single();
 
-        if (insertError) {
-          console.error('Error creating participant:', insertError);
-          if (insertError.message === 'User already has an active participation in this contest') {
-            await refetchParticipant();
-            return;
+          if (insertError) {
+            if (insertError.message.includes('already has an active participation')) {
+              await refetchParticipant();
+              return;
+            }
+            throw insertError;
           }
-          throw insertError;
+
+          console.log('Successfully created new participation:', newParticipation);
+          await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
+
+        } catch (insertError: any) {
+          console.error('Error creating participant:', insertError);
+          if (!insertError.message.includes('already has an active participation')) {
+            toast({
+              title: "Erreur",
+              description: "Impossible d'initialiser la participation",
+              variant: "destructive"
+            });
+          }
         }
-
-        console.log('Successfully created new participation:', newParticipation);
-        await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
-
       } catch (error: any) {
-        console.error('Error initializing participant:', error);
-        if (error.message !== 'User already has an active participation in this contest') {
-          toast({
-            title: "Erreur",
-            description: "Impossible d'initialiser la participation",
-            variant: "destructive"
-          });
-        }
+        console.error('Error in initializeParticipant:', error);
       }
     };
 
