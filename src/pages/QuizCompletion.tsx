@@ -9,15 +9,18 @@ import { AnswersCard } from '@/components/quiz-completion/AnswersCard';
 import { StatusCard } from '@/components/quiz-completion/StatusCard';
 import { isQualifiedForDraw } from '@/utils/scoreCalculations';
 import ShareScore from '@/components/quiz-completion/ShareScore';
+import { useToast } from '@/hooks/use-toast';
 
 const QuizCompletion = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const { 
     score = 0, 
     totalQuestions = 0, 
     contestId, 
-    requiredPercentage = 90 // Default to 90% if not provided
+    requiredPercentage = 90 
   } = location.state || {};
 
   // Calculer directement le nombre de bonnes réponses à partir du score
@@ -29,15 +32,23 @@ const QuizCompletion = () => {
     totalQuestions,
     correctAnswers,
     requiredPercentage,
-    isQualified
+    isQualified,
+    contestId
   });
 
   const handleRetry = () => {
     if (!contestId) {
       console.error("Contest ID is missing");
+      toast({
+        title: "Erreur",
+        description: "Impossible de réessayer le quiz - ID du concours manquant",
+        variant: "destructive"
+      });
       navigate('/contests');
       return;
     }
+    
+    // Navigate back to the contest with the ID
     navigate(`/contest/${contestId}`);
   };
 
