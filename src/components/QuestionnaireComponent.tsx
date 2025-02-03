@@ -46,7 +46,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
         .from('members')
         .select('first_name, last_name, email')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -103,21 +103,27 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // Vérifier si le profil utilisateur est chargé
         if (!userProfile) {
           console.log('Waiting for user profile data...');
           return;
         }
 
-        const { data: existingParticipant, error: fetchError } = await supabase
+        // Vérifier si un participant existe déjà
+        const { data: existingParticipant, error: checkError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
           .maybeSingle();
 
-        if (fetchError) throw fetchError;
+        if (checkError) throw checkError;
 
+        // Si le participant existe et a un statut 'completed', ne rien faire
+        if (existingParticipant?.status === 'completed') {
+          return;
+        }
+
+        // Si le participant n'existe pas, le créer
         if (!existingParticipant) {
           console.log('Creating new participant with profile:', userProfile);
           const { error: insertError } = await supabase
@@ -127,10 +133,11 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
                 id: session.user.id,
                 contest_id: contestId,
                 status: 'pending',
-                attempts: 0,
+                attempts: 1,
                 first_name: userProfile.first_name,
                 last_name: userProfile.last_name,
-                email: userProfile.email
+                email: userProfile.email,
+                score: 0
               }
             ]);
 

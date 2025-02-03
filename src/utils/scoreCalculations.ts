@@ -10,6 +10,11 @@ export const isQualifiedForDraw = (score: number, requiredPercentage: number = 9
 
 export const calculateFinalScore = async (participationId: string): Promise<number> => {
   try {
+    if (!participationId || participationId === "0") {
+      console.log('Invalid participation ID:', participationId);
+      return 0;
+    }
+
     console.log('Calculating final score for participant:', participationId);
     
     const { data: answers, error: answersError } = await supabase
@@ -30,6 +35,11 @@ export const calculateFinalScore = async (participationId: string): Promise<numb
     const correctAnswers = answers.filter(answer => answer.is_correct === true).length;
     const totalQuestions = answers.length;
     
+    console.log('Calculation details:', {
+      correctAnswers,
+      totalQuestions
+    });
+
     if (totalQuestions === 0) return 0;
     const score = Math.round((correctAnswers / totalQuestions) * 100);
     
