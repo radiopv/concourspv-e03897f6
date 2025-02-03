@@ -2,7 +2,7 @@ import React from 'react';
 import { Question } from '@/types/database';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, ImageIcon, ExternalLink } from 'lucide-react';
+import { Pencil, Trash2, ExternalLink } from 'lucide-react';
 
 interface QuestionListProps {
   questions: Question[];
@@ -44,7 +44,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                           : 'bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      {option}
+                      {String(option)}
                     </div>
                   ))}
                 </div>
