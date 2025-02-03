@@ -10,6 +10,8 @@ import { StatusCard } from '@/components/quiz-completion/StatusCard';
 import { isQualifiedForDraw } from '@/utils/scoreCalculations';
 import ShareScore from '@/components/quiz-completion/ShareScore';
 import { useToast } from '@/hooks/use-toast';
+import { ensureParticipantExists } from '@/components/questionnaire/ParticipantManager';
+import { supabase } from '@/lib/supabase';
 
 const QuizCompletion = () => {
   const location = useLocation();
@@ -23,20 +25,10 @@ const QuizCompletion = () => {
     requiredPercentage = 90 
   } = location.state || {};
 
-  // Calculer directement le nombre de bonnes réponses à partir du score
   const correctAnswers = Math.round((score / 100) * totalQuestions);
   const isQualified = isQualifiedForDraw(score, requiredPercentage);
 
-  console.log('Quiz completion details:', {
-    score,
-    totalQuestions,
-    correctAnswers,
-    requiredPercentage,
-    isQualified,
-    contestId
-  });
-
-  const handleRetry = () => {
+  const handleRetry = async () => {
     if (!contestId) {
       console.error("Contest ID is missing");
       toast({
@@ -47,9 +39,39 @@ const QuizCompletion = () => {
       navigate('/contests');
       return;
     }
-    
-    // Navigate back to the contest with the ID
-    navigate(`/contest/${contestId}`);
+
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté pour réessayer le quiz",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Créer une nouvelle participation
+      const participationId = await ensureParticipantExists(session.session.user.id, contestId);
+      
+      if (participationId) {
+        // Rediriger vers le concours avec le nouveau participationId
+        navigate(`/contest/${contestId}`);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de créer une nouvelle tentative",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error retrying quiz:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création d'une nouvelle tentative",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
