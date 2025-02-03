@@ -6,6 +6,7 @@ import { Trophy, Users, Gift, ExternalLink, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
 import { Prize } from '@/types/contest';
+import { useToast } from "@/hooks/use-toast";
 
 interface ContestCardProps {
   contest: {
@@ -23,10 +24,15 @@ interface ContestCardProps {
 
 const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleParticipate = () => {
     if (!contest.id) {
-      console.error("Contest ID is missing");
+      toast({
+        title: "Erreur",
+        description: "ID du concours manquant",
+        variant: "destructive",
+      });
       return;
     }
     navigate(`/contest/${contest.id}`);
