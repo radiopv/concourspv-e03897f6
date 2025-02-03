@@ -52,14 +52,17 @@ const QuestionnaireProgress = ({
   });
 
   const maxAttempts = (settings?.default_attempts || 3) + (userPoints?.extra_participations || 0);
+  
+  // Ensure currentQuestionIndex doesn't exceed totalQuestions
+  const displayQuestionNumber = Math.min(currentQuestionIndex, totalQuestions);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center text-sm text-gray-600">
-        <span>Question {currentQuestionIndex + 1} sur {totalQuestions}</span>
+        <span>Question {displayQuestionNumber} sur {totalQuestions}</span>
         <span>Score: {score}%</span>
       </div>
-      <Progress value={(currentQuestionIndex / totalQuestions) * 100} />
+      <Progress value={(displayQuestionNumber / totalQuestions) * 100} />
       <div className="flex justify-between text-sm text-gray-600">
         <span>Questions répondues: {totalAnswered}/{totalQuestions}</span>
         <span>Tentatives: {settings?.default_attempts || 3}/{maxAttempts}</span>
