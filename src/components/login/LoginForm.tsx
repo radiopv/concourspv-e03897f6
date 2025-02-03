@@ -33,9 +33,21 @@ export const LoginForm = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/dashboard", { replace: true });
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session check error:", error);
+          // Clear any potentially invalid session data
+          await supabase.auth.signOut();
+          return;
+        }
+
+        if (session?.user) {
+          navigate("/dashboard", { replace: true });
+        }
+      } catch (error) {
+        console.error("Session check failed:", error);
       }
     };
     checkSession();
@@ -60,6 +72,9 @@ export const LoginForm = () => {
           if (error.message.includes('Invalid login credentials')) {
             return "Email ou mot de passe incorrect.";
           }
+          if (error.message.includes('refresh_token_not_found')) {
+            return "Session expirée. Veuillez vous reconnecter.";
+          }
           return "Une erreur est survenue lors de la connexion.";
         case 422:
           return "Format d'email invalide.";
@@ -74,7 +89,8 @@ export const LoginForm = () => {
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
-      console.log("Tentative de connexion avec:", values.email);
+      // Clear any existing session first
+      await supabase.auth.signOut();
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
@@ -91,9 +107,13 @@ export const LoginForm = () => {
         return;
       }
 
-      console.log("Réponse de connexion:", data);
-
       if (data?.user) {
+        // Set session persistence
+        await supabase.auth.setSession({
+          access_token: data.session?.access_token || '',
+          refresh_token: data.session?.refresh_token || '',
+        });
+
         toast({
           title: "Connexion réussie",
           description: "Bienvenue sur votre espace membre !",
