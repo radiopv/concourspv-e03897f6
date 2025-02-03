@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
 import QuestionDisplay from './questionnaire/QuestionDisplay';
 import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
-import CountdownTimer from './questionnaire/CountdownTimer';
 import ParticipantCheck from './questionnaire/ParticipantCheck';
 import { calculateFinalScore } from '@/utils/scoreCalculations';
 import type { Participant } from '@/types/database';
@@ -20,8 +19,6 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const state = useQuestionnaireState();
-
-  console.log('QuestionnaireComponent - received contestId:', contestId);
 
   const { data: settings } = useQuery({
     queryKey: ['global-settings'],
@@ -240,12 +237,6 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
               totalQuestions={questions.length}
               score={state.score}
               totalAnswered={state.totalAnswered}
-            />
-            
-            <CountdownTimer 
-              countdown={300} 
-              onCountdownComplete={handleNextQuestion}
-              isDisabled={!state.selectedAnswer}
             />
 
             <QuestionDisplay

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import ArticleLink from './ArticleLink';
 import AnswerOptions from './AnswerOptions';
@@ -34,6 +34,20 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
   onNextQuestion,
   isLastQuestion,
 }) => {
+  const [canSubmit, setCanSubmit] = useState(false);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (hasClickedLink) {
+      timer = setTimeout(() => {
+        setCanSubmit(true);
+      }, 5000); // 5 secondes de délai
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [hasClickedLink]);
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -52,7 +66,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
           selectedAnswer={selectedAnswer}
           correctAnswer={correctAnswer}
           hasAnswered={hasAnswered}
-          isDisabled={isSubmitting}
+          isDisabled={!hasClickedLink || isSubmitting}
           onAnswerSelect={onAnswerSelect}
         />
       </div>
@@ -61,9 +75,13 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
         {!hasAnswered ? (
           <Button
             onClick={onSubmitAnswer}
-            disabled={!selectedAnswer || !hasClickedLink || isSubmitting}
+            disabled={!selectedAnswer || !hasClickedLink || !canSubmit || isSubmitting}
           >
-            Valider la réponse
+            {!hasClickedLink 
+              ? "Veuillez lire l'article d'abord" 
+              : !canSubmit 
+                ? "Veuillez patienter..." 
+                : "Valider la réponse"}
           </Button>
         ) : (
           <Button onClick={onNextQuestion}>
