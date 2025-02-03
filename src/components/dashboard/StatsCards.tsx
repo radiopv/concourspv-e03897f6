@@ -2,6 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Target, Star, Trophy } from "lucide-react";
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 
 interface StatsCardsProps {
   stats: {
@@ -12,9 +14,42 @@ interface StatsCardsProps {
 }
 
 const StatsCards = ({ stats }: StatsCardsProps) => {
-  const participations = stats?.contests_participated || 0;
-  const points = stats?.total_points || 0;
-  const wins = stats?.contests_won || 0;
+  const { data: realStats } = useQuery({
+    queryKey: ['user-stats'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) throw new Error('User not authenticated');
+
+      // Fetch member stats
+      const { data: memberData, error: memberError } = await supabase
+        .from('members')
+        .select('contests_participated, contests_won')
+        .eq('id', session.user.id)
+        .single();
+
+      if (memberError) throw memberError;
+
+      // Fetch total points from point history
+      const { data: pointsData, error: pointsError } = await supabase
+        .from('point_history')
+        .select('points')
+        .eq('user_id', session.user.id);
+
+      if (pointsError) throw pointsError;
+
+      const totalPoints = pointsData.reduce((sum, record) => sum + (record.points || 0), 0);
+
+      return {
+        contests_participated: memberData?.contests_participated || 0,
+        contests_won: memberData?.contests_won || 0,
+        total_points: totalPoints
+      };
+    }
+  });
+
+  const participations = realStats?.contests_participated || 0;
+  const points = realStats?.total_points || 0;
+  const wins = realStats?.contests_won || 0;
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
