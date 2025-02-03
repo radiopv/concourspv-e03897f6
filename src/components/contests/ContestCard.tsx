@@ -38,7 +38,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
     }
     
     console.log('Navigating to contest:', contest.id);
-    navigate(`/contest/${contest.id}`);
+    navigate(`/contests/${contest.id}`);
   };
 
   return (
