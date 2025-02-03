@@ -157,10 +157,9 @@ const QuestionnaireComponent = () => {
           return;
         }
 
-        // Calculate final score - fixed to use only state.score
-        const finalScore = calculateFinalScore(state.score);
+        // Convert score to string before passing to calculateFinalScore
+        const finalScore = calculateFinalScore(state.score.toString());
 
-        // Update participant status
         const { error: updateError } = await supabase
           .from('participants')
           .update({ 
@@ -173,7 +172,6 @@ const QuestionnaireComponent = () => {
 
         if (updateError) throw updateError;
 
-        // Navigate to completion page
         navigate('/quiz-completion', {
           state: {
             score: finalScore,
