@@ -163,10 +163,7 @@ const QuestionnaireComponent = () => {
         }
 
         // Calculate final score
-        const finalScore = calculateFinalScore(
-          questions?.length || 0,
-          state.correctAnswers
-        );
+        const finalScore = calculateFinalScore(questions?.length || 0, state.score);
 
         // Update participant status
         const { error: updateError } = await supabase
@@ -213,24 +210,39 @@ const QuestionnaireComponent = () => {
         <ParticipantCheck 
           participant={participant} 
           settings={settings}
+          contestId={contestId}
+          questionsLength={questions?.length || 0}
         />
         
         {participant && questions && questions.length > 0 && (
           <>
             <QuestionnaireProgress 
-              currentQuestion={state.currentQuestionIndex + 1}
+              currentQuestionIndex={state.currentQuestionIndex + 1}
               totalQuestions={questions.length}
+              score={state.score}
+              totalAnswered={state.totalAnswered}
             />
             
             <CountdownTimer 
-              duration={300} 
-              onTimeUp={handleNextQuestion}
+              countdown={300} 
+              onCountdownComplete={handleNextQuestion}
+              isDisabled={false}
             />
 
             <QuestionDisplay
-              question={questions[state.currentQuestionIndex]}
-              onAnswer={handleNextQuestion}
-              state={state}
+              questionText={questions[state.currentQuestionIndex].question_text}
+              articleUrl={questions[state.currentQuestionIndex].article_url}
+              options={questions[state.currentQuestionIndex].options}
+              selectedAnswer={state.selectedAnswer}
+              correctAnswer={questions[state.currentQuestionIndex].correct_answer}
+              hasClickedLink={state.hasClickedLink}
+              hasAnswered={state.hasAnswered}
+              isSubmitting={state.isSubmitting}
+              onArticleRead={() => state.setHasClickedLink(true)}
+              onAnswerSelect={(answer: string) => state.setSelectedAnswer(answer)}
+              onSubmitAnswer={handleNextQuestion}
+              onNextQuestion={handleNextQuestion}
+              isLastQuestion={state.currentQuestionIndex === questions.length - 1}
             />
           </>
         )}
