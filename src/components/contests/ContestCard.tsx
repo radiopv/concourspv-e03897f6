@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Star, Target, Gift, ExternalLink, DollarSign } from "lucide-react";
+import { Trophy, Users, Gift, ExternalLink, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
 import { Prize } from '@/types/contest';
@@ -25,6 +25,10 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const navigate = useNavigate();
 
   const handleParticipate = () => {
+    if (!contest.id) {
+      console.error("Contest ID is missing");
+      return;
+    }
     navigate(`/contest/${contest.id}`);
   };
 
