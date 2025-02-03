@@ -56,17 +56,18 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       if (!session?.user?.id) return null;
 
       // First, try to find an active participation
-      const { data: activeParticipation, error: activeError } = await supabase
+      const { data: activeParticipations, error: activeError } = await supabase
         .from('participants')
         .select('*')
         .eq('contest_id', contestId)
         .eq('id', session.user.id)
         .eq('status', 'pending')
-        .is('completed_at', null)
-        .maybeSingle();
+        .is('completed_at', null);
 
       if (activeError) throw activeError;
-      if (activeParticipation) return activeParticipation;
+      if (activeParticipations && activeParticipations.length > 0) {
+        return activeParticipations[0];
+      }
 
       // If no active participation found, get the most recent one
       const { data: recentParticipation, error: recentError } = await supabase
@@ -75,10 +76,10 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
         .eq('contest_id', contestId)
         .eq('id', session.user.id)
         .order('created_at', { ascending: false })
-        .maybeSingle();
+        .limit(1);
 
       if (recentError) throw recentError;
-      return recentParticipation;
+      return recentParticipation?.[0] || null;
     },
     enabled: !!contestId
   });
@@ -126,11 +127,10 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
           .eq('status', 'pending')
-          .is('completed_at', null)
-          .single();
+          .is('completed_at', null);
 
-        if (existingActive) {
-          console.log('Found existing active participation:', existingActive);
+        if (existingActive && existingActive.length > 0) {
+          console.log('Found existing active participation:', existingActive[0]);
           await refetchParticipant();
           return;
         }
