@@ -7,7 +7,6 @@ import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
 import QuestionDisplay from './questionnaire/QuestionDisplay';
 import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
 import ParticipantCheck from './questionnaire/ParticipantCheck';
-import { calculateFinalScore } from '@/utils/scoreCalculations';
 import type { Participant } from '@/types/database';
 
 interface QuestionnaireComponentProps {
@@ -164,6 +163,18 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       return;
     }
 
+    const currentQuestion = questions?.[state.currentQuestionIndex];
+    const isCorrect = currentQuestion && state.selectedAnswer === currentQuestion.correct_answer;
+
+    // Update score if answer is correct
+    if (isCorrect) {
+      const newScore = ((state.totalAnswered + 1) / (questions?.length || 1)) * 100;
+      state.setScore(Math.round(newScore));
+    }
+
+    // Increment total answered questions
+    state.setTotalAnswered(prev => prev + 1);
+
     if (state.currentQuestionIndex < (questions?.length || 0) - 1) {
       state.setCurrentQuestionIndex(prev => prev + 1);
       state.setSelectedAnswer('');
@@ -181,8 +192,20 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           return;
         }
 
-        // Ensure score is a number between 0 and 100
-        const finalScore = Math.min(Math.max(parseInt(state.score.toString()) || 0, 0), 100);
+        // Calculate final score based on correct answers
+        const correctAnswers = questions?.reduce((count, question, index) => {
+          const answer = state.selectedAnswer; // Get the answer for this question
+          return count + (answer === question.correct_answer ? 1 : 0);
+        }, 0) || 0;
+
+        const totalQuestions = questions?.length || 0;
+        const finalScore = Math.round((correctAnswers / totalQuestions) * 100);
+
+        console.log('Final score calculation:', {
+          correctAnswers,
+          totalQuestions,
+          finalScore
+        });
 
         const { error: updateError } = await supabase
           .from('participants')
@@ -196,10 +219,36 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
         if (updateError) throw updateError;
 
+        // Save each answer to participant_answers
+        const { data: participant } = await supabase
+          .from('participants')
+          .select('participation_id')
+          .eq('contest_id', contestId)
+          .eq('id', session.user.id)
+          .single();
+
+        if (participant?.participation_id) {
+          const { error: answersError } = await supabase
+            .from('participant_answers')
+            .insert(
+              questions?.map((question, index) => ({
+                participant_id: participant.participation_id,
+                question_id: question.id,
+                answer: state.selectedAnswer,
+                is_correct: state.selectedAnswer === question.correct_answer,
+                attempt_number: 1
+              })) || []
+            );
+
+          if (answersError) {
+            console.error('Error saving answers:', answersError);
+          }
+        }
+
         navigate('/quiz-completion', {
           state: {
             score: finalScore,
-            totalQuestions: questions?.length || 0,
+            totalQuestions,
             contestId,
             requiredPercentage: settings?.required_percentage || 90
           }
