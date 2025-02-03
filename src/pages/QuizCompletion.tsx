@@ -10,7 +10,6 @@ import { StatusCard } from '@/components/quiz-completion/StatusCard';
 import { isQualifiedForDraw } from '@/utils/scoreCalculations';
 import ShareScore from '@/components/quiz-completion/ShareScore';
 import { useToast } from '@/hooks/use-toast';
-import { ensureParticipantExists } from '@/components/questionnaire/ParticipantManager';
 import { supabase } from '@/lib/supabase';
 
 const QuizCompletion = () => {
@@ -51,11 +50,43 @@ const QuizCompletion = () => {
         return;
       }
 
-      // Créer une nouvelle participation
-      const participationId = await ensureParticipantExists(session.session.user.id, contestId);
-      
-      if (participationId) {
-        // Rediriger vers le concours avec le nouveau participationId
+      // Get user profile data
+      const { data: userProfile } = await supabase
+        .from('members')
+        .select('first_name, last_name, email')
+        .eq('id', session.session.user.id)
+        .single();
+
+      if (!userProfile) {
+        toast({
+          title: "Erreur",
+          description: "Profil utilisateur introuvable",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Create a new participation
+      const { data: newParticipation, error: participationError } = await supabase
+        .from('participants')
+        .insert({
+          id: session.session.user.id,
+          contest_id: contestId,
+          status: 'pending',
+          first_name: userProfile.first_name,
+          last_name: userProfile.last_name,
+          email: userProfile.email,
+          score: 0
+        })
+        .select('participation_id')
+        .single();
+
+      if (participationError) {
+        console.error('Error creating new participation:', participationError);
+        throw participationError;
+      }
+
+      if (newParticipation?.participation_id) {
         navigate(`/contest/${contestId}`);
       } else {
         toast({
@@ -162,6 +193,7 @@ const QuizCompletion = () => {
       </motion.div>
     </div>
   );
+
 };
 
 export default QuizCompletion;
