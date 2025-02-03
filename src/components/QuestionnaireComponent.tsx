@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -11,14 +11,17 @@ import ParticipantCheck from './questionnaire/ParticipantCheck';
 import { calculateFinalScore } from '@/utils/scoreCalculations';
 import type { Participant } from '@/types/database';
 
-const QuestionnaireComponent = () => {
-  const { contestId } = useParams<{ contestId: string }>();
+interface QuestionnaireComponentProps {
+  contestId: string;
+}
+
+const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contestId }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const state = useQuestionnaireState();
 
-  console.log('Current contestId:', contestId); // Ajout d'un log pour debug
+  console.log('QuestionnaireComponent - received contestId:', contestId);
 
   const { data: settings } = useQuery({
     queryKey: ['global-settings'],

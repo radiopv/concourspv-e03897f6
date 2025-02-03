@@ -3,12 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import QuestionnaireComponent from '@/components/QuestionnaireComponent';
 
 const Contest = () => {
-  const { contestId } = useParams<{ contestId: string }>();
+  const params = useParams();
   const navigate = useNavigate();
+  const contestId = params.contestId;
 
+  console.log('Contest component - actual params:', params);
   console.log('Contest component - contestId:', contestId);
 
   if (!contestId) {
+    console.error('No contest ID found in URL parameters');
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
@@ -27,7 +30,7 @@ const Contest = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <QuestionnaireComponent key={contestId} />
+      <QuestionnaireComponent key={contestId} contestId={contestId} />
     </div>
   );
 };
