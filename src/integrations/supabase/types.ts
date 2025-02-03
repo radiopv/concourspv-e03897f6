@@ -24,50 +24,6 @@ export type Database = {
         }
         Relationships: []
       }
-      booking_stats: {
-        Row: {
-          cancelled_rides: number | null
-          completed_rides: number | null
-          created_at: string
-          id: string
-          month: string
-          taxi_id: string | null
-          total_bookings: number | null
-          total_revenue: number | null
-          updated_at: string
-        }
-        Insert: {
-          cancelled_rides?: number | null
-          completed_rides?: number | null
-          created_at?: string
-          id?: string
-          month: string
-          taxi_id?: string | null
-          total_bookings?: number | null
-          total_revenue?: number | null
-          updated_at?: string
-        }
-        Update: {
-          cancelled_rides?: number | null
-          completed_rides?: number | null
-          created_at?: string
-          id?: string
-          month?: string
-          taxi_id?: string | null
-          total_bookings?: number | null
-          total_revenue?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_stats_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: false
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       contests: {
         Row: {
           created_at: string | null
@@ -146,42 +102,6 @@ export type Database = {
           draw_date?: string
           id?: string
           participant_id?: string
-        }
-        Relationships: []
-      }
-      drivers: {
-        Row: {
-          created_at: string
-          email: string | null
-          full_name: string
-          id: string
-          phone: string | null
-          preferred_channel: string | null
-          qr_code_url: string | null
-          temp_password: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email?: string | null
-          full_name: string
-          id?: string
-          phone?: string | null
-          preferred_channel?: string | null
-          qr_code_url?: string | null
-          temp_password?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string | null
-          full_name?: string
-          id?: string
-          phone?: string | null
-          preferred_channel?: string | null
-          qr_code_url?: string | null
-          temp_password?: string | null
-          updated_at?: string
         }
         Relationships: []
       }
@@ -598,53 +518,6 @@ export type Database = {
           },
         ]
       }
-      promotions: {
-        Row: {
-          created_at: string
-          description: string | null
-          discount_percentage: number | null
-          end_date: string
-          id: string
-          is_active: boolean | null
-          start_date: string
-          taxi_id: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          discount_percentage?: number | null
-          end_date: string
-          id?: string
-          is_active?: boolean | null
-          start_date: string
-          taxi_id?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          discount_percentage?: number | null
-          end_date?: string
-          id?: string
-          is_active?: boolean | null
-          start_date?: string
-          taxi_id?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "promotions_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: false
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       question_bank: {
         Row: {
           article_url: string | null
@@ -755,10 +628,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "reviews_taxi_id_fkey"
+            foreignKeyName: "reviews_taxi_chauffeur_id_fkey"
             columns: ["taxi_id"]
             isOneToOne: false
-            referencedRelation: "taxis"
+            referencedRelation: "taxi_chauffeur"
             referencedColumns: ["id"]
           },
         ]
@@ -787,216 +660,190 @@ export type Database = {
         }
         Relationships: []
       }
-      taxi_contacts: {
+      taxi_chauffeur: {
         Row: {
-          created_at: string
-          facebook: string | null
-          id: string
-          messenger: string | null
-          phone: string
-          taxi_id: string
-          updated_at: string
-          whatsapp: string | null
-        }
-        Insert: {
-          created_at?: string
-          facebook?: string | null
-          id?: string
-          messenger?: string | null
-          phone: string
-          taxi_id: string
-          updated_at?: string
-          whatsapp?: string | null
-        }
-        Update: {
-          created_at?: string
-          facebook?: string | null
-          id?: string
-          messenger?: string | null
-          phone?: string
-          taxi_id?: string
-          updated_at?: string
-          whatsapp?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "taxi_contacts_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: true
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      taxi_currencies: {
-        Row: {
-          currency: string
-          taxi_id: string
-        }
-        Insert: {
-          currency: string
-          taxi_id: string
-        }
-        Update: {
-          currency?: string
-          taxi_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "taxi_currencies_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: false
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      taxi_ratings: {
-        Row: {
-          comment: string | null
-          courtesy_rating: number | null
-          created_at: string
-          id: string
-          price_rating: number | null
-          punctuality_rating: number | null
-          service_rating: number | null
-          taxi_id: string | null
-          user_id: string | null
-          vehicle_condition_rating: number | null
-        }
-        Insert: {
-          comment?: string | null
-          courtesy_rating?: number | null
-          created_at?: string
-          id?: string
-          price_rating?: number | null
-          punctuality_rating?: number | null
-          service_rating?: number | null
-          taxi_id?: string | null
-          user_id?: string | null
-          vehicle_condition_rating?: number | null
-        }
-        Update: {
-          comment?: string | null
-          courtesy_rating?: number | null
-          created_at?: string
-          id?: string
-          price_rating?: number | null
-          punctuality_rating?: number | null
-          service_rating?: number | null
-          taxi_id?: string | null
-          user_id?: string | null
-          vehicle_condition_rating?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "taxi_ratings_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: false
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      taxi_working_hours: {
-        Row: {
-          created_at: string
-          day_of_week: number
-          end_time: string
-          id: string
-          is_closed: boolean | null
-          start_time: string
-          taxi_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          day_of_week: number
-          end_time: string
-          id?: string
-          is_closed?: boolean | null
-          start_time: string
-          taxi_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          day_of_week?: number
-          end_time?: string
-          id?: string
-          is_closed?: boolean | null
-          start_time?: string
-          taxi_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "taxi_working_hours_taxi_id_fkey"
-            columns: ["taxi_id"]
-            isOneToOne: false
-            referencedRelation: "taxis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      taxis: {
-        Row: {
+          accepted_currencies: string[] | null
           available: boolean | null
-          category: string
           created_at: string
           description: string | null
-          driver_id: string | null
-          driver_name: string
+          display_order: number | null
+          email: string | null
+          facebook_url: string | null
+          full_name: string
           id: string
-          images: string[] | null
           is_certified: boolean | null
+          is_first_login: boolean | null
           is_visible: boolean | null
-          license_plate: string | null
-          location: string | null
-          photo_url: string
+          languages: string[] | null
+          linkedin_url: string | null
+          location: Json | null
+          messenger: string | null
+          other_links: string[] | null
+          phone: string | null
+          photo_url: string | null
+          preferred_channel: string | null
+          publish_date: string | null
+          qr_code_token: string | null
+          qr_code_token_expires_at: string | null
+          qr_code_url: string | null
+          role: Database["public"]["Enums"]["driver_role"]
+          service_areas: string[] | null
+          status: string | null
+          taxi_category: string | null
+          taxi_images: string[] | null
+          taxi_model: string | null
+          taxi_type: string | null
+          temp_password: string | null
+          tripadvisor_url: string | null
+          unpublish_date: string | null
           updated_at: string
-          website: string | null
+          website_url: string | null
+          whatsapp: string | null
+          youtube_url: string | null
         }
         Insert: {
+          accepted_currencies?: string[] | null
           available?: boolean | null
-          category: string
           created_at?: string
           description?: string | null
-          driver_id?: string | null
-          driver_name: string
+          display_order?: number | null
+          email?: string | null
+          facebook_url?: string | null
+          full_name: string
           id?: string
-          images?: string[] | null
           is_certified?: boolean | null
+          is_first_login?: boolean | null
           is_visible?: boolean | null
-          license_plate?: string | null
-          location?: string | null
-          photo_url: string
+          languages?: string[] | null
+          linkedin_url?: string | null
+          location?: Json | null
+          messenger?: string | null
+          other_links?: string[] | null
+          phone?: string | null
+          photo_url?: string | null
+          preferred_channel?: string | null
+          publish_date?: string | null
+          qr_code_token?: string | null
+          qr_code_token_expires_at?: string | null
+          qr_code_url?: string | null
+          role?: Database["public"]["Enums"]["driver_role"]
+          service_areas?: string[] | null
+          status?: string | null
+          taxi_category?: string | null
+          taxi_images?: string[] | null
+          taxi_model?: string | null
+          taxi_type?: string | null
+          temp_password?: string | null
+          tripadvisor_url?: string | null
+          unpublish_date?: string | null
           updated_at?: string
-          website?: string | null
+          website_url?: string | null
+          whatsapp?: string | null
+          youtube_url?: string | null
         }
         Update: {
+          accepted_currencies?: string[] | null
           available?: boolean | null
-          category?: string
           created_at?: string
           description?: string | null
-          driver_id?: string | null
-          driver_name?: string
+          display_order?: number | null
+          email?: string | null
+          facebook_url?: string | null
+          full_name?: string
           id?: string
-          images?: string[] | null
           is_certified?: boolean | null
+          is_first_login?: boolean | null
           is_visible?: boolean | null
-          license_plate?: string | null
-          location?: string | null
-          photo_url?: string
+          languages?: string[] | null
+          linkedin_url?: string | null
+          location?: Json | null
+          messenger?: string | null
+          other_links?: string[] | null
+          phone?: string | null
+          photo_url?: string | null
+          preferred_channel?: string | null
+          publish_date?: string | null
+          qr_code_token?: string | null
+          qr_code_token_expires_at?: string | null
+          qr_code_url?: string | null
+          role?: Database["public"]["Enums"]["driver_role"]
+          service_areas?: string[] | null
+          status?: string | null
+          taxi_category?: string | null
+          taxi_images?: string[] | null
+          taxi_model?: string | null
+          taxi_type?: string | null
+          temp_password?: string | null
+          tripadvisor_url?: string | null
+          unpublish_date?: string | null
           updated_at?: string
-          website?: string | null
+          website_url?: string | null
+          whatsapp?: string | null
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      taxi_user_reviews: {
+        Row: {
+          content: string
+          courtesy_rating: number | null
+          created_at: string | null
+          driver_response: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          overall_rating: number | null
+          price_rating: number | null
+          punctuality_rating: number | null
+          status: Database["public"]["Enums"]["review_status"] | null
+          taxi_condition_rating: number | null
+          taxi_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          courtesy_rating?: number | null
+          created_at?: string | null
+          driver_response?: string | null
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          overall_rating?: number | null
+          price_rating?: number | null
+          punctuality_rating?: number | null
+          status?: Database["public"]["Enums"]["review_status"] | null
+          taxi_condition_rating?: number | null
+          taxi_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          courtesy_rating?: number | null
+          created_at?: string | null
+          driver_response?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          overall_rating?: number | null
+          price_rating?: number | null
+          punctuality_rating?: number | null
+          status?: Database["public"]["Enums"]["review_status"] | null
+          taxi_condition_rating?: number | null
+          taxi_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "taxis_driver_id_fkey"
-            columns: ["driver_id"]
+            foreignKeyName: "taxi_user_reviews_taxi_id_fkey"
+            columns: ["taxi_id"]
             isOneToOne: false
-            referencedRelation: "drivers"
+            referencedRelation: "taxi_chauffeur"
             referencedColumns: ["id"]
           },
         ]
@@ -1045,6 +892,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1065,6 +933,19 @@ export type Database = {
           description: string
           image_url: string
           prize_value: number
+        }[]
+      }
+      get_taxi_ratings: {
+        Args: {
+          taxi_id_input: string
+        }
+        Returns: {
+          average_courtesy: number
+          average_punctuality: number
+          average_price: number
+          average_taxi_condition: number
+          average_overall: number
+          total_reviews: number
         }[]
       }
       get_user_profile: {
@@ -1092,9 +973,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_claim: {
+        Args: {
+          uid: string
+          claim: string
+          value: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "driver"
+      driver_role: "admin" | "driver"
+      review_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never

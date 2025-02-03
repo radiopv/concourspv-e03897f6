@@ -1,94 +1,82 @@
-import React, { useState } from 'react';
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Question } from '@/types/database';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { Question, QuestionFormProps } from '@/types/database';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
-export interface QuestionFormProps {
-  initialQuestion?: Question;
-  contestId: string;
-  onSubmit: (formData: Omit<Question, "id">) => void;
-  onCancel?: () => void;
-}
-
-const QuestionForm = ({ initialQuestion, contestId, onSubmit, onCancel }: QuestionFormProps) => {
-  const [formData, setFormData] = useState({
-    question_text: initialQuestion?.question_text || '',
-    options: initialQuestion?.options || ['', '', '', ''],
-    correct_answer: initialQuestion?.correct_answer || '',
-    article_url: initialQuestion?.article_url || '',
-    type: 'multiple_choice' as const,
+export const QuestionForm: React.FC<QuestionFormProps> = ({
+  initialQuestion,
+  contestId,
+  onSubmit,
+  onCancel,
+}) => {
+  const { register, handleSubmit, formState: { errors } } = useForm<Omit<Question, "id">>({
+    defaultValues: initialQuestion || {
+      contest_id: contestId,
+      question_text: '',
+      options: ['', '', '', ''],
+      correct_answer: '',
+      article_url: '',
+      type: 'multiple_choice',
+      image_url: '',
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Submitting question with contest_id:', contestId); // Debug log
+  const onSubmitForm = (data: Omit<Question, "id">) => {
     onSubmit({
-      ...formData,
+      ...data,
       contest_id: contestId,
-      type: 'multiple_choice'
+      type: 'multiple_choice',
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4">
       <div>
-        <Label htmlFor="question">Question</Label>
-        <Input
-          id="question"
-          value={formData.question_text}
-          onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
-          placeholder="Entrez votre question"
-          required
-        />
+        <label className="block text-sm font-medium mb-1">Question</label>
+        <Textarea {...register('question_text', { required: true })} />
+        {errors.question_text && (
+          <span className="text-red-500">Ce champ est requis</span>
+        )}
       </div>
 
-      <div className="space-y-2">
-        <Label>Options</Label>
-        {formData.options.map((option, index) => (
+      <div>
+        <label className="block text-sm font-medium mb-1">Options</label>
+        {[0, 1, 2, 3].map((index) => (
           <Input
             key={index}
-            value={option}
-            onChange={(e) => {
-              const newOptions = [...formData.options];
-              newOptions[index] = e.target.value;
-              setFormData({ ...formData, options: newOptions });
-            }}
+            {...register(`options.${index}`, { required: true })}
+            className="mt-2"
             placeholder={`Option ${index + 1}`}
-            required
           />
         ))}
       </div>
 
       <div>
-        <Label htmlFor="correct">Réponse correcte</Label>
-        <Input
-          id="correct"
-          value={formData.correct_answer}
-          onChange={(e) => setFormData({ ...formData, correct_answer: e.target.value })}
-          placeholder="Entrez la réponse correcte"
-          required
-        />
+        <label className="block text-sm font-medium mb-1">Bonne réponse</label>
+        <Input {...register('correct_answer', { required: true })} />
+        {errors.correct_answer && (
+          <span className="text-red-500">Ce champ est requis</span>
+        )}
       </div>
 
       <div>
-        <Label htmlFor="article">URL de l'article (optionnel)</Label>
-        <Input
-          id="article"
-          value={formData.article_url}
-          onChange={(e) => setFormData({ ...formData, article_url: e.target.value })}
-          placeholder="https://..."
-        />
+        <label className="block text-sm font-medium mb-1">URL de l'article (optionnel)</label>
+        <Input {...register('article_url')} />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">URL de l'image (optionnel)</label>
+        <Input {...register('image_url')} />
       </div>
 
       <div className="flex justify-end gap-2">
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Annuler
-          </Button>
-        )}
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Annuler
+        </Button>
         <Button type="submit">
-          {initialQuestion ? 'Mettre à jour' : 'Ajouter'}
+          {initialQuestion ? 'Mettre à jour' : 'Créer'}
         </Button>
       </div>
     </form>
