@@ -8,7 +8,7 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     // Vérifier si le participant existe déjà
     const { data: existingParticipant, error: fetchError } = await supabase
       .from('participants')
-      .select('participation_id, attempts')
+      .select('participation_id, attempts, status')
       .eq('id', userId)
       .eq('contest_id', contestId)
       .maybeSingle();
@@ -18,44 +18,70 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
       throw fetchError;
     }
 
-    // Si le participant existe, incrémenter le nombre de tentatives et retourner son participation_id
+    // Si le participant existe, vérifier son statut et ses tentatives
     if (existingParticipant?.participation_id) {
       console.log('Found existing participant:', existingParticipant);
       
-      // Incrémenter le nombre de tentatives
-      const { error: updateError } = await supabase
-        .from('participants')
-        .update({ 
-          attempts: (existingParticipant.attempts || 0) + 1,
-          score: 0, // Réinitialiser le score pour la nouvelle tentative
-          status: 'pending'
-        })
-        .eq('participation_id', existingParticipant.participation_id);
+      // Si le statut est 'completed', créer une nouvelle participation
+      if (existingParticipant.status === 'completed') {
+        const { data: userProfile } = await supabase
+          .from('members')
+          .select('first_name, last_name, email')
+          .eq('id', userId)
+          .single();
 
-      if (updateError) {
-        console.error('Error updating attempts:', updateError);
-        throw updateError;
+        if (!userProfile) {
+          throw new Error('User profile not found');
+        }
+
+        const { data: newParticipant, error: insertError } = await supabase
+          .from('participants')
+          .insert({
+            id: userId,
+            contest_id: contestId,
+            status: 'pending',
+            attempts: (existingParticipant.attempts || 0) + 1,
+            first_name: userProfile.first_name,
+            last_name: userProfile.last_name,
+            email: userProfile.email,
+            score: 0
+          })
+          .select('participation_id')
+          .single();
+
+        if (insertError) {
+          console.error('Error creating new participant:', insertError);
+          throw insertError;
+        }
+
+        return newParticipant.participation_id;
       }
 
+      // Si le statut n'est pas 'completed', retourner l'ID existant
       return existingParticipant.participation_id;
     }
 
     // Si le participant n'existe pas, créer une nouvelle entrée
-    const { data: { session } } = await supabase.auth.getSession();
-    const userEmail = session?.user?.email || 'anonymous@user.com';
-    const participation_id = crypto.randomUUID();
+    const { data: userProfile } = await supabase
+      .from('members')
+      .select('first_name, last_name, email')
+      .eq('id', userId)
+      .single();
+
+    if (!userProfile) {
+      throw new Error('User profile not found');
+    }
 
     const { data: newParticipant, error: insertError } = await supabase
       .from('participants')
       .insert({
-        participation_id,
         id: userId,
         contest_id: contestId,
         status: 'pending',
-        first_name: userEmail.split('@')[0],
-        last_name: 'Participant',
-        email: userEmail,
         attempts: 1,
+        first_name: userProfile.first_name,
+        last_name: userProfile.last_name,
+        email: userProfile.email,
         score: 0
       })
       .select('participation_id')
@@ -67,7 +93,7 @@ export const ensureParticipantExists = async (userId: string, contestId: string)
     }
 
     console.log('Created new participant:', newParticipant);
-    return participation_id;
+    return newParticipant.participation_id;
 
   } catch (error) {
     console.error('Error in ensureParticipantExists:', error);
