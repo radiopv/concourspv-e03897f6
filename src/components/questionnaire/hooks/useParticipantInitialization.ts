@@ -33,85 +33,88 @@ export const useParticipantInitialization = (
         }
 
         // First, check for any existing active participation
-        const { data: existingParticipations, error: checkError } = await supabase
+        const { data: existingParticipation, error: checkError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
           .eq('status', 'pending')
           .is('completed_at', null)
-          .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no rows are found
+          .maybeSingle();
 
         if (checkError) {
           console.error('Error checking existing participation:', checkError);
           return;
         }
 
-        if (existingParticipations) {
-          console.log('Found existing active participation:', existingParticipations);
+        if (existingParticipation) {
+          console.log('Found existing active participation:', existingParticipation);
           await refetchParticipant();
           return;
         }
 
-        // Check for completed participations to determine attempt number
-        const { data: completedParticipations, error: completedError } = await supabase
+        // Get the latest participation to determine the next attempt number
+        const { data: latestParticipation, error: latestError } = await supabase
           .from('participants')
           .select('attempts')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
           .order('created_at', { ascending: false })
-          .limit(1);
+          .limit(1)
+          .maybeSingle();
 
-        if (completedError) {
-          console.error('Error checking completed participations:', completedError);
+        if (latestError) {
+          console.error('Error checking latest participation:', latestError);
           return;
         }
 
-        const currentAttempt = completedParticipations?.[0]?.attempts 
-          ? completedParticipations[0].attempts + 1 
-          : 1;
+        const nextAttemptNumber = (latestParticipation?.attempts || 0) + 1;
 
-        try {
-          const { data: newParticipation, error: insertError } = await supabase
-            .from('participants')
-            .insert({
-              id: session.user.id,
-              contest_id: contestId,
-              status: 'pending',
-              first_name: userProfile.first_name,
-              last_name: userProfile.last_name,
-              email: userProfile.email,
-              score: 0,
-              attempts: currentAttempt
-            })
-            .select()
-            .maybeSingle();
+        // Create new participation with transaction-like check
+        const { data: newParticipation, error: insertError } = await supabase
+          .from('participants')
+          .insert({
+            id: session.user.id,
+            contest_id: contestId,
+            status: 'pending',
+            first_name: userProfile.first_name,
+            last_name: userProfile.last_name,
+            email: userProfile.email,
+            score: 0,
+            attempts: nextAttemptNumber
+          })
+          .select()
+          .maybeSingle();
 
-          if (insertError) {
-            if (insertError.message.includes('already has an active participation')) {
-              // If there's a race condition and a participation was created,
-              // just refetch the participant data
-              await refetchParticipant();
-              return;
-            }
-            throw insertError;
+        if (insertError) {
+          // If there's a race condition and a participation was created in the meantime
+          if (insertError.message.includes('already has an active participation')) {
+            console.log('Race condition detected, refetching participant data');
+            await refetchParticipant();
+            return;
           }
+          
+          console.error('Error creating participant:', insertError);
+          toast({
+            title: "Erreur",
+            description: "Impossible d'initialiser la participation",
+            variant: "destructive"
+          });
+          return;
+        }
 
+        if (newParticipation) {
           console.log('Successfully created new participation:', newParticipation);
           await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
-
-        } catch (insertError: any) {
-          console.error('Error creating participant:', insertError);
-          if (!insertError.message.includes('already has an active participation')) {
-            toast({
-              title: "Erreur",
-              description: "Impossible d'initialiser la participation",
-              variant: "destructive"
-            });
-          }
         }
+
       } catch (error: any) {
         console.error('Error in initializeParticipant:', error);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de l'initialisation",
+          variant: "destructive"
+        });
       }
     };
 
