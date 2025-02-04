@@ -34,13 +34,16 @@ const TopParticipantsList = () => {
 
       if (error) throw error;
       
-      // Ensure the data matches our interface structure
+      // Ensure the data matches our interface structure by explicitly typing each field
       const typedData = (data || []).map(item => ({
-        user_id: item.user_id,
-        total_points: item.total_points,
-        current_rank: item.current_rank,
-        members: item.members
-      })) as TopParticipant[];
+        user_id: String(item.user_id),
+        total_points: Number(item.total_points),
+        current_rank: String(item.current_rank),
+        members: item.members ? {
+          first_name: String(item.members.first_name),
+          last_name: String(item.members.last_name)
+        } : null
+      }));
       
       return typedData;
     }
