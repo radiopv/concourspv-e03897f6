@@ -9,14 +9,14 @@ const TopParticipantsList = () => {
     queryKey: ['top-participants'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('members')
+        .from('user_points')
         .select(`
-          id,
-          first_name,
-          last_name,
+          user_id,
           total_points,
-          user_points (
-            current_rank
+          current_rank,
+          members (
+            first_name,
+            last_name
           )
         `)
         .order('total_points', { ascending: false })
@@ -43,11 +43,11 @@ const TopParticipantsList = () => {
         <div className="space-y-4">
           {topParticipants?.map((participant, index) => (
             <div
-              key={participant.id}
+              key={participant.user_id}
               className={`
                 flex items-center justify-between p-4 rounded-lg
                 ${index < 3 ? 'bg-gradient-to-r from-amber-50 to-amber-100' : 'bg-white'}
-                shadow-sm
+                shadow-sm hover:shadow-md transition-shadow duration-200
               `}
             >
               <div className="flex items-center gap-4">
@@ -62,10 +62,10 @@ const TopParticipantsList = () => {
                 </div>
                 <div>
                   <span className="font-medium">
-                    {participant.first_name} {participant.last_name}
+                    {participant.members?.first_name} {participant.members?.last_name}
                   </span>
                   <div className="text-sm text-gray-500">
-                    {participant.user_points?.[0]?.current_rank || 'NOVATO'}
+                    {participant.current_rank || 'NOVATO'}
                   </div>
                 </div>
               </div>
