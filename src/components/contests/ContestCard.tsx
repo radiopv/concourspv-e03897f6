@@ -1,12 +1,11 @@
 import React from 'react';
-import { Trophy, Lock, Calendar, Gift, Users, Award } from "lucide-react";
+import { Trophy, Calendar, Gift, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RANK_POINTS } from '@/constants/ranks';
 
 interface ContestCardProps {
   contest: {
@@ -17,18 +16,15 @@ interface ContestCardProps {
     has_big_prizes: boolean;
     participants?: { count: number };
     prizes?: any[];
-    is_rank_restricted?: boolean;
-    min_rank?: string;
     end_date: string;
     draw_date: string;
     status: string;
   };
   onSelect: (id: string) => void;
   index: number;
-  userRank?: string;
 }
 
-const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestCardProps) => {
+const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   const getStatusInfo = (status: string, endDate: string, drawDate: string) => {
     const now = new Date();
     const end = new Date(endDate);
@@ -54,9 +50,6 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
 
   const statusInfo = getStatusInfo(contest.status, contest.end_date, contest.draw_date);
 
-  const isLocked = contest.is_rank_restricted && contest.min_rank && 
-    RANK_POINTS[userRank as keyof typeof RANK_POINTS] < RANK_POINTS[contest.min_rank as keyof typeof RANK_POINTS];
-
   const backgroundColors = [
     'from-[#F2FCE2] to-[#E5F5D3]',
     'from-[#FEF7CD] to-[#FDF0B0]',
@@ -75,7 +68,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="h-full"
     >
-      <Card className={`bg-gradient-to-br ${bgColorClass} shadow-xl hover:shadow-2xl transition-all duration-300 border-gray-200/20 h-full flex flex-col ${isLocked ? 'opacity-75' : ''}`}>
+      <Card className={`bg-gradient-to-br ${bgColorClass} shadow-xl hover:shadow-2xl transition-all duration-300 border-gray-200/20 h-full flex flex-col`}>
         <CardContent className="p-6 flex flex-col h-full">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-xl font-bold text-gray-800">{contest.title}</h3>
@@ -120,30 +113,30 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
             )}
 
             {contest.prizes && contest.prizes.length > 0 && (
-              <div className="flex items-center gap-2 text-gray-700">
-                <Gift className="w-4 h-4" />
-                <span>{contest.prizes.length} prix à gagner</span>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-gray-700">
+                  <Gift className="w-4 h-4" />
+                  <span>{contest.prizes.length} prix à gagner</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2 mt-2">
+                  {contest.prizes.map((prize, idx) => (
+                    <div key={idx} className="bg-white/50 rounded-lg p-3">
+                      <h4 className="font-semibold text-gray-800">{prize.name}</h4>
+                      {prize.value && (
+                        <p className="text-sm text-gray-600">Valeur: {prize.value}€</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
           <Button
             onClick={() => onSelect(contest.id)}
-            className={`w-full mt-6 ${
-              isLocked 
-                ? 'bg-gray-500 hover:bg-gray-600' 
-                : 'bg-gradient-to-r from-[#9b87f5] to-[#F97316] hover:from-[#8B5CF6] hover:to-[#D946EF]'
-            } text-white font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300`}
-            disabled={isLocked}
+            className="w-full mt-6 bg-gradient-to-r from-[#9b87f5] to-[#F97316] hover:from-[#8B5CF6] hover:to-[#D946EF] text-white font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
           >
-            {isLocked ? (
-              <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4" />
-                <span>Rang {contest.min_rank} requis</span>
-              </div>
-            ) : (
-              'Participer Maintenant'
-            )}
+            Participer Maintenant
           </Button>
         </CardContent>
       </Card>
