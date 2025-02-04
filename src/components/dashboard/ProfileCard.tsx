@@ -101,8 +101,12 @@ const ProfileCard = ({
       }
 
       // Rafraîchir les données après la mise à jour
-      await Promise.all([refetch(), refetchPoints()]);
-      await queryClient.invalidateQueries({ queryKey: ['user-points'] });
+      await Promise.all([
+        refetch(), 
+        refetchPoints(),
+        queryClient.invalidateQueries({ queryKey: ['user-points'] }),
+        queryClient.invalidateQueries({ queryKey: ['point-history'] }) // Ajout de l'invalidation de l'historique des points
+      ]);
       
       toast({
         title: "Profil mis à jour",
