@@ -15,7 +15,7 @@ interface QuestionnaireComponentProps {
 
 const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contestId }) => {
   const state = useQuestionnaireState();
-  const { settings, userProfile, participant, questions } = useQuestionnaireQueries(contestId);
+  const { settings, userProfile, participant, questions, refetchParticipant } = useQuestionnaireQueries(contestId);
   
   // Check if participant has already completed this contest
   const hasAlreadyParticipated = participant?.status === 'completed';
@@ -36,7 +36,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   }
 
   // If not already participated, initialize participant
-  useParticipantInitialization(contestId, userProfile);
+  useParticipantInitialization(contestId, userProfile, refetchParticipant);
   const { handleNextQuestion } = useAnswerHandling(contestId, participant, questions || [], settings);
 
   return (
