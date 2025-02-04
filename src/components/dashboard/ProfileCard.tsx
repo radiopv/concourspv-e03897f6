@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUserPoints } from "@/services/pointsService";
 
 interface ProfileCardProps {
@@ -47,12 +47,15 @@ const ProfileCard = ({
   refetch
 }: ProfileCardProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Fetch user points data using the pointsService
-  const { data: points } = useQuery({
+  // Fetch user points data using the pointsService with proper caching
+  const { data: points, refetch: refetchPoints } = useQuery({
     queryKey: ['user-points', userId],
     queryFn: () => getUserPoints(userId),
-    enabled: !!userId
+    enabled: !!userId,
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0 // Don't cache the data
   });
 
   const handleSaveProfile = async () => {
@@ -98,7 +101,8 @@ const ProfileCard = ({
       }
 
       // Rafraîchir les données après la mise à jour
-      await refetch();
+      await Promise.all([refetch(), refetchPoints()]);
+      await queryClient.invalidateQueries({ queryKey: ['user-points'] });
       
       toast({
         title: "Profil mis à jour",
