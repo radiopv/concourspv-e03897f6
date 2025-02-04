@@ -2,12 +2,13 @@ import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Star, Gift, ExternalLink, DollarSign } from "lucide-react";
+import { Trophy, Users, Star, Gift, ExternalLink, DollarSign, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Prize } from "@/types/prize";
+import { useToast } from "@/hooks/use-toast";
 
 interface ContestCardProps {
   contest: {
@@ -18,13 +19,26 @@ interface ContestCardProps {
     has_big_prizes: boolean;
     participants?: { count: number };
     prizes?: Prize[];
+    is_rank_restricted?: boolean;
+    min_rank?: string;
   };
   onSelect: (id: string) => void;
   index: number;
+  userRank?: string;
 }
 
-const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
+const RANK_POINTS = {
+  'NOVATO': 0,
+  'HAVANA': 1000,
+  'SANTIAGO': 2500,
+  'RIO': 5000,
+  'CARNIVAL': 10000,
+  'ELDORADO': 25000
+};
+
+const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const { data: stats } = useQuery({
     queryKey: ['contest-detailed-stats', contest.id],
@@ -55,6 +69,21 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       console.error('Contest ID is missing');
       return;
     }
+
+    if (contest.is_rank_restricted && contest.min_rank) {
+      const requiredPoints = RANK_POINTS[contest.min_rank as keyof typeof RANK_POINTS];
+      const userPoints = RANK_POINTS[userRank as keyof typeof RANK_POINTS];
+
+      if (userPoints < requiredPoints) {
+        toast({
+          title: "Accès restreint",
+          description: `Ce concours est réservé aux joueurs de rang ${contest.min_rank} et plus. Continuez à gagner des points pour y accéder !`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     navigate(`/contest/${contest.id}`);
   };
 
@@ -72,6 +101,8 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
   ];
 
   const bgColorClass = backgroundColors[index % backgroundColors.length];
+  const isLocked = contest.is_rank_restricted && contest.min_rank && 
+    RANK_POINTS[userRank as keyof typeof RANK_POINTS] < RANK_POINTS[contest.min_rank as keyof typeof RANK_POINTS];
 
   return (
     <motion.div
@@ -80,7 +111,7 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="h-full"
     >
-      <Card className={`bg-gradient-to-br ${bgColorClass} shadow-xl hover:shadow-2xl transition-all duration-300 border-gray-200/20 h-full flex flex-col`}>
+      <Card className={`${bgColorClass} shadow-xl hover:shadow-2xl transition-all duration-300 border-gray-200/20 h-full flex flex-col ${isLocked ? 'opacity-75' : ''}`}>
         <CardHeader className="border-b border-gray-200/20 pb-4">
           <div className="flex flex-col gap-3">
             <CardTitle className="text-2xl font-bold text-gray-800">
@@ -95,6 +126,12 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
               {contest.has_big_prizes && (
                 <Badge className="bg-amber-500 text-white">
                   Gros Lots
+                </Badge>
+              )}
+              {contest.is_rank_restricted && contest.min_rank && (
+                <Badge className={isLocked ? "bg-red-500 text-white" : "bg-green-500 text-white"}>
+                  {isLocked ? <Lock className="w-3 h-3 mr-1 inline" /> : null}
+                  Rang {contest.min_rank}
                 </Badge>
               )}
             </div>
@@ -190,12 +227,17 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
             </div>
           )}
 
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex justify-center p-4">
             <Button
               onClick={handleParticipate}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none w-full sm:w-auto"
+              className={`w-full sm:w-auto ${
+                isLocked 
+                  ? 'bg-gray-500 hover:bg-gray-600' 
+                  : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
+              } text-white font-bold py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-300`}
+              disabled={isLocked}
             >
-              Participer Maintenant
+              {isLocked ? 'Rang insuffisant' : 'Participer Maintenant'}
             </Button>
           </div>
         </CardContent>

@@ -1,17 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Trophy } from "lucide-react";
+import { Trophy, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import ContestCard from "@/components/contests/ContestCard";
 import { useContests } from "@/hooks/useContests";
 import PageMetadata from "@/components/seo/PageMetadata";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 const ContestsList = () => {
   const navigate = useNavigate();
   const { data: contests, isLoading } = useContests();
+  const [showLockedContests, setShowLockedContests] = useState(true);
   const canonicalUrl = `${window.location.origin}/contests`;
+
+  const { data: userPoints } = useQuery({
+    queryKey: ['user-points'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+
+      const { data } = await supabase
+        .from('user_points')
+        .select('current_rank')
+        .eq('user_id', session.user.id)
+        .single();
+
+      return data;
+    }
+  });
+
+  const userRank = userPoints?.current_rank || 'NOVATO';
 
   if (isLoading) {
     return (
@@ -47,6 +70,15 @@ const ContestsList = () => {
     );
   }
 
+  const filteredContests = showLockedContests 
+    ? contests 
+    : contests.filter(contest => {
+        if (!contest.is_rank_restricted) return true;
+        const userPoints = RANK_POINTS[userRank as keyof typeof RANK_POINTS];
+        const requiredPoints = RANK_POINTS[contest.min_rank as keyof typeof RANK_POINTS];
+        return userPoints >= requiredPoints;
+      });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] py-12">
       <PageMetadata
@@ -73,18 +105,30 @@ const ContestsList = () => {
               Nos Concours
             </h1>
           </div>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
             Découvrez nos concours exceptionnels
           </p>
+          
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <Switch
+              id="show-locked"
+              checked={showLockedContests}
+              onCheckedChange={setShowLockedContests}
+            />
+            <Label htmlFor="show-locked" className="text-gray-300">
+              Afficher les concours verrouillés
+            </Label>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {contests.map((contest, index) => (
+          {filteredContests.map((contest, index) => (
             <div key={contest.id} className="w-full">
               <ContestCard
                 contest={contest}
                 onSelect={(id) => navigate(`/contest/${id}`)}
                 index={index}
+                userRank={userRank}
               />
             </div>
           ))}

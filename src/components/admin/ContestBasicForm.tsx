@@ -4,6 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const RANKS = [
+  { value: 'NOVATO', label: 'Novato' },
+  { value: 'HAVANA', label: 'Havana' },
+  { value: 'SANTIAGO', label: 'Santiago' },
+  { value: 'RIO', label: 'Rio' },
+  { value: 'CARNIVAL', label: 'Carnival' },
+  { value: 'ELDORADO', label: 'El Dorado' }
+] as const;
 
 interface ContestBasicFormProps {
   formData: {
@@ -18,6 +28,8 @@ interface ContestBasicFormProps {
     shop_url?: string;
     prize_image_url?: string;
     main_image_url?: string;
+    min_rank: string;
+    is_rank_restricted: boolean;
   };
   setFormData: (data: any) => void;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -142,6 +154,36 @@ const ContestBasicForm = ({ formData, setFormData, handleImageUpload, uploading 
             onCheckedChange={(checked) => setFormData({ ...formData, has_big_prizes: checked })}
           />
         </div>
+
+        <div className="flex items-center justify-between">
+          <Label htmlFor="is_rank_restricted">Restreindre l'accès par rang</Label>
+          <Switch
+            id="is_rank_restricted"
+            checked={formData.is_rank_restricted}
+            onCheckedChange={(checked) => setFormData({ ...formData, is_rank_restricted: checked })}
+          />
+        </div>
+
+        {formData.is_rank_restricted && (
+          <div>
+            <Label htmlFor="min_rank">Rang minimum requis</Label>
+            <Select
+              value={formData.min_rank}
+              onValueChange={(value) => setFormData({ ...formData, min_rank: value })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sélectionner un rang minimum" />
+              </SelectTrigger>
+              <SelectContent>
+                {RANKS.map((rank) => (
+                  <SelectItem key={rank.value} value={rank.value}>
+                    {rank.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
     </div>
   );
