@@ -33,7 +33,7 @@ const TopParticipantsList = () => {
         .limit(25);
 
       if (error) throw error;
-      return data;
+      return data as TopParticipant[];
     }
   });
 
