@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,58 +7,71 @@ import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 interface ProfileCardProps {
-  userProfile: {
-    email: string;
-    first_name: string;
-    last_name: string;
-    phone_number?: string;
-    street_address?: string;
-    city?: string;
-    postal_code?: string;
-    country?: string;
-  };
-  isEditing: boolean;
-  formData: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone_number?: string;
-    street_address?: string;
-    city?: string;
-    postal_code?: string;
-    country?: string;
-  };
-  setFormData: (data: any) => void;
-  setIsEditing: (editing: boolean) => void;
   userId: string;
-  refetch: () => void;
 }
 
-const ProfileCard = ({ 
-  userProfile, 
-  isEditing, 
-  formData, 
-  setFormData, 
-  setIsEditing,
-  userId,
-  refetch
-}: ProfileCardProps) => {
+const ProfileCard = ({ userId }: ProfileCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Fetch user profile data
+  const { data: userProfile, isLoading, refetch } = useQuery({
+    queryKey: ['user-profile', userId],
+    queryFn: async () => {
+      console.log('Fetching user profile for:', userId);
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        throw error;
+      }
+
+      console.log('User profile data:', data);
+      return data;
+    }
+  });
+
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone_number: '',
+    street_address: '',
+    city: '',
+    postal_code: '',
+    country: 'France'
+  });
+
+  // Update form data when user profile is loaded
+  React.useEffect(() => {
+    if (userProfile) {
+      setFormData({
+        first_name: userProfile.first_name || '',
+        last_name: userProfile.last_name || '',
+        email: userProfile.email || '',
+        phone_number: userProfile.phone_number || '',
+        street_address: userProfile.street_address || '',
+        city: userProfile.city || '',
+        postal_code: userProfile.postal_code || '',
+        country: userProfile.country || 'France'
+      });
+    }
+  }, [userProfile]);
 
   const handleSaveProfile = async () => {
     try {
-      console.log("Début de la mise à jour du profil...");
-      console.log("Données à mettre à jour:", formData);
-      console.log("ID utilisateur:", userId);
-
       if (!userId) {
         throw new Error("ID utilisateur manquant");
       }
 
-      // Mise à jour du profil dans la base de données
       const { error: dbError } = await supabase
         .from("members")
         .update({
@@ -69,54 +82,24 @@ const ProfileCard = ({
           street_address: formData.street_address,
           city: formData.city,
           postal_code: formData.postal_code,
-          country: formData.country || 'France'
+          country: formData.country
         })
         .eq("id", userId);
 
-      if (dbError) {
-        console.error("Erreur lors de la mise à jour du profil:", dbError);
-        throw dbError;
-      }
+      if (dbError) throw dbError;
 
-      // Si l'email a changé, mettre à jour l'email dans auth
-      if (formData.email !== userProfile.email) {
-        const { error: authError } = await supabase.auth.updateUser({
-          email: formData.email,
-        });
-
-        if (authError) {
-          console.error("Erreur lors de la mise à jour de l'email:", authError);
-          throw authError;
-        }
-      }
-
-      // Rafraîchir les données après la mise à jour
-      await Promise.all([
-        refetch(),
-        queryClient.invalidateQueries({ queryKey: ['user-points'] }),
-        queryClient.invalidateQueries({ queryKey: ['point-history'] })
-      ]);
+      await refetch();
+      await queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       
       toast({
         title: "Profil mis à jour",
-        description: formData.email !== userProfile.email 
-          ? "Vos informations ont été enregistrées. Si vous avez modifié votre email, veuillez vérifier votre boîte de réception pour confirmer le changement."
-          : "Vos informations ont été enregistrées avec succès.",
+        description: "Vos informations ont été enregistrées avec succès.",
       });
       
       setIsEditing(false);
     } catch (error: any) {
       console.error("Erreur complète:", error);
       
-      if (error.message?.includes("email_exists") || error.message?.includes("already been registered")) {
-        toast({
-          variant: "destructive",
-          title: "Email déjà utilisé",
-          description: "Cette adresse email est déjà associée à un autre compte.",
-        });
-        return;
-      }
-
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -124,6 +107,20 @@ const ProfileCard = ({
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="mb-8">
@@ -211,16 +208,18 @@ const ProfileCard = ({
               <>
                 <Button variant="outline" onClick={() => {
                   setIsEditing(false);
-                  setFormData({
-                    first_name: userProfile.first_name,
-                    last_name: userProfile.last_name,
-                    email: userProfile.email,
-                    phone_number: userProfile.phone_number,
-                    street_address: userProfile.street_address,
-                    city: userProfile.city,
-                    postal_code: userProfile.postal_code,
-                    country: userProfile.country
-                  });
+                  if (userProfile) {
+                    setFormData({
+                      first_name: userProfile.first_name || '',
+                      last_name: userProfile.last_name || '',
+                      email: userProfile.email || '',
+                      phone_number: userProfile.phone_number || '',
+                      street_address: userProfile.street_address || '',
+                      city: userProfile.city || '',
+                      postal_code: userProfile.postal_code || '',
+                      country: userProfile.country || 'France'
+                    });
+                  }
                 }}>
                   Annuler
                 </Button>
