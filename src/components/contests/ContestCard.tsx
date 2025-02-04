@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Star, Gift, ExternalLink, DollarSign, Lock } from "lucide-react";
 import { motion } from "framer-motion";
-import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Prize } from "@/types/prize";
@@ -37,7 +36,6 @@ const RANK_POINTS = {
 };
 
 const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestCardProps) => {
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const { data: stats } = useQuery({
@@ -84,7 +82,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
       }
     }
 
-    navigate(`/contest/${contest.id}`);
+    onSelect(contest.id);
   };
 
   // Remove duplicate "Connaissance de base" from title
@@ -111,7 +109,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="h-full"
     >
-      <Card className={`${bgColorClass} shadow-xl hover:shadow-2xl transition-all duration-300 border-gray-200/20 h-full flex flex-col ${isLocked ? 'opacity-75' : ''}`}>
+      <Card className={`bg-gradient-to-br ${bgColorClass} shadow-xl hover:shadow-2xl transition-all duration-300 border-gray-200/20 h-full flex flex-col ${isLocked ? 'opacity-75' : ''}`}>
         <CardHeader className="border-b border-gray-200/20 pb-4">
           <div className="flex flex-col gap-3">
             <CardTitle className="text-2xl font-bold text-gray-800">
@@ -119,12 +117,12 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
             </CardTitle>
             <div className="flex flex-wrap gap-2">
               {contest.is_new && (
-                <Badge className="bg-blue-500 text-white">
+                <Badge className="bg-[#9b87f5] text-white">
                   Nouveau
                 </Badge>
               )}
               {contest.has_big_prizes && (
-                <Badge className="bg-amber-500 text-white">
+                <Badge className="bg-[#F97316] text-white">
                   Gros Lots
                 </Badge>
               )}
@@ -146,7 +144,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
         <CardContent className="pt-6 space-y-6 flex-grow">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white/50 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-blue-600 mb-2">
+              <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
                 <Users className="w-4 h-4" />
                 <h3 className="font-medium">Participants</h3>
               </div>
@@ -156,7 +154,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
             </div>
 
             <div className="bg-white/50 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-amber-600 mb-2">
+              <div className="flex items-center gap-2 text-[#F97316] mb-2">
                 <Star className="w-4 h-4" />
                 <h3 className="font-medium">Score Moyen</h3>
               </div>
@@ -166,7 +164,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
             </div>
 
             <div className="bg-white/50 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-purple-600 mb-2">
+              <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
                 <Trophy className="w-4 h-4" />
                 <h3 className="font-medium">Éligibles</h3>
               </div>
@@ -179,7 +177,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
           {contest.prizes && contest.prizes.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 justify-center">
-                <Gift className="w-5 h-5" />
+                <Gift className="w-5 h-5 text-[#F97316]" />
                 Prix à gagner
               </h3>
               <div className="grid grid-cols-1 gap-4">
@@ -203,7 +201,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
                           {prize.name}
                         </h4>
                         {prize.value && (
-                          <p className="flex items-center gap-1 text-green-600 text-sm mt-1">
+                          <p className="flex items-center gap-1 text-[#F97316] text-sm mt-1">
                             <DollarSign className="w-4 h-4" />
                             Valeur: {prize.value} CAD $
                           </p>
@@ -213,7 +211,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
                             href={prize.shop_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors mt-2"
+                            className="inline-flex items-center gap-1 text-sm text-[#9b87f5] hover:text-[#F97316] transition-colors mt-2"
                           >
                             <ExternalLink className="w-4 h-4" />
                             Voir le cadeau
@@ -233,7 +231,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
               className={`w-full sm:w-auto ${
                 isLocked 
                   ? 'bg-gray-500 hover:bg-gray-600' 
-                  : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
+                  : 'bg-gradient-to-r from-[#9b87f5] to-[#F97316] hover:from-[#8B5CF6] hover:to-[#D946EF]'
               } text-white font-bold py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-300`}
               disabled={isLocked}
             >
