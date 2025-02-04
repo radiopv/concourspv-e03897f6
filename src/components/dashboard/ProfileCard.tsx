@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getUserPoints } from "@/services/pointsService";
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ProfileCardProps {
   userProfile: {
@@ -48,15 +47,6 @@ const ProfileCard = ({
 }: ProfileCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Fetch user points data using the pointsService with proper caching
-  const { data: points, refetch: refetchPoints } = useQuery({
-    queryKey: ['user-points', userId],
-    queryFn: () => getUserPoints(userId),
-    enabled: !!userId,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0 // Don't cache the data (formerly cacheTime)
-  });
 
   const handleSaveProfile = async () => {
     try {
@@ -102,10 +92,9 @@ const ProfileCard = ({
 
       // Rafraîchir les données après la mise à jour
       await Promise.all([
-        refetch(), 
-        refetchPoints(),
+        refetch(),
         queryClient.invalidateQueries({ queryKey: ['user-points'] }),
-        queryClient.invalidateQueries({ queryKey: ['point-history'] }) // Ajout de l'invalidation de l'historique des points
+        queryClient.invalidateQueries({ queryKey: ['point-history'] })
       ]);
       
       toast({
@@ -144,20 +133,6 @@ const ProfileCard = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Points et Rang */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-amber-50 p-4 rounded-lg">
-              <div className="text-sm text-amber-700">Points totaux</div>
-              <div className="text-2xl font-bold text-amber-900">{points?.total_points || 0}</div>
-            </div>
-            <div className="bg-amber-50 p-4 rounded-lg">
-              <div className="text-sm text-amber-700">Rang actuel</div>
-              <div className="text-2xl font-bold text-amber-900">
-                {points?.current_rank?.badge} {points?.current_rank?.rank || 'NOVATO'}
-              </div>
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">Prénom</Label>
