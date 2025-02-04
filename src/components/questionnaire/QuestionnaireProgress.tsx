@@ -2,6 +2,8 @@ import React from 'react';
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface QuestionnaireProgressProps {
   currentQuestionIndex: number;
@@ -76,12 +78,24 @@ const QuestionnaireProgress = ({
 
   const maxAttempts = (settings?.default_attempts || 3) + (userPoints?.extra_participations || 0);
   const currentAttempt = participant?.attempts || 1;
+  const remainingAttempts = maxAttempts - currentAttempt;
   
   // Ensure currentQuestionIndex doesn't exceed totalQuestions
   const displayQuestionNumber = Math.min(currentQuestionIndex, totalQuestions);
 
   return (
     <div className="space-y-4">
+      {remainingAttempts <= 1 && (
+        <Alert variant="warning" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {remainingAttempts === 1 
+              ? "Attention : Il ne vous reste qu'une seule tentative !"
+              : "C'est votre dernière tentative pour ce concours."}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="flex justify-between items-center text-sm text-gray-600">
         <span>Question {displayQuestionNumber} sur {totalQuestions}</span>
         <span>Score: {score}%</span>
@@ -89,7 +103,9 @@ const QuestionnaireProgress = ({
       <Progress value={(displayQuestionNumber / totalQuestions) * 100} />
       <div className="flex justify-between text-sm text-gray-600">
         <span>Questions répondues: {totalAnswered}/{totalQuestions}</span>
-        <span>Tentative: {currentAttempt}/{maxAttempts}</span>
+        <span className={remainingAttempts <= 1 ? "text-amber-600 font-medium" : ""}>
+          Tentative: {currentAttempt}/{maxAttempts}
+        </span>
       </div>
     </div>
   );
