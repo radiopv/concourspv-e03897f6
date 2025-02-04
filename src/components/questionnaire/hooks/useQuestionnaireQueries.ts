@@ -11,7 +11,10 @@ export const useQuestionnaireQueries = (contestId: string) => {
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching settings:', error);
+        return { default_attempts: 1, required_percentage: 80 };
+      }
       return data || { default_attempts: 1, required_percentage: 80 };
     }
   });
@@ -49,7 +52,14 @@ export const useQuestionnaireQueries = (contestId: string) => {
           .limit(1)
           .maybeSingle();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching participant:', error);
+          // Si l'erreur indique que l'utilisateur a déjà participé, on retourne un objet avec le statut completed
+          if (error.message.includes('déjà participé')) {
+            return { status: 'completed' };
+          }
+          return null;
+        }
         return data;
       } catch (error: any) {
         console.error('Error fetching participant:', error);
