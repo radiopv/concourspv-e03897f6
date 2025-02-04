@@ -9,9 +9,11 @@ import PageMetadata from "@/components/seo/PageMetadata";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 const ContestsList = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { data: contests, isLoading, error } = useContests();
   const canonicalUrl = `${window.location.origin}/contests`;
 
@@ -19,21 +21,20 @@ const ContestsList = () => {
   console.log("Loading state:", isLoading);
   console.log("Error state:", error);
 
-  const { data: userPoints } = useQuery({
-    queryKey: ['user-points'],
+  // Check if user is authenticated
+  const { data: session } = useQuery({
+    queryKey: ['auth-session'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
-
-      const { data } = await supabase
-        .from('user_points')
-        .select('current_rank')
-        .eq('user_id', session.user.id)
-        .single();
-
-      return data;
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error checking session:', error);
+        return null;
+      }
+      return session;
     }
   });
+
+  console.log("Auth session:", session);
 
   // Loading state
   if (isLoading) {
@@ -73,6 +74,13 @@ const ContestsList = () => {
 
   // Error state
   if (error) {
+    console.error('Error loading contests:', error);
+    toast({
+      variant: "destructive",
+      title: "Erreur de chargement",
+      description: "Impossible de charger les concours. Veuillez réessayer plus tard.",
+    });
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] flex items-center justify-center p-4">
         <PageMetadata
@@ -95,6 +103,7 @@ const ContestsList = () => {
     );
   }
 
+  // No contests state
   if (!contests || contests.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] flex items-center justify-center p-4">

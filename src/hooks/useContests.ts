@@ -11,6 +11,11 @@ export const useContests = () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       console.log('Session check:', session ? 'Session exists' : 'No session', sessionError);
       
+      if (!session) {
+        console.log('No session found, continuing as public user');
+      }
+
+      console.log('Attempting to fetch contests from Supabase...');
       const { data: contests, error } = await supabase
         .from('contests')
         .select(`
@@ -36,6 +41,8 @@ export const useContests = () => {
       return contests;
     },
     retry: 1,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    cacheTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
   });
 };
