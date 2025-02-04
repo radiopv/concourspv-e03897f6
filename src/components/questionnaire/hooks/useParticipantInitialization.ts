@@ -69,13 +69,19 @@ export const useParticipantInitialization = (
 
         const nextAttemptNumber = (latestParticipation?.attempts || 0) + 1;
 
-        // Get settings for max attempts
+        // Get settings for max attempts and user's extra participations
         const { data: settings } = await supabase
           .from('settings')
           .select('default_attempts')
           .single();
 
-        const maxAttempts = settings?.default_attempts || 3;
+        const { data: userPoints } = await supabase
+          .from('user_points')
+          .select('extra_participations')
+          .eq('user_id', session.user.id)
+          .single();
+
+        const maxAttempts = (settings?.default_attempts || 3) + (userPoints?.extra_participations || 0);
 
         if (nextAttemptNumber > maxAttempts) {
           toast({

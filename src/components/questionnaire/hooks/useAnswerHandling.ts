@@ -86,6 +86,9 @@ export const useAnswerHandling = (
         return;
       }
 
+      console.log('Completing quiz with score:', finalScore);
+      console.log('Participant data:', participant);
+
       const { error: updateError } = await supabase
         .from('participants')
         .update({ 
@@ -94,9 +97,13 @@ export const useAnswerHandling = (
           completed_at: new Date().toISOString()
         })
         .eq('contest_id', contestId)
-        .eq('id', session.user.id);
+        .eq('id', session.user.id)
+        .eq('participation_id', participant.participation_id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating participant:', updateError);
+        throw updateError;
+      }
 
       if (participant?.participation_id) {
         const answersToSave = questions.map((question, index) => ({
@@ -104,7 +111,7 @@ export const useAnswerHandling = (
           question_id: question.id,
           answer: state.selectedAnswer,
           is_correct: state.selectedAnswer === question.correct_answer,
-          attempt_number: 1
+          attempt_number: participant.attempts || 1
         }));
 
         const { error: answersError } = await supabase
