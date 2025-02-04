@@ -8,8 +8,7 @@ export const RANKS: UserRank[] = [
     maxPoints: 50,
     badge: "🌱",
     benefits: [
-      "Accès aux concours de base",
-      "1 participation par concours"
+      "Accès aux concours de base"
     ]
   },
   {
@@ -18,7 +17,6 @@ export const RANKS: UserRank[] = [
     maxPoints: 150,
     badge: "🌴",
     benefits: [
-      "2 participations bonus par concours",
       "Bonus x1.5 sur les séries de 5"
     ]
   },
@@ -28,7 +26,6 @@ export const RANKS: UserRank[] = [
     maxPoints: 300,
     badge: "🌺",
     benefits: [
-      "3 participations bonus par concours",
       "Bonus x2 sur les séries de 5",
       "Accès prioritaire aux nouveaux concours"
     ]
@@ -39,7 +36,6 @@ export const RANKS: UserRank[] = [
     maxPoints: 600,
     badge: "🎭",
     benefits: [
-      "4 participations bonus par concours",
       "Bonus x2.5 sur les séries de 5",
       "Accès aux concours exclusifs"
     ]
@@ -50,7 +46,6 @@ export const RANKS: UserRank[] = [
     maxPoints: 1000,
     badge: "🎪",
     benefits: [
-      "5 participations bonus par concours",
       "Bonus x3 sur les séries de 5",
       "Accès VIP aux tirages au sort"
     ]
@@ -61,7 +56,6 @@ export const RANKS: UserRank[] = [
     maxPoints: Infinity,
     badge: "👑",
     benefits: [
-      "6 participations bonus par concours",
       "Bonus x4 sur les séries de 5",
       "Statut légendaire permanent",
       "Accès à tous les avantages VIP"
@@ -104,8 +98,7 @@ export const getUserPoints = async (userId: string) => {
       rank: currentRank?.rank || 'NOVATO',
       badge: currentRank?.badge || '🌱'
     },
-    best_streak: data.best_streak,
-    extra_participations: data.extra_participations
+    best_streak: data.best_streak
   };
 };
 

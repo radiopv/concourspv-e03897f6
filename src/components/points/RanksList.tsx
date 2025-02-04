@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RANKS } from "@/services/pointsService";
 import { motion } from "framer-motion";
+import { RANKS } from "@/services/pointsService";
 
 const RanksList = () => {
   return (

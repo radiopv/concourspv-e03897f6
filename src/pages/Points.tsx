@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import RanksList from "@/components/points/RanksList";
 import CommunityStats from "@/components/points/CommunityStats";
-import ExtraParticipations from "@/components/points/ExtraParticipations";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
@@ -59,11 +58,6 @@ const Points = () => {
           {stats && <CommunityStats {...stats} />}
         </Card>
       </div>
-
-      <Card className="p-6">
-        <h2 className="text-2xl font-semibold mb-4">Participations Bonus</h2>
-        <ExtraParticipations />
-      </Card>
     </div>
   );
 };
