@@ -73,11 +73,16 @@ const Instructions = () => {
                 <li>
                   <strong>Bonus de série :</strong>
                   <ul className="list-disc list-inside pl-4 mt-2 space-y-1">
+                    <li>3 bonnes réponses : +5 points</li>
                     <li>5 bonnes réponses : x1.5</li>
                     <li>10 bonnes réponses : x2</li>
                     <li>15 bonnes réponses : x2.5</li>
                     <li>20 bonnes réponses : x3</li>
                   </ul>
+                </li>
+                <li>
+                  <strong>Bonus de score parfait :</strong>
+                  <br />+200 points pour un score de 100% sur un questionnaire de 25 questions ou plus
                 </li>
               </ul>
             </CardContent>
@@ -86,17 +91,19 @@ const Instructions = () => {
           <Card className="bg-white/50 backdrop-blur-sm">
             <CardHeader className="text-center">
               <Gift className="w-8 h-8 mx-auto text-amber-500 mb-2" />
-              <CardTitle>Récompenses et Rangs</CardTitle>
+              <CardTitle>Rangs et Avantages</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-gray-600">
               <p>
                 Accumulez des points pour débloquer des avantages :
               </p>
               <ul className="list-disc list-inside space-y-2">
-                <li><strong>NOVATO (0-50 points) :</strong> Accès aux concours de base</li>
-                <li><strong>HAVANA (51-150 points) :</strong> Bonus sur les points gagnés</li>
-                <li><strong>SANTIAGO (151-300 points) :</strong> Accès prioritaire aux nouveaux concours</li>
-                <li><strong>ELDORADO (1000+ points) :</strong> Statut VIP permanent</li>
+                <li><strong>NOVATO (0-500 points) :</strong> Points de base et accès aux concours standards</li>
+                <li><strong>HAVANA (501-1000 points) :</strong> Bonus x1.5 sur les séries et points bonus</li>
+                <li><strong>SANTIAGO (1001-2000 points) :</strong> Bonus x2 et accès prioritaire aux nouveaux concours</li>
+                <li><strong>RIO (2001-3500 points) :</strong> Bonus x2.5 et accès aux concours exclusifs</li>
+                <li><strong>CARNIVAL (3501-5000 points) :</strong> Bonus x3 et accès VIP aux tirages</li>
+                <li><strong>ELDORADO (5001+ points) :</strong> Bonus x4 et avantages légendaires</li>
               </ul>
             </CardContent>
           </Card>
@@ -110,14 +117,14 @@ const Instructions = () => {
           <CardContent className="text-center text-gray-600">
             <div className="space-y-4">
               <p className="mb-4">
-                Pour maximiser vos chances de qualification :
+                Pour maximiser vos chances de qualification et gagner plus de points :
               </p>
               <ul className="list-disc text-left max-w-lg mx-auto space-y-2">
                 <li>Lisez attentivement chaque article avant de commencer</li>
                 <li>Prenez des notes pendant votre lecture</li>
-                <li>Vérifiez vos réponses avant de les soumettre</li>
-                <li>Prenez votre temps pour répondre aux questions</li>
-                <li>N'hésitez pas à relire les articles en cas de doute</li>
+                <li>Maintenez votre série de bonnes réponses pour les bonus</li>
+                <li>Visez le score parfait sur les longs questionnaires</li>
+                <li>Participez régulièrement pour monter en rang</li>
               </ul>
             </div>
           </CardContent>
