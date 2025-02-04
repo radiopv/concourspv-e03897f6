@@ -32,10 +32,10 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   if (hasAlreadyParticipated) {
     return (
       <div className="max-w-4xl mx-auto p-4">
-        <Alert variant="info" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
+        <Alert className="mb-6 border-blue-500 bg-blue-50 dark:bg-blue-900/10">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertTitle>Participation terminée</AlertTitle>
-          <AlertDescription className="mt-2">
+          <AlertDescription className="mt-2 text-blue-600">
             Vous avez déjà participé à ce concours. Bonne chance pour les prochains défis !
           </AlertDescription>
         </Alert>
