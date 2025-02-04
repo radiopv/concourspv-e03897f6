@@ -33,7 +33,16 @@ const TopParticipantsList = () => {
         .limit(25);
 
       if (error) throw error;
-      return data as TopParticipant[];
+      
+      // Ensure the data matches our interface structure
+      const typedData = (data || []).map(item => ({
+        user_id: item.user_id,
+        total_points: item.total_points,
+        current_rank: item.current_rank,
+        members: item.members
+      })) as TopParticipant[];
+      
+      return typedData;
     }
   });
 
