@@ -9,6 +9,7 @@ import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { MobileExperienceAlert } from './alerts/MobileExperienceAlert';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -80,6 +81,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
       <UserNavBar isAdmin={isAdmin} />
+      <MobileExperienceAlert />
       
       {isAdmin && isAdminRoute && (
         <div className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-md sticky top-0 z-50 border-b border-amber-100/20">
