@@ -7,7 +7,6 @@ import ProfileCard from '@/components/dashboard/ProfileCard';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import StatsCards from '@/components/dashboard/StatsCards';
 import QuickActions from '@/components/dashboard/QuickActions';
-import PointsOverview from '@/components/dashboard/PointsOverview';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -79,7 +78,6 @@ const Dashboard = () => {
         <div className="md:col-span-8 space-y-6">
           <StatsCards stats={stats || { contests_participated: 0, total_points: 0, contests_won: 0 }} />
           <QuickActions />
-          <PointsOverview />
         </div>
       </div>
     </div>
