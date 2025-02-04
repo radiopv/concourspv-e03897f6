@@ -23,7 +23,7 @@ const Dashboard = () => {
         </div>
         
         <div className="md:col-span-8 space-y-6">
-          <StatsCards />
+          <StatsCards stats={{ contests_participated: 0, contests_won: 0 }} />
           <QuickActions />
         </div>
       </div>
