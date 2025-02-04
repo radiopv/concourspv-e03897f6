@@ -54,20 +54,12 @@ const PointsOverview = () => {
               <p className="text-2xl font-bold">{points.total_points}</p>
             </div>
 
-            <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+            <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg col-span-2">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-5 h-5 text-green-500" />
                 <h3 className="font-semibold">Meilleure série</h3>
               </div>
               <p className="text-2xl font-bold">{points.best_streak}</p>
-            </div>
-
-            <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Trophy className="w-5 h-5 text-blue-500" />
-                <h3 className="font-semibold">Participations bonus</h3>
-              </div>
-              <p className="text-2xl font-bold">{points.extra_participations}</p>
             </div>
           </div>
         </CardContent>

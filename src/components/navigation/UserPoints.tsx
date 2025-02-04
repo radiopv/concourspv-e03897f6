@@ -39,9 +39,6 @@ const UserPoints = () => {
           <p className="text-sm text-gray-600">
             Meilleure série : {points.best_streak} bonnes réponses
           </p>
-          <p className="text-sm text-gray-600">
-            Participations bonus disponibles : {points.extra_participations}
-          </p>
         </div>
       </HoverCardContent>
     </HoverCard>
