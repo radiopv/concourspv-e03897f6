@@ -10,7 +10,15 @@ const TopParticipantsList = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('members')
-        .select('id, first_name, last_name, total_points, user_points!inner(current_rank)')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          total_points,
+          user_points (
+            current_rank
+          )
+        `)
         .order('total_points', { ascending: false })
         .limit(25);
 
@@ -57,7 +65,7 @@ const TopParticipantsList = () => {
                     {participant.first_name} {participant.last_name}
                   </span>
                   <div className="text-sm text-gray-500">
-                    {participant.user_points?.current_rank || 'NOVATO'}
+                    {participant.user_points?.[0]?.current_rank || 'NOVATO'}
                   </div>
                 </div>
               </div>
