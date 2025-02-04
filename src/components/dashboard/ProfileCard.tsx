@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useQuery } from '@tanstack/react-query';
 
 interface ProfileCardProps {
   userProfile: {
@@ -45,6 +46,22 @@ const ProfileCard = ({
   refetch
 }: ProfileCardProps) => {
   const { toast } = useToast();
+
+  // Fetch user points data
+  const { data: userPoints } = useQuery({
+    queryKey: ['user-points', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_points')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId
+  });
 
   const handleSaveProfile = async () => {
     try {
@@ -102,7 +119,6 @@ const ProfileCard = ({
     } catch (error: any) {
       console.error("Erreur complète:", error);
       
-      // Gestion spécifique des erreurs d'email en doublon
       if (error.message?.includes("email_exists") || error.message?.includes("already been registered")) {
         toast({
           variant: "destructive",
@@ -128,6 +144,18 @@ const ProfileCard = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {/* Points et Rang */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-amber-50 p-4 rounded-lg">
+              <div className="text-sm text-amber-700">Points totaux</div>
+              <div className="text-2xl font-bold text-amber-900">{userPoints?.total_points || 0}</div>
+            </div>
+            <div className="bg-amber-50 p-4 rounded-lg">
+              <div className="text-sm text-amber-700">Rang actuel</div>
+              <div className="text-2xl font-bold text-amber-900">{userPoints?.current_rank || 'NOVATO'}</div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">Prénom</Label>
