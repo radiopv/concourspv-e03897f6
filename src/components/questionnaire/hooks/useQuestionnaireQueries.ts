@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 export const useQuestionnaireQueries = (contestId: string) => {
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading: isSettingsLoading } = useQuery({
     queryKey: ['global-settings'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -19,7 +19,7 @@ export const useQuestionnaireQueries = (contestId: string) => {
     }
   });
 
-  const { data: userProfile } = useQuery({
+  const { data: userProfile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['user-profile'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -36,7 +36,7 @@ export const useQuestionnaireQueries = (contestId: string) => {
     }
   });
 
-  const { data: participant, refetch: refetchParticipant } = useQuery({
+  const { data: participant, isLoading: isParticipantLoading, error: participantError } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
       try {
@@ -54,7 +54,6 @@ export const useQuestionnaireQueries = (contestId: string) => {
 
         if (error) {
           console.error('Error fetching participant:', error);
-          // Si l'erreur indique que l'utilisateur a déjà participé, on retourne un objet avec le statut completed
           if (error.message.includes('déjà participé')) {
             return { status: 'completed' };
           }
@@ -69,7 +68,7 @@ export const useQuestionnaireQueries = (contestId: string) => {
     enabled: !!contestId
   });
 
-  const { data: questions } = useQuery({
+  const { data: questions, isLoading: isQuestionsLoading, error: questionsError } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
@@ -86,11 +85,18 @@ export const useQuestionnaireQueries = (contestId: string) => {
     enabled: !!contestId
   });
 
+  // Combine loading states
+  const isLoading = isSettingsLoading || isProfileLoading || isParticipantLoading || isQuestionsLoading;
+  
+  // Use the first error encountered
+  const error = participantError || questionsError;
+
   return {
     settings,
     userProfile,
     participant,
     questions,
-    refetchParticipant
+    isLoading,
+    error
   };
 };
