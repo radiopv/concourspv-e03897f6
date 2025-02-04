@@ -7,6 +7,7 @@ import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from '@tanstack/react-query';
+import { getUserPoints } from "@/services/pointsService";
 
 interface ProfileCardProps {
   userProfile: {
@@ -47,19 +48,10 @@ const ProfileCard = ({
 }: ProfileCardProps) => {
   const { toast } = useToast();
 
-  // Fetch user points data
-  const { data: userPoints } = useQuery({
+  // Fetch user points data using the pointsService
+  const { data: points } = useQuery({
     queryKey: ['user-points', userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('user_points')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => getUserPoints(userId),
     enabled: !!userId
   });
 
@@ -148,11 +140,13 @@ const ProfileCard = ({
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-amber-50 p-4 rounded-lg">
               <div className="text-sm text-amber-700">Points totaux</div>
-              <div className="text-2xl font-bold text-amber-900">{userPoints?.total_points || 0}</div>
+              <div className="text-2xl font-bold text-amber-900">{points?.total_points || 0}</div>
             </div>
             <div className="bg-amber-50 p-4 rounded-lg">
               <div className="text-sm text-amber-700">Rang actuel</div>
-              <div className="text-2xl font-bold text-amber-900">{userPoints?.current_rank || 'NOVATO'}</div>
+              <div className="text-2xl font-bold text-amber-900">
+                {points?.current_rank?.badge} {points?.current_rank?.rank || 'NOVATO'}
+              </div>
             </div>
           </div>
 
