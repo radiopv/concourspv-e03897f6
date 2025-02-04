@@ -86,9 +86,9 @@ const QuestionnaireProgress = ({
   return (
     <div className="space-y-4">
       {remainingAttempts <= 1 && (
-        <Alert variant="warning" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
+        <Alert className="mb-4 border-amber-500 bg-amber-50 dark:bg-amber-900/10">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-600">
             {remainingAttempts === 1 
               ? "Attention : Il ne vous reste qu'une seule tentative !"
               : "C'est votre dernière tentative pour ce concours."}
