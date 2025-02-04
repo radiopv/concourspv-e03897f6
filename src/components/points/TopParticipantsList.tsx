@@ -4,8 +4,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Trophy, Medal, Crown } from "lucide-react";
 
+interface TopParticipant {
+  user_id: string;
+  total_points: number;
+  current_rank: string;
+  members: {
+    first_name: string;
+    last_name: string;
+  } | null;
+}
+
 const TopParticipantsList = () => {
-  const { data: topParticipants, isLoading } = useQuery({
+  const { data: topParticipants, isLoading } = useQuery<TopParticipant[]>({
     queryKey: ['top-participants'],
     queryFn: async () => {
       const { data, error } = await supabase
