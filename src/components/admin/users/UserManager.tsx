@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { UserEditDialog } from './UserEditDialog';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, Trophy, Medal, Award } from 'lucide-react';
+import { Loader2, Trophy, Medal, Award, Crown } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RANK_POINTS } from '@/constants/ranks';
 
 const UserManager = () => {
   const { toast } = useToast();
@@ -131,7 +132,7 @@ const UserManager = () => {
   const getRankIcon = (position: number) => {
     switch (position) {
       case 1:
-        return <Trophy className="h-6 w-6 text-amber-500" />;
+        return <Crown className="h-6 w-6 text-yellow-500" />;
       case 2:
         return <Medal className="h-6 w-6 text-gray-400" />;
       case 3:
@@ -139,6 +140,18 @@ const UserManager = () => {
       default:
         return <Award className="h-6 w-6 text-blue-500" />;
     }
+  };
+
+  const getNextRankInfo = (currentPoints: number, currentRank: string) => {
+    const ranks = Object.entries(RANK_POINTS).sort((a, b) => a[1] - b[1]);
+    const nextRank = ranks.find(([_, points]) => points > currentPoints);
+    if (nextRank) {
+      return {
+        rank: nextRank[0],
+        pointsNeeded: nextRank[1] - currentPoints
+      };
+    }
+    return null;
   };
 
   if (isLoading) {
@@ -176,57 +189,74 @@ const UserManager = () => {
               <TableHead>Nom</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Points</TableHead>
-              <TableHead>Rang</TableHead>
-              <TableHead>Participations Extra</TableHead>
+              <TableHead>Rang Actuel</TableHead>
+              <TableHead>Prochain Rang</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {getDisplayedUsers().map((user, index) => (
-              <TableRow 
-                key={user.id}
-                className={index < 3 ? 'bg-amber-50' : ''}
-              >
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    {getRankIcon(index + 1)}
-                    {index + 1}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {user.first_name} {user.last_name}
-                </TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell className="font-bold text-indigo-600">
-                  {user.total_points}
-                </TableCell>
-                <TableCell>
-                  <span className="px-2 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-amber-100 to-amber-200">
-                    {user.user_points?.[0]?.current_rank || 'NOVATO'}
-                  </span>
-                </TableCell>
-                <TableCell>{user.user_points?.[0]?.extra_participations || 0}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <UserEditDialog user={user} />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => resetPointsMutation.mutate(user.id)}
-                    >
-                      Réinitialiser
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addParticipationMutation.mutate(user.id)}
-                    >
-                      +1 Participation
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {getDisplayedUsers().map((user, index) => {
+              const nextRankInfo = getNextRankInfo(
+                user.total_points,
+                user.user_points?.[0]?.current_rank || 'NOVATO'
+              );
+              
+              return (
+                <TableRow 
+                  key={user.id}
+                  className={index < 3 ? 'bg-gradient-to-r from-amber-50 to-amber-100' : ''}
+                >
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {getRankIcon(index + 1)}
+                      {index + 1}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {user.first_name} {user.last_name}
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="font-bold text-indigo-600">
+                    {user.total_points}
+                  </TableCell>
+                  <TableCell>
+                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-amber-100 to-amber-200">
+                      {user.user_points?.[0]?.current_rank || 'NOVATO'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {nextRankInfo ? (
+                      <span className="text-sm text-gray-600">
+                        {nextRankInfo.pointsNeeded} points pour {nextRankInfo.rank}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-emerald-600 font-medium">
+                        Rang maximal atteint !
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <UserEditDialog user={user} />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => resetPointsMutation.mutate(user.id)}
+                      >
+                        Réinitialiser
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addParticipationMutation.mutate(user.id)}
+                      >
+                        +1 Participation
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
