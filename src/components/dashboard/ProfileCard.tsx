@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { useQueryClient } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface ProfileCardProps {
   userId: string;
@@ -17,28 +16,6 @@ const ProfileCard = ({ userId }: ProfileCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
-
-  // Fetch user profile data
-  const { data: userProfile, isLoading, refetch } = useQuery({
-    queryKey: ['user-profile', userId],
-    queryFn: async () => {
-      console.log('Fetching user profile for:', userId);
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        throw error;
-      }
-
-      console.log('User profile data:', data);
-      return data;
-    }
-  });
-
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -50,8 +27,29 @@ const ProfileCard = ({ userId }: ProfileCardProps) => {
     country: 'France'
   });
 
+  const { data: userProfile, isLoading, refetch } = useQuery({
+    queryKey: ['user-profile', userId],
+    queryFn: async () => {
+      console.log('Fetching user profile for:', userId);
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        throw error;
+      }
+
+      console.log('User profile data:', data);
+      return data;
+    },
+    enabled: !!userId
+  });
+
   // Update form data when user profile is loaded
-  React.useEffect(() => {
+  useEffect(() => {
     if (userProfile) {
       setFormData({
         first_name: userProfile.first_name || '',
