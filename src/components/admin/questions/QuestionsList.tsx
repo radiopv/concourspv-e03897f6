@@ -130,7 +130,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {questions?.map((question) => (
+        {Array.isArray(questions) && questions.map((question: Question) => (
           <QuestionCard
             key={question.id}
             question={question}
