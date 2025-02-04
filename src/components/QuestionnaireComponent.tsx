@@ -17,48 +17,16 @@ interface QuestionnaireComponentProps {
 const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contestId }) => {
   const navigate = useNavigate();
   const state = useQuestionnaireState();
-  const { settings, userProfile, participant, questions, isLoading, error } = useQuestionnaireQueries(contestId);
+  const { settings, userProfile, participant, questions, refetchParticipant } = useQuestionnaireQueries(contestId);
   
   // Initialize participant
-  useParticipantInitialization(contestId, userProfile, () => {
-    console.log('Participant initialized or updated');
-  });
+  useParticipantInitialization(contestId, userProfile, refetchParticipant);
   
   // Setup answer handling
   const { handleNextQuestion } = useAnswerHandling(contestId, participant, questions || [], settings);
 
   // Check if participant has already completed this contest
   const hasAlreadyParticipated = participant?.status === 'completed';
-
-  // Display loading state
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Chargement...</AlertTitle>
-          <AlertDescription>
-            Préparation du questionnaire en cours.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  // Display error state
-  if (error) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>
-            Une erreur est survenue lors du chargement du questionnaire.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
 
   // Display message if already participated
   if (hasAlreadyParticipated) {
@@ -88,9 +56,9 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       <div className="max-w-4xl mx-auto p-4">
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Aucune question disponible</AlertTitle>
+          <AlertTitle>Chargement...</AlertTitle>
           <AlertDescription>
-            Ce concours n'a pas encore de questions. Veuillez réessayer plus tard.
+            Préparation du questionnaire en cours.
           </AlertDescription>
         </Alert>
       </div>
