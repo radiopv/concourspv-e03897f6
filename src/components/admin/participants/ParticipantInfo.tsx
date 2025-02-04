@@ -49,12 +49,12 @@ const ParticipantInfo = ({ userId, contestId }: ParticipantInfoProps) => {
     <div className="flex gap-2 items-center">
       <Badge 
         variant="secondary"
-        className={`text-sm ${participant.score >= 70 ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}`}
+        className={`text-sm ${participant.score >= 80 ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}`}
       >
         Score: {participant.score}%
       </Badge>
       <Badge variant="outline" className="text-sm">
-        Tentatives: {participant.attempts}/3
+        {participant.status === 'completed' ? 'Terminé' : 'En cours'}
       </Badge>
     </div>
   );

@@ -46,13 +46,13 @@ const Instructions = () => {
             </CardHeader>
             <CardContent className="space-y-4 text-gray-600">
               <p>
-                <strong>Score minimum requis : 90%</strong> pour être qualifié au tirage au sort
+                <strong>Score minimum requis : 80%</strong> pour être qualifié au tirage au sort
               </p>
               <ul className="list-disc list-inside space-y-2">
-                <li>Vous disposez de 3 tentatives maximum par questionnaire</li>
-                <li>Chaque tentative repart de zéro</li>
-                <li>Seul votre meilleur score est conservé</li>
-                <li>Les tentatives non utilisées ne sont pas reportables</li>
+                <li>Vous disposez d'une seule tentative par questionnaire</li>
+                <li>Répondez avec attention à chaque question</li>
+                <li>Votre score final détermine votre qualification</li>
+                <li>Les tentatives ne sont pas reportables</li>
               </ul>
             </CardContent>
           </Card>
@@ -94,8 +94,8 @@ const Instructions = () => {
               </p>
               <ul className="list-disc list-inside space-y-2">
                 <li><strong>NOVATO (0-50 points) :</strong> Accès aux concours de base</li>
-                <li><strong>HAVANA (51-150 points) :</strong> 2 participations bonus</li>
-                <li><strong>SANTIAGO (151-300 points) :</strong> 3 participations bonus</li>
+                <li><strong>HAVANA (51-150 points) :</strong> Bonus sur les points gagnés</li>
+                <li><strong>SANTIAGO (151-300 points) :</strong> Accès prioritaire aux nouveaux concours</li>
                 <li><strong>ELDORADO (1000+ points) :</strong> Statut VIP permanent</li>
               </ul>
             </CardContent>
@@ -116,7 +116,7 @@ const Instructions = () => {
                 <li>Lisez attentivement chaque article avant de commencer</li>
                 <li>Prenez des notes pendant votre lecture</li>
                 <li>Vérifiez vos réponses avant de les soumettre</li>
-                <li>Utilisez vos tentatives avec stratégie</li>
+                <li>Prenez votre temps pour répondre aux questions</li>
                 <li>N'hésitez pas à relire les articles en cas de doute</li>
               </ul>
             </div>
