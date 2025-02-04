@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Gift, Trophy, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Prizes = () => {
   const { toast } = useToast();
@@ -12,6 +13,7 @@ const Prizes = () => {
   const { data: prizes, isLoading, error } = useQuery({
     queryKey: ['prizes-catalog'],
     queryFn: async () => {
+      console.log('Fetching prize catalog...');
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
@@ -28,18 +30,73 @@ const Prizes = () => {
         throw error;
       }
       
+      console.log('Prize catalog data:', data);
       return data;
     }
   });
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-8">
-        <div className="animate-pulse space-y-8">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-64 bg-gray-200 rounded-xl"></div>
-          ))}
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 bg-clip-text text-transparent mb-6">
+              🎰 Chargement des Prix... 🎲
+            </h1>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <Skeleton className="aspect-video w-full" />
+                  <div className="p-4 space-y-3">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4">
+        <Card className="max-w-lg">
+          <CardHeader>
+            <CardTitle className="text-center text-red-500">
+              Erreur de chargement
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center">
+              Une erreur est survenue lors du chargement des prix. Veuillez réessayer plus tard.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!prizes || prizes.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4">
+        <Card className="max-w-lg">
+          <CardHeader>
+            <CardTitle className="text-center">
+              Aucun prix disponible
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center">
+              Il n'y a actuellement aucun prix dans le catalogue.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
