@@ -32,25 +32,52 @@ export const useParticipantInitialization = (
           return;
         }
 
-        // First, check for any existing active participation
-        const { data: existingParticipations, error: checkError } = await supabase
+        // First, check for any existing participation
+        const { data: existingParticipation, error: checkError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
-          .eq('status', 'pending')
-          .is('completed_at', null);
+          .maybeSingle();
 
         if (checkError) {
           console.error('Error checking existing participation:', checkError);
           return;
         }
 
-        if (existingParticipations && existingParticipations.length > 0) {
-          console.log('Found existing active participation:', existingParticipations[0]);
+        // If there's an existing completed participation, redirect to completion page
+        if (existingParticipation?.status === 'completed') {
+          navigate('/quiz-completion', {
+            state: {
+              contestId,
+              score: existingParticipation.score,
+              totalQuestions: 0, // This will be updated when we fetch questions
+              requiredPercentage: 80,
+            }
+          });
+          return;
+        }
+
+        // If there's an existing pending participation, use that
+        if (existingParticipation?.status === 'pending') {
+          console.log('Found existing pending participation:', existingParticipation);
           await refetchParticipant();
           return;
         }
+
+        // Get settings for max attempts and user's extra participations
+        const { data: settings } = await supabase
+          .from('settings')
+          .select('default_attempts')
+          .single();
+
+        const { data: userPoints } = await supabase
+          .from('user_points')
+          .select('extra_participations')
+          .eq('user_id', session.user.id)
+          .single();
+
+        const maxAttempts = (settings?.default_attempts || 3) + (userPoints?.extra_participations || 0);
 
         // Get the latest participation to determine the next attempt number
         const { data: latestParticipation, error: latestError } = await supabase
@@ -68,20 +95,6 @@ export const useParticipantInitialization = (
         }
 
         const nextAttemptNumber = (latestParticipation?.attempts || 0) + 1;
-
-        // Get settings for max attempts and user's extra participations
-        const { data: settings } = await supabase
-          .from('settings')
-          .select('default_attempts')
-          .single();
-
-        const { data: userPoints } = await supabase
-          .from('user_points')
-          .select('extra_participations')
-          .eq('user_id', session.user.id)
-          .single();
-
-        const maxAttempts = (settings?.default_attempts || 3) + (userPoints?.extra_participations || 0);
 
         if (nextAttemptNumber > maxAttempts) {
           toast({
@@ -107,15 +120,9 @@ export const useParticipantInitialization = (
             attempts: nextAttemptNumber
           })
           .select()
-          .maybeSingle();
+          .single();
 
         if (insertError) {
-          if (insertError.message.includes('active participation')) {
-            console.log('Race condition detected, refetching participant data');
-            await refetchParticipant();
-            return;
-          }
-          
           console.error('Error creating participant:', insertError);
           toast({
             title: "Erreur",
