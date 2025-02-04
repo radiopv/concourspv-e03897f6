@@ -5,60 +5,66 @@ export const RANKS: UserRank[] = [
   {
     rank: "NOVATO",
     minPoints: 0,
-    maxPoints: 50,
+    maxPoints: 500,
     badge: "🌱",
     benefits: [
-      "Accès aux concours de base"
+      "Accès aux concours de base",
+      "Points de base pour les bonnes réponses"
     ]
   },
   {
     rank: "HAVANA",
-    minPoints: 51,
-    maxPoints: 150,
+    minPoints: 501,
+    maxPoints: 1000,
     badge: "🌴",
     benefits: [
-      "Bonus x1.5 sur les séries de 5"
+      "Bonus x1.5 sur les séries de 5",
+      "Points bonus sur les réponses rapides"
     ]
   },
   {
     rank: "SANTIAGO",
-    minPoints: 151,
-    maxPoints: 300,
+    minPoints: 1001,
+    maxPoints: 2000,
     badge: "🌺",
     benefits: [
       "Bonus x2 sur les séries de 5",
-      "Accès prioritaire aux nouveaux concours"
+      "Accès prioritaire aux nouveaux concours",
+      "Bonus de streak amélioré"
     ]
   },
   {
     rank: "RIO",
-    minPoints: 301,
-    maxPoints: 600,
+    minPoints: 2001,
+    maxPoints: 3500,
     badge: "🎭",
     benefits: [
       "Bonus x2.5 sur les séries de 5",
-      "Accès aux concours exclusifs"
+      "Accès aux concours exclusifs",
+      "Bonus de score parfait augmenté"
     ]
   },
   {
     rank: "CARNIVAL",
-    minPoints: 601,
-    maxPoints: 1000,
+    minPoints: 3501,
+    maxPoints: 5000,
     badge: "🎪",
     benefits: [
       "Bonus x3 sur les séries de 5",
-      "Accès VIP aux tirages au sort"
+      "Accès VIP aux tirages au sort",
+      "Bonus de streak maximal"
     ]
   },
   {
     rank: "ELDORADO",
-    minPoints: 1001,
+    minPoints: 5001,
     maxPoints: Infinity,
     badge: "👑",
     benefits: [
       "Bonus x4 sur les séries de 5",
       "Statut légendaire permanent",
-      "Accès à tous les avantages VIP"
+      "Accès à tous les avantages VIP",
+      "Bonus spéciaux exclusifs"
     ]
   }
 ];
