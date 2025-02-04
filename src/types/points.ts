@@ -23,6 +23,5 @@ export interface UserPoints {
   current_streak: number;
   best_streak: number;
   current_rank: Rank;
-  extra_participations: number;
   articles_read: number;
 }

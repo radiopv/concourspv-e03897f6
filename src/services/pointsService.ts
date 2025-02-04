@@ -118,7 +118,6 @@ export const initializeUserPoints = async (userId: string) => {
         current_streak: 0,
         best_streak: 0,
         current_rank: 'NOVATO',
-        extra_participations: 0,
         articles_read: 0
       }]);
 

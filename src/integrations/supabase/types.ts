@@ -891,6 +891,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_streak_bonus: {
+        Args: {
+          streak_count: number
+          base_points: number
+        }
+        Returns: number
+      }
       calculate_user_points: {
         Args: {
           input_user_id: string
@@ -930,6 +937,16 @@ export type Database = {
           email: string
           bio: string
         }[]
+      }
+      handle_answer_points: {
+        Args: {
+          user_id_param: string
+          is_correct: boolean
+          current_streak: number
+          total_questions: number
+          correct_answers: number
+        }
+        Returns: Json
       }
       handle_facebook_share: {
         Args: {
