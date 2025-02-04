@@ -3,6 +3,7 @@ import { Trophy, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 interface Prize {
   prize_catalog: {
@@ -21,10 +22,17 @@ interface ContestPrizesProps {
 }
 
 const ContestPrizes = ({ prizes, isLoading }: ContestPrizesProps) => {
-  const { data: publicPrizes, isLoading: isPrizesLoading } = useQuery({
+  const { toast } = useToast();
+  
+  const { data: publicPrizes, isLoading: isPrizesLoading, error } = useQuery({
     queryKey: ['public-prizes'],
     queryFn: async () => {
-      console.log('Fetching public prizes from catalog...');
+      console.log('Starting to fetch public prizes from catalog...');
+      
+      // First check if we have a session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Session check:', session ? 'Session exists' : 'No session', sessionError);
+      
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
@@ -33,12 +41,29 @@ const ContestPrizes = ({ prizes, isLoading }: ContestPrizesProps) => {
       
       if (error) {
         console.error('Error fetching public prizes:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les prix. Veuillez réessayer.",
+        });
         throw error;
       }
-      console.log('Public prizes data:', data);
+
+      if (!data) {
+        console.log('No prizes found in catalog');
+        return [];
+      }
+
+      console.log('Successfully fetched public prizes:', data);
       return data;
-    }
+    },
+    retry: 1,
+    refetchOnWindowFocus: false
   });
+
+  if (error) {
+    console.error('Prize query error:', error);
+  }
 
   if (isLoading || isPrizesLoading) {
     return (
@@ -132,5 +157,3 @@ const ContestPrizes = ({ prizes, isLoading }: ContestPrizesProps) => {
     </Card>
   );
 };
-
-export default ContestPrizes;

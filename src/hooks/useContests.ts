@@ -5,7 +5,11 @@ export const useContests = () => {
   return useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
-      console.log('Fetching contests...');
+      console.log('Starting to fetch contests...');
+      
+      // First check if we have a session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Session check:', session ? 'Session exists' : 'No session', sessionError);
       
       const { data: contests, error } = await supabase
         .from('contests')
@@ -23,14 +27,15 @@ export const useContests = () => {
         throw error;
       }
 
-      console.log('Raw contests data:', contests);
-
       if (!contests) {
         console.log('No contests found in database');
         return [];
       }
 
+      console.log('Successfully fetched contests:', contests);
       return contests;
-    }
+    },
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 };
