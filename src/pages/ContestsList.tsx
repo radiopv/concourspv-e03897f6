@@ -30,8 +30,6 @@ const ContestsList = () => {
     }
   });
 
-  const userRank = userPoints?.current_rank || 'NOVATO';
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B]">
@@ -62,14 +60,6 @@ const ContestsList = () => {
       </div>
     );
   }
-
-  // Filtrer les concours accessibles à l'utilisateur en fonction de son rang
-  const accessibleContests = contests.filter(contest => {
-    if (!contest.is_rank_restricted) return true;
-    const userPoints = RANK_POINTS[userRank as keyof typeof RANK_POINTS];
-    const requiredPoints = RANK_POINTS[contest.min_rank as keyof typeof RANK_POINTS];
-    return userPoints >= requiredPoints;
-  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] py-12">
@@ -103,13 +93,12 @@ const ContestsList = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {accessibleContests.map((contest, index) => (
+          {contests.map((contest, index) => (
             <div key={contest.id} className="w-full">
               <ContestCard
                 contest={contest}
                 onSelect={(id) => navigate(`/contest/${id}`)}
                 index={index}
-                userRank={userRank}
               />
             </div>
           ))}

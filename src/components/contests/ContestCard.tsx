@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Calendar, Gift, Users } from "lucide-react";
+import { Trophy, Calendar, Gift, Users, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -116,14 +116,34 @@ const ContestCard = ({ contest, onSelect, index }: ContestCardProps) => {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-700">
                   <Gift className="w-4 h-4" />
-                  <span>{contest.prizes.length} prix à gagner</span>
+                  <span>Choix parmi {contest.prizes.length} prix</span>
                 </div>
                 <div className="grid grid-cols-1 gap-2 mt-2">
                   {contest.prizes.map((prize, idx) => (
                     <div key={idx} className="bg-white/50 rounded-lg p-3">
+                      {prize.image_url && (
+                        <div className="aspect-video relative mb-2">
+                          <img
+                            src={prize.image_url}
+                            alt={prize.name}
+                            className="w-full h-full object-cover rounded"
+                          />
+                        </div>
+                      )}
                       <h4 className="font-semibold text-gray-800">{prize.name}</h4>
                       {prize.value && (
                         <p className="text-sm text-gray-600">Valeur: {prize.value}€</p>
+                      )}
+                      {prize.shop_url && (
+                        <a
+                          href={prize.shop_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Voir dans la boutique
+                        </a>
                       )}
                     </div>
                   ))}
