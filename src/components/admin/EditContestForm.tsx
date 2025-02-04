@@ -47,6 +47,8 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
     shop_url: '',
     prize_image_url: '',
     main_image_url: '',
+    min_rank: 'NOVATO',
+    is_rank_restricted: false,
   });
 
   useEffect(() => {
@@ -69,6 +71,8 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
         shop_url: contest.shop_url || '',
         prize_image_url: contest.prize_image_url || '',
         main_image_url: contest.main_image_url || '',
+        min_rank: contest.min_rank || 'NOVATO',
+        is_rank_restricted: contest.is_rank_restricted || false,
       });
     }
   }, [contest]);
@@ -166,6 +170,8 @@ const EditContestForm = ({ contestId, onClose }: EditContestFormProps) => {
           is_new: formData.is_new,
           has_big_prizes: formData.has_big_prizes,
           shop_url: formData.shop_url,
+          min_rank: formData.min_rank,
+          is_rank_restricted: formData.is_rank_restricted,
         })
         .eq('id', contestId);
 

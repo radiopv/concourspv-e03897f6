@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { RANK_POINTS } from '@/constants/ranks';
 
 const ContestsList = () => {
   const navigate = useNavigate();
