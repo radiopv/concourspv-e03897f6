@@ -7,6 +7,9 @@ interface AnswersCardProps {
 }
 
 export const AnswersCard = ({ correctAnswers, totalQuestions }: AnswersCardProps) => {
+  // Log the values for debugging
+  console.log('AnswersCard received:', { correctAnswers, totalQuestions });
+  
   return (
     <Card className="bg-gradient-to-br from-purple-50 to-pink-50">
       <CardHeader className="space-y-1">

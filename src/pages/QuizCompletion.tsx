@@ -21,7 +21,15 @@ const QuizCompletion = () => {
     requiredPercentage = 80 
   } = location.state || {};
 
+  // Calculate correct answers based on the score percentage
   const correctAnswers = Math.round((score / 100) * totalQuestions);
+  console.log('Score calculation:', {
+    score,
+    totalQuestions,
+    correctAnswers,
+    calculation: `${score}% of ${totalQuestions} = ${correctAnswers}`
+  });
+
   const isQualified = isQualifiedForDraw(score, requiredPercentage);
 
   return (
