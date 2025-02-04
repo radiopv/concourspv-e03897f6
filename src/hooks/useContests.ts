@@ -45,7 +45,7 @@ export const useContests = () => {
 
       console.log('Raw contests data:', contests);
 
-      if (!contests || contests.length === 0) {
+      if (!contests) {
         console.log('No contests found in database');
         return [];
       }
