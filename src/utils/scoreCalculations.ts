@@ -4,7 +4,7 @@ export const calculateCorrectAnswers = (score: number, totalQuestions: number): 
   return Math.round((score / 100) * totalQuestions);
 };
 
-export const isQualifiedForDraw = (score: number, requiredPercentage: number = 90): boolean => {
+export const isQualifiedForDraw = (score: number, requiredPercentage: number = 80): boolean => {
   return score >= requiredPercentage;
 };
 
@@ -41,6 +41,7 @@ export const calculateFinalScore = async (participationId: string): Promise<numb
     });
 
     if (totalQuestions === 0) return 0;
+    // Calculate percentage based on correct answers out of total questions
     const score = Math.round((correctAnswers / totalQuestions) * 100);
     
     console.log('Final score:', score);
