@@ -38,12 +38,12 @@ export const LoginForm = () => {
         
         if (error) {
           console.error("Session check error:", error);
-          // Clear any potentially invalid session data
           await supabase.auth.signOut();
           return;
         }
 
         if (session?.user) {
+          console.log("Session active trouvée, redirection vers dashboard");
           navigate("/dashboard", { replace: true });
         }
       } catch (error) {
@@ -63,6 +63,8 @@ export const LoginForm = () => {
   }, [state?.message, toast]);
 
   const getErrorMessage = (error: AuthError) => {
+    console.error("Erreur détaillée:", error);
+    
     if (error instanceof AuthApiError) {
       switch (error.status) {
         case 400:
@@ -89,6 +91,8 @@ export const LoginForm = () => {
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
+      console.log("Tentative de connexion pour:", values.email);
+      
       // Clear any existing session first
       await supabase.auth.signOut();
 
@@ -108,6 +112,8 @@ export const LoginForm = () => {
       }
 
       if (data?.user) {
+        console.log("Connexion réussie pour:", data.user.email);
+        
         // Set session persistence
         await supabase.auth.setSession({
           access_token: data.session?.access_token || '',
