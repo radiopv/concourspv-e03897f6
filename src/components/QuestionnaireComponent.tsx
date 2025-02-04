@@ -2,7 +2,6 @@ import React from 'react';
 import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
 import QuestionDisplay from './questionnaire/QuestionDisplay';
 import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
-import ParticipantCheck from './questionnaire/ParticipantCheck';
 import { useQuestionnaireQueries } from './questionnaire/hooks/useQuestionnaireQueries';
 import { useParticipantInitialization } from './questionnaire/hooks/useParticipantInitialization';
 import { useAnswerHandling } from './questionnaire/hooks/useAnswerHandling';
@@ -17,6 +16,12 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   const state = useQuestionnaireState();
   const { settings, userProfile, participant, questions, refetchParticipant } = useQuestionnaireQueries(contestId);
   
+  // Initialize participant (this hook handles the case where user has already participated)
+  useParticipantInitialization(contestId, userProfile, refetchParticipant);
+  
+  // Setup answer handling
+  const { handleNextQuestion } = useAnswerHandling(contestId, participant, questions || [], settings);
+
   // Check if participant has already completed this contest
   const hasAlreadyParticipated = participant?.status === 'completed';
 
@@ -34,10 +39,6 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       </div>
     );
   }
-
-  // If not already participated, initialize participant
-  useParticipantInitialization(contestId, userProfile, refetchParticipant);
-  const { handleNextQuestion } = useAnswerHandling(contestId, participant, questions || [], settings);
 
   return (
     <div className="max-w-4xl mx-auto p-4">

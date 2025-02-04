@@ -8,10 +8,11 @@ export const useQuestionnaireQueries = (contestId: string) => {
       const { data, error } = await supabase
         .from('settings')
         .select('*')
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return data || { default_attempts: 1, required_percentage: 80 };
     }
   });
 
@@ -39,29 +40,17 @@ export const useQuestionnaireQueries = (contestId: string) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user?.id) return null;
 
-        const { data: activeParticipations, error: activeError } = await supabase
-          .from('participants')
-          .select('*')
-          .eq('contest_id', contestId)
-          .eq('id', session.user.id)
-          .eq('status', 'pending')
-          .is('completed_at', null);
-
-        if (activeError) throw activeError;
-        if (activeParticipations && activeParticipations.length > 0) {
-          return activeParticipations[0];
-        }
-
-        const { data: recentParticipations, error: recentError } = await supabase
+        const { data, error } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
           .order('created_at', { ascending: false })
-          .limit(1);
+          .limit(1)
+          .maybeSingle();
 
-        if (recentError) throw recentError;
-        return recentParticipations?.[0] || null;
+        if (error) throw error;
+        return data;
       } catch (error: any) {
         console.error('Error fetching participant:', error);
         return null;
