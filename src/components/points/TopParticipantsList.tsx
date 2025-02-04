@@ -34,8 +34,7 @@ const TopParticipantsList = () => {
 
       if (error) throw error;
       
-      // Ensure the data matches our interface structure by explicitly typing each field
-      const typedData = (data || []).map(item => ({
+      return (data || []).map(item => ({
         user_id: String(item.user_id),
         total_points: Number(item.total_points),
         current_rank: String(item.current_rank),
@@ -44,8 +43,6 @@ const TopParticipantsList = () => {
           last_name: String(item.members.last_name)
         } : null
       }));
-      
-      return typedData;
     }
   });
 
