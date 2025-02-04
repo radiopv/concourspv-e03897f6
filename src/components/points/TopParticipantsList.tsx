@@ -11,7 +11,7 @@ interface TopParticipant {
   members: {
     first_name: string;
     last_name: string;
-  } | null;
+  }[] | null;
 }
 
 const TopParticipantsList = () => {
@@ -38,10 +38,10 @@ const TopParticipantsList = () => {
         user_id: String(item.user_id),
         total_points: Number(item.total_points),
         current_rank: String(item.current_rank),
-        members: item.members ? {
-          first_name: String(item.members.first_name),
-          last_name: String(item.members.last_name)
-        } : null
+        members: Array.isArray(item.members) ? item.members.map(member => ({
+          first_name: String(member.first_name),
+          last_name: String(member.last_name)
+        })) : null
       }));
     }
   });
@@ -81,7 +81,7 @@ const TopParticipantsList = () => {
                 </div>
                 <div>
                   <span className="font-medium">
-                    {participant.members?.first_name} {participant.members?.last_name}
+                    {participant.members?.[0]?.first_name} {participant.members?.[0]?.last_name}
                   </span>
                   <div className="text-sm text-gray-500">
                     {participant.current_rank || 'NOVATO'}
