@@ -28,9 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        // Clear any existing session first to avoid stale data
-        await supabase.auth.signOut();
-        
+        // Récupérer la session actuelle
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -50,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setSession(currentSession);
             setUser(currentUser);
             
-            // Set session persistence
+            // Mettre à jour la persistance de la session
             await supabase.auth.setSession({
               access_token: currentSession.access_token,
               refresh_token: currentSession.refresh_token,
@@ -62,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(null);
           setUser(null);
           
-          // Redirect to login if on a protected route
+          // Rediriger vers login si sur une route protégée
           if (window.location.pathname.startsWith('/dashboard') || 
               window.location.pathname.startsWith('/admin')) {
             navigate('/login');
@@ -76,15 +74,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Initial session check
+    // Vérification initiale de la session
     checkSession();
 
-    // Set up auth state change listener
+    // Configuration du listener pour les changements d'état d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth state changed:", event);
       
       if (event === 'SIGNED_OUT') {
-        // Clear session data
+        // Nettoyer les données de session
         setSession(null);
         setUser(null);
         localStorage.removeItem('supabase.auth.token');
@@ -99,7 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(currentSession);
           setUser(currentSession.user);
           
-          // Refresh session persistence
+          // Rafraîchir la persistance de la session
           await supabase.auth.setSession({
             access_token: currentSession.access_token,
             refresh_token: currentSession.refresh_token,
@@ -110,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
+    // Nettoyage de la souscription lors du démontage
     return () => {
       subscription.unsubscribe();
     };
@@ -118,12 +116,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Clear local session data first
+      // Nettoyer d'abord les données locales
       setSession(null);
       setUser(null);
       localStorage.removeItem('supabase.auth.token');
       
-      // Then attempt to sign out from Supabase
+      // Puis tenter la déconnexion de Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Sign out error:", error);
@@ -138,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate('/login');
     } catch (error) {
       console.error("Sign out error:", error);
-      // Even if there's an error, we still want to clear the local session
+      // Même en cas d'erreur, on veut nettoyer la session locale
       navigate('/login');
       toast({
         variant: "destructive",

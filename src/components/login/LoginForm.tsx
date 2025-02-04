@@ -93,7 +93,7 @@ export const LoginForm = () => {
     try {
       console.log("Tentative de connexion pour:", values.email);
       
-      // Clear any existing session first
+      // Nettoyer toute session existante d'abord
       await supabase.auth.signOut();
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -114,7 +114,7 @@ export const LoginForm = () => {
       if (data?.user) {
         console.log("Connexion réussie pour:", data.user.email);
         
-        // Set session persistence
+        // Définir la persistance de la session
         await supabase.auth.setSession({
           access_token: data.session?.access_token || '',
           refresh_token: data.session?.refresh_token || '',
