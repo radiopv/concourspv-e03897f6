@@ -48,12 +48,21 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
     };
   }, [hasClickedLink]);
 
+  // Ensure we're rendering text content, not objects
+  const renderOptions = Array.isArray(options) 
+    ? options 
+    : typeof options === 'string' 
+      ? [options]
+      : [];
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">{questionText}</h3>
+        <h3 className="text-lg font-semibold">
+          {typeof questionText === 'string' ? questionText : 'Question non disponible'}
+        </h3>
         
-        {articleUrl && (
+        {articleUrl && typeof articleUrl === 'string' && (
           <ArticleLink
             url={articleUrl}
             isRead={hasClickedLink}
@@ -62,7 +71,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
         )}
 
         <AnswerOptions
-          options={options}
+          options={renderOptions}
           selectedAnswer={selectedAnswer}
           correctAnswer={correctAnswer}
           hasAnswered={hasAnswered}
