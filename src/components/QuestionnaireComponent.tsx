@@ -8,7 +8,6 @@ import { useParticipantInitialization } from './questionnaire/hooks/useParticipa
 import { useAnswerHandling } from './questionnaire/hooks/useAnswerHandling';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -16,24 +15,23 @@ interface QuestionnaireComponentProps {
 
 const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contestId }) => {
   const state = useQuestionnaireState();
-  const { toast } = useToast();
   const { settings, userProfile, participant, questions, refetchParticipant } = useQuestionnaireQueries(contestId);
   
   useParticipantInitialization(contestId, userProfile, refetchParticipant);
   const { handleNextQuestion } = useAnswerHandling(contestId, participant, questions || [], settings);
 
-  // Check if participant has reached maximum attempts
-  const hasReachedMaxAttempts = participant?.attempts >= (settings?.default_attempts || 3);
+  // Check if participant has already completed this contest
+  const hasAlreadyParticipated = participant?.status === 'completed';
 
-  // Display error message if max attempts reached
-  if (hasReachedMaxAttempts) {
+  // Display error message if already participated
+  if (hasAlreadyParticipated) {
     return (
       <div className="max-w-4xl mx-auto p-4">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Limite de tentatives atteinte</AlertTitle>
+          <AlertTitle>Participation non autorisée</AlertTitle>
           <AlertDescription>
-            Vous avez atteint le nombre maximum de tentatives ({settings?.default_attempts || 3}) pour ce concours.
+            Vous avez déjà participé à ce concours. Une seule participation est autorisée.
           </AlertDescription>
         </Alert>
       </div>
