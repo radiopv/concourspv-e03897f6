@@ -17,10 +17,6 @@ const ContestsList = () => {
   const { data: contests, isLoading, error } = useContests();
   const canonicalUrl = `${window.location.origin}/contests`;
 
-  console.log("Contests data:", contests);
-  console.log("Loading state:", isLoading);
-  console.log("Error state:", error);
-
   // Check if user is authenticated
   const { data: session } = useQuery({
     queryKey: ['auth-session'],
@@ -28,16 +24,29 @@ const ContestsList = () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
         console.error('Error checking session:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur d'authentification",
+          description: "Impossible de vérifier votre session.",
+        });
         return null;
       }
+      console.log("Session status:", session ? "Authenticated" : "Not authenticated");
       return session;
-    }
+    },
+    retry: 1
   });
 
-  console.log("Auth session:", session);
+  console.log("ContestsList - Rendering with data:", {
+    hasContests: contests?.length > 0,
+    isLoading,
+    hasError: !!error,
+    sessionExists: !!session
+  });
 
   // Loading state
   if (isLoading) {
+    console.log("ContestsList - Loading state");
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] py-12">
         <div className="container mx-auto px-4 max-w-7xl">
@@ -105,6 +114,7 @@ const ContestsList = () => {
 
   // No contests state
   if (!contests || contests.length === 0) {
+    console.log("ContestsList - No contests available");
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] flex items-center justify-center p-4">
         <PageMetadata
@@ -126,6 +136,8 @@ const ContestsList = () => {
       </div>
     );
   }
+
+  console.log("ContestsList - Rendering contests:", contests.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] py-12">

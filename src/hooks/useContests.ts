@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 export const useContests = () => {
+  const { toast } = useToast();
+  
   return useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
@@ -11,8 +14,9 @@ export const useContests = () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       console.log('Session check:', session ? 'Session exists' : 'No session', sessionError);
       
-      if (!session) {
-        console.log('No session found, continuing as public user');
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Failed to check authentication status');
       }
 
       console.log('Attempting to fetch contests from Supabase...');
@@ -29,6 +33,11 @@ export const useContests = () => {
 
       if (error) {
         console.error('Error fetching contests:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les concours. Veuillez réessayer.",
+        });
         throw error;
       }
 
