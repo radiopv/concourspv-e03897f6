@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -12,32 +12,39 @@ import {
 } from '@/components/ui/table';
 import { UserEditDialog } from './UserEditDialog';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trophy, Medal, Award } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const UserManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [displayMode, setDisplayMode] = useState<'all' | 'top10' | 'top25'>('all');
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      // First, get all members
       const { data: members, error: membersError } = await supabase
         .from('members')
-        .select('*');
+        .select('*')
+        .order('total_points', { ascending: false });
       
       if (membersError) throw membersError;
 
-      // Then, get their points
       const { data: points, error: pointsError } = await supabase
         .from('user_points')
         .select('*');
 
       if (pointsError) throw pointsError;
 
-      // Combine the data
-      return members.map(member => ({
+      return members.map((member, index) => ({
         ...member,
+        rank: index + 1,
         user_points: points.filter(p => p.user_id === member.id)
       }));
     }
@@ -51,7 +58,7 @@ const UserManager = () => {
           total_points: 0,
           current_streak: 0,
           best_streak: 0,
-          current_rank: 'BEGINNER',
+          current_rank: 'NOVATO',
           extra_participations: 0
         })
         .eq('user_id', userId);
@@ -109,6 +116,31 @@ const UserManager = () => {
     }
   });
 
+  const getDisplayedUsers = () => {
+    if (!users) return [];
+    switch (displayMode) {
+      case 'top10':
+        return users.slice(0, 10);
+      case 'top25':
+        return users.slice(0, 25);
+      default:
+        return users;
+    }
+  };
+
+  const getRankIcon = (position: number) => {
+    switch (position) {
+      case 1:
+        return <Trophy className="h-6 w-6 text-amber-500" />;
+      case 2:
+        return <Medal className="h-6 w-6 text-gray-400" />;
+      case 3:
+        return <Medal className="h-6 w-6 text-amber-700" />;
+      default:
+        return <Award className="h-6 w-6 text-blue-500" />;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -121,12 +153,26 @@ const UserManager = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Gestion des utilisateurs</h2>
+        <Select
+          value={displayMode}
+          onValueChange={(value: 'all' | 'top10' | 'top25') => setDisplayMode(value)}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Afficher..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les joueurs</SelectItem>
+            <SelectItem value="top10">Top 10 🏆</SelectItem>
+            <SelectItem value="top25">Top 25 🔥</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Position</TableHead>
               <TableHead>Nom</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Points</TableHead>
@@ -136,14 +182,29 @@ const UserManager = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users?.map((user) => (
-              <TableRow key={user.id}>
+            {getDisplayedUsers().map((user, index) => (
+              <TableRow 
+                key={user.id}
+                className={index < 3 ? 'bg-amber-50' : ''}
+              >
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {getRankIcon(index + 1)}
+                    {index + 1}
+                  </div>
+                </TableCell>
                 <TableCell>
                   {user.first_name} {user.last_name}
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>{user.user_points?.[0]?.total_points || 0}</TableCell>
-                <TableCell>{user.user_points?.[0]?.current_rank || 'BEGINNER'}</TableCell>
+                <TableCell className="font-bold text-indigo-600">
+                  {user.total_points}
+                </TableCell>
+                <TableCell>
+                  <span className="px-2 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-amber-100 to-amber-200">
+                    {user.user_points?.[0]?.current_rank || 'NOVATO'}
+                  </span>
+                </TableCell>
                 <TableCell>{user.user_points?.[0]?.extra_participations || 0}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
