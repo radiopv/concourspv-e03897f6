@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { getUserPoints } from "@/services/pointsService";
 import { RANKS } from "@/services/pointsService";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const UserRankProgress = () => {
   const { toast } = useToast();
