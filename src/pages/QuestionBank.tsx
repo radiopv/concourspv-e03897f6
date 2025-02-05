@@ -12,8 +12,9 @@ const QuestionBank = () => {
     queryKey: ['question-bank'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('question_bank')
+        .from('questions')
         .select('*')
+        .is('contest_id', null)
         .eq('status', 'available');
 
       if (error) throw error;
