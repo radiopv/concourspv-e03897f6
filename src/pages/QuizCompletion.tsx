@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { motion } from "framer-motion";
 import { Helmet } from 'react-helmet';
 import { ScoreCard } from '@/components/quiz-completion/ScoreCard';
@@ -12,7 +12,6 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
 const QuizCompletion = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const { contestId } = useParams();
   const { toast } = useToast();
@@ -20,18 +19,31 @@ const QuizCompletion = () => {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [isQualified, setIsQualified] = useState(false);
-  const requiredPercentage = 80; // Score minimum requis
+  const requiredPercentage = 80;
 
   useEffect(() => {
     const fetchQuizResults = async () => {
       if (!contestId) return;
 
       try {
-        // Récupérer les réponses du participant
+        // First get the participant's ID for this contest
+        const { data: participant, error: participantError } = await supabase
+          .from('participants')
+          .select('participation_id')
+          .eq('contest_id', contestId)
+          .single();
+
+        if (participantError) throw participantError;
+
+        if (!participant?.participation_id) {
+          throw new Error('Participant not found');
+        }
+
+        // Then get their answers
         const { data: answers, error: answersError } = await supabase
           .from('participant_answers')
           .select('is_correct')
-          .eq('contest_id', contestId);
+          .eq('participant_id', participant.participation_id);
 
         if (answersError) throw answersError;
 
@@ -40,12 +52,19 @@ const QuizCompletion = () => {
           const total = answers.length;
           const calculatedScore = total > 0 ? Math.round((correct / total) * 100) : 0;
 
+          console.log('Quiz results:', {
+            correct,
+            total,
+            calculatedScore,
+            answers
+          });
+
           setCorrectAnswers(correct);
           setTotalQuestions(total);
           setScore(calculatedScore);
           setIsQualified(calculatedScore >= requiredPercentage);
 
-          // Mettre à jour le statut du participant
+          // Update participant status and score
           const { error: updateError } = await supabase
             .from('participants')
             .update({ 
