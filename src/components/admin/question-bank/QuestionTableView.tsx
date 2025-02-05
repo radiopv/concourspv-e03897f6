@@ -29,12 +29,27 @@ const QuestionTableView = () => {
   const [editedQuestion, setEditedQuestion] = useState<Partial<Question>>({});
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  // Ajout de la requête pour les concours
+  const { data: contests } = useQuery({
+    queryKey: ['contests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions-bank'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
         .select('*')
+        .is('contest_id', null)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -275,147 +290,147 @@ const QuestionTableView = () => {
                     {question.status || 'available'}
                   </Badge>
                 </TableCell>
-              <TableCell>
-                {editingId === question.id ? (
-                  <Input
-                    value={editedQuestion.correct_answer || question.correct_answer}
-                    onChange={(e) => setEditedQuestion({
-                      ...editedQuestion,
-                      correct_answer: e.target.value
-                    })}
-                  />
-                ) : (
-                  <span className="text-green-600 font-medium">
-                    {question.correct_answer}
-                  </span>
-                )}
-              </TableCell>
-              <TableCell>
-                {editingId === question.id ? (
-                  <div className="space-y-2">
-                    {(editedQuestion.options || question.options)?.map((option: string, index: number) => (
-                      <Input
-                        key={index}
-                        value={option}
-                        onChange={(e) => {
-                          const newOptions = [...(editedQuestion.options || question.options)];
-                          newOptions[index] = e.target.value;
-                          setEditedQuestion({
-                            ...editedQuestion,
-                            options: newOptions
-                          });
-                        }}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <ul className="list-disc list-inside">
-                    {question.options?.map((option: string, index: number) => (
-                      <li key={index} className={option === question.correct_answer ? "text-green-600" : ""}>
-                        {option}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </TableCell>
-              <TableCell>
-                {editingId === question.id ? (
-                  <Input
-                    value={editedQuestion.article_url || question.article_url}
-                    onChange={(e) => setEditedQuestion({
-                      ...editedQuestion,
-                      article_url: e.target.value
-                    })}
-                  />
-                ) : (
-                  question.article_url && (
-                    <a
-                      href={question.article_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-blue-600 hover:text-blue-800"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      Voir l'article
-                    </a>
-                  )
-                )}
-              </TableCell>
-              <TableCell>
-                <div className="flex space-x-2">
+                <TableCell>
                   {editingId === question.id ? (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleSave(question.id)}
-                      >
-                        <Save className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleCancel}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </>
+                    <Input
+                      value={editedQuestion.correct_answer || question.correct_answer}
+                      onChange={(e) => setEditedQuestion({
+                        ...editedQuestion,
+                        correct_answer: e.target.value
+                      })}
+                    />
                   ) : (
-                    <>
-                      <Select
-                        onValueChange={(contestId) => {
-                          addToContestMutation.mutate({ 
-                            questionId: question.id, 
-                            contestId 
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Ajouter au concours" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {contests?.map((contest) => (
-                            <SelectItem key={contest.id} value={contest.id}>
-                              {contest.title} ({contest.questions.count} questions)
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(question)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Êtes-vous sûr de vouloir supprimer cette question ? Cette action est irréversible.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Annuler</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteMutation.mutate(question.id)}
-                              className="bg-red-500 hover:bg-red-600"
-                            >
-                              Supprimer
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </>
+                    <span className="text-green-600 font-medium">
+                      {question.correct_answer}
+                    </span>
                   )}
-                </div>
-              </TableCell>
+                </TableCell>
+                <TableCell>
+                  {editingId === question.id ? (
+                    <div className="space-y-2">
+                      {(editedQuestion.options || question.options)?.map((option: string, index: number) => (
+                        <Input
+                          key={index}
+                          value={option}
+                          onChange={(e) => {
+                            const newOptions = [...(editedQuestion.options || question.options)];
+                            newOptions[index] = e.target.value;
+                            setEditedQuestion({
+                              ...editedQuestion,
+                              options: newOptions
+                            });
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <ul className="list-disc list-inside">
+                      {question.options?.map((option: string, index: number) => (
+                        <li key={index} className={option === question.correct_answer ? "text-green-600" : ""}>
+                          {option}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editingId === question.id ? (
+                    <Input
+                      value={editedQuestion.article_url || question.article_url}
+                      onChange={(e) => setEditedQuestion({
+                        ...editedQuestion,
+                        article_url: e.target.value
+                      })}
+                    />
+                  ) : (
+                    question.article_url && (
+                      <a
+                        href={question.article_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center text-blue-600 hover:text-blue-800"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Voir l'article
+                      </a>
+                    )
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    {editingId === question.id ? (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSave(question.id)}
+                        >
+                          <Save className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleCancel}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Select
+                          onValueChange={(contestId) => {
+                            addToContestMutation.mutate({ 
+                              questionId: question.id, 
+                              contestId 
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Ajouter au concours" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {contests?.map((contest) => (
+                              <SelectItem key={contest.id} value={contest.id}>
+                                {contest.title} ({contest.questions.count} questions)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(question)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Êtes-vous sûr de vouloir supprimer cette question ? Cette action est irréversible.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Annuler</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteMutation.mutate(question.id)}
+                                className="bg-red-500 hover:bg-red-600"
+                              >
+                                Supprimer
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

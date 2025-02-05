@@ -27,6 +27,7 @@ export interface Question {
   image_url?: string;
   type: 'multiple_choice' | 'text';
   order_number?: number;
+  status: 'available' | 'in_use' | 'archived';
 }
 
 export interface QuestionFormProps {
