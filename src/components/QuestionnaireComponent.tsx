@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -16,8 +17,32 @@ interface QuestionnaireComponentProps {
 
 const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contestId }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const state = useQuestionnaireState();
   const { settings, userProfile, participant, questions, refetchParticipant } = useQuestionnaireQueries(contestId);
+  
+  // Vérifier si l'utilisateur est connecté
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto p-4">
+        <Alert className="mb-6 border-blue-500 bg-blue-50 dark:bg-blue-900/10">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertTitle>Connexion requise</AlertTitle>
+          <AlertDescription className="mt-2 text-blue-600">
+            Vous devez être connecté pour participer à ce concours.
+          </AlertDescription>
+        </Alert>
+        <div className="flex justify-center mt-4">
+          <Button 
+            onClick={() => navigate('/login')}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Se connecter
+          </Button>
+        </div>
+      </div>
+    );
+  }
   
   // Initialize participant
   useParticipantInitialization(contestId, userProfile, refetchParticipant);
