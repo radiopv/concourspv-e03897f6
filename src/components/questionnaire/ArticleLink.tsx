@@ -27,19 +27,24 @@ const ArticleLink: React.FC<ArticleLinkProps> = ({ url, isRead, onArticleRead })
     <div className="space-y-4">
       <motion.div
         initial={{ scale: 1 }}
-        animate={{ scale: isRead ? 1 : [1, 1.05, 1] }}
-        transition={{ duration: 2, repeat: isRead ? 0 : Infinity }}
+        animate={{ scale: isRead ? 1 : [1, 1.02, 1] }}
+        transition={{ duration: 3, repeat: isRead ? 0 : Infinity, ease: "easeInOut" }}
       >
         <Button
           variant={isRead ? "default" : "default"}
           onClick={handleClick}
           className={cn(
             "w-full justify-between py-6 text-lg font-semibold",
-            "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
+            "bg-gradient-to-r from-amber-500 to-orange-500",
+            "hover:from-amber-600 hover:to-orange-600",
             "text-white shadow-lg hover:shadow-xl transition-all duration-300",
-            "border-2 border-blue-400 hover:border-blue-500",
+            "border-2 border-amber-400 hover:border-amber-500",
             !isRead && "animate-pulse"
           )}
+          style={{
+            animationDuration: '3s',
+            animationTimingFunction: 'ease-in-out'
+          }}
         >
           <div className="flex items-center gap-3">
             <BookOpen className="w-6 h-6" />
