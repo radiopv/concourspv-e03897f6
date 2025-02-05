@@ -1,137 +1,86 @@
-import React from 'react';
-import { useQuestionnaireState } from './questionnaire/QuestionnaireState';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuestions } from './questionnaire/useQuestions';
 import QuestionDisplay from './questionnaire/QuestionDisplay';
 import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
 import { useQuestionnaireQueries } from './questionnaire/hooks/useQuestionnaireQueries';
-import { useParticipantInitialization } from './questionnaire/hooks/useParticipantInitialization';
-import { useAnswerHandling } from './questionnaire/hooks/useAnswerHandling';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { Question } from '@/types/database';
 
 interface QuestionnaireComponentProps {
   contestId: string;
 }
 
 const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contestId }) => {
-  // Always call hooks at the top level
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [hasClickedLink, setHasClickedLink] = useState(false);
+  const [hasAnswered, setHasAnswered] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const state = useQuestionnaireState();
-  const { settings, userProfile, participant, questions, refetchParticipant } = useQuestionnaireQueries(contestId);
   
-  // Initialize participant (this hook will handle navigation if needed)
-  useParticipantInitialization(contestId, userProfile, refetchParticipant);
-  
-  // Setup answer handling
-  const { handleNextQuestion } = useAnswerHandling(contestId, participant, questions || [], settings);
+  const { questions } = useQuestions(contestId);
+  const { participant, refetchParticipant } = useQuestionnaireQueries(contestId);
 
-  // Early return for unauthenticated users
-  if (!user) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <Alert className="mb-6 border-blue-500 bg-blue-50 dark:bg-blue-900/10">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertTitle>Connexion requise</AlertTitle>
-          <AlertDescription className="mt-2 text-blue-600">
-            Vous devez être connecté pour participer à ce concours.
-          </AlertDescription>
-        </Alert>
-        <div className="flex justify-center mt-4">
-          <Button 
-            onClick={() => navigate('/login')}
-            className="bg-primary hover:bg-primary/90"
-          >
-            Se connecter
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const currentQuestion = questions?.[currentQuestionIndex];
+  const totalQuestions = questions?.length || 0;
+  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
 
-  // Early return for completed participants
-  if (participant?.status === 'completed') {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <Alert className="mb-6 border-blue-500 bg-blue-50 dark:bg-blue-900/10">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertTitle>Participation terminée</AlertTitle>
-          <AlertDescription className="mt-2 text-blue-600">
-            Vous avez déjà participé à ce concours. Bonne chance pour les prochains défis !
-          </AlertDescription>
-        </Alert>
-        <div className="flex justify-center mt-4">
-          <Button 
-            onClick={() => navigate('/contests')}
-            className="bg-primary hover:bg-primary/90"
-          >
-            Voir les autres concours
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const handleArticleRead = () => {
+    setHasClickedLink(true);
+  };
 
-  // Early return for loading state
-  if (!questions || questions.length === 0) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Chargement...</AlertTitle>
-          <AlertDescription>
-            Préparation du questionnaire en cours.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  const handleAnswerSelect = (answer: string) => {
+    setSelectedAnswer(answer);
+  };
 
-  // Validate current question index
-  const isValidIndex = state.currentQuestionIndex >= 0 && state.currentQuestionIndex < questions.length;
-  if (!isValidIndex) {
-    console.error('Invalid question index:', state.currentQuestionIndex, 'total questions:', questions.length);
-    state.setCurrentQuestionIndex(0);
-    return null;
-  }
+  const handleSubmitAnswer = async () => {
+    if (!selectedAnswer || isSubmitting) return;
 
-  const currentQuestion = questions[state.currentQuestionIndex];
+    setIsSubmitting(true);
+    // Submit the answer logic here
+    setHasAnswered(true);
+    setIsSubmitting(false);
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex + 1 < totalQuestions) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedAnswer('');
+      setHasClickedLink(false);
+      setHasAnswered(false);
+    } else {
+      navigate(`/quiz-completion/${contestId}`);
+    }
+  };
+
   if (!currentQuestion) {
-    console.error('Question not found at index:', state.currentQuestionIndex);
-    return null;
+    return <div>Loading...</div>;
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="space-y-8">
-        {participant && questions && questions.length > 0 && (
-          <>
-            <QuestionnaireProgress 
-              currentQuestionIndex={state.currentQuestionIndex + 1}
-              totalQuestions={questions.length}
-              score={state.score}
-              totalAnswered={state.totalAnswered}
-            />
-
-            <QuestionDisplay
-              questionText={currentQuestion.question_text}
-              articleUrl={currentQuestion.article_url}
-              options={currentQuestion.options}
-              selectedAnswer={state.selectedAnswer}
-              correctAnswer={currentQuestion.correct_answer}
-              hasClickedLink={state.hasClickedLink}
-              hasAnswered={state.hasAnswered}
-              isSubmitting={state.isSubmitting}
-              onArticleRead={() => state.setHasClickedLink(true)}
-              onAnswerSelect={(answer: string) => state.setSelectedAnswer(answer)}
-              onSubmitAnswer={handleNextQuestion}
-              onNextQuestion={handleNextQuestion}
-              isLastQuestion={state.currentQuestionIndex === questions.length - 1}
-            />
-          </>
-        )}
+    <div className="max-w-3xl mx-auto px-4">
+      <QuestionnaireProgress 
+        currentQuestion={currentQuestionIndex + 1}
+        totalQuestions={totalQuestions}
+        progress={progress}
+      />
+      
+      <div className="mt-8">
+        <QuestionDisplay
+          questionText={currentQuestion.question_text}
+          articleUrl={currentQuestion.article_url}
+          options={currentQuestion.options as string[]}
+          selectedAnswer={selectedAnswer}
+          correctAnswer={currentQuestion.correct_answer}
+          hasClickedLink={hasClickedLink}
+          hasAnswered={hasAnswered}
+          isSubmitting={isSubmitting}
+          onArticleRead={handleArticleRead}
+          onAnswerSelect={handleAnswerSelect}
+          onSubmitAnswer={handleSubmitAnswer}
+          onNextQuestion={handleNextQuestion}
+          isLastQuestion={currentQuestionIndex + 1 === totalQuestions}
+        />
       </div>
     </div>
   );
