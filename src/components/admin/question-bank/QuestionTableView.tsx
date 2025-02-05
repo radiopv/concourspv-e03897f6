@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Pencil, Save, Trash2, X, ExternalLink, Plus } from 'lucide-react';
 import {
   AlertDialog,
@@ -18,20 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-interface Question {
-  id: string;
-  question_text: string;
-  options: string[];
-  correct_answer: string;
-  article_url?: string;
-}
-
-interface Contest {
-  id: string;
-  title: string;
-  questions: { count: number };
-}
+import { Question } from '@/types/database';
 
 const QuestionTableView = () => {
   const { toast } = useToast();
@@ -40,7 +27,7 @@ const QuestionTableView = () => {
   const [editedQuestion, setEditedQuestion] = useState<Partial<Question>>({});
 
   const { data: questions, isLoading } = useQuery({
-    queryKey: ['questions'],
+    queryKey: ['questions-bank'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
@@ -72,7 +59,7 @@ const QuestionTableView = () => {
         id: contest.id,
         title: contest.title,
         questions: { count: contest.questions[0]?.count || 0 }
-      })) as Contest[];
+      }));
     }
   });
 
@@ -106,22 +93,17 @@ const QuestionTableView = () => {
         }
       }
 
-      // Create a new question for the contest
-      const { error: insertError } = await supabase
+      // Update the question to associate it with the contest
+      const { error: updateError } = await supabase
         .from('questions')
-        .insert([{
-          contest_id: contestId,
-          question_text: questionData.question_text,
-          options: questionData.options,
-          correct_answer: questionData.correct_answer,
-          article_url: questionData.article_url,
-          type: 'multiple_choice'
-        }]);
+        .update({ contest_id: contestId })
+        .eq('id', questionId);
 
-      if (insertError) throw insertError;
+      if (updateError) throw updateError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests-with-questions-count'] });
+      queryClient.invalidateQueries({ queryKey: ['questions-bank'] });
       toast({
         title: "Question ajoutée",
         description: "La question a été ajoutée au concours avec succès",
@@ -151,7 +133,7 @@ const QuestionTableView = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      queryClient.invalidateQueries({ queryKey: ['questions-bank'] });
       toast({
         title: "Question mise à jour",
         description: "La question a été modifiée avec succès",
@@ -177,7 +159,7 @@ const QuestionTableView = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      queryClient.invalidateQueries({ queryKey: ['questions-bank'] });
       toast({
         title: "Question supprimée",
         description: "La question a été supprimée avec succès",
