@@ -2,15 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 export const useQuestionnaireQueries = (contestId: string) => {
-  // Query for global settings
-  const { 
-    data: settings,
-    isLoading: isSettingsLoading,
-    error: settingsError
-  } = useQuery({
+  const { data: settings } = useQuery({
     queryKey: ['global-settings'],
     queryFn: async () => {
-      console.log('Fetching settings...');
       const { data, error } = await supabase
         .from('settings')
         .select('*')
@@ -19,21 +13,15 @@ export const useQuestionnaireQueries = (contestId: string) => {
 
       if (error) {
         console.error('Error fetching settings:', error);
-        throw error;
+        return { default_attempts: 1, required_percentage: 80 };
       }
       return data || { default_attempts: 1, required_percentage: 80 };
     }
   });
 
-  // Query for user profile
-  const {
-    data: userProfile,
-    isLoading: isProfileLoading,
-    error: profileError
-  } = useQuery({
+  const { data: userProfile } = useQuery({
     queryKey: ['user-profile'],
     queryFn: async () => {
-      console.log('Fetching user profile...');
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return null;
 
@@ -48,16 +36,9 @@ export const useQuestionnaireQueries = (contestId: string) => {
     }
   });
 
-  // Query for participant status
-  const {
-    data: participant,
-    isLoading: isParticipantLoading,
-    error: participantError,
-    refetch: refetchParticipant
-  } = useQuery({
+  const { data: participant, refetch: refetchParticipant } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
-      console.log('Fetching participant status for contest:', contestId);
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user?.id) return null;
@@ -73,27 +54,24 @@ export const useQuestionnaireQueries = (contestId: string) => {
 
         if (error) {
           console.error('Error fetching participant:', error);
-          throw error;
+          // Si l'erreur indique que l'utilisateur a déjà participé, on retourne un objet avec le statut completed
+          if (error.message.includes('déjà participé')) {
+            return { status: 'completed' };
+          }
+          return null;
         }
-        console.log('Participant data:', data);
         return data;
       } catch (error: any) {
-        console.error('Error in participant query:', error);
-        throw error;
+        console.error('Error fetching participant:', error);
+        return null;
       }
     },
     enabled: !!contestId
   });
 
-  // Query for questions
-  const {
-    data: questions,
-    isLoading: isQuestionsLoading,
-    error: questionsError
-  } = useQuery({
+  const { data: questions } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
-      console.log('Fetching questions for contest:', contestId);
       if (!contestId) throw new Error('Contest ID is required');
       
       const { data, error } = await supabase
@@ -103,22 +81,16 @@ export const useQuestionnaireQueries = (contestId: string) => {
         .order('order_number', { ascending: true });
 
       if (error) throw error;
-      console.log('Questions loaded:', data?.length || 0);
       return data;
     },
     enabled: !!contestId
   });
-
-  const isLoading = isSettingsLoading || isProfileLoading || isParticipantLoading || isQuestionsLoading;
-  const error = settingsError || profileError || participantError || questionsError;
 
   return {
     settings,
     userProfile,
     participant,
     questions,
-    refetchParticipant,
-    isLoading,
-    error
+    refetchParticipant
   };
 };

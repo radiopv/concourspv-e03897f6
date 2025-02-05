@@ -6,7 +6,7 @@ import { useQuestionnaireQueries } from './questionnaire/hooks/useQuestionnaireQ
 import { useParticipantInitialization } from './questionnaire/hooks/useParticipantInitialization';
 import { useAnswerHandling } from './questionnaire/hooks/useAnswerHandling';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 
@@ -17,97 +17,18 @@ interface QuestionnaireComponentProps {
 const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contestId }) => {
   const navigate = useNavigate();
   const state = useQuestionnaireState();
-  const { 
-    settings, 
-    userProfile, 
-    participant, 
-    questions,
-    refetchParticipant,
-    isLoading: queriesLoading,
-    error: queriesError
-  } = useQuestionnaireQueries(contestId);
-
-  console.log('QuestionnaireComponent render:', {
-    contestId,
-    queriesLoading,
-    hasParticipant: !!participant,
-    questionsCount: questions?.length,
-    error: queriesError?.message,
-    userProfile
-  });
-
+  const { settings, userProfile, participant, questions, refetchParticipant } = useQuestionnaireQueries(contestId);
+  
   // Initialize participant
   useParticipantInitialization(contestId, userProfile, refetchParticipant);
-
+  
   // Setup answer handling
   const { handleNextQuestion } = useAnswerHandling(contestId, participant, questions || [], settings);
 
-  // If no contestId is provided, redirect to contests page
-  if (!contestId) {
-    console.error('No contest ID found in URL parameters');
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>
-            ID du concours manquant. Veuillez réessayer.
-          </AlertDescription>
-        </Alert>
-        <div className="flex justify-center mt-4">
-          <Button 
-            onClick={() => navigate('/contests')}
-            className="bg-primary hover:bg-primary/90"
-          >
-            Retour aux concours
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading state
-  if (queriesLoading) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <Alert>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <AlertTitle>Chargement en cours...</AlertTitle>
-          <AlertDescription>
-            Préparation de votre questionnaire. Merci de patienter.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (queriesError) {
-    console.error('Error loading questionnaire:', queriesError);
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>
-            Une erreur est survenue lors du chargement du questionnaire. 
-            Message: {queriesError.message}
-          </AlertDescription>
-        </Alert>
-        <div className="flex justify-center mt-4">
-          <Button 
-            onClick={() => navigate('/contests')}
-            className="bg-primary hover:bg-primary/90"
-          >
-            Retour aux concours
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   // Check if participant has already completed this contest
   const hasAlreadyParticipated = participant?.status === 'completed';
+
+  // Display message if already participated
   if (hasAlreadyParticipated) {
     return (
       <div className="max-w-4xl mx-auto p-4">
@@ -130,48 +51,16 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     );
   }
 
-  // Show error if no questions are available
   if (!questions || questions.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-4">
-        <Alert variant="destructive">
+        <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Aucune question disponible</AlertTitle>
+          <AlertTitle>Chargement...</AlertTitle>
           <AlertDescription>
-            Ce concours n'a pas encore de questions. Veuillez réessayer plus tard.
+            Préparation du questionnaire en cours.
           </AlertDescription>
         </Alert>
-        <div className="flex justify-center mt-4">
-          <Button 
-            onClick={() => navigate('/contests')}
-            className="bg-primary hover:bg-primary/90"
-          >
-            Retour aux concours
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error if user profile is not loaded
-  if (!userProfile) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Profil non chargé</AlertTitle>
-          <AlertDescription>
-            Impossible de charger votre profil. Veuillez vous reconnecter.
-          </AlertDescription>
-        </Alert>
-        <div className="flex justify-center mt-4">
-          <Button 
-            onClick={() => navigate('/login')}
-            className="bg-primary hover:bg-primary/90"
-          >
-            Se connecter
-          </Button>
-        </div>
       </div>
     );
   }

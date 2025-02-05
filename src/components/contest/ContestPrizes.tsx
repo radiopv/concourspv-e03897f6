@@ -3,7 +3,6 @@ import { Trophy, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
 
 interface Prize {
   prize_catalog: {
@@ -22,17 +21,10 @@ interface ContestPrizesProps {
 }
 
 const ContestPrizes = ({ prizes, isLoading }: ContestPrizesProps) => {
-  const { toast } = useToast();
-  
-  const { data: publicPrizes, isLoading: isPrizesLoading, error } = useQuery({
+  const { data: publicPrizes, isLoading: isPrizesLoading } = useQuery({
     queryKey: ['public-prizes'],
     queryFn: async () => {
-      console.log('Starting to fetch public prizes from catalog...');
-      
-      // First check if we have a session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Session check:', session ? 'Session exists' : 'No session', sessionError);
-      
+      console.log('Fetching public prizes from catalog...');
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
@@ -41,31 +33,12 @@ const ContestPrizes = ({ prizes, isLoading }: ContestPrizesProps) => {
       
       if (error) {
         console.error('Error fetching public prizes:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les prix. Veuillez réessayer.",
-        });
         throw error;
       }
-
-      if (!data) {
-        console.log('No prizes found in catalog');
-        return [];
-      }
-
-      console.log('Successfully fetched public prizes:', data);
+      console.log('Public prizes data:', data);
       return data;
-    },
-    retry: 1,
-    refetchOnWindowFocus: false,
-    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    }
   });
-
-  if (error) {
-    console.error('Prize query error:', error);
-  }
 
   if (isLoading || isPrizesLoading) {
     return (
@@ -159,3 +132,5 @@ const ContestPrizes = ({ prizes, isLoading }: ContestPrizesProps) => {
     </Card>
   );
 };
+
+export default ContestPrizes;

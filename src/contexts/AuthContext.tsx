@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        console.log('Checking current session...');
+        // First, try to get the session from Supabase
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -36,9 +36,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           throw sessionError;
         }
 
-        console.log('Session status:', currentSession ? 'Active session found' : 'No active session');
-
         if (currentSession) {
+          // If we have a session, verify it's still valid
           const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
           
           if (userError) {
@@ -47,21 +46,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           if (currentUser) {
-            console.log('User found:', currentUser.email);
             setSession(currentSession);
             setUser(currentUser);
-            
-            // Update session persistence
-            await supabase.auth.setSession({
-              access_token: currentSession.access_token,
-              refresh_token: currentSession.refresh_token,
-            });
           } else {
-            console.log('No user found, signing out...');
+            // User data not found, clear the session
             await signOut();
           }
         } else {
-          console.log('No active session found');
+          // No session found, clear state
           setSession(null);
           setUser(null);
           
@@ -73,6 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("Session check error:", error);
+        // Clear state and redirect on error
         await signOut();
       } finally {
         setLoading(false);
@@ -87,27 +80,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("Auth state changed:", event);
       
       if (event === 'SIGNED_OUT') {
-        // Clean up session data
         setSession(null);
         setUser(null);
-        localStorage.removeItem('supabase.auth.token');
         navigate('/login');
-        
         toast({
           title: "Session terminée",
           description: "Veuillez vous reconnecter.",
         });
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (currentSession) {
-          console.log('Setting new session for user:', currentSession.user?.email);
           setSession(currentSession);
           setUser(currentSession.user);
-          
-          // Refresh session persistence
-          await supabase.auth.setSession({
-            access_token: currentSession.access_token,
-            refresh_token: currentSession.refresh_token,
-          });
         }
       }
       
@@ -122,17 +105,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Clean up local data first
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
       setSession(null);
       setUser(null);
-      localStorage.removeItem('supabase.auth.token');
       
-      // Then attempt Supabase signout
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Sign out error:", error);
-        throw error;
-      }
+      // Clear any stored tokens
+      localStorage.removeItem('supabase.auth.token');
       
       toast({
         title: "Déconnexion réussie",
@@ -142,12 +122,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate('/login');
     } catch (error) {
       console.error("Sign out error:", error);
-      // Even if there's an error, we want to clean up the local session
-      navigate('/login');
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de la déconnexion, mais votre session a été réinitialisée.",
+        description: "Une erreur est survenue lors de la déconnexion.",
       });
     }
   };
