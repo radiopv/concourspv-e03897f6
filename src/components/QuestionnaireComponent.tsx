@@ -21,20 +21,21 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     settings, 
     userProfile, 
     participant, 
-    questions, 
+    questions,
     refetchParticipant,
-    isLoading,
-    error 
+    isLoading: queriesLoading,
+    error: queriesError
   } = useQuestionnaireQueries(contestId);
 
   console.log('QuestionnaireComponent render:', {
     contestId,
-    isLoading,
+    queriesLoading,
     hasParticipant: !!participant,
     questionsCount: questions?.length,
-    error: error?.message
+    error: queriesError?.message,
+    userProfile
   });
-  
+
   // Initialize participant
   useParticipantInitialization(contestId, userProfile, refetchParticipant);
 
@@ -43,14 +44,14 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
   // If no contestId is provided, redirect to contests page
   if (!contestId) {
-    console.error('No contest ID provided');
+    console.error('No contest ID found in URL parameters');
     return (
       <div className="max-w-4xl mx-auto p-4">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erreur</AlertTitle>
           <AlertDescription>
-            Impossible de charger le concours. Veuillez réessayer.
+            ID du concours manquant. Veuillez réessayer.
           </AlertDescription>
         </Alert>
         <div className="flex justify-center mt-4">
@@ -66,14 +67,14 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   }
 
   // Show loading state
-  if (isLoading) {
+  if (queriesLoading) {
     return (
       <div className="max-w-4xl mx-auto p-4">
         <Alert>
           <Loader2 className="h-4 w-4 animate-spin" />
-          <AlertTitle>Chargement...</AlertTitle>
+          <AlertTitle>Chargement en cours...</AlertTitle>
           <AlertDescription>
-            Préparation du questionnaire en cours.
+            Préparation de votre questionnaire. Merci de patienter.
           </AlertDescription>
         </Alert>
       </div>
@@ -81,15 +82,16 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   }
 
   // Show error state
-  if (error) {
-    console.error('Error loading questionnaire:', error);
+  if (queriesError) {
+    console.error('Error loading questionnaire:', queriesError);
     return (
       <div className="max-w-4xl mx-auto p-4">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erreur</AlertTitle>
           <AlertDescription>
-            Une erreur est survenue lors du chargement du questionnaire.
+            Une erreur est survenue lors du chargement du questionnaire. 
+            Message: {queriesError.message}
           </AlertDescription>
         </Alert>
         <div className="flex justify-center mt-4">
@@ -145,6 +147,29 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
             className="bg-primary hover:bg-primary/90"
           >
             Retour aux concours
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if user profile is not loaded
+  if (!userProfile) {
+    return (
+      <div className="max-w-4xl mx-auto p-4">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Profil non chargé</AlertTitle>
+          <AlertDescription>
+            Impossible de charger votre profil. Veuillez vous reconnecter.
+          </AlertDescription>
+        </Alert>
+        <div className="flex justify-center mt-4">
+          <Button 
+            onClick={() => navigate('/login')}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Se connecter
           </Button>
         </div>
       </div>

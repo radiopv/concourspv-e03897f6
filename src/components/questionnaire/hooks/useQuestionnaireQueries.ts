@@ -3,7 +3,11 @@ import { supabase } from '@/lib/supabase';
 
 export const useQuestionnaireQueries = (contestId: string) => {
   // Query for global settings
-  const { data: settings, isLoading: isSettingsLoading, error: settingsError } = useQuery({
+  const { 
+    data: settings,
+    isLoading: isSettingsLoading,
+    error: settingsError
+  } = useQuery({
     queryKey: ['global-settings'],
     queryFn: async () => {
       console.log('Fetching settings...');
@@ -22,7 +26,11 @@ export const useQuestionnaireQueries = (contestId: string) => {
   });
 
   // Query for user profile
-  const { data: userProfile, isLoading: isProfileLoading, error: profileError } = useQuery({
+  const {
+    data: userProfile,
+    isLoading: isProfileLoading,
+    error: profileError
+  } = useQuery({
     queryKey: ['user-profile'],
     queryFn: async () => {
       console.log('Fetching user profile...');
@@ -41,11 +49,11 @@ export const useQuestionnaireQueries = (contestId: string) => {
   });
 
   // Query for participant status
-  const { 
-    data: participant, 
-    isLoading: isParticipantLoading, 
+  const {
+    data: participant,
+    isLoading: isParticipantLoading,
     error: participantError,
-    refetch: refetchParticipant 
+    refetch: refetchParticipant
   } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
@@ -78,7 +86,11 @@ export const useQuestionnaireQueries = (contestId: string) => {
   });
 
   // Query for questions
-  const { data: questions, isLoading: isQuestionsLoading, error: questionsError } = useQuery({
+  const {
+    data: questions,
+    isLoading: isQuestionsLoading,
+    error: questionsError
+  } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
       console.log('Fetching questions for contest:', contestId);
