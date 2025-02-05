@@ -26,9 +26,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("Setting up auth state listener");
+    
     const checkSession = async () => {
       try {
-        // First, try to get the session from Supabase
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -37,36 +38,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         if (currentSession) {
-          // If we have a session, verify it's still valid
-          const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-          
-          if (userError) {
-            console.error("Error fetching user:", userError.message);
-            throw userError;
-          }
-
-          if (currentUser) {
-            setSession(currentSession);
-            setUser(currentUser);
-          } else {
-            // User data not found, clear the session
-            await signOut();
-          }
+          console.log("Found existing session");
+          setSession(currentSession);
+          setUser(currentSession.user);
         } else {
-          // No session found, clear state
+          console.log("No session found");
           setSession(null);
           setUser(null);
-          
-          // Redirect to login if on a protected route
-          if (window.location.pathname.startsWith('/dashboard') || 
-              window.location.pathname.startsWith('/admin')) {
-            navigate('/login');
-          }
         }
       } catch (error) {
         console.error("Session check error:", error);
-        // Clear state and redirect on error
-        await signOut();
+        setSession(null);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -110,9 +93,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setSession(null);
       setUser(null);
-      
-      // Clear any stored tokens
-      localStorage.removeItem('supabase.auth.token');
       
       toast({
         title: "Déconnexion réussie",
