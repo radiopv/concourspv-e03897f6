@@ -10,7 +10,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -21,6 +21,7 @@ export const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const [isResetting, setIsResetting] = useState(false);
   const state = location.state as { email?: string; message?: string } | null;
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -119,6 +120,41 @@ export const LoginForm = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    const email = form.getValues("email");
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Veuillez entrer votre email pour réinitialiser votre mot de passe",
+      });
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email envoyé",
+        description: "Vérifiez votre boîte mail pour réinitialiser votre mot de passe",
+      });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'envoi de l'email de réinitialisation",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <Form {...form}>
       {state?.message && (
@@ -168,6 +204,15 @@ export const LoginForm = () => {
             <Link to="/register" className="text-indigo-600 hover:underline">
               Créer un compte
             </Link>
+            <Button
+              type="button"
+              variant="link"
+              className="text-indigo-600 hover:underline p-0 h-auto"
+              onClick={handleResetPassword}
+              disabled={isResetting}
+            >
+              {isResetting ? "Envoi en cours..." : "Mot de passe oublié ?"}
+            </Button>
           </div>
         </div>
       </form>
