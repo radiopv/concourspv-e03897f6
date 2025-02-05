@@ -1,24 +1,18 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { parseQuestionText } from '@/utils/questionParser';
-import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { parseQuestionText } from "@/utils/questionParser";
 
 const QuickAddQuestion = () => {
-  const [questionText, setQuestionText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [bulkText, setBulkText] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
+  const handleSubmit = async () => {
     try {
-      const parsedQuestions = parseQuestionText(questionText);
+      const parsedQuestions = parseQuestionText(bulkText);
       
       if (parsedQuestions.length === 0) {
         toast({
@@ -29,26 +23,28 @@ const QuickAddQuestion = () => {
         return;
       }
 
-      // Insérer toutes les questions
+      // Insert into questions table instead of question_bank
       const { error } = await supabase
-        .from('question_bank')
-        .insert(parsedQuestions.map(q => ({
-          question_text: q.question_text,
-          options: q.options,
-          correct_answer: q.correct_answer,
-          article_url: q.article_url,
-          status: 'available'
-        })));
+        .from('questions')
+        .insert(
+          parsedQuestions.map(q => ({
+            question_text: q.question_text,
+            options: q.options,
+            correct_answer: q.correct_answer,
+            article_url: q.article_url,
+            type: 'multiple_choice',
+            status: 'available'
+          }))
+        );
 
       if (error) throw error;
 
       toast({
         title: "Succès",
-        description: `${parsedQuestions.length} question(s) ajoutée(s) à la banque de questions`,
+        description: `${parsedQuestions.length} question(s) ajoutée(s) avec succès`,
       });
 
-      setQuestionText('');
-      queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      setBulkText('');
     } catch (error) {
       console.error('Error adding questions:', error);
       toast({
@@ -56,8 +52,6 @@ const QuickAddQuestion = () => {
         description: "Impossible d'ajouter les questions",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -66,30 +60,28 @@ const QuickAddQuestion = () => {
       <CardHeader>
         <CardTitle>Ajout rapide de questions</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Textarea
-            value={questionText}
-            onChange={(e) => setQuestionText(e.target.value)}
-            placeholder={`Format attendu:
+      <CardContent className="space-y-4">
+        <Textarea
+          value={bulkText}
+          onChange={(e) => setBulkText(e.target.value)}
+          placeholder={`Format attendu:
 
-Question : Votre question ici ?
+Question 1:
+Votre question ici ?
 
-Source : https://...
+A) Option 1
+B) Option 2
+C) Option 3
+D) Option 4
 
-Réponses proposées:
-Option 1
-Option 2
-Option 3
-Option 4
+Réponse correcte: B) La bonne réponse
 
-Réponse correcte: La réponse correcte`}
-            className="min-h-[300px]"
-          />
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Ajout en cours...' : 'Ajouter les questions'}
-          </Button>
-        </form>
+https://... (lien de l'article)`}
+          className="min-h-[300px]"
+        />
+        <Button onClick={handleSubmit} className="w-full">
+          Ajouter les questions
+        </Button>
       </CardContent>
     </Card>
   );
