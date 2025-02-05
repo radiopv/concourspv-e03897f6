@@ -46,6 +46,9 @@ export const parseQuestionText = (text: string): ParsedQuestion[] => {
         }
       }
 
+      // Remove duplicate options while preserving order
+      options = [...new Set(options)];
+
       // Extract correct answer
       let correct_answer = '';
       const correctMatch = block.match(/Réponse correcte\s*:\s*(?:[A-D]\)\s*)?([^\n]+)/i);
@@ -59,8 +62,8 @@ export const parseQuestionText = (text: string): ParsedQuestion[] => {
         }
       }
 
-      // Only add if we have all required fields
-      if (question_text && options.length > 0 && correct_answer) {
+      // Only add if we have all required fields and exactly 4 unique options
+      if (question_text && options.length === 4 && correct_answer) {
         questions.push({
           question_text,
           options,
