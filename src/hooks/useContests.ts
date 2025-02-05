@@ -26,7 +26,7 @@ export const useContests = () => {
           *,
           prizes (
             id,
-            catalog_item:prize_catalog(*)
+            prize_catalog (*)
           )
         `)
         .order('created_at', { ascending: false });
