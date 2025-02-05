@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ExternalLink, CheckCircle2, XCircle, Sparkles, Timer } from "lucide-react";
+import { ExternalLink, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AnswerOptions from './AnswerOptions';
 import { useToast } from "@/hooks/use-toast";
@@ -38,7 +38,6 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
   onSubmitAnswer,
 }) => {
   const [canSubmit, setCanSubmit] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const { toast } = useToast();
   const isCorrect = hasAnswered && selectedAnswer === correctAnswer;
@@ -59,8 +58,6 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
 
   useEffect(() => {
     if (hasAnswered) {
-      setShowFeedback(true);
-      
       toast({
         description: isCorrect ? 
           "🎉 Excellente réponse ! Continue comme ça !" :
@@ -71,12 +68,6 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
         ),
         duration: 2000,
       });
-
-      const timer = setTimeout(() => {
-        setShowFeedback(false);
-      }, 2000);
-
-      return () => clearTimeout(timer);
     }
   }, [hasAnswered, isCorrect, toast]);
 
@@ -125,26 +116,6 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                 onAnswerSelect={onAnswerSelect}
               />
             </div>
-
-            {showFeedback && (
-              <div className={cn(
-                "flex items-center justify-center p-4 rounded-lg transition-all duration-300",
-                isCorrect ? "bg-green-50" : "bg-red-50"
-              )}>
-                {isCorrect ? (
-                  <div className="flex items-center space-x-2 text-green-600">
-                    <CheckCircle2 className="w-5 h-5" />
-                    <Sparkles className="w-5 h-5" />
-                    <span>Excellent !</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2 text-red-600">
-                    <XCircle className="w-5 h-5" />
-                    <span>Pas tout à fait...</span>
-                  </div>
-                )}
-              </div>
-            )}
 
             <div className="flex justify-end space-x-4 mt-6">
               {!hasAnswered && (
