@@ -105,7 +105,11 @@ const ContestQuestionsManager = () => {
   };
 
   const handleAddQuestion = async (questionId: string) => {
+    if (!contestId) return;
+    
     try {
+      console.log('Adding question:', questionId, 'to contest:', contestId);
+      
       const { error } = await supabase
         .from('questions')
         .update({ 
@@ -116,8 +120,8 @@ const ContestQuestionsManager = () => {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
-      queryClient.invalidateQueries({ queryKey: ['questions-bank'] });
+      await queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['available-questions'] });
       
       toast({
         title: "Question ajoutée",
@@ -134,6 +138,8 @@ const ContestQuestionsManager = () => {
   };
 
   const handleRemoveQuestion = async (questionId: string) => {
+    if (!contestId) return;
+    
     try {
       console.log('Removing question:', questionId, 'from contest:', contestId);
       
@@ -143,9 +149,13 @@ const ContestQuestionsManager = () => {
           contest_id: null,
           status: 'available'
         })
-        .eq('id', questionId);
+        .eq('id', questionId)
+        .eq('contest_id', contestId); // Ensure we're only updating if the question belongs to this contest
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       // Invalidate queries to refresh the lists
       await queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
