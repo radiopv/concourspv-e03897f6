@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ExternalLink, CheckCircle2, XCircle, Sparkles } from "lucide-react";
+import { ExternalLink, CheckCircle2, XCircle, Sparkles, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AnswerOptions from './AnswerOptions';
 import { useToast } from "@/hooks/use-toast";
+import ArticleLink from './ArticleLink';
 
 interface QuestionDisplayProps {
   questionText: string;
@@ -40,20 +41,23 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
 }) => {
   const [canSubmit, setCanSubmit] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [countdown, setCountdown] = useState(5);
   const { toast } = useToast();
   const isCorrect = hasAnswered && selectedAnswer === correctAnswer;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (hasClickedLink) {
-      timer = setTimeout(() => {
-        setCanSubmit(true);
-      }, 5000);
+    if (hasClickedLink && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown(prev => prev - 1);
+      }, 1000);
+    } else if (countdown === 0) {
+      setCanSubmit(true);
     }
     return () => {
-      if (timer) clearTimeout(timer);
+      if (timer) clearInterval(timer);
     };
-  }, [hasClickedLink]);
+  }, [hasClickedLink, countdown]);
 
   useEffect(() => {
     if (hasAnswered) {
@@ -86,24 +90,26 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
             <h3 className="text-lg font-semibold">{questionText}</h3>
 
             {articleUrl && (
-              <div className="my-4">
-                <a
-                  href={articleUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={onArticleRead}
-                  className="inline-flex items-center text-primary hover:text-primary/80 transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Lire l'article pour répondre
-                </a>
-              </div>
+              <ArticleLink 
+                url={articleUrl}
+                isRead={hasClickedLink}
+                onArticleRead={onArticleRead}
+              />
             )}
 
             {!hasClickedLink && articleUrl && (
               <Alert>
                 <AlertDescription>
                   Veuillez lire l'article avant de répondre à la question
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {hasClickedLink && countdown > 0 && (
+              <Alert className="bg-blue-50 border-blue-200">
+                <Timer className="h-4 w-4 text-blue-600 animate-spin" />
+                <AlertDescription className="text-blue-600">
+                  Merci de patienter {countdown} secondes avant de répondre...
                 </AlertDescription>
               </Alert>
             )}
@@ -117,7 +123,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                 selectedAnswer={selectedAnswer}
                 correctAnswer={hasAnswered ? correctAnswer : undefined}
                 hasAnswered={hasAnswered}
-                isDisabled={isSubmitting}
+                isDisabled={isSubmitting || !hasClickedLink || countdown > 0}
                 onAnswerSelect={onAnswerSelect}
               />
             </div>
@@ -146,8 +152,11 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               {!hasAnswered ? (
                 <Button
                   onClick={onSubmitAnswer}
-                  disabled={!selectedAnswer || isSubmitting || (articleUrl && !canSubmit)}
-                  className="bg-primary hover:bg-primary/90 transition-colors"
+                  disabled={!selectedAnswer || isSubmitting || !canSubmit}
+                  className={cn(
+                    "bg-primary hover:bg-primary/90 transition-colors",
+                    (!canSubmit || !selectedAnswer) && "opacity-50 cursor-not-allowed"
+                  )}
                 >
                   {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
                 </Button>
