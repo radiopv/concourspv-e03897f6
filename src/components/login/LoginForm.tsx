@@ -4,7 +4,6 @@ import * as z from "zod";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { AuthError } from '@supabase/supabase-js';
 
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -65,6 +64,11 @@ export const LoginForm = () => {
   }, [state?.message, toast]);
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
+    if (isLoading) {
+      console.log("Une connexion est déjà en cours...");
+      return;
+    }
+
     try {
       setIsLoading(true);
       console.log("Tentative de connexion pour:", values.email);
@@ -141,7 +145,12 @@ export const LoginForm = () => {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="jean.dupont@example.com" {...field} />
+                <Input 
+                  type="email" 
+                  placeholder="jean.dupont@example.com" 
+                  {...field} 
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -155,7 +164,11 @@ export const LoginForm = () => {
             <FormItem>
               <FormLabel>Mot de passe</FormLabel>
               <FormControl>
-                <Input type="password" {...field} />
+                <Input 
+                  type="password" 
+                  {...field} 
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
