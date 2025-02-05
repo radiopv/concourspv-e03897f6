@@ -32,11 +32,11 @@ const QuestionTableView = () => {
       const { data, error } = await supabase
         .from('questions')
         .select('*')
-        .is('contest_id', null) // Only get questions not associated with a contest
+        .is('contest_id', null)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as Question[];
     }
   });
 
