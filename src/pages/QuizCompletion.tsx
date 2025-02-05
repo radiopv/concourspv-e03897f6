@@ -40,15 +40,23 @@ const QuizCompletion = () => {
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
-          .single();
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
         if (participantError) {
           console.error('Error fetching participant:', participantError);
-          throw new Error('Participant not found');
+          throw participantError;
         }
 
         if (!participant) {
-          throw new Error('No participant found');
+          console.error('No participant found');
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Aucune participation trouvée pour ce concours",
+          });
+          return;
         }
 
         console.log('Found participant:', participant);
