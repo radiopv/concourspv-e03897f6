@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -9,26 +9,60 @@ import { AnswersCard } from '@/components/quiz-completion/AnswersCard';
 import { StatusCard } from '@/components/quiz-completion/StatusCard';
 import { isQualifiedForDraw } from '@/utils/scoreCalculations';
 import ShareScore from '@/components/quiz-completion/ShareScore';
+import { supabase } from '@/lib/supabase';
 
 const QuizCompletion = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   
   const { 
     score = 0, 
-    totalQuestions = 0, 
-    contestId, 
+    contestId,
     requiredPercentage = 80 
   } = location.state || {};
 
-  // Calculate correct answers based on the score percentage
-  const correctAnswers = Math.round((score / 100) * totalQuestions);
-  console.log('Score calculation:', {
-    score,
-    totalQuestions,
-    correctAnswers,
-    calculation: `${score}% of ${totalQuestions} = ${correctAnswers}`
-  });
+  useEffect(() => {
+    const fetchAnswerStats = async () => {
+      if (!contestId) return;
+
+      try {
+        // Récupérer le nombre total de questions pour ce concours
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('questions')
+          .select('id')
+          .eq('contest_id', contestId);
+
+        if (questionsError) throw questionsError;
+        
+        const totalQuestionsCount = questionsData?.length || 0;
+        setTotalQuestions(totalQuestionsCount);
+
+        // Récupérer les réponses correctes du participant
+        const { data: answersData, error: answersError } = await supabase
+          .from('participant_answers')
+          .select('*')
+          .eq('contest_id', contestId)
+          .eq('is_correct', true);
+
+        if (answersError) throw answersError;
+        
+        const correctAnswersCount = answersData?.length || 0;
+        setCorrectAnswers(correctAnswersCount);
+
+        console.log('Answer stats:', {
+          totalQuestions: totalQuestionsCount,
+          correctAnswers: correctAnswersCount
+        });
+
+      } catch (error) {
+        console.error('Error fetching answer stats:', error);
+      }
+    };
+
+    fetchAnswerStats();
+  }, [contestId]);
 
   const isQualified = isQualifiedForDraw(score, requiredPercentage);
 
