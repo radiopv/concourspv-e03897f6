@@ -18,7 +18,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   
-  const { questions } = useQuestions(contestId);
+  const { data: questions } = useQuestions(contestId);
   const { participant, refetchParticipant } = useQuestionnaireQueries(contestId);
 
   const currentQuestion = questions?.[currentQuestionIndex];
@@ -60,9 +60,10 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   return (
     <div className="max-w-3xl mx-auto px-4">
       <QuestionnaireProgress 
-        currentQuestion={currentQuestionIndex + 1}
+        currentQuestionIndex={currentQuestionIndex + 1}
         totalQuestions={totalQuestions}
-        progress={progress}
+        score={0}
+        totalAnswered={currentQuestionIndex}
       />
       
       <div className="mt-8">
