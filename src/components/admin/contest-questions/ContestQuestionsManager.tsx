@@ -135,6 +135,8 @@ const ContestQuestionsManager = () => {
 
   const handleRemoveQuestion = async (questionId: string) => {
     try {
+      console.log('Removing question:', questionId, 'from contest:', contestId);
+      
       const { error } = await supabase
         .from('questions')
         .update({ 
@@ -145,12 +147,13 @@ const ContestQuestionsManager = () => {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
-      queryClient.invalidateQueries({ queryKey: ['questions-bank'] });
+      // Invalidate queries to refresh the lists
+      await queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['available-questions'] });
       
       toast({
         title: "Question retirée",
-        description: "La question a été retirée du concours",
+        description: "La question a été retirée du concours avec succès",
       });
     } catch (error) {
       console.error('Error removing question:', error);
