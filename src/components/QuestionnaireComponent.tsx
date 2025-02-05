@@ -60,9 +60,9 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     }, 2000);
   };
 
-  // Calculate score percentage based on questions answered so far
-  const scorePercentage = answeredQuestions > 0 
-    ? Math.min(100, Math.round((correctAnswers / answeredQuestions) * 100))
+  // Calculate score percentage based on total questions
+  const scorePercentage = totalQuestions > 0 
+    ? Math.round((correctAnswers / totalQuestions) * 100)
     : 0;
 
   if (!currentQuestion) {
