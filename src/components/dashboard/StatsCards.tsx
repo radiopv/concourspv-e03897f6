@@ -20,15 +20,6 @@ const StatsCards = ({ stats }: StatsCardsProps) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) throw new Error('User not authenticated');
 
-      // Fetch member stats
-      const { data: memberData, error: memberError } = await supabase
-        .from('members')
-        .select('contests_participated, contests_won')
-        .eq('id', session.user.id)
-        .single();
-
-      if (memberError) throw memberError;
-
       // Fetch total points from point history
       const { data: pointsData, error: pointsError } = await supabase
         .from('point_history')
@@ -39,12 +30,23 @@ const StatsCards = ({ stats }: StatsCardsProps) => {
 
       const totalPoints = pointsData.reduce((sum, record) => sum + (record.points || 0), 0);
 
+      // Fetch member stats
+      const { data: memberData, error: memberError } = await supabase
+        .from('members')
+        .select('contests_participated, contests_won')
+        .eq('id', session.user.id)
+        .single();
+
+      if (memberError) throw memberError;
+
       return {
         contests_participated: memberData?.contests_participated || 0,
         contests_won: memberData?.contests_won || 0,
         total_points: totalPoints
       };
-    }
+    },
+    staleTime: 1000 * 60, // Refresh every minute
+    refetchOnWindowFocus: true
   });
 
   const participations = realStats?.contests_participated || 0;
