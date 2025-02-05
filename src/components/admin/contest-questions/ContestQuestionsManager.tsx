@@ -137,12 +137,12 @@ const ContestQuestionsManager = () => {
 
   const handleRemoveQuestion = async (questionId: string) => {
     if (!contestId) {
-      console.error('No contest ID provided');
+      console.error('❌ No contest ID provided');
       return;
     }
     
     try {
-      console.log('Starting question removal process:', { questionId, contestId });
+      console.log('🔍 Starting question removal process:', { questionId, contestId });
 
       // First verify the question belongs to this contest
       const { data: question, error: checkError } = await supabase
@@ -150,50 +150,57 @@ const ContestQuestionsManager = () => {
         .select('*')
         .eq('id', questionId)
         .eq('contest_id', contestId)
-        .single();
+        .maybeSingle();
 
-      console.log('Question verification result:', { question, checkError });
+      console.log('📋 Question verification result:', { question, checkError });
 
       if (checkError) {
-        console.error('Error checking question:', checkError);
+        console.error('❌ Error checking question:', checkError);
         throw new Error('Error verifying question ownership');
       }
 
       if (!question) {
-        console.error('Question not found or does not belong to this contest');
+        console.error('❌ Question not found or does not belong to this contest');
         throw new Error('Question not found or does not belong to this contest');
       }
 
-      console.log('Proceeding with question removal');
+      console.log('✅ Question verified, proceeding with removal');
 
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('questions')
         .update({ 
           contest_id: null,
           status: 'available'
         })
         .eq('id', questionId)
-        .eq('contest_id', contestId); // Add this condition to ensure we only update if it belongs to this contest
+        .select();
 
-      console.log('Update operation result:', { updateError });
+      console.log('📝 Update operation result:', { updateData, updateError });
 
       if (updateError) {
-        console.error('Error updating question:', updateError);
+        console.error('❌ Error updating question:', updateError);
         throw updateError;
+      }
+
+      if (!updateData || updateData.length === 0) {
+        console.error('❌ No rows were updated');
+        throw new Error('Failed to update question');
       }
 
       // Immediately update the cache to remove the question
       queryClient.setQueryData(['contest-questions', contestId], (old: Question[] | undefined) => {
         if (!old) return [];
         const filtered = old.filter(q => q.id !== questionId);
-        console.log('Cache update - removed question:', { 
+        console.log('🔄 Cache update:', { 
           oldLength: old.length, 
-          newLength: filtered.length 
+          newLength: filtered.length,
+          removedQuestion: questionId
         });
         return filtered;
       });
 
       // Then invalidate queries to ensure everything is in sync
+      console.log('🔄 Invalidating queries...');
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['available-questions'] })
@@ -204,9 +211,9 @@ const ContestQuestionsManager = () => {
         description: "La question a été retirée du concours avec succès",
       });
 
-      console.log('Question removal completed successfully');
+      console.log('✨ Question removal completed successfully');
     } catch (error) {
-      console.error('Error removing question:', error);
+      console.error('❌ Error removing question:', error);
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Impossible de retirer la question du concours",
