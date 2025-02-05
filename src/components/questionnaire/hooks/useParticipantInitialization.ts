@@ -32,12 +32,13 @@ export const useParticipantInitialization = (
           return;
         }
 
-        // First, check for any existing participation
-        const { data: existingParticipation, error: checkError } = await supabase
+        // Vérifier d'abord si une participation complétée existe
+        const { data: existingCompletedParticipation, error: checkError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
+          .eq('status', 'completed')
           .maybeSingle();
 
         if (checkError) {
@@ -45,22 +46,29 @@ export const useParticipantInitialization = (
           return;
         }
 
-        // If there's an existing completed participation, redirect to completion page
-        if (existingParticipation?.status === 'completed') {
+        // Si une participation complétée existe, rediriger vers la page de résultats
+        if (existingCompletedParticipation) {
           navigate('/quiz-completion', {
             state: {
               contestId,
-              score: existingParticipation.score,
-              totalQuestions: 0, // This will be updated when we fetch questions
+              score: existingCompletedParticipation.score,
               requiredPercentage: 80,
             }
           });
           return;
         }
 
-        // If there's an existing pending participation, use that
-        if (existingParticipation?.status === 'pending') {
-          console.log('Found existing pending participation:', existingParticipation);
+        // Vérifier les participations en cours
+        const { data: existingPendingParticipation } = await supabase
+          .from('participants')
+          .select('*')
+          .eq('contest_id', contestId)
+          .eq('id', session.user.id)
+          .eq('status', 'pending')
+          .maybeSingle();
+
+        if (existingPendingParticipation) {
+          console.log('Found existing pending participation:', existingPendingParticipation);
           await refetchParticipant();
           return;
         }
@@ -80,7 +88,7 @@ export const useParticipantInitialization = (
         const maxAttempts = (settings?.default_attempts || 3) + (userPoints?.extra_participations || 0);
 
         // Get the latest participation to determine the next attempt number
-        const { data: latestParticipation, error: latestError } = await supabase
+        const { data: latestParticipation } = await supabase
           .from('participants')
           .select('attempts')
           .eq('contest_id', contestId)
@@ -88,11 +96,6 @@ export const useParticipantInitialization = (
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
-
-        if (latestError) {
-          console.error('Error checking latest participation:', latestError);
-          return;
-        }
 
         const nextAttemptNumber = (latestParticipation?.attempts || 0) + 1;
 
@@ -123,6 +126,17 @@ export const useParticipantInitialization = (
           .single();
 
         if (insertError) {
+          if (insertError.message.includes('déjà participé')) {
+            navigate('/quiz-completion', {
+              state: {
+                contestId,
+                score: 0,
+                requiredPercentage: 80,
+              }
+            });
+            return;
+          }
+          
           console.error('Error creating participant:', insertError);
           toast({
             title: "Erreur",
