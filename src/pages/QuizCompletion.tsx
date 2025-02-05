@@ -1,70 +1,76 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { useLocation, useParams } from 'react-router-dom';
 import { motion } from "framer-motion";
 import { Helmet } from 'react-helmet';
 import { ScoreCard } from '@/components/quiz-completion/ScoreCard';
 import { AnswersCard } from '@/components/quiz-completion/AnswersCard';
 import { StatusCard } from '@/components/quiz-completion/StatusCard';
-import { isQualifiedForDraw } from '@/utils/scoreCalculations';
-import ShareScore from '@/components/quiz-completion/ShareScore';
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 const QuizCompletion = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { contestId } = useParams();
+  const { toast } = useToast();
+  const [score, setScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
-  
-  const { 
-    score = 0, 
-    contestId,
-    requiredPercentage = 80 
-  } = location.state || {};
+  const [isQualified, setIsQualified] = useState(false);
+  const requiredPercentage = 80; // Score minimum requis
 
   useEffect(() => {
-    const fetchAnswerStats = async () => {
+    const fetchQuizResults = async () => {
       if (!contestId) return;
 
       try {
-        // Récupérer le nombre total de questions pour ce concours
-        const { data: questionsData, error: questionsError } = await supabase
-          .from('questions')
-          .select('id')
+        // Récupérer les réponses du participant
+        const { data: answers, error: answersError } = await supabase
+          .from('participant_answers')
+          .select('is_correct')
           .eq('contest_id', contestId);
 
-        if (questionsError) throw questionsError;
-        
-        const totalQuestionsCount = questionsData?.length || 0;
-        setTotalQuestions(totalQuestionsCount);
-
-        // Récupérer les réponses correctes du participant
-        const { data: answersData, error: answersError } = await supabase
-          .from('participant_answers')
-          .select('*')
-          .eq('contest_id', contestId)
-          .eq('is_correct', true);
-
         if (answersError) throw answersError;
-        
-        const correctAnswersCount = answersData?.length || 0;
-        setCorrectAnswers(correctAnswersCount);
 
-        console.log('Answer stats:', {
-          totalQuestions: totalQuestionsCount,
-          correctAnswers: correctAnswersCount
-        });
+        if (answers) {
+          const correct = answers.filter(answer => answer.is_correct).length;
+          const total = answers.length;
+          const calculatedScore = total > 0 ? Math.round((correct / total) * 100) : 0;
 
+          setCorrectAnswers(correct);
+          setTotalQuestions(total);
+          setScore(calculatedScore);
+          setIsQualified(calculatedScore >= requiredPercentage);
+
+          // Mettre à jour le statut du participant
+          const { error: updateError } = await supabase
+            .from('participants')
+            .update({ 
+              status: 'completed',
+              score: calculatedScore,
+              completed_at: new Date().toISOString()
+            })
+            .eq('contest_id', contestId);
+
+          if (updateError) {
+            console.error('Error updating participant status:', updateError);
+          }
+        }
       } catch (error) {
-        console.error('Error fetching answer stats:', error);
+        console.error('Error fetching quiz results:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de récupérer vos résultats",
+        });
       }
     };
 
-    fetchAnswerStats();
-  }, [contestId]);
-
-  const isQualified = isQualifiedForDraw(score, requiredPercentage);
+    fetchQuizResults();
+  }, [contestId, toast]);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -79,7 +85,7 @@ const QuizCompletion = () => {
         className="text-center mb-8"
       >
         <h1 className="text-4xl font-bold text-amber-600 mb-4">
-          {isQualified ? "🎉 Félicitations !" : "Quiz terminé"}
+          Quiz terminé
         </h1>
         <p className="text-xl text-gray-600">
           Voici vos résultats
@@ -119,29 +125,16 @@ const QuizCompletion = () => {
         className="text-center space-y-4"
       >
         <p className="text-lg text-gray-600 mb-4">
-          {isQualified 
-            ? "Bravo ! Vous êtes qualifié pour le tirage au sort !"
-            : `Le score minimum requis est de ${requiredPercentage}%. Une seule participation est autorisée par concours.`}
+          Le score minimum requis est de {requiredPercentage}%. Une seule participation est autorisée par concours.
         </p>
-        <div className="space-x-4">
-          <Button
-            onClick={() => navigate('/contests')}
-            className="bg-amber-500 hover:bg-amber-600"
-          >
-            Voir tous les concours
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
         
-        {isQualified && contestId && (
-          <div className="mt-8">
-            <ShareScore 
-              score={score} 
-              totalQuestions={totalQuestions} 
-              contestId={contestId} 
-            />
-          </div>
-        )}
+        <Button
+          onClick={() => navigate('/contests')}
+          className="bg-amber-500 hover:bg-amber-600"
+        >
+          Voir tous les concours
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
       </motion.div>
     </div>
   );
