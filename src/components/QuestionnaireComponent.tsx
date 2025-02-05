@@ -45,7 +45,11 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     const participationId = await createOrUpdateParticipant();
     if (!participationId) return;
 
-    const isCorrect = await submitAnswer(participationId, currentQuestion, selectedAnswer, totalQuestions);
+    const isCorrect = await submitAnswer(participationId, {
+      ...currentQuestion,
+      status: currentQuestion.status || 'available'
+    }, selectedAnswer, totalQuestions);
+    
     setHasAnswered(true);
 
     setTimeout(() => {
