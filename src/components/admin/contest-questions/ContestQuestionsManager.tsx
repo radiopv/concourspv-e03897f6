@@ -51,14 +51,13 @@ const ContestQuestionsManager = () => {
     }
   });
 
-  const questionsNeeded = 25 - (questions?.length || 0);
+  const questionsNeeded = 25 - (Array.isArray(questions) ? questions.length : 0);
 
   const autoFillQuestions = async () => {
     if (!contestId) return;
     setIsAutoFilling(true);
 
     try {
-      // Récupérer les questions disponibles
       const { data: availableQuestions, error: fetchError } = await supabase
         .from('questions')
         .select('*')
@@ -77,7 +76,6 @@ const ContestQuestionsManager = () => {
         return;
       }
 
-      // Ajouter les questions au concours
       const { error: updateError } = await supabase
         .from('questions')
         .update({ 
@@ -202,7 +200,7 @@ const ContestQuestionsManager = () => {
           <CardContent className="pt-6">
             <div className="flex justify-between items-center">
               <span>Questions dans ce concours</span>
-              <Badge variant="secondary">{questions.length} / 25</Badge>
+              <Badge variant="secondary">{Array.isArray(questions) ? questions.length : 0} / 25</Badge>
             </div>
           </CardContent>
         </Card>
@@ -227,7 +225,7 @@ const ContestQuestionsManager = () => {
           <CardContent>
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-4">
-                {availableQuestions.map((question: Question) => (
+                {Array.isArray(availableQuestions) && availableQuestions.map((question: Question) => (
                   <Card key={question.id} className="p-4">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
@@ -273,7 +271,7 @@ const ContestQuestionsManager = () => {
           <CardContent>
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-4">
-                {questions.map((question: Question, index: number) => (
+                {Array.isArray(questions) && questions.map((question: Question, index: number) => (
                   <Card key={question.id} className="p-4">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
