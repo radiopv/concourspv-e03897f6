@@ -151,7 +151,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
             </div>
           </div>
           {contest.description && (
-            <p className="text-gray-700 mt-2 text-sm leading-relaxed">
+            <p className="text-gray-700 mt-4 text-sm leading-relaxed">
               {contest.description}
             </p>
           )}
