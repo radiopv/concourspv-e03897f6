@@ -8,113 +8,37 @@ import { useContests } from "@/hooks/useContests";
 import PageMetadata from "@/components/seo/PageMetadata";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 
 const ContestsList = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { data: contests, isLoading, error } = useContests();
+  const { data: contests, isLoading } = useContests();
   const canonicalUrl = `${window.location.origin}/contests`;
 
-  // Check if user is authenticated
-  const { data: session } = useQuery({
-    queryKey: ['auth-session'],
+  const { data: userPoints } = useQuery({
+    queryKey: ['user-points'],
     queryFn: async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error checking session:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur d'authentification",
-          description: "Impossible de vérifier votre session.",
-        });
-        return null;
-      }
-      console.log("Session status:", session ? "Authenticated" : "Not authenticated");
-      return session;
-    },
-    retry: 1
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+
+      const { data } = await supabase
+        .from('user_points')
+        .select('current_rank')
+        .eq('user_id', session.user.id)
+        .single();
+
+      return data;
+    }
   });
 
-  console.log("ContestsList - Rendering with data:", {
-    hasContests: contests?.length > 0,
-    isLoading,
-    hasError: !!error,
-    sessionExists: !!session
-  });
-
-  // Loading state
   if (isLoading) {
-    console.log("ContestsList - Loading state");
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] py-12">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center mb-4">
-              <Trophy className="w-12 h-12 text-[#F97316] mr-3" />
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-[#9b87f5] to-[#F97316] bg-clip-text text-transparent">
-                Nos Concours
-              </h1>
-            </div>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
-              Chargement des concours...
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            {[1, 2].map((i) => (
-              <div key={i} className="w-full">
-                <Card className="w-full h-[400px] bg-black/30 animate-pulse">
-                  <CardContent className="p-6">
-                    <Skeleton className="h-8 w-3/4 mb-4" />
-                    <Skeleton className="h-4 w-full mb-2" />
-                    <Skeleton className="h-4 w-2/3 mb-4" />
-                    <Skeleton className="h-40 w-full mb-4" />
-                    <Skeleton className="h-10 w-full" />
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#9b87f5]"></div>
       </div>
     );
   }
 
-  // Error state
-  if (error) {
-    console.error('Error loading contests:', error);
-    toast({
-      variant: "destructive",
-      title: "Erreur de chargement",
-      description: "Impossible de charger les concours. Veuillez réessayer plus tard.",
-    });
-
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] flex items-center justify-center p-4">
-        <PageMetadata
-          title="Concours - Erreur de chargement"
-          description="Une erreur est survenue lors du chargement des concours."
-          pageUrl={canonicalUrl}
-        />
-        <Card className="max-w-lg w-full bg-black/30 border-[#9b87f5]/20">
-          <CardContent className="text-center py-12">
-            <Trophy className="w-16 h-16 text-[#F97316] mx-auto mb-6" />
-            <h2 className="text-2xl font-semibold mb-4 text-white">
-              Erreur de chargement
-            </h2>
-            <p className="text-gray-300 mb-6">
-              Une erreur est survenue lors du chargement des concours. Veuillez réessayer plus tard.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // No contests state
   if (!contests || contests.length === 0) {
-    console.log("ContestsList - No contests available");
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] flex items-center justify-center p-4">
         <PageMetadata
@@ -136,8 +60,6 @@ const ContestsList = () => {
       </div>
     );
   }
-
-  console.log("ContestsList - Rendering contests:", contests.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] py-12">

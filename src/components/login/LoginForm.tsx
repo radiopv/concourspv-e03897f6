@@ -4,12 +4,13 @@ import * as z from "zod";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { AuthError, AuthApiError } from '@supabase/supabase-js';
 
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -20,7 +21,6 @@ export const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
   const state = location.state as { email?: string; message?: string } | null;
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -34,11 +34,10 @@ export const LoginForm = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        console.log("Vérification de la session existante...");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("Erreur lors de la vérification de la session:", error);
+          console.error("Session check error:", error);
           await supabase.auth.signOut();
           return;
         }
@@ -46,11 +45,9 @@ export const LoginForm = () => {
         if (session?.user) {
           console.log("Session active trouvée, redirection vers dashboard");
           navigate("/dashboard", { replace: true });
-        } else {
-          console.log("Aucune session active trouvée");
         }
       } catch (error) {
-        console.error("Erreur lors de la vérification de la session:", error);
+        console.error("Session check failed:", error);
       }
     };
     checkSession();
@@ -65,21 +62,40 @@ export const LoginForm = () => {
     }
   }, [state?.message, toast]);
 
-  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
-    if (isLoading) {
-      console.log("Une connexion est déjà en cours...");
-      return;
+  const getErrorMessage = (error: AuthError) => {
+    console.error("Erreur détaillée:", error);
+    
+    if (error instanceof AuthApiError) {
+      switch (error.status) {
+        case 400:
+          if (error.message.includes('Email not confirmed')) {
+            return "Veuillez vérifier votre email pour activer votre compte.";
+          }
+          if (error.message.includes('Invalid login credentials')) {
+            return "Email ou mot de passe incorrect.";
+          }
+          if (error.message.includes('refresh_token_not_found')) {
+            return "Session expirée. Veuillez vous reconnecter.";
+          }
+          return "Une erreur est survenue lors de la connexion.";
+        case 422:
+          return "Format d'email invalide.";
+        case 429:
+          return "Trop de tentatives de connexion. Veuillez réessayer plus tard.";
+        default:
+          return error.message;
+      }
     }
+    return "Une erreur inattendue est survenue. Veuillez réessayer.";
+  };
 
+  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
-      setIsLoading(true);
       console.log("Tentative de connexion pour:", values.email);
       
-      // Nettoyer toute session existante d'abord
-      console.log("Nettoyage de la session existante...");
+      // Clear any existing session first
       await supabase.auth.signOut();
 
-      console.log("Envoi des identifiants à Supabase...");
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
@@ -87,18 +103,10 @@ export const LoginForm = () => {
 
       if (error) {
         console.error("Erreur de connexion:", error);
-        let errorMessage = "Une erreur est survenue lors de la connexion";
-        
-        if (error.message.includes('Invalid login credentials')) {
-          errorMessage = "Email ou mot de passe incorrect";
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = "Veuillez confirmer votre email avant de vous connecter";
-        }
-        
         toast({
           variant: "destructive",
           title: "Erreur de connexion",
-          description: errorMessage,
+          description: getErrorMessage(error),
         });
         return;
       }
@@ -106,20 +114,11 @@ export const LoginForm = () => {
       if (data?.user) {
         console.log("Connexion réussie pour:", data.user.email);
         
-        // Vérifier que la session est bien établie
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error("Erreur lors de la vérification de la session:", sessionError);
-          throw sessionError;
-        }
-
-        if (!sessionData.session) {
-          console.error("Session non établie après connexion");
-          throw new Error("Session non établie après connexion");
-        }
-
-        console.log("Session établie avec succès:", sessionData.session);
+        // Set session persistence
+        await supabase.auth.setSession({
+          access_token: data.session?.access_token || '',
+          refresh_token: data.session?.refresh_token || '',
+        });
 
         toast({
           title: "Connexion réussie",
@@ -127,19 +126,46 @@ export const LoginForm = () => {
         });
         
         navigate("/dashboard", { replace: true });
-      } else {
-        console.error("Données utilisateur manquantes après connexion");
-        throw new Error("Données utilisateur manquantes après connexion");
       }
     } catch (error) {
-      console.error("Erreur inattendue lors de la connexion:", error);
+      console.error("Erreur lors de la connexion:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur inattendue est survenue",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la connexion",
       });
-    } finally {
-      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    const email = form.getValues("email");
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "Email requis",
+        description: "Veuillez entrer votre email pour réinitialiser votre mot de passe.",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email envoyé",
+        description: "Veuillez vérifier votre boîte de réception pour réinitialiser votre mot de passe.",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la réinitialisation du mot de passe:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue. Veuillez réessayer.",
+      });
     }
   };
 
@@ -159,12 +185,7 @@ export const LoginForm = () => {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input 
-                  type="email" 
-                  placeholder="jean.dupont@example.com" 
-                  {...field} 
-                  disabled={isLoading}
-                />
+                <Input type="email" placeholder="jean.dupont@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -178,11 +199,7 @@ export const LoginForm = () => {
             <FormItem>
               <FormLabel>Mot de passe</FormLabel>
               <FormControl>
-                <Input 
-                  type="password" 
-                  {...field} 
-                  disabled={isLoading}
-                />
+                <Input type="password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -192,16 +209,20 @@ export const LoginForm = () => {
         <div className="flex flex-col space-y-4">
           <Button
             type="submit"
-            disabled={isLoading}
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
           >
-            {isLoading ? "Connexion en cours..." : "Se connecter"}
+            Se connecter
           </Button>
 
           <div className="flex justify-between text-sm">
-            <Link to="/forgot-password" className="text-indigo-600 hover:underline">
+            <Button
+              type="button"
+              variant="link"
+              className="text-indigo-600"
+              onClick={handleResetPassword}
+            >
               Mot de passe oublié ?
-            </Link>
+            </Button>
             <Link to="/register" className="text-indigo-600 hover:underline">
               Créer un compte
             </Link>

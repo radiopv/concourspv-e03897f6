@@ -577,6 +577,44 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          status: string
+          taxi_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          status?: string
+          taxi_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          status?: string
+          taxi_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_taxi_chauffeur_id_fkey"
+            columns: ["taxi_id"]
+            isOneToOne: false
+            referencedRelation: "taxi_chauffeur"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       settings: {
         Row: {
           created_at: string

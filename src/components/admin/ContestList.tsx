@@ -3,7 +3,6 @@ import ContestListHeader from "./contest-list/ContestListHeader";
 import ContestListGrid from "./contest-list/ContestListGrid";
 import { Contest } from "@/types/contest";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 
 interface ContestListProps {
   contests: Contest[];
@@ -12,20 +11,11 @@ interface ContestListProps {
 
 const ContestList: React.FC<ContestListProps> = ({ contests, onSelectContest }) => {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const { toast } = useToast();
 
-  console.log('ContestList received contests:', contests);
-
-  if (!contests || contests.length === 0) {
-    console.log('No contests available or contests array is empty');
-  }
-
-  const filteredContests = contests?.filter(contest => {
+  const filteredContests = contests.filter(contest => {
     if (selectedStatus === "all") return true;
     return contest.status === selectedStatus;
-  }) || [];
-
-  console.log('Filtered contests:', filteredContests);
+  });
 
   return (
     <div className="space-y-6">

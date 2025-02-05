@@ -1,67 +1,82 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
 export const useContests = () => {
   const { toast } = useToast();
-  const { session } = useAuth();
-  
+  const navigate = useNavigate();
+
   return useQuery({
-    queryKey: ['contests'],
+    queryKey: ['active-contests'],
     queryFn: async () => {
-      console.log('Starting to fetch contests...');
-      console.log('Current session:', session);
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // First check if we have a session
-      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Session check:', currentSession ? 'Session exists' : 'No session', sessionError);
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error('Failed to check authentication status');
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Non connecté",
+          description: "Veuillez vous connecter pour voir les concours.",
+        });
+        navigate('/login');
+        return [];
       }
 
-      console.log('Attempting to fetch contests from Supabase...');
+      console.log('Fetching contests...');
+      
       const { data: contests, error } = await supabase
         .from('contests')
         .select(`
           *,
-          prizes (
+          participants(count),
+          questions(count),
+          prizes(
             id,
-            prize_catalog (
-              id,
+            prize_catalog_id,
+            prize_catalog(
               name,
               description,
               image_url,
-              value,
-              shop_url
+              shop_url,
+              value
             )
           )
         `)
-        .order('created_at', { ascending: false });
+        .eq('status', 'active')
+        .eq('participants.status', 'completed');
 
       if (error) {
         console.error('Error fetching contests:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les concours. Veuillez réessayer.",
-        });
         throw error;
       }
 
-      if (!contests) {
+      console.log('Raw contests data:', contests);
+
+      if (!contests || contests.length === 0) {
         console.log('No contests found in database');
         return [];
       }
 
-      console.log('Successfully fetched contests:', contests);
-      return contests;
+      const processedContests = contests.map(contest => ({
+        ...contest,
+        participants: { count: contest.participants?.[0]?.count || 0 },
+        questions: { count: contest.questions?.[0]?.count || 0 },
+        prizes: contest.prizes?.map(prize => ({
+          id: prize.id,
+          name: prize.prize_catalog.name,
+          description: prize.prize_catalog.description,
+          image_url: prize.prize_catalog.image_url,
+          shop_url: prize.prize_catalog.shop_url,
+          value: prize.prize_catalog.value
+        })) || []
+      }));
+
+      console.log('Processed contests:', processedContests);
+      return processedContests;
     },
     retry: 1,
     refetchOnWindowFocus: false,
-    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    refetchInterval: 300000, // 5 minutes
+    staleTime: 300000, // 5 minutes
   });
 };

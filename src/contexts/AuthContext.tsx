@@ -28,15 +28,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        console.log('Checking current session...');
+        // Clear any existing session first to avoid stale data
+        await supabase.auth.signOut();
+        
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error("Error fetching session:", sessionError.message);
           throw sessionError;
         }
-
-        console.log('Session status:', currentSession ? 'Active session found' : 'No active session');
 
         if (currentSession) {
           const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
@@ -47,21 +47,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           if (currentUser) {
-            console.log('User found:', currentUser.email);
             setSession(currentSession);
             setUser(currentUser);
             
-            // Update session persistence
+            // Set session persistence
             await supabase.auth.setSession({
               access_token: currentSession.access_token,
               refresh_token: currentSession.refresh_token,
             });
           } else {
-            console.log('No user found, signing out...');
             await signOut();
           }
         } else {
-          console.log('No active session found');
           setSession(null);
           setUser(null);
           
@@ -87,7 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("Auth state changed:", event);
       
       if (event === 'SIGNED_OUT') {
-        // Clean up session data
+        // Clear session data
         setSession(null);
         setUser(null);
         localStorage.removeItem('supabase.auth.token');
@@ -99,7 +96,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (currentSession) {
-          console.log('Setting new session for user:', currentSession.user?.email);
           setSession(currentSession);
           setUser(currentSession.user);
           
@@ -122,12 +118,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Clean up local data first
+      // Clear local session data first
       setSession(null);
       setUser(null);
       localStorage.removeItem('supabase.auth.token');
       
-      // Then attempt Supabase signout
+      // Then attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Sign out error:", error);
@@ -142,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate('/login');
     } catch (error) {
       console.error("Sign out error:", error);
-      // Even if there's an error, we want to clean up the local session
+      // Even if there's an error, we still want to clear the local session
       navigate('/login');
       toast({
         variant: "destructive",
