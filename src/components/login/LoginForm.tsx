@@ -4,7 +4,7 @@ import * as z from "zod";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { AuthError, AuthApiError } from '@supabase/supabase-js';
+import { AuthError } from '@supabase/supabase-js';
 
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -35,10 +35,11 @@ export const LoginForm = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        console.log("Vérification de la session existante...");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("Session check error:", error);
+          console.error("Erreur lors de la vérification de la session:", error);
           await supabase.auth.signOut();
           return;
         }
@@ -48,7 +49,7 @@ export const LoginForm = () => {
           navigate("/dashboard", { replace: true });
         }
       } catch (error) {
-        console.error("Session check failed:", error);
+        console.error("Erreur lors de la vérification de la session:", error);
       }
     };
     checkSession();
@@ -63,41 +64,16 @@ export const LoginForm = () => {
     }
   }, [state?.message, toast]);
 
-  const getErrorMessage = (error: AuthError) => {
-    console.error("Erreur détaillée:", error);
-    
-    if (error instanceof AuthApiError) {
-      switch (error.status) {
-        case 400:
-          if (error.message.includes('Email not confirmed')) {
-            return "Veuillez vérifier votre email pour activer votre compte.";
-          }
-          if (error.message.includes('Invalid login credentials')) {
-            return "Email ou mot de passe incorrect.";
-          }
-          if (error.message.includes('refresh_token_not_found')) {
-            return "Session expirée. Veuillez vous reconnecter.";
-          }
-          return "Une erreur est survenue lors de la connexion.";
-        case 422:
-          return "Format d'email invalide.";
-        case 429:
-          return "Trop de tentatives de connexion. Veuillez réessayer plus tard.";
-        default:
-          return error.message;
-      }
-    }
-    return "Une erreur inattendue est survenue. Veuillez réessayer.";
-  };
-
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
       setIsLoading(true);
       console.log("Tentative de connexion pour:", values.email);
       
       // Nettoyer toute session existante d'abord
+      console.log("Nettoyage de la session existante...");
       await supabase.auth.signOut();
 
+      console.log("Envoi des identifiants à Supabase...");
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
@@ -105,10 +81,18 @@ export const LoginForm = () => {
 
       if (error) {
         console.error("Erreur de connexion:", error);
+        let errorMessage = "Une erreur est survenue lors de la connexion";
+        
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = "Email ou mot de passe incorrect";
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = "Veuillez confirmer votre email avant de vous connecter";
+        }
+        
         toast({
           variant: "destructive",
           title: "Erreur de connexion",
-          description: getErrorMessage(error),
+          description: errorMessage,
         });
         return;
       }
@@ -116,7 +100,7 @@ export const LoginForm = () => {
       if (data?.user) {
         console.log("Connexion réussie pour:", data.user.email);
         
-        // Définir la persistance de la session
+        console.log("Mise à jour de la session...");
         await supabase.auth.setSession({
           access_token: data.session?.access_token || '',
           refresh_token: data.session?.refresh_token || '',
@@ -130,11 +114,11 @@ export const LoginForm = () => {
         navigate("/dashboard", { replace: true });
       }
     } catch (error) {
-      console.error("Erreur lors de la connexion:", error);
+      console.error("Erreur inattendue lors de la connexion:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la connexion",
+        description: error instanceof Error ? error.message : "Une erreur inattendue est survenue",
       });
     } finally {
       setIsLoading(false);
