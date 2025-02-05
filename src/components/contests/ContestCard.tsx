@@ -8,6 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Prize } from "@/types/prize";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface ContestCardProps {
   contest: {
@@ -20,6 +22,8 @@ interface ContestCardProps {
     prizes?: Prize[];
     is_rank_restricted?: boolean;
     min_rank?: string;
+    start_date?: string;
+    end_date?: string;
   };
   onSelect: (id: string) => void;
   index: number;
@@ -85,17 +89,15 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
     onSelect(contest.id);
   };
 
-  // Remove duplicate "Connaissance de base" from title
   const cleanTitle = contest.title.replace(/Connaissance de base/g, '').replace(/\s+-\s+$/, '').trim();
 
-  // Rotate between different soft background colors based on index
   const backgroundColors = [
-    'from-[#F2FCE2] to-[#E5F5D3]', // Soft Green
-    'from-[#FEF7CD] to-[#FDF0B0]', // Soft Yellow
-    'from-[#E5DEFF] to-[#D6BCFA]', // Soft Purple
-    'from-[#D3E4FD] to-[#B9D5FC]', // Soft Blue
-    'from-[#FFDEE2] to-[#FFD0D6]', // Soft Pink
-    'from-[#FDE1D3] to-[#FCD1BA]'  // Soft Peach
+    'from-[#F2FCE2] to-[#E5F5D3]',
+    'from-[#FEF7CD] to-[#FDF0B0]',
+    'from-[#E5DEFF] to-[#D6BCFA]',
+    'from-[#D3E4FD] to-[#B9D5FC]',
+    'from-[#FFDEE2] to-[#FFD0D6]',
+    'from-[#FDE1D3] to-[#FCD1BA]'
   ];
 
   const bgColorClass = backgroundColors[index % backgroundColors.length];
@@ -138,6 +140,12 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
             <p className="text-gray-700 mt-2 text-sm leading-relaxed">
               {contest.description}
             </p>
+          )}
+          {contest.start_date && contest.end_date && (
+            <div className="mt-4 text-sm text-gray-600">
+              <p>Du {format(new Date(contest.start_date), 'dd MMMM yyyy', { locale: fr })}</p>
+              <p>Au {format(new Date(contest.end_date), 'dd MMMM yyyy', { locale: fr })}</p>
+            </div>
           )}
         </CardHeader>
 
