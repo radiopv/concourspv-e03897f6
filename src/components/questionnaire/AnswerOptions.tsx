@@ -21,46 +21,62 @@ const AnswerOptions = ({
   isDisabled,
   onAnswerSelect
 }: AnswerOptionsProps) => {
-  const isCorrect = hasAnswered && selectedAnswer === correctAnswer;
-
   return (
     <RadioGroup
       value={selectedAnswer}
       onValueChange={onAnswerSelect}
       className="space-y-3"
     >
-      {options?.map((option: string, index: number) => (
-        <div 
-          key={index} 
-          className={cn(
-            "flex items-center space-x-2 p-3 rounded-lg border transition-all",
-            isDisabled && "opacity-50 cursor-not-allowed",
-            hasAnswered && option === selectedAnswer && (
-              isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"
-            )
-          )}
-        >
-          <RadioGroupItem 
-            value={option} 
-            id={`option-${index}`}
-            disabled={isDisabled || hasAnswered}
-          />
-          <Label 
-            htmlFor={`option-${index}`}
+      {options?.map((option: string, index: number) => {
+        const isSelected = option === selectedAnswer;
+        const isCorrect = hasAnswered && option === correctAnswer;
+        const isWrong = hasAnswered && isSelected && !isCorrect;
+
+        return (
+          <div 
+            key={index} 
             className={cn(
-              "flex-1 cursor-pointer",
-              isDisabled && "cursor-not-allowed"
+              "flex items-center space-x-2 p-4 rounded-lg border transition-all duration-300",
+              "hover:shadow-md hover:border-primary/50",
+              isDisabled && "opacity-50 cursor-not-allowed",
+              isSelected && !hasAnswered && "border-primary/50 bg-primary/5",
+              hasAnswered && isCorrect && "border-green-500 bg-green-50",
+              isWrong && "border-red-500 bg-red-50",
+              "transform hover:scale-[1.02] active:scale-[0.98]"
             )}
           >
-            {option}
-          </Label>
-          {hasAnswered && option === selectedAnswer && (
-            isCorrect ? 
-              <CheckCircle2 className="w-5 h-5 text-green-500" /> :
-              <XCircle className="w-5 h-5 text-red-500" />
-          )}
-        </div>
-      ))}
+            <RadioGroupItem 
+              value={option} 
+              id={`option-${index}`}
+              disabled={isDisabled || hasAnswered}
+              className={cn(
+                "transition-all duration-300",
+                isSelected && "ring-primary"
+              )}
+            />
+            <Label 
+              htmlFor={`option-${index}`}
+              className={cn(
+                "flex-1 cursor-pointer select-none",
+                isDisabled && "cursor-not-allowed"
+              )}
+            >
+              {option}
+            </Label>
+            {hasAnswered && isSelected && (
+              <div className={cn(
+                "ml-2 transition-all duration-300",
+                isCorrect ? "text-green-500" : "text-red-500"
+              )}>
+                {isCorrect ? 
+                  <CheckCircle2 className="w-5 h-5 animate-bounce-once" /> :
+                  <XCircle className="w-5 h-5 animate-shake" />
+                }
+              </div>
+            )}
+          </div>
+        );
+      })}
     </RadioGroup>
   );
 };
