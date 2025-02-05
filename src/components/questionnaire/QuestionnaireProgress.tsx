@@ -1,7 +1,7 @@
 import React from 'react';
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Trophy, Target } from "lucide-react";
+import { Trophy, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface QuestionnaireProgressProps {
@@ -15,7 +15,6 @@ const QuestionnaireProgress = ({
   currentQuestionIndex,
   totalQuestions,
   score,
-  totalAnswered,
 }: QuestionnaireProgressProps) => {
   const displayQuestionNumber = Math.min(currentQuestionIndex, totalQuestions);
   const progressPercentage = (displayQuestionNumber / totalQuestions) * 100;
@@ -63,11 +62,6 @@ const QuestionnaireProgress = ({
             isNearingCompletion && "animate-pulse"
           )}
         />
-        
-        <div className="flex justify-between text-sm text-gray-600">
-          <span>Questions répondues : {totalAnswered}/{totalQuestions}</span>
-          <span>Score minimum requis : 80%</span>
-        </div>
       </div>
     </div>
   );
