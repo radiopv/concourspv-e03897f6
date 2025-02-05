@@ -20,6 +20,7 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
       article_url: '',
       type: 'multiple_choice',
       image_url: '',
+      status: 'available',
     },
   });
 
