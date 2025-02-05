@@ -43,7 +43,7 @@ export const LoginForm = () => {
         }
 
         if (session?.user) {
-          console.log("Session active trouvée, redirection vers dashboard");
+          console.log("Active session found, redirecting to dashboard");
           navigate("/dashboard", { replace: true });
         }
       } catch (error) {
@@ -62,36 +62,9 @@ export const LoginForm = () => {
     }
   }, [state?.message, toast]);
 
-  const getErrorMessage = (error: AuthError) => {
-    console.error("Erreur détaillée:", error);
-    
-    if (error instanceof AuthApiError) {
-      switch (error.status) {
-        case 400:
-          if (error.message.includes('Email not confirmed')) {
-            return "Veuillez vérifier votre email pour activer votre compte.";
-          }
-          if (error.message.includes('Invalid login credentials')) {
-            return "Email ou mot de passe incorrect.";
-          }
-          if (error.message.includes('refresh_token_not_found')) {
-            return "Session expirée. Veuillez vous reconnecter.";
-          }
-          return "Une erreur est survenue lors de la connexion.";
-        case 422:
-          return "Format d'email invalide.";
-        case 429:
-          return "Trop de tentatives de connexion. Veuillez réessayer plus tard.";
-        default:
-          return error.message;
-      }
-    }
-    return "Une erreur inattendue est survenue. Veuillez réessayer.";
-  };
-
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     try {
-      console.log("Tentative de connexion pour:", values.email);
+      console.log("Attempting login for:", values.email);
       
       // Clear any existing session first
       await supabase.auth.signOut();
@@ -102,24 +75,18 @@ export const LoginForm = () => {
       });
 
       if (error) {
-        console.error("Erreur de connexion:", error);
+        console.error("Login error:", error);
         toast({
           variant: "destructive",
           title: "Erreur de connexion",
-          description: getErrorMessage(error),
+          description: error instanceof AuthApiError ? error.message : "Une erreur est survenue lors de la connexion",
         });
         return;
       }
 
       if (data?.user) {
-        console.log("Connexion réussie pour:", data.user.email);
+        console.log("Login successful for:", data.user.email);
         
-        // Set session persistence
-        await supabase.auth.setSession({
-          access_token: data.session?.access_token || '',
-          refresh_token: data.session?.refresh_token || '',
-        });
-
         toast({
           title: "Connexion réussie",
           description: "Bienvenue sur votre espace membre !",
@@ -128,43 +95,11 @@ export const LoginForm = () => {
         navigate("/dashboard", { replace: true });
       }
     } catch (error) {
-      console.error("Erreur lors de la connexion:", error);
+      console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: error instanceof Error ? error.message : "Une erreur est survenue lors de la connexion",
-      });
-    }
-  };
-
-  const handleResetPassword = async () => {
-    const email = form.getValues("email");
-    if (!email) {
-      toast({
-        variant: "destructive",
-        title: "Email requis",
-        description: "Veuillez entrer votre email pour réinitialiser votre mot de passe.",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Email envoyé",
-        description: "Veuillez vérifier votre boîte de réception pour réinitialiser votre mot de passe.",
-      });
-    } catch (error) {
-      console.error("Erreur lors de la réinitialisation du mot de passe:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue. Veuillez réessayer.",
       });
     }
   };
@@ -215,14 +150,6 @@ export const LoginForm = () => {
           </Button>
 
           <div className="flex justify-between text-sm">
-            <Button
-              type="button"
-              variant="link"
-              className="text-indigo-600"
-              onClick={handleResetPassword}
-            >
-              Mot de passe oublié ?
-            </Button>
             <Link to="/register" className="text-indigo-600 hover:underline">
               Créer un compte
             </Link>
