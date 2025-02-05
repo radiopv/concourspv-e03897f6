@@ -16,7 +16,7 @@ const ContestQuestionsManager = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
 
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ['contest-questions', contestId],
@@ -38,21 +38,60 @@ const ContestQuestionsManager = () => {
     enabled: !!contestId
   });
 
-  const { data: availableQuestions, isLoading: availableQuestionsLoading } = useQuery({
-    queryKey: ['questions-bank'],
-    queryFn: async () => {
-      const { data, error } = await supabase
+  const questionsNeeded = 25 - (questions?.length || 0);
+
+  const autoFillQuestions = async () => {
+    if (!contestId) return;
+    setIsAutoFilling(true);
+
+    try {
+      // Récupérer les questions disponibles
+      const { data: availableQuestions, error: fetchError } = await supabase
         .from('questions')
         .select('*')
+        .eq('status', 'available')
         .is('contest_id', null)
-        .eq('status', 'available');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
+        .limit(questionsNeeded);
 
-  const questionsNeeded = 25 - (questions?.length || 0);
+      if (fetchError) throw fetchError;
+
+      if (!availableQuestions || availableQuestions.length === 0) {
+        toast({
+          title: "Attention",
+          description: "Aucune question disponible dans la banque de questions.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Ajouter les questions au concours
+      const { error: updateError } = await supabase
+        .from('questions')
+        .update({ 
+          contest_id: contestId,
+          status: 'in_use'
+        })
+        .in('id', availableQuestions.map(q => q.id));
+
+      if (updateError) throw updateError;
+
+      await queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
+      
+      toast({
+        title: "Succès",
+        description: `${availableQuestions.length} questions ont été ajoutées au concours.`,
+      });
+    } catch (error) {
+      console.error('Error auto-filling questions:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter les questions automatiquement.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAutoFilling(false);
+    }
+  };
 
   const handleAddQuestion = async (questionId: string) => {
     try {
@@ -112,7 +151,7 @@ const ContestQuestionsManager = () => {
     }
   };
 
-  if (questionsLoading || availableQuestionsLoading) {
+  if (questionsLoading) {
     return <div>Chargement...</div>;
   }
 
@@ -134,9 +173,21 @@ const ContestQuestionsManager = () => {
       {questionsNeeded > 0 && (
         <Alert className="mb-6">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Il manque {questionsNeeded} question{questionsNeeded > 1 ? 's' : ''} pour atteindre les 25 questions requises.
-            {questionsNeeded > 0 && " Des questions seront automatiquement ajoutées depuis la banque de questions."}
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              Il manque {questionsNeeded} question{questionsNeeded > 1 ? 's' : ''} pour atteindre les 25 questions requises.
+            </span>
+            <Button
+              onClick={autoFillQuestions}
+              disabled={isAutoFilling}
+              className="ml-4"
+            >
+              {isAutoFilling ? (
+                "Ajout en cours..."
+              ) : (
+                "Ajouter automatiquement"
+              )}
+            </Button>
           </AlertDescription>
         </Alert>
       )}
@@ -162,7 +213,7 @@ const ContestQuestionsManager = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="grid md:grid-cols-2 gap-6">
         {/* Available Questions */}
         <Card>
