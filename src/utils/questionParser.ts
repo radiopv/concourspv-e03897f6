@@ -12,49 +12,62 @@ const cleanText = (text: string): string => {
 export const parseQuestionText = (text: string): ParsedQuestion[] => {
   const questions: ParsedQuestion[] = [];
   
-  // Séparer les questions (par "Question" ou "Question X :")
-  const questionBlocks = text.split(/Question(?:\s+\d+\s*:|\s*:|\s*$)/g).filter(block => block.trim());
+  // Format 1: Question X: ... A) ... B) ... C) ... D) ... Réponse correcte: ...
+  // Format 2: Question: ... Réponses proposées: ... Réponse correcte: ...
+  const questionBlocks = text.split(/(?=Question(?:\s+\d+\s*:|\s*:))/g).filter(block => block.trim());
   
   for (const block of questionBlocks) {
     try {
-      // Extraire l'URL source
-      const sourceMatch = block.match(/Source\s*:\s*(https?:\/\/[^\s\n]+)/i);
-      const article_url = sourceMatch ? sourceMatch[1].trim() : undefined;
+      // Extract source URL from anywhere in the text
+      const urlMatch = block.match(/https?:\/\/[^\s\n]+/);
+      const article_url = urlMatch ? urlMatch[0].trim() : undefined;
 
-      // Extraire la question
-      const questionMatch = block.match(/Question\s*:?\s*([^\n]+)/i) || 
+      // Extract question text
+      const questionMatch = block.match(/Question(?:\s+\d+)?:?\s*([^\n]+)/i) || 
                           block.match(/([^\n]+\?)/);
       if (!questionMatch) continue;
       const question_text = questionMatch[1].trim();
 
-      // Extraire les options
-      const optionsMatch = block.match(/Réponses proposées\s*:\s*([\s\S]*?)(?=\s*Réponse correcte|$)/i);
-      if (!optionsMatch) continue;
-      const options = optionsMatch[1]
-        .split('\n')
-        .map(opt => cleanText(opt))
-        .filter(opt => opt.length > 0);
-
-      // Extraire la réponse correcte
-      const correctMatch = block.match(/Réponse correcte\s*:\s*(?:\d+\.\s*)?([^\n]+)/i);
-      if (!correctMatch) continue;
-      let correct_answer = correctMatch[1].trim();
-
-      // Si la réponse correcte contient un numéro, prendre l'option correspondante
-      const numberMatch = correct_answer.match(/^(\d+)\./);
-      if (numberMatch) {
-        const index = parseInt(numberMatch[1]) - 1;
-        if (options[index]) {
-          correct_answer = cleanText(options[index]);
+      // Try different formats for options
+      let options: string[] = [];
+      
+      // Format 1: A) B) C) D)
+      const letterOptions = block.match(/[A-D]\)\s*([^\n]+)/g);
+      if (letterOptions) {
+        options = letterOptions.map(opt => opt.replace(/^[A-D]\)\s*/, '').trim());
+      } else {
+        // Format 2: Line by line after "Réponses proposées:"
+        const optionsMatch = block.match(/Réponses proposées\s*:\s*([\s\S]*?)(?=\s*Réponse correcte|$)/i);
+        if (optionsMatch) {
+          options = optionsMatch[1]
+            .split('\n')
+            .map(opt => cleanText(opt))
+            .filter(opt => opt.length > 0);
         }
       }
 
-      questions.push({
-        question_text,
-        options,
-        correct_answer,
-        article_url
-      });
+      // Extract correct answer
+      let correct_answer = '';
+      const correctMatch = block.match(/Réponse correcte\s*:\s*(?:[A-D]\)\s*)?([^\n]+)/i);
+      if (correctMatch) {
+        correct_answer = correctMatch[1].trim();
+        // If the answer contains a letter (A, B, C, D), get the corresponding option
+        const letterMatch = correct_answer.match(/^([A-D])\)/);
+        if (letterMatch && options.length >= 4) {
+          const index = letterMatch[1].charCodeAt(0) - 65; // Convert A->0, B->1, etc.
+          correct_answer = options[index];
+        }
+      }
+
+      // Only add if we have all required fields
+      if (question_text && options.length > 0 && correct_answer) {
+        questions.push({
+          question_text,
+          options,
+          correct_answer,
+          article_url
+        });
+      }
     } catch (error) {
       console.error('Error parsing question block:', error);
       continue;
