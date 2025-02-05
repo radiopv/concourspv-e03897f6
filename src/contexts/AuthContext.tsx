@@ -28,13 +28,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        // Récupérer la session actuelle
+        console.log('Checking current session...');
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error("Error fetching session:", sessionError.message);
           throw sessionError;
         }
+
+        console.log('Session status:', currentSession ? 'Active session found' : 'No active session');
 
         if (currentSession) {
           const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
@@ -45,22 +47,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           if (currentUser) {
+            console.log('User found:', currentUser.email);
             setSession(currentSession);
             setUser(currentUser);
             
-            // Mettre à jour la persistance de la session
+            // Update session persistence
             await supabase.auth.setSession({
               access_token: currentSession.access_token,
               refresh_token: currentSession.refresh_token,
             });
           } else {
+            console.log('No user found, signing out...');
             await signOut();
           }
         } else {
+          console.log('No active session found');
           setSession(null);
           setUser(null);
           
-          // Rediriger vers login si sur une route protégée
+          // Redirect to login if on a protected route
           if (window.location.pathname.startsWith('/dashboard') || 
               window.location.pathname.startsWith('/admin')) {
             navigate('/login');
@@ -74,15 +79,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Vérification initiale de la session
+    // Initial session check
     checkSession();
 
-    // Configuration du listener pour les changements d'état d'authentification
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth state changed:", event);
       
       if (event === 'SIGNED_OUT') {
-        // Nettoyer les données de session
+        // Clean up session data
         setSession(null);
         setUser(null);
         localStorage.removeItem('supabase.auth.token');
@@ -94,10 +99,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (currentSession) {
+          console.log('Setting new session for user:', currentSession.user?.email);
           setSession(currentSession);
           setUser(currentSession.user);
           
-          // Rafraîchir la persistance de la session
+          // Refresh session persistence
           await supabase.auth.setSession({
             access_token: currentSession.access_token,
             refresh_token: currentSession.refresh_token,
@@ -108,7 +114,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    // Nettoyage de la souscription lors du démontage
+    // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
@@ -116,12 +122,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Nettoyer d'abord les données locales
+      // Clean up local data first
       setSession(null);
       setUser(null);
       localStorage.removeItem('supabase.auth.token');
       
-      // Puis tenter la déconnexion de Supabase
+      // Then attempt Supabase signout
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Sign out error:", error);
@@ -136,7 +142,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate('/login');
     } catch (error) {
       console.error("Sign out error:", error);
-      // Même en cas d'erreur, on veut nettoyer la session locale
+      // Even if there's an error, we want to clean up the local session
       navigate('/login');
       toast({
         variant: "destructive",
