@@ -10,6 +10,8 @@ import { Prize } from "@/types/prize";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface ContestCardProps {
   contest: {
@@ -41,6 +43,8 @@ const RANK_POINTS = {
 
 const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestCardProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const { data: stats } = useQuery({
     queryKey: ['contest-detailed-stats', contest.id],
@@ -67,6 +71,16 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
   });
 
   const handleParticipate = () => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter ou créer un compte pour participer au concours",
+        variant: "default",
+      });
+      navigate('/login', { state: { returnUrl: `/contest/${contest.id}` } });
+      return;
+    }
+
     if (!contest.id) {
       console.error('Contest ID is missing');
       return;
@@ -243,7 +257,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
               } text-white font-bold py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-300`}
               disabled={isLocked}
             >
-              {isLocked ? 'Rang insuffisant' : 'Participer Maintenant'}
+              {isLocked ? 'Rang insuffisant' : (user ? 'Participer Maintenant' : 'Se connecter pour participer')}
             </Button>
           </div>
         </CardContent>

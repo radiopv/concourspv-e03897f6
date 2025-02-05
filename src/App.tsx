@@ -13,6 +13,8 @@ import Points from '@/pages/Points';
 import Prizes from '@/pages/Prizes';
 import QuizCompletion from '@/pages/QuizCompletion';
 import Admin from '@/pages/Admin';
+import { useAuth } from '@/contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,6 +24,17 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Protected Route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 const App = () => {
   return (
@@ -33,14 +46,16 @@ const App = () => {
               <Route path="/" element={<ContestsList />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/instructions" element={<Instructions />} />
               <Route path="/contests" element={<ContestsList />} />
               <Route path="/contest/:id" element={<Contest />} />
-              <Route path="/points" element={<Points />} />
-              <Route path="/prizes" element={<Prizes />} />
-              <Route path="/quiz-completion/:contestId" element={<QuizCompletion />} />
-              <Route path="/admin/*" element={<Admin />} />
+              
+              {/* Protected routes */}
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/points" element={<ProtectedRoute><Points /></ProtectedRoute>} />
+              <Route path="/prizes" element={<ProtectedRoute><Prizes /></ProtectedRoute>} />
+              <Route path="/quiz-completion/:contestId" element={<ProtectedRoute><QuizCompletion /></ProtectedRoute>} />
+              <Route path="/admin/*" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             </Routes>
           </Layout>
         </AuthProvider>
