@@ -48,6 +48,22 @@ const ProfileCard = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Initialize form data with user profile when component mounts or userProfile changes
+  React.useEffect(() => {
+    if (userProfile) {
+      setFormData({
+        first_name: userProfile.first_name || '',
+        last_name: userProfile.last_name || '',
+        email: userProfile.email || '',
+        phone_number: userProfile.phone_number || '',
+        street_address: userProfile.street_address || '',
+        city: userProfile.city || '',
+        postal_code: userProfile.postal_code || '',
+        country: userProfile.country || 'France'
+      });
+    }
+  }, [userProfile, setFormData]);
+
   const handleSaveProfile = async () => {
     try {
       console.log("Début de la mise à jour du profil...");
@@ -124,6 +140,17 @@ const ProfileCard = ({
       });
     }
   };
+
+  if (!userProfile) {
+    return (
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-xl">Mon profil</CardTitle>
+          <CardDescription>Chargement de vos informations...</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card className="mb-8">

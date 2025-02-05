@@ -16,17 +16,21 @@ const Dashboard = () => {
     last_name: '',
     email: '',
     phone_number: '',
-    notifications_enabled: true,
-    share_scores: true
+    street_address: '',
+    city: '',
+    postal_code: '',
+    country: 'France'
   });
 
   const { data: userProfile, refetch } = useQuery({
     queryKey: ['user-profile', user?.id],
     queryFn: async () => {
+      if (!user?.id) throw new Error('User ID not found');
+      
       const { data, error } = await supabase
         .from('members')
         .select('*')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single();
 
       if (error) throw error;
@@ -57,22 +61,24 @@ const Dashboard = () => {
   return (
     <div className="space-y-8">
       <Helmet>
-        <title>{"Tableau de bord"}</title>
+        <title>Tableau de bord</title>
       </Helmet>
       
       <DashboardHeader />
       
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         <div className="md:col-span-4">
-          <ProfileCard 
-            userProfile={userProfile}
-            userId={user?.id || ''}
-            refetch={refetch}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-            formData={formData}
-            setFormData={setFormData}
-          />
+          {userProfile && (
+            <ProfileCard 
+              userProfile={userProfile}
+              userId={user?.id || ''}
+              refetch={refetch}
+              isEditing={isEditing}
+              setIsEditing={setIsEditing}
+              formData={formData}
+              setFormData={setFormData}
+            />
+          )}
         </div>
         
         <div className="md:col-span-8 space-y-6">
