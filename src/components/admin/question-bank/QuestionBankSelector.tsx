@@ -5,14 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Plus, Check, ExternalLink } from "lucide-react";
-
-interface Question {
-  id: string;
-  question_text: string;
-  options: string[];
-  correct_answer: string;
-  article_url?: string;
-}
+import { Question } from '@/types/database';
 
 interface QuestionBankSelectorProps {
   contestId: string;
@@ -27,8 +20,9 @@ const QuestionBankSelector = ({ contestId, onQuestionSelect, selectedQuestions }
     queryKey: ['question-bank'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('question_bank')
+        .from('questions')
         .select('*')
+        .is('contest_id', null)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -46,14 +40,8 @@ const QuestionBankSelector = ({ contestId, onQuestionSelect, selectedQuestions }
 
       const { error } = await supabase
         .from('questions')
-        .insert([{
-          contest_id: contestId,
-          question_text: questionToAdd.question_text,
-          options: questionToAdd.options,
-          correct_answer: questionToAdd.correct_answer,
-          article_url: questionToAdd.article_url,
-          type: 'multiple_choice'
-        }]);
+        .update({ contest_id: contestId })
+        .eq('id', questionId);
 
       if (error) throw error;
 
