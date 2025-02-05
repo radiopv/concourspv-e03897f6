@@ -37,7 +37,7 @@ const QuizCompletion = () => {
         // Get participant information
         const { data: participant, error: participantError } = await supabase
           .from('participants')
-          .select('*')
+          .select('participation_id, status, score')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
           .order('created_at', { ascending: false })
@@ -74,7 +74,7 @@ const QuizCompletion = () => {
 
         console.log('Total questions:', totalQuestionsCount);
 
-        // Get the participant's answers
+        // Get the participant's answers using participation_id
         const { data: answers, error: answersError } = await supabase
           .from('participant_answers')
           .select('is_correct')
