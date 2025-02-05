@@ -16,7 +16,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   const [hasClickedLink, setHasClickedLink] = useState(false);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [score, setScore] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
   const navigate = useNavigate();
   
   const { data: questions } = useQuestions(contestId);
@@ -24,7 +24,6 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
   const currentQuestion = questions?.[currentQuestionIndex];
   const totalQuestions = questions?.length || 0;
-  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
 
   const handleArticleRead = () => {
     setHasClickedLink(true);
@@ -41,7 +40,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     const isCorrect = selectedAnswer === currentQuestion.correct_answer;
     
     if (isCorrect) {
-      setScore(prev => prev + 1);
+      setCorrectAnswers(prev => prev + 1);
     }
     
     setHasAnswered(true);
@@ -60,8 +59,8 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     }, 2000);
   };
 
-  // Calculate score percentage
-  const scorePercentage = Math.round((score / totalQuestions) * 100);
+  // Calculate score percentage based on correct answers
+  const scorePercentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
 
   if (!currentQuestion) {
     return <div>Loading...</div>;
