@@ -41,19 +41,17 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
     if (hasClickedLink) {
       timer = setTimeout(() => {
         setCanSubmit(true);
-      }, 5000); // 5 secondes de délai
+      }, 5000);
     }
     return () => {
       if (timer) clearTimeout(timer);
     };
   }, [hasClickedLink]);
 
-  // Ensure we're rendering text content, not objects
+  // S'assurer que les options sont bien un tableau de chaînes
   const renderOptions = Array.isArray(options) 
-    ? options 
-    : typeof options === 'string' 
-      ? [options]
-      : [];
+    ? options.map(opt => typeof opt === 'string' ? opt : String(opt))
+    : [];
 
   return (
     <div className="space-y-6">
