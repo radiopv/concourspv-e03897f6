@@ -10,6 +10,7 @@ import { ArrowRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { calculateCorrectAnswers, isQualifiedForDraw } from '@/utils/scoreCalculations';
 
 const QuizCompletion = () => {
   const navigate = useNavigate();
@@ -26,7 +27,18 @@ const QuizCompletion = () => {
       if (!contestId) return;
 
       try {
-        // Get the participant's answers directly using contest_id
+        // Get all questions for this contest to know total count
+        const { data: questions, error: questionsError } = await supabase
+          .from('questions')
+          .select('id')
+          .eq('contest_id', contestId);
+
+        if (questionsError) throw questionsError;
+
+        const totalQuestionsCount = questions?.length || 0;
+        setTotalQuestions(totalQuestionsCount);
+
+        // Get the participant's answers
         const { data: answers, error: answersError } = await supabase
           .from('participant_answers')
           .select('is_correct')
@@ -36,18 +48,18 @@ const QuizCompletion = () => {
 
         if (answers) {
           const correct = answers.filter(answer => answer.is_correct).length;
-          const total = answers.length;
-          const calculatedScore = total > 0 ? Math.round((correct / total) * 100) : 0;
+          const calculatedScore = totalQuestionsCount > 0 
+            ? Math.round((correct / totalQuestionsCount) * 100) 
+            : 0;
 
           console.log('Quiz results:', {
             correct,
-            total,
+            totalQuestionsCount,
             calculatedScore,
             answers
           });
 
           setCorrectAnswers(correct);
-          setTotalQuestions(total);
           setScore(calculatedScore);
           setIsQualified(calculatedScore >= requiredPercentage);
 
@@ -63,6 +75,7 @@ const QuizCompletion = () => {
 
           if (updateError) {
             console.error('Error updating participant status:', updateError);
+            throw updateError;
           }
         }
       } catch (error) {
