@@ -236,7 +236,7 @@ const ContestCard = ({ contest, onEdit, onDelete }: ContestCardProps) => {
                 </p>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
-                {prizes.map((prize, index) => (
+                {prizes.map((prize) => (
                   <div key={prize.id} className="bg-white p-4 rounded-lg shadow flex flex-col">
                     {prize.prize_catalog?.image_url && (
                       <div className="aspect-video relative mb-3">
