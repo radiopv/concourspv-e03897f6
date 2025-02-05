@@ -62,16 +62,17 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
   useEffect(() => {
     if (hasAnswered) {
       setShowFeedback(true);
-      const message = isCorrect ? 
-        "🎉 Excellente réponse ! Continue comme ça !" :
-        "😮 Oups ! Ce n'est pas la bonne réponse.";
       
+      // Afficher le toast avec une durée de 2 secondes
       toast({
-        description: message,
+        description: isCorrect ? 
+          "🎉 Excellente réponse ! Continue comme ça !" :
+          "😮 Oups ! Ce n'est pas la bonne réponse.",
         className: cn(
           "border",
           isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"
-        )
+        ),
+        duration: 2000, // Le toast disparaîtra après 2 secondes
       });
 
       const timer = setTimeout(() => {
