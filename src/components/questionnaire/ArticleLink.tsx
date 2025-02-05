@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, ArrowRight, BookOpen } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export interface ArticleLinkProps {
   url: string;
