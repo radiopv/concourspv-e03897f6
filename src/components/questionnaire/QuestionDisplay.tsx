@@ -36,8 +36,6 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
   onArticleRead,
   onAnswerSelect,
   onSubmitAnswer,
-  onNextQuestion,
-  isLastQuestion
 }) => {
   const [canSubmit, setCanSubmit] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -63,7 +61,6 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
     if (hasAnswered) {
       setShowFeedback(true);
       
-      // Afficher le toast avec une durée de 2 secondes
       toast({
         description: isCorrect ? 
           "🎉 Excellente réponse ! Continue comme ça !" :
@@ -72,12 +69,12 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
           "border",
           isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"
         ),
-        duration: 2000, // Le toast disparaîtra après 2 secondes
+        duration: 2000,
       });
 
       const timer = setTimeout(() => {
         setShowFeedback(false);
-      }, 3000);
+      }, 2000);
 
       return () => clearTimeout(timer);
     }
@@ -150,7 +147,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
             )}
 
             <div className="flex justify-end space-x-4 mt-6">
-              {!hasAnswered ? (
+              {!hasAnswered && (
                 <Button
                   onClick={onSubmitAnswer}
                   disabled={!selectedAnswer || isSubmitting || !canSubmit}
@@ -160,14 +157,6 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                   )}
                 >
                   {isSubmitting ? "Envoi en cours..." : "Valider la réponse"}
-                </Button>
-              ) : (
-                <Button
-                  onClick={onNextQuestion}
-                  disabled={isSubmitting}
-                  className="bg-primary hover:bg-primary/90 transition-colors"
-                >
-                  {isLastQuestion ? "Terminer le quiz" : "Question suivante"}
                 </Button>
               )}
             </div>

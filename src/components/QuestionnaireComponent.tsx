@@ -16,6 +16,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   const [hasClickedLink, setHasClickedLink] = useState(false);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [score, setScore] = useState(0);
   const navigate = useNavigate();
   
   const { data: questions } = useQuestions(contestId);
@@ -34,24 +35,33 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   };
 
   const handleSubmitAnswer = async () => {
-    if (!selectedAnswer || isSubmitting) return;
+    if (!selectedAnswer || isSubmitting || !currentQuestion) return;
 
     setIsSubmitting(true);
-    // Submit the answer logic here
+    const isCorrect = selectedAnswer === currentQuestion.correct_answer;
+    
+    if (isCorrect) {
+      setScore(prev => prev + 1);
+    }
+    
     setHasAnswered(true);
     setIsSubmitting(false);
+
+    // Automatically progress to next question after 2 seconds
+    setTimeout(() => {
+      if (currentQuestionIndex + 1 < totalQuestions) {
+        setCurrentQuestionIndex(prev => prev + 1);
+        setSelectedAnswer('');
+        setHasClickedLink(false);
+        setHasAnswered(false);
+      } else {
+        navigate(`/quiz-completion/${contestId}`);
+      }
+    }, 2000);
   };
 
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex + 1 < totalQuestions) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setSelectedAnswer('');
-      setHasClickedLink(false);
-      setHasAnswered(false);
-    } else {
-      navigate(`/quiz-completion/${contestId}`);
-    }
-  };
+  // Calculate score percentage
+  const scorePercentage = Math.round((score / totalQuestions) * 100);
 
   if (!currentQuestion) {
     return <div>Loading...</div>;
@@ -62,7 +72,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       <QuestionnaireProgress 
         currentQuestionIndex={currentQuestionIndex + 1}
         totalQuestions={totalQuestions}
-        score={0}
+        score={scorePercentage}
         totalAnswered={currentQuestionIndex}
       />
       
@@ -79,7 +89,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           onArticleRead={handleArticleRead}
           onAnswerSelect={handleAnswerSelect}
           onSubmitAnswer={handleSubmitAnswer}
-          onNextQuestion={handleNextQuestion}
+          onNextQuestion={() => {}}
           isLastQuestion={currentQuestionIndex + 1 === totalQuestions}
         />
       </div>
