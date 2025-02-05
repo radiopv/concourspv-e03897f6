@@ -4,7 +4,6 @@ import * as z from "zod";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { AuthError } from '@supabase/supabase-js';
 
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -47,6 +46,8 @@ export const LoginForm = () => {
         if (session?.user) {
           console.log("Session active trouvée, redirection vers dashboard");
           navigate("/dashboard", { replace: true });
+        } else {
+          console.log("Aucune session active trouvée");
         }
       } catch (error) {
         console.error("Erreur lors de la vérification de la session:", error);
@@ -65,6 +66,11 @@ export const LoginForm = () => {
   }, [state?.message, toast]);
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
+    if (isLoading) {
+      console.log("Une connexion est déjà en cours...");
+      return;
+    }
+
     try {
       setIsLoading(true);
       console.log("Tentative de connexion pour:", values.email);
@@ -100,11 +106,20 @@ export const LoginForm = () => {
       if (data?.user) {
         console.log("Connexion réussie pour:", data.user.email);
         
-        console.log("Mise à jour de la session...");
-        await supabase.auth.setSession({
-          access_token: data.session?.access_token || '',
-          refresh_token: data.session?.refresh_token || '',
-        });
+        // Vérifier que la session est bien établie
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Erreur lors de la vérification de la session:", sessionError);
+          throw sessionError;
+        }
+
+        if (!sessionData.session) {
+          console.error("Session non établie après connexion");
+          throw new Error("Session non établie après connexion");
+        }
+
+        console.log("Session établie avec succès:", sessionData.session);
 
         toast({
           title: "Connexion réussie",
@@ -112,6 +127,9 @@ export const LoginForm = () => {
         });
         
         navigate("/dashboard", { replace: true });
+      } else {
+        console.error("Données utilisateur manquantes après connexion");
+        throw new Error("Données utilisateur manquantes après connexion");
       }
     } catch (error) {
       console.error("Erreur inattendue lors de la connexion:", error);
@@ -141,7 +159,12 @@ export const LoginForm = () => {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="jean.dupont@example.com" {...field} />
+                <Input 
+                  type="email" 
+                  placeholder="jean.dupont@example.com" 
+                  {...field} 
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -155,7 +178,11 @@ export const LoginForm = () => {
             <FormItem>
               <FormLabel>Mot de passe</FormLabel>
               <FormControl>
-                <Input type="password" {...field} />
+                <Input 
+                  type="password" 
+                  {...field} 
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

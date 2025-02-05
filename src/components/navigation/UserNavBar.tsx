@@ -15,8 +15,12 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
   const location = useLocation();
 
   const handleLogout = async () => {
-    await signOut();
-    navigate('/login');
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   return (
@@ -77,13 +81,22 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
                 </div>
               </>
             ) : (
-              location.pathname !== '/login' && (
-                <Link to="/register">
-                  <Button variant="secondary" className="font-semibold">
-                    Inscription
-                  </Button>
-                </Link>
-              )
+              <div className="flex space-x-2">
+                {location.pathname !== '/login' && (
+                  <Link to="/login">
+                    <Button variant="secondary" className="font-semibold">
+                      Connexion
+                    </Button>
+                  </Link>
+                )}
+                {location.pathname !== '/register' && (
+                  <Link to="/register">
+                    <Button variant="secondary" className="font-semibold">
+                      Inscription
+                    </Button>
+                  </Link>
+                )}
+              </div>
             )}
           </div>
         </div>
