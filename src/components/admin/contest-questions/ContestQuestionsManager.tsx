@@ -18,7 +18,7 @@ const ContestQuestionsManager = () => {
   const queryClient = useQueryClient();
   const [isAutoFilling, setIsAutoFilling] = useState(false);
 
-  const { data: questions, isLoading: questionsLoading } = useQuery({
+  const { data: questions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ['contest-questions', contestId],
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
@@ -38,7 +38,7 @@ const ContestQuestionsManager = () => {
     enabled: !!contestId
   });
 
-  const { data: availableQuestions } = useQuery({
+  const { data: availableQuestions = [] } = useQuery({
     queryKey: ['available-questions'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -169,6 +169,10 @@ const ContestQuestionsManager = () => {
     return <div>Chargement...</div>;
   }
 
+  if (!contestId) {
+    return <div>L'ID du concours est requis</div>;
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-4 mb-6">
@@ -212,7 +216,7 @@ const ContestQuestionsManager = () => {
           <CardContent className="pt-6">
             <div className="flex justify-between items-center">
               <span>Questions dans ce concours</span>
-              <Badge variant="secondary">{questions?.length || 0} / 25</Badge>
+              <Badge variant="secondary">{questions.length} / 25</Badge>
             </div>
           </CardContent>
         </Card>
@@ -237,7 +241,7 @@ const ContestQuestionsManager = () => {
           <CardContent>
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-4">
-                {availableQuestions?.map((question) => (
+                {availableQuestions.map((question: Question) => (
                   <Card key={question.id} className="p-4">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
@@ -283,7 +287,7 @@ const ContestQuestionsManager = () => {
           <CardContent>
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-4">
-                {questions?.map((question, index) => (
+                {questions.map((question: Question, index: number) => (
                   <Card key={question.id} className="p-4">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
