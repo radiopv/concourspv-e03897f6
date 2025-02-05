@@ -26,24 +26,11 @@ const QuizCompletion = () => {
       if (!contestId) return;
 
       try {
-        // First get the participant's ID for this contest
-        const { data: participant, error: participantError } = await supabase
-          .from('participants')
-          .select('participation_id')
-          .eq('contest_id', contestId)
-          .single();
-
-        if (participantError) throw participantError;
-
-        if (!participant?.participation_id) {
-          throw new Error('Participant not found');
-        }
-
-        // Then get their answers
+        // Get the participant's answers directly using contest_id
         const { data: answers, error: answersError } = await supabase
           .from('participant_answers')
           .select('is_correct')
-          .eq('participant_id', participant.participation_id);
+          .eq('contest_id', contestId);
 
         if (answersError) throw answersError;
 

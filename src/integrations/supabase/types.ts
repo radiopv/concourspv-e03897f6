@@ -211,6 +211,7 @@ export type Database = {
         Row: {
           answer: string | null
           attempt_number: number
+          contest_id: string | null
           created_at: string | null
           id: number
           is_correct: boolean | null
@@ -220,6 +221,7 @@ export type Database = {
         Insert: {
           answer?: string | null
           attempt_number: number
+          contest_id?: string | null
           created_at?: string | null
           id?: number
           is_correct?: boolean | null
@@ -229,13 +231,22 @@ export type Database = {
         Update: {
           answer?: string | null
           attempt_number?: number
+          contest_id?: string | null
           created_at?: string | null
           id?: number
           is_correct?: boolean | null
           participant_id?: string
           question_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "participant_answers_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       participant_prizes: {
         Row: {
