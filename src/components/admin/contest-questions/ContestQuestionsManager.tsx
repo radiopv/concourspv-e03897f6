@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Check, ArrowLeft, ExternalLink, AlertCircle } from "lucide-react";
+import { Plus, ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import { Question } from "@/types/database";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 const ContestQuestionsManager = () => {
   const { contestId } = useParams();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAutoFilling, setIsAutoFilling] = useState(false);
@@ -175,22 +174,9 @@ const ContestQuestionsManager = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Retour
-        </Button>
-        <h1 className="text-2xl font-bold">Gestion des Questions du Concours</h1>
-      </div>
-
       {/* Questions Counter Alert */}
       {questionsNeeded > 0 && (
         <Alert className="mb-6">
-          <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
             <span>
               Il manque {questionsNeeded} question{questionsNeeded > 1 ? 's' : ''} pour atteindre les 25 questions requises.
