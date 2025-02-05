@@ -76,10 +76,25 @@ export const LoginForm = () => {
 
       if (error) {
         console.error("Login error:", error);
+        let errorMessage = "Une erreur est survenue lors de la connexion";
+        
+        if (error instanceof AuthApiError) {
+          switch (error.message) {
+            case "Invalid login credentials":
+              errorMessage = "Email ou mot de passe incorrect";
+              break;
+            case "Email not confirmed":
+              errorMessage = "Veuillez confirmer votre email avant de vous connecter";
+              break;
+            default:
+              errorMessage = error.message;
+          }
+        }
+        
         toast({
           variant: "destructive",
           title: "Erreur de connexion",
-          description: error instanceof AuthApiError ? error.message : "Une erreur est survenue lors de la connexion",
+          description: errorMessage,
         });
         return;
       }

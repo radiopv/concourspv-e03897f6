@@ -30,9 +30,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     const initializeAuth = async () => {
       try {
-        // Clear any existing session first
-        await supabase.auth.signOut();
-        
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
