@@ -44,10 +44,22 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     const isCorrect = selectedAnswer === currentQuestion.correct_answer;
     
     try {
-      // Get current user session
+      // Get current user session and profile
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
         throw new Error('User not authenticated');
+      }
+
+      // Get user profile information
+      const { data: userProfile, error: profileError } = await supabase
+        .from('members')
+        .select('first_name, last_name, email')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError || !userProfile) {
+        console.error('Error fetching user profile:', profileError);
+        throw new Error('Could not fetch user profile');
       }
 
       // Get or create participant
@@ -61,18 +73,28 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       let participationId = existingParticipant?.participation_id;
 
       if (!participationId) {
+        console.log('Creating new participant with profile:', userProfile);
+        
         const { data: newParticipant, error: createError } = await supabase
           .from('participants')
           .insert({
             id: session.user.id,
             contest_id: contestId,
-            status: 'pending'
+            status: 'pending',
+            first_name: userProfile.first_name,
+            last_name: userProfile.last_name,
+            email: userProfile.email
           })
           .select('participation_id')
           .single();
 
-        if (createError) throw createError;
+        if (createError) {
+          console.error('Error creating participant:', createError);
+          throw createError;
+        }
+        
         participationId = newParticipant.participation_id;
+        console.log('Created new participant with ID:', participationId);
       }
 
       // Save the answer
@@ -103,17 +125,29 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           setHasClickedLink(false);
           setHasAnswered(false);
         } else {
+          // Calculate final score
+          const finalScore = Math.round((correctAnswers / totalQuestions) * 100);
+          console.log('Final score:', finalScore, 'Correct answers:', correctAnswers, 'Total questions:', totalQuestions);
+          
           // Update participant status to completed
           supabase
             .from('participants')
             .update({ 
               status: 'completed',
-              score: Math.round((correctAnswers / totalQuestions) * 100),
+              score: finalScore,
               completed_at: new Date().toISOString()
             })
             .eq('participation_id', participationId)
             .then(() => {
               navigate(`/quiz-completion/${contestId}`);
+            })
+            .catch(error => {
+              console.error('Error updating participant status:', error);
+              toast({
+                variant: "destructive",
+                title: "Erreur",
+                description: "Impossible de mettre à jour votre statut"
+              });
             });
         }
       }, 2000);
