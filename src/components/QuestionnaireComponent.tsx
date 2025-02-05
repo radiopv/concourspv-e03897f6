@@ -55,11 +55,21 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
         .from('members')
         .select('first_name, last_name, email')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError || !userProfile) {
+      if (profileError) {
         console.error('Error fetching user profile:', profileError);
         throw new Error('Could not fetch user profile');
+      }
+
+      if (!userProfile?.first_name || !userProfile?.last_name || !userProfile?.email) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Votre profil est incomplet. Veuillez le compléter avant de participer."
+        });
+        navigate('/profile');
+        return;
       }
 
       // Get or create participant
@@ -129,26 +139,32 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
           const finalScore = Math.round((correctAnswers / totalQuestions) * 100);
           console.log('Final score:', finalScore, 'Correct answers:', correctAnswers, 'Total questions:', totalQuestions);
           
-          // Update participant status to completed
-          supabase
-            .from('participants')
-            .update({ 
-              status: 'completed',
-              score: finalScore,
-              completed_at: new Date().toISOString()
-            })
-            .eq('participation_id', participationId)
-            .then(() => {
+          // Update participant status to completed using async/await
+          const updateParticipant = async () => {
+            try {
+              const { error: updateError } = await supabase
+                .from('participants')
+                .update({ 
+                  status: 'completed',
+                  score: finalScore,
+                  completed_at: new Date().toISOString()
+                })
+                .eq('participation_id', participationId);
+              
+              if (updateError) throw updateError;
+              
               navigate(`/quiz-completion/${contestId}`);
-            })
-            .catch(error => {
+            } catch (error) {
               console.error('Error updating participant status:', error);
               toast({
                 variant: "destructive",
                 title: "Erreur",
                 description: "Impossible de mettre à jour votre statut"
               });
-            });
+            }
+          };
+          
+          updateParticipant();
         }
       }, 2000);
 
