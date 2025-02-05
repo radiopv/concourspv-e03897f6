@@ -22,7 +22,6 @@ const ContestQuestionsManager = () => {
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
       
-      console.log('Fetching questions for contest:', contestId);
       const { data, error } = await supabase
         .from('questions')
         .select('*')
@@ -108,15 +107,14 @@ const ContestQuestionsManager = () => {
     if (!contestId) return;
     
     try {
-      console.log('Adding question:', questionId, 'to contest:', contestId);
-      
       const { error } = await supabase
         .from('questions')
         .update({ 
           contest_id: contestId,
           status: 'in_use'
         })
-        .eq('id', questionId);
+        .eq('id', questionId)
+        .is('contest_id', null); // Only update if not already assigned
 
       if (error) throw error;
 
@@ -141,23 +139,35 @@ const ContestQuestionsManager = () => {
     if (!contestId) return;
     
     try {
-      console.log('Removing question:', questionId, 'from contest:', contestId);
-      
+      // First verify the question belongs to this contest
+      const { data: question, error: checkError } = await supabase
+        .from('questions')
+        .select('id')
+        .eq('id', questionId)
+        .eq('contest_id', contestId)
+        .single();
+
+      if (checkError || !question) {
+        throw new Error('Question not found or does not belong to this contest');
+      }
+
       const { error } = await supabase
         .from('questions')
         .update({ 
           contest_id: null,
           status: 'available'
         })
-        .eq('id', questionId)
-        .eq('contest_id', contestId); // Ensure we're only updating if the question belongs to this contest
+        .eq('id', questionId);
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      // Invalidate queries to refresh the lists
+      // Immediately update the cache to remove the question
+      queryClient.setQueryData(['contest-questions', contestId], (old: Question[] | undefined) => {
+        if (!old) return [];
+        return old.filter(q => q.id !== questionId);
+      });
+
+      // Then invalidate queries to ensure everything is in sync
       await queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
       await queryClient.invalidateQueries({ queryKey: ['available-questions'] });
       
@@ -185,7 +195,6 @@ const ContestQuestionsManager = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Questions Counter Alert */}
       {questionsNeeded > 0 && (
         <Alert className="mb-6">
           <AlertDescription className="flex items-center justify-between">
@@ -207,7 +216,6 @@ const ContestQuestionsManager = () => {
         </Alert>
       )}
       
-      {/* Questions Stats */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
@@ -230,7 +238,6 @@ const ContestQuestionsManager = () => {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Available Questions */}
         <Card>
           <CardHeader>
             <CardTitle>Questions Disponibles</CardTitle>
@@ -276,7 +283,6 @@ const ContestQuestionsManager = () => {
           </CardContent>
         </Card>
 
-        {/* Contest Questions */}
         <Card>
           <CardHeader>
             <CardTitle>Questions du Concours</CardTitle>
