@@ -79,7 +79,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
         <QuestionDisplay
           questionText={currentQuestion.question_text}
           articleUrl={currentQuestion.article_url}
-          options={currentQuestion.options as string[]}
+          options={Array.isArray(currentQuestion.options) ? currentQuestion.options : []}
           selectedAnswer={selectedAnswer}
           correctAnswer={currentQuestion.correct_answer}
           hasClickedLink={hasClickedLink}
