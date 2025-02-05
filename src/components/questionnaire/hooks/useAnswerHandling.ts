@@ -123,7 +123,7 @@ export const useAnswerHandling = (
         }
       }
 
-      navigate('/quiz-completion', {
+      navigate(`/quiz-completion/${contestId}`, {
         state: {
           score: finalScore,
           totalQuestions: questions.length,

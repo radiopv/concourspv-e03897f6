@@ -39,7 +39,7 @@ const App = () => {
               <Route path="/contest/:id" element={<Contest />} />
               <Route path="/points" element={<Points />} />
               <Route path="/prizes" element={<Prizes />} />
-              <Route path="/quiz-completion" element={<QuizCompletion />} />
+              <Route path="/quiz-completion/:contestId" element={<QuizCompletion />} />
               <Route path="/admin/*" element={<Admin />} />
             </Routes>
           </Layout>
