@@ -76,6 +76,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     );
   }
 
+  // Vérifier si les questions sont chargées
   if (!questions || questions.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-4">
@@ -88,6 +89,20 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
         </Alert>
       </div>
     );
+  }
+
+  // Vérifier si l'index actuel est valide
+  const isValidIndex = state.currentQuestionIndex >= 0 && state.currentQuestionIndex < questions.length;
+  if (!isValidIndex) {
+    console.error('Invalid question index:', state.currentQuestionIndex, 'total questions:', questions.length);
+    state.setCurrentQuestionIndex(0);
+    return null;
+  }
+
+  const currentQuestion = questions[state.currentQuestionIndex];
+  if (!currentQuestion) {
+    console.error('Question not found at index:', state.currentQuestionIndex);
+    return null;
   }
 
   return (
@@ -103,11 +118,11 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
             />
 
             <QuestionDisplay
-              questionText={questions[state.currentQuestionIndex].question_text}
-              articleUrl={questions[state.currentQuestionIndex].article_url}
-              options={questions[state.currentQuestionIndex].options}
+              questionText={currentQuestion.question_text}
+              articleUrl={currentQuestion.article_url}
+              options={currentQuestion.options}
               selectedAnswer={state.selectedAnswer}
-              correctAnswer={questions[state.currentQuestionIndex].correct_answer}
+              correctAnswer={currentQuestion.correct_answer}
               hasClickedLink={state.hasClickedLink}
               hasAnswered={state.hasAnswered}
               isSubmitting={state.isSubmitting}
