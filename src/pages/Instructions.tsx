@@ -60,10 +60,6 @@ const Instructions = () => {
                     <li>20 bonnes réponses : points x3</li>
                   </ul>
                 </li>
-                <li>
-                  <strong>Bonus de partage :</strong>
-                  <br />5 points par partage Facebook (max 3 par mois)
-                </li>
               </ul>
             </CardContent>
           </Card>
@@ -106,7 +102,6 @@ const Instructions = () => {
               <li>Lisez attentivement chaque article avant de commencer</li>
               <li>Prenez des notes pendant votre lecture</li>
               <li>Maintenez votre série de bonnes réponses pour les bonus</li>
-              <li>Partagez vos succès sur Facebook pour gagner des points</li>
               <li>Participez régulièrement pour monter en rang</li>
             </ul>
           </CardContent>
