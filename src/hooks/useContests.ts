@@ -1,18 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useContests = () => {
   const { toast } = useToast();
+  const { session } = useAuth();
   
   return useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
       console.log('Starting to fetch contests...');
+      console.log('Current session:', session);
       
       // First check if we have a session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Session check:', session ? 'Session exists' : 'No session', sessionError);
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Session check:', currentSession ? 'Session exists' : 'No session', sessionError);
       
       if (sessionError) {
         console.error('Session error:', sessionError);
