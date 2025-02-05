@@ -10,18 +10,6 @@ export const useContests = () => {
   return useQuery({
     queryKey: ['active-contests'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          variant: "destructive",
-          title: "Non connecté",
-          description: "Veuillez vous connecter pour voir les concours.",
-        });
-        navigate('/login');
-        return [];
-      }
-
       console.log('Fetching contests...');
       
       const { data: contests, error } = await supabase
@@ -43,10 +31,15 @@ export const useContests = () => {
           )
         `)
         .eq('status', 'active')
-        .eq('participants.status', 'completed');
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching contests:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les concours. Veuillez réessayer.",
+        });
         throw error;
       }
 
