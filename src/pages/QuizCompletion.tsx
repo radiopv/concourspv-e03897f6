@@ -32,17 +32,26 @@ const QuizCompletion = () => {
           throw new Error('User not authenticated');
         }
 
+        console.log('Fetching results for user:', session.user.id);
+
         // Get participant information
-        const { data: participant } = await supabase
+        const { data: participant, error: participantError } = await supabase
           .from('participants')
-          .select('participation_id')
+          .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
-          .maybeSingle();
+          .single();
 
-        if (!participant?.participation_id) {
+        if (participantError) {
+          console.error('Error fetching participant:', participantError);
           throw new Error('Participant not found');
         }
+
+        if (!participant) {
+          throw new Error('No participant found');
+        }
+
+        console.log('Found participant:', participant);
 
         // Get all questions for this contest
         const { data: questions, error: questionsError } = await supabase
@@ -55,6 +64,8 @@ const QuizCompletion = () => {
         const totalQuestionsCount = questions?.length || 0;
         setTotalQuestions(totalQuestionsCount);
 
+        console.log('Total questions:', totalQuestionsCount);
+
         // Get the participant's answers
         const { data: answers, error: answersError } = await supabase
           .from('participant_answers')
@@ -64,40 +75,43 @@ const QuizCompletion = () => {
 
         if (answersError) throw answersError;
 
+        console.log('Participant answers:', answers);
+
         if (answers) {
           const correct = answers.filter(answer => answer.is_correct).length;
           const calculatedScore = totalQuestionsCount > 0 
             ? Math.round((correct / totalQuestionsCount) * 100) 
             : 0;
 
-          console.log('Quiz results:', {
+          console.log('Calculation details:', {
             correct,
             totalQuestionsCount,
-            calculatedScore,
-            answers
+            calculatedScore
           });
 
           setCorrectAnswers(correct);
           setScore(calculatedScore);
           setIsQualified(calculatedScore >= requiredPercentage);
 
-          // Update participant status and score
-          const { error: updateError } = await supabase
-            .from('participants')
-            .update({ 
-              status: 'completed',
-              score: calculatedScore,
-              completed_at: new Date().toISOString()
-            })
-            .eq('contest_id', contestId)
-            .eq('id', session.user.id);
+          // Update participant status and score if not already completed
+          if (participant.status !== 'completed') {
+            const { error: updateError } = await supabase
+              .from('participants')
+              .update({ 
+                status: 'completed',
+                score: calculatedScore,
+                completed_at: new Date().toISOString()
+              })
+              .eq('contest_id', contestId)
+              .eq('id', session.user.id);
 
-          if (updateError) {
-            console.error('Error updating participant status:', updateError);
-            throw updateError;
+            if (updateError) {
+              console.error('Error updating participant status:', updateError);
+              throw updateError;
+            }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching quiz results:', error);
         toast({
           variant: "destructive",
