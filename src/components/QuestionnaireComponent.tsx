@@ -25,6 +25,36 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
   const { data: questions } = useQuestions(contestId);
   const { participant, refetchParticipant } = useQuestionnaireQueries(contestId);
 
+  useEffect(() => {
+    const checkExistingParticipation = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
+      const { data: existingParticipation, error } = await supabase
+        .from('participants')
+        .select('participation_id, status, score')
+        .eq('contest_id', contestId)
+        .eq('id', session.user.id)
+        .eq('status', 'completed')
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking participation:', error);
+        return;
+      }
+
+      if (existingParticipation) {
+        toast({
+          title: "Participation existante",
+          description: "Vous avez déjà participé à ce concours. Une seule participation est autorisée.",
+        });
+        navigate(`/quiz-completion/${contestId}`);
+      }
+    };
+
+    checkExistingParticipation();
+  }, [contestId, navigate, toast]);
+
   const currentQuestion = questions?.[currentQuestionIndex];
   const totalQuestions = questions?.length || 0;
   const answeredQuestions = currentQuestionIndex + (hasAnswered ? 1 : 0);
@@ -44,13 +74,11 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     const isCorrect = selectedAnswer === currentQuestion.correct_answer;
     
     try {
-      // Get current user session and profile
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
         throw new Error('User not authenticated');
       }
 
-      // Get user profile information
       const { data: userProfile, error: profileError } = await supabase
         .from('members')
         .select('first_name, last_name, email')
