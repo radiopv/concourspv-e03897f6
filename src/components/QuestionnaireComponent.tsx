@@ -24,6 +24,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
   const currentQuestion = questions?.[currentQuestionIndex];
   const totalQuestions = questions?.length || 0;
+  const answeredQuestions = currentQuestionIndex + (hasAnswered ? 1 : 0);
 
   const handleArticleRead = () => {
     setHasClickedLink(true);
@@ -59,8 +60,10 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     }, 2000);
   };
 
-  // Calculate score percentage based on correct answers
-  const scorePercentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+  // Calculate score percentage based on questions answered so far
+  const scorePercentage = answeredQuestions > 0 
+    ? Math.round((correctAnswers / answeredQuestions) * 100) 
+    : 0;
 
   if (!currentQuestion) {
     return <div>Loading...</div>;
@@ -72,7 +75,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
         currentQuestionIndex={currentQuestionIndex + 1}
         totalQuestions={totalQuestions}
         score={scorePercentage}
-        totalAnswered={currentQuestionIndex}
+        totalAnswered={answeredQuestions}
       />
       
       <div className="mt-8">
