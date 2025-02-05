@@ -16,6 +16,7 @@ const ContestQuestionsManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const [recentlyRemovedQuestions, setRecentlyRemovedQuestions] = useState<string[]>([]);
 
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ['contest-questions', contestId],
@@ -43,11 +44,14 @@ const ContestQuestionsManager = () => {
         .from('questions')
         .select('*')
         .eq('status', 'available')
-        .is('contest_id', null);
+        .is('contest_id', null)
+        .not('id', 'in', `(${recentlyRemovedQuestions.join(',')})`)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
-    }
+    },
+    enabled: true
   });
 
   const questionsNeeded = 25 - (Array.isArray(questions) ? questions.length : 0);
@@ -62,6 +66,7 @@ const ContestQuestionsManager = () => {
         .select('*')
         .eq('status', 'available')
         .is('contest_id', null)
+        .not('id', 'in', `(${recentlyRemovedQuestions.join(',')})`)
         .limit(questionsNeeded);
 
       if (fetchError) throw fetchError;
@@ -146,6 +151,14 @@ const ContestQuestionsManager = () => {
         .eq('id', questionId);
 
       if (error) throw error;
+
+      // Add the question ID to recently removed questions
+      setRecentlyRemovedQuestions(prev => [...prev, questionId]);
+
+      // After 5 seconds, remove the question from the recently removed list
+      setTimeout(() => {
+        setRecentlyRemovedQuestions(prev => prev.filter(id => id !== questionId));
+      }, 5000);
 
       // Refresh the data
       await queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
