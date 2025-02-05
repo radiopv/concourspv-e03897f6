@@ -29,8 +29,8 @@ const QuestionTableView = () => {
   const [editedQuestion, setEditedQuestion] = useState<Partial<Question>>({});
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  // Ajout de la requête pour les concours
-  const { data: contests } = useQuery({
+  // Add contests query
+  const { data: contestsData } = useQuery({
     queryKey: ['contests'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -286,8 +286,8 @@ const QuestionTableView = () => {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge className={getStatusColor(question.status || 'available')}>
-                    {question.status || 'available'}
+                  <Badge className={getStatusColor(question.status)}>
+                    {question.status}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -389,9 +389,9 @@ const QuestionTableView = () => {
                             <SelectValue placeholder="Ajouter au concours" />
                           </SelectTrigger>
                           <SelectContent>
-                            {contests?.map((contest) => (
+                            {contestsData?.map((contest) => (
                               <SelectItem key={contest.id} value={contest.id}>
-                                {contest.title} ({contest.questions.count} questions)
+                                {contest.title}
                               </SelectItem>
                             ))}
                           </SelectContent>
