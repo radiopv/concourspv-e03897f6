@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Trophy, Medal, Crown } from "lucide-react";
+import { Trophy, Crown } from "lucide-react";
 
 interface TopParticipant {
   user_id: string;
@@ -24,7 +24,7 @@ const TopParticipantsList = () => {
           user_id,
           total_points,
           current_rank,
-          members (
+          members!inner (
             first_name,
             last_name
           )
@@ -43,11 +43,32 @@ const TopParticipantsList = () => {
           last_name: String(member.last_name)
         })) : null
       }));
-    }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 1000 * 60 * 5 // Refresh every 5 minutes
   });
 
   if (isLoading) {
-    return <div>Chargement du classement...</div>;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-amber-500" />
+            Chargement du classement...
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[...Array(5)].map((_, index) => (
+              <div
+                key={index}
+                className="h-16 bg-gray-100 animate-pulse rounded-lg"
+              />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -84,7 +105,7 @@ const TopParticipantsList = () => {
                     {participant.members?.[0]?.first_name} {participant.members?.[0]?.last_name}
                   </span>
                   <div className="text-sm text-gray-500">
-                    {participant.current_rank || 'NOVATO'}
+                    {participant.current_rank}
                   </div>
                 </div>
               </div>
