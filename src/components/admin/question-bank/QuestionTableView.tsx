@@ -5,8 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Save, Trash2, X, ExternalLink, Plus } from 'lucide-react';
+import { Pencil, Save, Trash2, X, ExternalLink, Plus, AlertCircle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,12 +20,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Question } from '@/types/database';
+import { Card } from '@/components/ui/card';
 
 const QuestionTableView = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedQuestion, setEditedQuestion] = useState<Partial<Question>>({});
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const { data: questions, isLoading } = useQuery({
     queryKey: ['questions-bank'],
@@ -32,7 +35,6 @@ const QuestionTableView = () => {
       const { data, error } = await supabase
         .from('questions')
         .select('*')
-        .is('contest_id', null)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -40,28 +42,28 @@ const QuestionTableView = () => {
     }
   });
 
-  const { data: contests } = useQuery({
-    queryKey: ['contests-with-questions-count'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contests')
-        .select(`
-          id,
-          title,
-          questions:questions(count)
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-
-      return data.map((contest: any) => ({
-        id: contest.id,
-        title: contest.title,
-        questions: { count: contest.questions[0]?.count || 0 }
-      }));
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'available':
+        return 'bg-green-100 text-green-800';
+      case 'in_use':
+        return 'bg-blue-100 text-blue-800';
+      case 'archived':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
-  });
+  };
+
+  const filteredQuestions = questions?.filter(q => 
+    statusFilter === 'all' ? true : q.status === statusFilter
+  );
+
+  const questionsStats = {
+    available: questions?.filter(q => q.status === 'available').length || 0,
+    in_use: questions?.filter(q => q.status === 'in_use').length || 0,
+    archived: questions?.filter(q => q.status === 'archived').length || 0
+  };
 
   const addToContestMutation = useMutation({
     mutationFn: async ({ questionId, contestId }: { questionId: string, contestId: string }) => {
@@ -194,37 +196,85 @@ const QuestionTableView = () => {
   };
 
   if (isLoading) {
-    return <div>Chargement des questions...</div>;
+    return <div>Loading questions...</div>;
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[300px]">Question</TableHead>
-            <TableHead className="w-[200px]">Réponse correcte</TableHead>
-            <TableHead className="w-[300px]">Options</TableHead>
-            <TableHead className="w-[200px]">URL Article</TableHead>
-            <TableHead className="w-[250px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {questions?.map((question: Question) => (
-            <TableRow key={question.id}>
-              <TableCell>
-                {editingId === question.id ? (
-                  <Input
-                    value={editedQuestion.question_text || question.question_text}
-                    onChange={(e) => setEditedQuestion({
-                      ...editedQuestion,
-                      question_text: e.target.value
-                    })}
-                  />
-                ) : (
-                  question.question_text
-                )}
-              </TableCell>
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card className="p-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium">Questions disponibles</h3>
+            <Badge variant="secondary">{questionsStats.available}</Badge>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium">Questions en utilisation</h3>
+            <Badge variant="secondary">{questionsStats.in_use}</Badge>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium">Questions archivées</h3>
+            <Badge variant="secondary">{questionsStats.archived}</Badge>
+          </div>
+        </Card>
+      </div>
+
+      {/* Filter */}
+      <div className="flex justify-between items-center mb-6">
+        <Select
+          value={statusFilter}
+          onValueChange={setStatusFilter}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Filtrer par statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les statuts</SelectItem>
+            <SelectItem value="available">Disponible</SelectItem>
+            <SelectItem value="in_use">En utilisation</SelectItem>
+            <SelectItem value="archived">Archivé</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Questions Table */}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[300px]">Question</TableHead>
+              <TableHead className="w-[100px]">Statut</TableHead>
+              <TableHead className="w-[200px]">Réponse correcte</TableHead>
+              <TableHead className="w-[300px]">Options</TableHead>
+              <TableHead className="w-[200px]">URL Article</TableHead>
+              <TableHead className="w-[250px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredQuestions?.map((question: Question) => (
+              <TableRow key={question.id}>
+                <TableCell>
+                  {editingId === question.id ? (
+                    <Input
+                      value={editedQuestion.question_text || question.question_text}
+                      onChange={(e) => setEditedQuestion({
+                        ...editedQuestion,
+                        question_text: e.target.value
+                      })}
+                    />
+                  ) : (
+                    question.question_text
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(question.status || 'available')}>
+                    {question.status || 'available'}
+                  </Badge>
+                </TableCell>
               <TableCell>
                 {editingId === question.id ? (
                   <Input
@@ -366,10 +416,11 @@ const QuestionTableView = () => {
                   )}
                 </div>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };

@@ -5,9 +5,11 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Check, ArrowLeft, ExternalLink } from "lucide-react";
+import { Plus, Check, ArrowLeft, ExternalLink, AlertCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Question } from "@/types/database";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 const ContestQuestionsManager = () => {
   const { contestId } = useParams();
@@ -17,24 +19,6 @@ const ContestQuestionsManager = () => {
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
 
   const { data: questions, isLoading: questionsLoading } = useQuery({
-    queryKey: ['question-bank'],
-    queryFn: async () => {
-      console.log('Fetching questions from question bank');
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .is('contest_id', null)
-        .eq('status', 'available');
-      
-      if (error) {
-        console.error('Error fetching questions:', error);
-        throw error;
-      }
-      return data || [];
-    }
-  });
-
-  const { data: contestQuestions, isLoading: contestQuestionsLoading } = useQuery({
     queryKey: ['contest-questions', contestId],
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
@@ -54,32 +38,46 @@ const ContestQuestionsManager = () => {
     enabled: !!contestId
   });
 
-  const handleAddQuestion = async (questionBankId: string) => {
-    try {
-      if (!contestId) return;
+  const { data: availableQuestions, isLoading: availableQuestionsLoading } = useQuery({
+    queryKey: ['questions-bank'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .is('contest_id', null)
+        .eq('status', 'available');
       
-      const questionToAdd = questions?.find(q => q.id === questionBankId);
-      if (!questionToAdd) return;
+      if (error) throw error;
+      return data;
+    }
+  });
 
+  const questionsNeeded = 25 - (questions?.length || 0);
+
+  const handleAddQuestion = async (questionId: string) => {
+    try {
       const { error } = await supabase
         .from('questions')
-        .update({ contest_id: contestId })
-        .eq('id', questionBankId);
+        .update({ 
+          contest_id: contestId,
+          status: 'in_use'
+        })
+        .eq('id', questionId);
 
       if (error) throw error;
 
-      toast({
-        title: "Succès",
-        description: "Question ajoutée au concours",
-      });
-
       queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
-      queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      queryClient.invalidateQueries({ queryKey: ['questions-bank'] });
+      
+      toast({
+        title: "Question ajoutée",
+        description: "La question a été ajoutée au concours avec succès",
+      });
     } catch (error) {
       console.error('Error adding question:', error);
       toast({
         title: "Erreur",
-        description: "Impossible d'ajouter la question",
+        description: "Impossible d'ajouter la question au concours",
         variant: "destructive",
       });
     }
@@ -89,40 +87,32 @@ const ContestQuestionsManager = () => {
     try {
       const { error } = await supabase
         .from('questions')
-        .update({ contest_id: null })
+        .update({ 
+          contest_id: null,
+          status: 'available'
+        })
         .eq('id', questionId);
 
       if (error) throw error;
 
-      toast({
-        title: "Succès",
-        description: "Question retirée du concours",
-      });
-
       queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
-      queryClient.invalidateQueries({ queryKey: ['question-bank'] });
+      queryClient.invalidateQueries({ queryKey: ['questions-bank'] });
+      
+      toast({
+        title: "Question retirée",
+        description: "La question a été retirée du concours",
+      });
     } catch (error) {
       console.error('Error removing question:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de retirer la question",
+        description: "Impossible de retirer la question du concours",
         variant: "destructive",
       });
     }
   };
 
-  const isQuestionInContest = (questionBankId: string): boolean => {
-    if (!Array.isArray(contestQuestions) || !Array.isArray(questions)) return false;
-    
-    const questionFromBank = questions.find(q => q.id === questionBankId);
-    if (!questionFromBank) return false;
-    
-    return contestQuestions.some(q => 
-      q.question_text === questionFromBank.question_text
-    );
-  };
-
-  if (questionsLoading || contestQuestionsLoading) {
+  if (questionsLoading || availableQuestionsLoading) {
     return <div>Chargement...</div>;
   }
 
@@ -139,9 +129,42 @@ const ContestQuestionsManager = () => {
         </Button>
         <h1 className="text-2xl font-bold">Gestion des Questions du Concours</h1>
       </div>
+
+      {/* Questions Counter Alert */}
+      {questionsNeeded > 0 && (
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Il manque {questionsNeeded} question{questionsNeeded > 1 ? 's' : ''} pour atteindre les 25 questions requises.
+            {questionsNeeded > 0 && " Des questions seront automatiquement ajoutées depuis la banque de questions."}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {/* Questions Stats */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center">
+              <span>Questions dans ce concours</span>
+              <Badge variant="secondary">{questions?.length || 0} / 25</Badge>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center">
+              <span>Questions manquantes</span>
+              <Badge variant={questionsNeeded > 0 ? "destructive" : "secondary"}>
+                {questionsNeeded}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Questions disponibles */}
+        {/* Available Questions */}
         <Card>
           <CardHeader>
             <CardTitle>Questions Disponibles</CardTitle>
@@ -149,7 +172,7 @@ const ContestQuestionsManager = () => {
           <CardContent>
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-4">
-                {Array.isArray(questions) && questions.map((question) => (
+                {availableQuestions?.map((question) => (
                   <Card key={question.id} className="p-4">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
@@ -173,16 +196,11 @@ const ContestQuestionsManager = () => {
                         )}
                       </div>
                       <Button
-                        variant={isQuestionInContest(question.id) ? "secondary" : "default"}
+                        variant="outline"
                         size="sm"
                         onClick={() => handleAddQuestion(question.id)}
-                        disabled={isQuestionInContest(question.id)}
                       >
-                        {isQuestionInContest(question.id) ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Plus className="h-4 w-4" />
-                        )}
+                        <Plus className="h-4 w-4" />
                       </Button>
                     </div>
                   </Card>
@@ -192,7 +210,7 @@ const ContestQuestionsManager = () => {
           </CardContent>
         </Card>
 
-        {/* Questions du concours */}
+        {/* Contest Questions */}
         <Card>
           <CardHeader>
             <CardTitle>Questions du Concours</CardTitle>
@@ -200,14 +218,17 @@ const ContestQuestionsManager = () => {
           <CardContent>
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-4">
-                {Array.isArray(contestQuestions) && contestQuestions.map((question) => (
+                {questions?.map((question, index) => (
                   <Card key={question.id} className="p-4">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
-                        <h3 className="font-medium mb-2">{question.question_text}</h3>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline">Question {index + 1}</Badge>
+                          <h3 className="font-medium">{question.question_text}</h3>
+                        </div>
                         <div className="space-y-1 text-sm text-gray-500">
-                          {Array.isArray(question.options) && question.options.map((option: string, index: number) => (
-                            <p key={index} className={option === question.correct_answer ? "text-green-600 font-medium" : ""}>
+                          {Array.isArray(question.options) && question.options.map((option: string, optionIndex: number) => (
+                            <p key={optionIndex} className={option === question.correct_answer ? "text-green-600 font-medium" : ""}>
                               {option}
                             </p>
                           ))}
@@ -224,7 +245,7 @@ const ContestQuestionsManager = () => {
                         )}
                       </div>
                       <Button
-                        variant="destructive"
+                        variant="outline"
                         size="sm"
                         onClick={() => handleRemoveQuestion(question.id)}
                       >

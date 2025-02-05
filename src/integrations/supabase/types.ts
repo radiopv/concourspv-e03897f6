@@ -859,6 +859,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_fill_contest_questions: {
+        Args: {
+          contest_id_param: string
+        }
+        Returns: undefined
+      }
       calculate_streak_bonus: {
         Args: {
           streak_count: number
