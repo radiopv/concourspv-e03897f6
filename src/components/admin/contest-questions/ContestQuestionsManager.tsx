@@ -38,6 +38,20 @@ const ContestQuestionsManager = () => {
     enabled: !!contestId
   });
 
+  const { data: availableQuestions } = useQuery({
+    queryKey: ['available-questions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('status', 'available')
+        .is('contest_id', null);
+
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
   const questionsNeeded = 25 - (questions?.length || 0);
 
   const autoFillQuestions = async () => {
