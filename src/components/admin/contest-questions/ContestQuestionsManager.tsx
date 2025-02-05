@@ -166,6 +166,7 @@ const ContestQuestionsManager = () => {
 
       console.log('✅ Question verified, proceeding with removal');
 
+      // Important: Use .select() to get the updated data back
       const { data: updateData, error: updateError } = await supabase
         .from('questions')
         .update({ 
@@ -173,6 +174,7 @@ const ContestQuestionsManager = () => {
           status: 'available'
         })
         .eq('id', questionId)
+        .eq('contest_id', contestId) // Make sure we only update if it belongs to this contest
         .select();
 
       console.log('📝 Update operation result:', { updateData, updateError });
@@ -190,21 +192,13 @@ const ContestQuestionsManager = () => {
       // Immediately update the cache to remove the question
       queryClient.setQueryData(['contest-questions', contestId], (old: Question[] | undefined) => {
         if (!old) return [];
-        const filtered = old.filter(q => q.id !== questionId);
-        console.log('🔄 Cache update:', { 
-          oldLength: old.length, 
-          newLength: filtered.length,
-          removedQuestion: questionId
-        });
-        return filtered;
+        return old.filter(q => q.id !== questionId);
       });
 
       // Then invalidate queries to ensure everything is in sync
       console.log('🔄 Invalidating queries...');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['available-questions'] })
-      ]);
+      await queryClient.invalidateQueries({ queryKey: ['contest-questions', contestId] });
+      await queryClient.invalidateQueries({ queryKey: ['available-questions'] });
       
       toast({
         title: "Question retirée",
