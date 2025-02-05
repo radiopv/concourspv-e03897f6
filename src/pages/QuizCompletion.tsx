@@ -26,7 +26,6 @@ const QuizCompletion = () => {
       if (!contestId) return;
 
       try {
-        // Get the current user's session
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user?.id) {
           throw new Error('User not authenticated');
@@ -100,24 +99,6 @@ const QuizCompletion = () => {
           setCorrectAnswers(correct);
           setScore(calculatedScore);
           setIsQualified(calculatedScore >= requiredPercentage);
-
-          // Update participant status and score if not already completed
-          if (participant.status !== 'completed') {
-            const { error: updateError } = await supabase
-              .from('participants')
-              .update({ 
-                status: 'completed',
-                score: calculatedScore,
-                completed_at: new Date().toISOString()
-              })
-              .eq('contest_id', contestId)
-              .eq('id', session.user.id);
-
-            if (updateError) {
-              console.error('Error updating participant status:', updateError);
-              throw updateError;
-            }
-          }
         }
       } catch (error: any) {
         console.error('Error fetching quiz results:', error);
