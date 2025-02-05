@@ -16,12 +16,19 @@ interface QuestionnaireComponentProps {
 }
 
 const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contestId }) => {
+  // Always call hooks at the top level
   const navigate = useNavigate();
   const { user } = useAuth();
   const state = useQuestionnaireState();
   const { settings, userProfile, participant, questions, refetchParticipant } = useQuestionnaireQueries(contestId);
   
-  // Vérifier si l'utilisateur est connecté
+  // Initialize participant (this hook will handle navigation if needed)
+  useParticipantInitialization(contestId, userProfile, refetchParticipant);
+  
+  // Setup answer handling
+  const { handleNextQuestion } = useAnswerHandling(contestId, participant, questions || [], settings);
+
+  // Early return for unauthenticated users
   if (!user) {
     return (
       <div className="max-w-4xl mx-auto p-4">
@@ -43,18 +50,9 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
       </div>
     );
   }
-  
-  // Initialize participant
-  useParticipantInitialization(contestId, userProfile, refetchParticipant);
-  
-  // Setup answer handling
-  const { handleNextQuestion } = useAnswerHandling(contestId, participant, questions || [], settings);
 
-  // Check if participant has already completed this contest
-  const hasAlreadyParticipated = participant?.status === 'completed';
-
-  // Display message if already participated
-  if (hasAlreadyParticipated) {
+  // Early return for completed participants
+  if (participant?.status === 'completed') {
     return (
       <div className="max-w-4xl mx-auto p-4">
         <Alert className="mb-6 border-blue-500 bg-blue-50 dark:bg-blue-900/10">
@@ -76,7 +74,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     );
   }
 
-  // Vérifier si les questions sont chargées
+  // Early return for loading state
   if (!questions || questions.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-4">
@@ -91,7 +89,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     );
   }
 
-  // Vérifier si l'index actuel est valide
+  // Validate current question index
   const isValidIndex = state.currentQuestionIndex >= 0 && state.currentQuestionIndex < questions.length;
   if (!isValidIndex) {
     console.error('Invalid question index:', state.currentQuestionIndex, 'total questions:', questions.length);

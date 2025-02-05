@@ -32,13 +32,13 @@ export const useParticipantInitialization = (
           return;
         }
 
-        // Vérifier d'abord si une participation complétée existe
-        const { data: existingCompletedParticipation, error: checkError } = await supabase
+        // Check for any existing participation (completed or pending)
+        const { data: existingParticipation, error: checkError } = await supabase
           .from('participants')
           .select('*')
           .eq('contest_id', contestId)
           .eq('id', session.user.id)
-          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
           .maybeSingle();
 
         if (checkError) {
@@ -46,34 +46,25 @@ export const useParticipantInitialization = (
           return;
         }
 
-        // Si une participation complétée existe, rediriger vers la page de résultats
-        if (existingCompletedParticipation) {
-          navigate('/quiz-completion', {
-            state: {
-              contestId,
-              score: existingCompletedParticipation.score,
-              requiredPercentage: 80,
-            }
-          });
-          return;
+        // If there's an existing participation, handle it accordingly
+        if (existingParticipation) {
+          if (existingParticipation.status === 'completed') {
+            navigate('/quiz-completion', {
+              state: {
+                contestId,
+                score: existingParticipation.score,
+                requiredPercentage: 80,
+              }
+            });
+            return;
+          } else if (existingParticipation.status === 'pending') {
+            console.log('Found existing pending participation:', existingParticipation);
+            await refetchParticipant();
+            return;
+          }
         }
 
-        // Vérifier les participations en cours
-        const { data: existingPendingParticipation } = await supabase
-          .from('participants')
-          .select('*')
-          .eq('contest_id', contestId)
-          .eq('id', session.user.id)
-          .eq('status', 'pending')
-          .maybeSingle();
-
-        if (existingPendingParticipation) {
-          console.log('Found existing pending participation:', existingPendingParticipation);
-          await refetchParticipant();
-          return;
-        }
-
-        // Get settings for max attempts and user's extra participations
+        // Get settings and user points for attempt validation
         const { data: settings } = await supabase
           .from('settings')
           .select('default_attempts')
@@ -87,7 +78,7 @@ export const useParticipantInitialization = (
 
         const maxAttempts = (settings?.default_attempts || 3) + (userPoints?.extra_participations || 0);
 
-        // Get the latest participation to determine the next attempt number
+        // Get the latest attempt number
         const { data: latestParticipation } = await supabase
           .from('participants')
           .select('attempts')
@@ -110,7 +101,7 @@ export const useParticipantInitialization = (
         }
 
         // Create new participation
-        const { data: newParticipation, error: insertError } = await supabase
+        const { error: insertError } = await supabase
           .from('participants')
           .insert({
             id: session.user.id,
@@ -126,6 +117,9 @@ export const useParticipantInitialization = (
           .single();
 
         if (insertError) {
+          console.error('Error creating participant:', insertError);
+          
+          // If the error indicates the user has already participated, redirect to completion
           if (insertError.message.includes('déjà participé')) {
             navigate('/quiz-completion', {
               state: {
@@ -136,8 +130,7 @@ export const useParticipantInitialization = (
             });
             return;
           }
-          
-          console.error('Error creating participant:', insertError);
+
           toast({
             title: "Erreur",
             description: "Impossible d'initialiser la participation",
@@ -146,14 +139,11 @@ export const useParticipantInitialization = (
           return;
         }
 
-        if (newParticipation) {
-          console.log('Successfully created new participation:', newParticipation);
-          await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
-          toast({
-            title: `Tentative ${nextAttemptNumber}/${maxAttempts}`,
-            description: "Bonne chance !",
-          });
-        }
+        await queryClient.invalidateQueries({ queryKey: ['participant-status', contestId] });
+        toast({
+          title: `Tentative ${nextAttemptNumber}/${maxAttempts}`,
+          description: "Bonne chance !",
+        });
 
       } catch (error: any) {
         console.error('Error in initializeParticipant:', error);
