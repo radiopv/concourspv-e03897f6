@@ -10,7 +10,6 @@ import { ArrowRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { calculateCorrectAnswers, isQualifiedForDraw } from '@/utils/scoreCalculations';
 
 const QuizCompletion = () => {
   const navigate = useNavigate();
@@ -27,7 +26,25 @@ const QuizCompletion = () => {
       if (!contestId) return;
 
       try {
-        // Get all questions for this contest to know total count
+        // Get the current user's session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) {
+          throw new Error('User not authenticated');
+        }
+
+        // Get participant information
+        const { data: participant } = await supabase
+          .from('participants')
+          .select('participation_id')
+          .eq('contest_id', contestId)
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (!participant?.participation_id) {
+          throw new Error('Participant not found');
+        }
+
+        // Get all questions for this contest
         const { data: questions, error: questionsError } = await supabase
           .from('questions')
           .select('id')
@@ -42,6 +59,7 @@ const QuizCompletion = () => {
         const { data: answers, error: answersError } = await supabase
           .from('participant_answers')
           .select('is_correct')
+          .eq('participant_id', participant.participation_id)
           .eq('contest_id', contestId);
 
         if (answersError) throw answersError;
@@ -71,7 +89,8 @@ const QuizCompletion = () => {
               score: calculatedScore,
               completed_at: new Date().toISOString()
             })
-            .eq('contest_id', contestId);
+            .eq('contest_id', contestId)
+            .eq('id', session.user.id);
 
           if (updateError) {
             console.error('Error updating participant status:', updateError);
