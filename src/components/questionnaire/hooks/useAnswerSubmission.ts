@@ -1,119 +1,81 @@
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { useQuestionnaireState } from '../QuestionnaireState';
-import { getRandomMessage } from '../messages';
-import { awardPoints } from '../../../services/pointsService';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
+import { Question } from '@/types/database';
 
 export const useAnswerSubmission = (contestId: string) => {
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const state = useQuestionnaireState();
 
-  const handleSubmitAnswer = async (currentQuestion: any) => {
-    if (!state.selectedAnswer || !currentQuestion) return;
+  const submitAnswer = async (
+    participationId: string,
+    currentQuestion: Question,
+    selectedAnswer: string,
+    totalQuestions: number
+  ) => {
+    const isCorrect = selectedAnswer === currentQuestion.correct_answer;
 
-    state.setIsSubmitting(true);
     try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user?.id) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté pour participer",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Récupérer les informations du participant
-      const { data: participant } = await supabase
-        .from('participants')
-        .select('participation_id, attempts')
-        .eq('id', session.session.user.id)
-        .eq('contest_id', contestId)
-        .single();
-
-      if (!participant?.participation_id) {
-        throw new Error("Participant not found");
-      }
-
-      const isAnswerCorrect = state.selectedAnswer === currentQuestion.correct_answer;
-
-      // Sauvegarder la réponse avec le numéro de tentative
-      const { error: insertError } = await supabase
+      const { error: answerError } = await supabase
         .from('participant_answers')
         .insert({
-          participant_id: participant.participation_id,
+          participant_id: participationId,
+          contest_id: contestId,
           question_id: currentQuestion.id,
-          answer: state.selectedAnswer,
-          is_correct: isAnswerCorrect,
-          attempt_number: participant.attempts || 1
+          answer: selectedAnswer,
+          is_correct: isCorrect,
+          attempt_number: 1
         });
 
-      if (insertError) {
-        console.error('Error saving answer:', insertError);
-        throw insertError;
+      if (answerError) throw answerError;
+
+      if (isCorrect) {
+        setCorrectAnswers(prev => prev + 1);
       }
 
-      // Mettre à jour l'état
-      state.setIsCorrect(isAnswerCorrect);
-      state.setHasAnswered(true);
-      state.setTotalAnswered(prev => prev + 1);
-      
-      if (isAnswerCorrect) {
-        // N'attribuer des points que lors de la première tentative
-        if (participant.attempts <= 1) {
-          state.setScore(prev => prev + 1);
-          state.incrementStreak();
-          const currentStreak = state.getCurrentStreak();
-          
-          await awardPoints(
-            session.session.user.id,
-            1,
-            contestId,
-            currentStreak
-          );
-
-          toast({
-            title: "Bravo ! 🎉",
-            description: "Vous avez gagné un point pour cette bonne réponse !",
-          });
-        } else {
-          toast({
-            title: "Bonne réponse ! ✨",
-            description: "Pas de points pour les tentatives suivantes, mais continuez comme ça !",
-          });
-        }
-      } else {
-        state.resetStreak();
-        toast({
-          title: "Pas tout à fait... 😕",
-          description: "La réponse n'est pas correcte. Essayez encore !",
-          variant: "destructive",
-        });
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ['contests'] });
-      await queryClient.invalidateQueries({ queryKey: ['questions', contestId] });
-      await queryClient.invalidateQueries({ queryKey: ['participants', contestId] });
-      await queryClient.invalidateQueries({ queryKey: ['user-points'] });
-
-      const message = getRandomMessage();
-      toast({
-        description: message,
-      });
-
+      return isCorrect;
     } catch (error) {
       console.error('Error submitting answer:', error);
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la soumission de votre réponse",
         variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'enregistrer votre réponse"
       });
-    } finally {
-      state.setIsSubmitting(false);
+      return false;
     }
   };
 
-  return { handleSubmitAnswer };
+  const completeQuestionnaire = async (participationId: string, totalQuestions: number) => {
+    const finalScore = Math.round((correctAnswers / totalQuestions) * 100);
+    
+    try {
+      const { error: updateError } = await supabase
+        .from('participants')
+        .update({ 
+          status: 'completed',
+          score: finalScore,
+          completed_at: new Date().toISOString()
+        })
+        .eq('participation_id', participationId);
+      
+      if (updateError) throw updateError;
+      
+      navigate(`/quiz-completion/${contestId}`);
+    } catch (error) {
+      console.error('Error updating participant status:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de mettre à jour votre statut"
+      });
+    }
+  };
+
+  return {
+    correctAnswers,
+    submitAnswer,
+    completeQuestionnaire
+  };
 };
