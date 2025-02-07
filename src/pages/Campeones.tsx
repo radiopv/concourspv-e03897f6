@@ -5,8 +5,25 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Medal, Star, Award } from "lucide-react";
 
+interface Member {
+  first_name: string;
+  last_name: string;
+}
+
+interface UserPoints {
+  total_points: number;
+  best_streak: number;
+  current_rank: string;
+  members: Member;
+}
+
+interface StreakStats {
+  best_streak: number;
+  members: Member;
+}
+
 const Campeones = () => {
-  const { data: topPlayers } = useQuery({
+  const { data: topPlayers } = useQuery<UserPoints[]>({
     queryKey: ['top-players'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -28,7 +45,7 @@ const Campeones = () => {
     }
   });
 
-  const { data: streakStats } = useQuery({
+  const { data: streakStats } = useQuery<StreakStats[]>({
     queryKey: ['streak-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
