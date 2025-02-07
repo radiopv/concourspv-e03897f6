@@ -1,13 +1,31 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PageMetadata } from '@/components/seo/PageMetadata';
+import PageMetadata from '@/components/seo/PageMetadata';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Trophy } from 'lucide-react';
 
+type Winner = {
+  id: string;
+  member: {
+    id: string;
+    full_name: string;
+  } | null;
+  contest: {
+    id: string;
+    name: string;
+  } | null;
+  prize: {
+    id: string;
+    name: string;
+    description: string | null;
+    image_url: string | null;
+  } | null;
+}
+
 const Campeones = () => {
-  const { data: winners, isLoading } = useQuery({
+  const { data: winners, isLoading } = useQuery<Winner[]>({
     queryKey: ['winners'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -21,7 +39,7 @@ const Campeones = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 
@@ -30,6 +48,7 @@ const Campeones = () => {
       <PageMetadata 
         title="Los Campeones | Passion Varadero" 
         description="Découvrez les gagnants de nos concours Passion Varadero" 
+        pageUrl={window.location.href}
       />
       
       <div className="flex items-center justify-between">
@@ -59,7 +78,7 @@ const Campeones = () => {
                 <div className="relative h-48 w-full">
                   <img
                     src={winner.prize.image_url}
-                    alt={winner.prize.name}
+                    alt={winner.prize.name || 'Prize image'}
                     className="absolute inset-0 h-full w-full object-cover"
                   />
                 </div>
