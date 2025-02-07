@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PageMetadata from '@/components/seo/PageMetadata';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { Trophy } from 'lucide-react';
+import { Trophy, Crown, Medal } from 'lucide-react';
 
 type Winner = {
   id: string;
@@ -23,22 +23,30 @@ type Winner = {
     description: string | null;
     image_url: string | null;
   } | null;
+  total_points?: number;
+  wins_count?: number;
 }
 
 const Campeones = () => {
   const { data: winners = [], isLoading } = useQuery<Winner[]>({
     queryKey: ['winners'],
     queryFn: async () => {
-      console.log('Fetching winners...');
-      const { data, error } = await supabase
+      const { data: participantPrizes, error } = await supabase
         .from('participant_prizes')
         .select(`
           id,
-          participant:participant_id(id, first_name, last_name),
-          contest:contest_id(id, title),
-          prize:prize_id(
+          participant:participants!inner(
             id,
-            prize_catalog:prize_catalog_id(
+            first_name,
+            last_name
+          ),
+          contest:contests!inner(
+            id,
+            title
+          ),
+          prize:prizes!inner(
+            id,
+            prize_catalog!inner(
               name,
               description,
               image_url
@@ -52,34 +60,46 @@ const Campeones = () => {
         throw error;
       }
 
-      console.log('Winners data:', data);
+      console.log('Winners data:', participantPrizes);
       
-      return (data || []).map((winner): Winner => {
-        // Type assertion to help TypeScript understand the structure
-        const typedWinner = winner as {
-          id: string;
-          participant: { id: string; first_name: string; last_name: string; } | null;
-          contest: { id: string; title: string; } | null;
-          prize: {
-            id: string;
-            prize_catalog: {
-              name: string;
-              description: string | null;
-              image_url: string | null;
-            } | null;
-          } | null;
-        };
+      return (participantPrizes || []).map((winner): Winner => {
+        if (!winner || !winner.participant || !winner.contest || !winner.prize) {
+          throw new Error('Invalid winner data structure');
+        }
+
+        const participant = Array.isArray(winner.participant) 
+          ? winner.participant[0] 
+          : winner.participant;
+
+        const contest = Array.isArray(winner.contest)
+          ? winner.contest[0]
+          : winner.contest;
+
+        const prize = Array.isArray(winner.prize)
+          ? winner.prize[0]
+          : winner.prize;
+
+        if (!participant || !contest || !prize?.prize_catalog) {
+          throw new Error('Missing required winner data');
+        }
 
         return {
-          id: typedWinner.id,
-          participant: typedWinner.participant,
-          contest: typedWinner.contest,
-          prize: typedWinner.prize ? {
-            id: typedWinner.prize.id,
-            name: typedWinner.prize.prize_catalog?.name || 'Prix non spécifié',
-            description: typedWinner.prize.prize_catalog?.description || null,
-            image_url: typedWinner.prize.prize_catalog?.image_url || null
-          } : null
+          id: winner.id,
+          participant: {
+            id: participant.id,
+            first_name: participant.first_name,
+            last_name: participant.last_name
+          },
+          contest: {
+            id: contest.id,
+            title: contest.title
+          },
+          prize: {
+            id: prize.id,
+            name: prize.prize_catalog.name || 'Prix non spécifié',
+            description: prize.prize_catalog.description || null,
+            image_url: prize.prize_catalog.image_url || null
+          }
         };
       });
     }
@@ -114,26 +134,48 @@ const Campeones = () => {
         </div>
       ) : winners && winners.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {winners.map((winner) => (
-            <Card key={winner.id} className="overflow-hidden">
-              {winner.prize?.image_url && (
-                <div className="relative h-48 w-full">
+          {winners.map((winner, index) => (
+            <Card key={winner.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <div className={`relative ${winner.prize?.image_url ? 'h-48' : 'h-24'} w-full bg-gradient-to-r from-amber-100 to-amber-200`}>
+                {winner.prize?.image_url ? (
                   <img
                     src={winner.prize.image_url}
-                    alt={winner.prize.name || 'Prize image'}
+                    alt={winner.prize.name || 'Prix'}
                     className="absolute inset-0 h-full w-full object-cover"
                   />
-                </div>
-              )}
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {index === 0 ? (
+                      <Crown className="h-12 w-12 text-amber-500" />
+                    ) : index === 1 ? (
+                      <Medal className="h-12 w-12 text-gray-400" />
+                    ) : index === 2 ? (
+                      <Medal className="h-12 w-12 text-amber-700" />
+                    ) : (
+                      <Trophy className="h-12 w-12 text-amber-300" />
+                    )}
+                  </div>
+                )}
+              </div>
               <CardHeader>
-                <CardTitle className="text-lg">
+                <CardTitle className="text-lg flex items-center gap-2">
                   {winner.participant?.first_name} {winner.participant?.last_name}
+                  {index < 3 && (
+                    <span className="text-sm px-2 py-1 rounded-full bg-amber-100 text-amber-800">
+                      #{index + 1}
+                    </span>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   A gagné {winner.prize?.name} dans le concours "{winner.contest?.title}"
                 </p>
+                {winner.prize?.description && (
+                  <p className="mt-2 text-sm text-gray-500">
+                    {winner.prize.description}
+                  </p>
+                )}
               </CardContent>
             </Card>
           ))}
