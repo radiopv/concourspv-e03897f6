@@ -1,16 +1,9 @@
-import { Link } from 'react-router-dom';
-import { Trophy, Home, Star, User, Settings, LogOut } from 'lucide-react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Settings, LogOut, User, Trophy, BookOpen, Gift } from 'lucide-react';
+import UserPoints from './UserPoints';
 
 interface UserNavBarProps {
   isAdmin: boolean;
@@ -18,74 +11,87 @@ interface UserNavBarProps {
 
 const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   return (
-    <nav className="bg-white shadow-sm">
+    <nav className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-500 text-white shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
-            <Link
-              to="/"
-              className="text-gray-600 hover:text-amber-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-            >
-              <Home className="h-4 w-4" />
-              Accueil
+            <Link to="/" className="flex items-center space-x-2 text-white hover:text-amber-100">
+              <Trophy className="h-6 w-6" />
+              <span className="font-bold text-lg">Passion Varadero</span>
             </Link>
-            <Link
-              to="/points"
-              className="text-gray-600 hover:text-amber-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-            >
-              <Star className="h-4 w-4" />
-              Points & Rangs
-            </Link>
-            <Link
-              to="/campeones"
-              className="text-gray-600 hover:text-amber-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-            >
-              <Trophy className="h-4 w-4" />
-              Los Campeones
-            </Link>
+            <div className="hidden md:flex space-x-4">
+              <Link to="/instructions" className="text-white hover:text-amber-100">
+                <span className="flex items-center">
+                  <BookOpen className="h-4 w-4 mr-1" />
+                  Instructions
+                </span>
+              </Link>
+              <Link to="/contests" className="text-white hover:text-amber-100">
+                Concours
+              </Link>
+              <Link to="/prizes" className="text-white hover:text-amber-100 flex items-center">
+                <Gift className="h-4 w-4 mr-1" />
+                Prix à Gagner
+              </Link>
+              <Link to="/points" className="text-white hover:text-amber-100">
+                Points
+              </Link>
+            </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email} />
-                    <AvatarFallback>
-                      {user?.email?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {user?.user_metadata?.full_name || 'Utilisateur'}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user?.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Paramètres</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Se déconnecter</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {user ? (
+              <>
+                <UserPoints />
+                <div className="hidden md:flex space-x-2">
+                  <Link to="/dashboard">
+                    <Button variant="ghost" className="text-white hover:text-amber-100">
+                      <User className="h-5 w-5 mr-2" />
+                      Profil
+                    </Button>
+                  </Link>
+                  {isAdmin && (
+                    <Link to="/admin">
+                      <Button variant="ghost" className="text-white hover:text-amber-100">
+                        <Settings className="h-5 w-5 mr-2" />
+                        Admin
+                      </Button>
+                    </Link>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    className="text-white hover:text-amber-100" 
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              location.pathname !== '/login' && (
+                <div className="flex space-x-2">
+                  <Link to="/login">
+                    <Button variant="secondary" className="font-semibold">
+                      Connexion
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button variant="secondary" className="font-semibold">
+                      Inscription
+                    </Button>
+                  </Link>
+                </div>
+              )
+            )}
           </div>
         </div>
       </div>

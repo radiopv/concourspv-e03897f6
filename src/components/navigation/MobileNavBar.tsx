@@ -20,14 +20,24 @@ const MobileNavBar = ({ isAdmin }: MobileNavBarProps) => {
       icon: Home
     },
     {
-      title: "Points",
-      path: "/points",
+      title: "Instructions",
+      path: "/instructions",
+      icon: BookOpen
+    },
+    {
+      title: "Concours",
+      path: "/contests",
       icon: Trophy
     },
     {
-      title: "Campeones",
-      path: "/campeones",
-      icon: Trophy
+      title: "Prix",
+      path: "/prizes",
+      icon: Gift
+    },
+    {
+      title: "Points",
+      path: "/points",
+      icon: Gift
     },
     {
       title: "Profil",
