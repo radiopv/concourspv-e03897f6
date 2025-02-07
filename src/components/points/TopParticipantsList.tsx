@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -29,8 +30,7 @@ const TopParticipantsList = () => {
             last_name
           )
         `)
-        .order('total_points', { ascending: false })
-        .limit(25);
+        .order('total_points', { ascending: false });
 
       if (error) throw error;
       
@@ -43,9 +43,7 @@ const TopParticipantsList = () => {
           last_name: String(member.last_name)
         })) : null
       }));
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 60 * 5 // Refresh every 5 minutes
+    }
   });
 
   if (isLoading) {
@@ -76,7 +74,7 @@ const TopParticipantsList = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Trophy className="w-6 h-6 text-amber-500" />
-          Top 25 des joueurs
+          Classement des joueurs
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -116,6 +114,11 @@ const TopParticipantsList = () => {
               </div>
             </div>
           ))}
+          {(!topParticipants || topParticipants.length === 0) && (
+            <div className="text-center py-8 text-gray-500">
+              Aucun participant pour le moment
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
