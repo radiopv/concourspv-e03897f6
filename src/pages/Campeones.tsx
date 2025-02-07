@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PageMetadata from '@/components/seo/PageMetadata';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { Trophy, Crown, Medal } from 'lucide-react';
+import { Trophy, Crown, Medal, Star, Award, Target } from 'lucide-react';
+import TopParticipantsList from '@/components/points/TopParticipantsList';
 
 type Winner = {
   id: string;
@@ -23,12 +24,10 @@ type Winner = {
     description: string | null;
     image_url: string | null;
   } | null;
-  total_points?: number;
-  wins_count?: number;
 }
 
 const Campeones = () => {
-  const { data: winners = [], isLoading } = useQuery<Winner[]>({
+  const { data: winners = [], isLoading: winnersLoading } = useQuery<Winner[]>({
     queryKey: ['winners'],
     queryFn: async () => {
       const { data: participantPrizes, error } = await supabase
@@ -113,11 +112,27 @@ const Campeones = () => {
     }
   });
 
+  // Statistiques globales
+  const { data: globalStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['global-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_points')
+        .select('total_points, best_streak, current_streak, current_rank')
+        .order('total_points', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   return (
     <div className="space-y-6">
       <PageMetadata 
         title="Los Campeones | Passion Varadero" 
-        description="Découvrez les gagnants de nos concours Passion Varadero" 
+        description="Découvrez les champions et les meilleurs joueurs de Passion Varadero" 
         pageUrl={window.location.href}
       />
       
@@ -128,80 +143,139 @@ const Campeones = () => {
         </h1>
       </div>
 
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((n) => (
-            <Card key={n} className="animate-pulse">
-              <CardHeader className="h-32 bg-gray-200" />
-              <CardContent className="space-y-2">
-                <div className="h-4 w-3/4 bg-gray-200 rounded" />
-                <div className="h-4 w-1/2 bg-gray-200 rounded" />
-              </CardContent>
-            </Card>
-          ))}
+      {/* Statistiques globales */}
+      {!statsLoading && globalStats && (
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Meilleur Score
+              </CardTitle>
+              <Trophy className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{globalStats.total_points || 0} pts</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Meilleure Série
+              </CardTitle>
+              <Star className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{globalStats.best_streak || 0}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Série Actuelle Record
+              </CardTitle>
+              <Target className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{globalStats.current_streak || 0}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Rang Maximum
+              </CardTitle>
+              <Award className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{globalStats.current_rank || 'NOVATO'}</div>
+            </CardContent>
+          </Card>
         </div>
-      ) : winners && winners.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {winners.map((winner, index) => (
-            <Card key={winner.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className={`relative ${winner.prize?.image_url ? 'h-48' : 'h-24'} w-full bg-gradient-to-r from-amber-100 to-amber-200`}>
-                {winner.prize?.image_url ? (
-                  <img
-                    src={winner.prize.image_url}
-                    alt={winner.prize.name || 'Prix'}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    {index === 0 ? (
-                      <Crown className="h-12 w-12 text-amber-500" />
-                    ) : index === 1 ? (
-                      <Medal className="h-12 w-12 text-gray-400" />
-                    ) : index === 2 ? (
-                      <Medal className="h-12 w-12 text-amber-700" />
-                    ) : (
-                      <Trophy className="h-12 w-12 text-amber-300" />
-                    )}
-                  </div>
-                )}
-              </div>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  {winner.participant?.first_name} {winner.participant?.last_name}
-                  {index < 3 && (
-                    <span className="text-sm px-2 py-1 rounded-full bg-amber-100 text-amber-800">
-                      #{index + 1}
-                    </span>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  A gagné {winner.prize?.name} dans le concours "{winner.contest?.title}"
-                </p>
-                {winner.prize?.description && (
-                  <p className="mt-2 text-sm text-gray-500">
-                    {winner.prize.description}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-            <Trophy className="h-12 w-12 text-amber-500 mb-4" />
-            <h3 className="text-lg font-semibold">Pas encore de gagnants</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Participez à nos concours pour avoir une chance de gagner !
-            </p>
-          </CardContent>
-        </Card>
       )}
+
+      {/* Top 25 des joueurs */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-4">Top 25 des Joueurs</h2>
+        <TopParticipantsList />
+      </div>
+
+      {/* Section des gagnants récents */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-4">Gagnants Récents</h2>
+        {winnersLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((n) => (
+              <Card key={n} className="animate-pulse">
+                <CardHeader className="h-32 bg-gray-200" />
+                <CardContent className="space-y-2">
+                  <div className="h-4 w-3/4 bg-gray-200 rounded" />
+                  <div className="h-4 w-1/2 bg-gray-200 rounded" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : winners && winners.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {winners.map((winner, index) => (
+              <Card key={winner.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className={`relative ${winner.prize?.image_url ? 'h-48' : 'h-24'} w-full bg-gradient-to-r from-amber-100 to-amber-200`}>
+                  {winner.prize?.image_url ? (
+                    <img
+                      src={winner.prize.image_url}
+                      alt={winner.prize.name || 'Prix'}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      {index === 0 ? (
+                        <Crown className="h-12 w-12 text-amber-500" />
+                      ) : index === 1 ? (
+                        <Medal className="h-12 w-12 text-gray-400" />
+                      ) : index === 2 ? (
+                        <Medal className="h-12 w-12 text-amber-700" />
+                      ) : (
+                        <Trophy className="h-12 w-12 text-amber-300" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    {winner.participant?.first_name} {winner.participant?.last_name}
+                    {index < 3 && (
+                      <span className="text-sm px-2 py-1 rounded-full bg-amber-100 text-amber-800">
+                        #{index + 1}
+                      </span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    A gagné {winner.prize?.name} dans le concours "{winner.contest?.title}"
+                  </p>
+                  {winner.prize?.description && (
+                    <p className="mt-2 text-sm text-gray-500">
+                      {winner.prize.description}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+              <Trophy className="h-12 w-12 text-amber-500 mb-4" />
+              <h3 className="text-lg font-semibold">Pas encore de gagnants</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Participez à nos concours pour avoir une chance de gagner !
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
 
 export default Campeones;
-
