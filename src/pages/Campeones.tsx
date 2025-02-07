@@ -51,24 +51,23 @@ const Campeones = () => {
       }
 
       console.log('Winners data:', data);
-      // Ensure we return an array that matches our Winner type
-      return (data || []).map(item => ({
-        id: item.id,
-        participant: item.participant ? {
-          id: item.participant.id,
-          first_name: item.participant.first_name,
-          last_name: item.participant.last_name
-        } : null,
-        contest: item.contest ? {
-          id: item.contest.id,
-          title: item.contest.title
-        } : null,
-        prize: item.prize ? {
-          id: item.prize.id,
-          name: item.prize.name?.name || 'Prix non spécifié',
-          description: item.prize.description?.description || null,
-          image_url: item.prize.image_url?.image_url || null
-        } : null
+      return (data || []).map(winner => ({
+        id: winner.id,
+        participant: winner.participant && {
+          id: winner.participant.id,
+          first_name: winner.participant.first_name,
+          last_name: winner.participant.last_name
+        },
+        contest: winner.contest && {
+          id: winner.contest.id,
+          title: winner.contest.title
+        },
+        prize: winner.prize && {
+          id: winner.prize.id,
+          name: winner.prize.name?.name || 'Prix non spécifié',
+          description: winner.prize.description?.description || null,
+          image_url: winner.prize.image_url?.image_url || null
+        }
       }));
     }
   });
