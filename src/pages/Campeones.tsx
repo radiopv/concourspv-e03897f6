@@ -32,7 +32,7 @@ const Campeones = () => {
           total_points,
           best_streak,
           current_rank,
-          members!inner (
+          members (
             first_name,
             last_name
           )
@@ -41,7 +41,7 @@ const Campeones = () => {
         .limit(25);
 
       if (error) throw error;
-      return data;
+      return data as UserPoints[];
     }
   });
 
@@ -50,12 +50,18 @@ const Campeones = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_points')
-        .select('best_streak, members!inner(first_name, last_name)')
+        .select(`
+          best_streak,
+          members (
+            first_name,
+            last_name
+          )
+        `)
         .order('best_streak', { ascending: false })
         .limit(10);
 
       if (error) throw error;
-      return data;
+      return data as StreakStats[];
     }
   });
 
