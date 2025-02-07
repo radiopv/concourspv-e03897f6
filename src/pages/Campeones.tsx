@@ -8,13 +8,14 @@ import { Trophy } from 'lucide-react';
 
 type Winner = {
   id: string;
-  member: {
+  participant: {
     id: string;
-    full_name: string;
+    first_name: string;
+    last_name: string;
   } | null;
   contest: {
     id: string;
-    name: string;
+    title: string;
   } | null;
   prize: {
     id: string;
@@ -28,17 +29,28 @@ const Campeones = () => {
   const { data: winners, isLoading } = useQuery<Winner[]>({
     queryKey: ['winners'],
     queryFn: async () => {
+      console.log('Fetching winners...');
       const { data, error } = await supabase
         .from('participant_prizes')
         .select(`
           id,
-          member:member_id(id, full_name),
-          contest:contest_id(id, name),
-          prize:prize_id(id, name, description, image_url)
+          participant:participant_id(id, first_name, last_name),
+          contest:contest_id(id, title),
+          prize:prize_id(
+            id, 
+            name:prize_catalog_id(name),
+            description:prize_catalog_id(description),
+            image_url:prize_catalog_id(image_url)
+          )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching winners:', error);
+        throw error;
+      }
+
+      console.log('Winners data:', data);
       return data || [];
     }
   });
@@ -85,12 +97,12 @@ const Campeones = () => {
               )}
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {winner.member?.full_name}
+                  {winner.participant?.first_name} {winner.participant?.last_name}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  A gagné {winner.prize?.name} dans le concours "{winner.contest?.name}"
+                  A gagné {winner.prize?.name} dans le concours "{winner.contest?.title}"
                 </p>
               </CardContent>
             </Card>
