@@ -74,7 +74,6 @@ const PageMetadata = ({
           <meta property="og:image:alt" content={title} />
         </>
       )}
-      <meta property="fb:app_id" content="1234567890" /> {/* Remplacer par votre Facebook App ID */}
       
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
@@ -121,7 +120,7 @@ const PageMetadata = ({
             "name": siteName,
             "logo": {
               "@type": "ImageObject",
-              "url": "https://votre-site.com/logo.png" // Remplacer par votre logo
+              "url": "/og-image.png"
             }
           },
           "mainEntityOfPage": {
