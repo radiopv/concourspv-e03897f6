@@ -53,7 +53,8 @@ const Campeones = () => {
       }
 
       console.log('Winners data:', data);
-      return (data || []).map(winner => ({
+      
+      return (data || []).map((winner): Winner => ({
         id: winner.id,
         participant: winner.participant,
         contest: winner.contest,
