@@ -42,14 +42,13 @@ const Campeones = () => {
 
       if (error) throw error;
       
-      // Transform the data to match our interface
       return (data || []).map(item => ({
         total_points: item.total_points,
         best_streak: item.best_streak,
         current_rank: item.current_rank,
         members: {
-          first_name: item.members.first_name,
-          last_name: item.members.last_name
+          first_name: item.members[0].first_name,
+          last_name: item.members[0].last_name
         }
       }));
     }
@@ -72,12 +71,11 @@ const Campeones = () => {
 
       if (error) throw error;
       
-      // Transform the data to match our interface
       return (data || []).map(item => ({
         best_streak: item.best_streak,
         members: {
-          first_name: item.members.first_name,
-          last_name: item.members.last_name
+          first_name: item.members[0].first_name,
+          last_name: item.members[0].last_name
         }
       }));
     }
