@@ -43,7 +43,8 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
           options: ["Option 1", "Option 2", "Option 3", "Option 4"],
           correct_answer: "Option 1",
           order_number: (questions?.length || 0) + 1,
-          type: 'multiple_choice'
+          type: 'multiple_choice',
+          article_url: ''
         }]);
 
       if (error) throw error;
@@ -134,7 +135,11 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         {Array.isArray(questions) && questions.map((question: Question) => (
           <QuestionCard
             key={question.id}
-            question={question}
+            question={{
+              ...question,
+              options: Array.isArray(question.options) ? question.options : [],
+              article_url: question.article_url || ''
+            }}
             contestId={contestId}
             isEditing={editingQuestionId === question.id}
             onEdit={() => setEditingQuestionId(question.id)}
