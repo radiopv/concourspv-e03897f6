@@ -26,7 +26,7 @@ type Winner = {
 }
 
 const Campeones = () => {
-  const { data: winners, isLoading } = useQuery<Winner[]>({
+  const { data: winners = [], isLoading } = useQuery<Winner[]>({
     queryKey: ['winners'],
     queryFn: async () => {
       console.log('Fetching winners...');
@@ -51,7 +51,25 @@ const Campeones = () => {
       }
 
       console.log('Winners data:', data);
-      return data || [];
+      // Ensure we return an array that matches our Winner type
+      return (data || []).map(item => ({
+        id: item.id,
+        participant: item.participant ? {
+          id: item.participant.id,
+          first_name: item.participant.first_name,
+          last_name: item.participant.last_name
+        } : null,
+        contest: item.contest ? {
+          id: item.contest.id,
+          title: item.contest.title
+        } : null,
+        prize: item.prize ? {
+          id: item.prize.id,
+          name: item.prize.name?.name || 'Prix non spécifié',
+          description: item.prize.description?.description || null,
+          image_url: item.prize.image_url?.image_url || null
+        } : null
+      }));
     }
   });
 
