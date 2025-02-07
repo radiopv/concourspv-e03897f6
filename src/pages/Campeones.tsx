@@ -54,17 +54,34 @@ const Campeones = () => {
 
       console.log('Winners data:', data);
       
-      return (data || []).map((winner): Winner => ({
-        id: winner.id,
-        participant: winner.participant || null,
-        contest: winner.contest || null,
-        prize: winner.prize ? {
-          id: winner.prize.id,
-          name: winner.prize.prize_catalog?.name || 'Prix non spécifié',
-          description: winner.prize.prize_catalog?.description || null,
-          image_url: winner.prize.prize_catalog?.image_url || null
-        } : null
-      }));
+      return (data || []).map((winner): Winner => {
+        // Type assertion to help TypeScript understand the structure
+        const typedWinner = winner as {
+          id: string;
+          participant: { id: string; first_name: string; last_name: string; } | null;
+          contest: { id: string; title: string; } | null;
+          prize: {
+            id: string;
+            prize_catalog: {
+              name: string;
+              description: string | null;
+              image_url: string | null;
+            } | null;
+          } | null;
+        };
+
+        return {
+          id: typedWinner.id,
+          participant: typedWinner.participant,
+          contest: typedWinner.contest,
+          prize: typedWinner.prize ? {
+            id: typedWinner.prize.id,
+            name: typedWinner.prize.prize_catalog?.name || 'Prix non spécifié',
+            description: typedWinner.prize.prize_catalog?.description || null,
+            image_url: typedWinner.prize.prize_catalog?.image_url || null
+          } : null
+        };
+      });
     }
   });
 
