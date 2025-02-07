@@ -13,6 +13,7 @@ import Points from '@/pages/Points';
 import Prizes from '@/pages/Prizes';
 import QuizCompletion from '@/pages/QuizCompletion';
 import Admin from '@/pages/Admin';
+import Campeones from '@/pages/Campeones';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
@@ -49,6 +50,7 @@ const App = () => {
               <Route path="/instructions" element={<Instructions />} />
               <Route path="/contests" element={<ContestsList />} />
               <Route path="/contest/:id" element={<Contest />} />
+              <Route path="/campeones" element={<Campeones />} />
               
               {/* Protected routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
