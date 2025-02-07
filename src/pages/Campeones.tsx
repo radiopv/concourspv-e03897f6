@@ -56,8 +56,8 @@ const Campeones = () => {
       
       return (data || []).map((winner): Winner => ({
         id: winner.id,
-        participant: winner.participant,
-        contest: winner.contest,
+        participant: winner.participant || null,
+        contest: winner.contest || null,
         prize: winner.prize ? {
           id: winner.prize.id,
           name: winner.prize.prize_catalog?.name || 'Prix non spécifié',
