@@ -37,10 +37,12 @@ const Campeones = () => {
           participant:participant_id(id, first_name, last_name),
           contest:contest_id(id, title),
           prize:prize_id(
-            id, 
-            name:prize_catalog_id(name),
-            description:prize_catalog_id(description),
-            image_url:prize_catalog_id(image_url)
+            id,
+            prize_catalog:prize_catalog_id(
+              name,
+              description,
+              image_url
+            )
           )
         `)
         .order('created_at', { ascending: false });
@@ -53,21 +55,14 @@ const Campeones = () => {
       console.log('Winners data:', data);
       return (data || []).map(winner => ({
         id: winner.id,
-        participant: winner.participant && {
-          id: winner.participant.id,
-          first_name: winner.participant.first_name,
-          last_name: winner.participant.last_name
-        },
-        contest: winner.contest && {
-          id: winner.contest.id,
-          title: winner.contest.title
-        },
-        prize: winner.prize && {
+        participant: winner.participant,
+        contest: winner.contest,
+        prize: winner.prize ? {
           id: winner.prize.id,
-          name: winner.prize.name?.name || 'Prix non spécifié',
-          description: winner.prize.description?.description || null,
-          image_url: winner.prize.image_url?.image_url || null
-        }
+          name: winner.prize.prize_catalog?.name || 'Prix non spécifié',
+          description: winner.prize.prize_catalog?.description || null,
+          image_url: winner.prize.prize_catalog?.image_url || null
+        } : null
       }));
     }
   });

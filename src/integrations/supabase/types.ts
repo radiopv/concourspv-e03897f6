@@ -250,6 +250,7 @@ export type Database = {
       }
       participant_prizes: {
         Row: {
+          contest_id: string | null
           created_at: string | null
           id: string
           participant_id: string | null
@@ -257,6 +258,7 @@ export type Database = {
           prize_id: string | null
         }
         Insert: {
+          contest_id?: string | null
           created_at?: string | null
           id?: string
           participant_id?: string | null
@@ -264,6 +266,7 @@ export type Database = {
           prize_id?: string | null
         }
         Update: {
+          contest_id?: string | null
           created_at?: string | null
           id?: string
           participant_id?: string | null
@@ -276,6 +279,13 @@ export type Database = {
             columns: ["participation_id"]
             isOneToOne: false
             referencedRelation: "participations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participant_prizes_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
             referencedColumns: ["id"]
           },
           {
