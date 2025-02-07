@@ -6,13 +6,11 @@ import { supabase } from "@/lib/supabase";
 import { Trophy, Crown } from "lucide-react";
 
 interface TopParticipant {
-  user_id: string;
-  total_points: number;
+  id: string;
+  score: number;
+  first_name: string;
+  last_name: string;
   current_rank: string;
-  member: {
-    first_name: string;
-    last_name: string;
-  } | null;
 }
 
 const TopParticipantsList = () => {
@@ -20,17 +18,15 @@ const TopParticipantsList = () => {
     queryKey: ['top-participants'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('user_points')
+        .from('participants')
         .select(`
-          user_id,
-          total_points,
-          current_rank,
-          member:members!fk_user_points_member (
-            first_name,
-            last_name
-          )
+          id,
+          score,
+          first_name,
+          last_name,
+          current_rank
         `)
-        .order('total_points', { ascending: false })
+        .order('score', { ascending: false })
         .limit(25);
 
       if (error) {
@@ -88,7 +84,7 @@ const TopParticipantsList = () => {
         <div className="space-y-4">
           {topParticipants?.map((participant, index) => (
             <div
-              key={participant.user_id}
+              key={participant.id}
               className={`
                 flex items-center justify-between p-4 rounded-lg
                 ${index < 3 ? 'bg-gradient-to-r from-amber-50 to-amber-100' : 'bg-white'}
@@ -107,7 +103,7 @@ const TopParticipantsList = () => {
                 </div>
                 <div>
                   <span className="font-medium">
-                    {participant.member?.first_name} {participant.member?.last_name}
+                    {participant.first_name} {participant.last_name}
                   </span>
                   <div className="text-sm text-gray-500">
                     {participant.current_rank}
@@ -116,7 +112,7 @@ const TopParticipantsList = () => {
               </div>
               <div className="text-right">
                 <span className="text-lg font-bold text-indigo-600">
-                  {participant.total_points} pts
+                  {participant.score}%
                 </span>
               </div>
             </div>
