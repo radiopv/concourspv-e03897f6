@@ -852,13 +852,6 @@ export type Database = {
             referencedRelation: "members"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fk_user_points_members"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_roles: {

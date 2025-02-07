@@ -9,10 +9,10 @@ interface TopParticipant {
   user_id: string;
   total_points: number;
   current_rank: string;
-  members: {
+  member: {
     first_name: string;
     last_name: string;
-  }[] | null;
+  } | null;
 }
 
 const TopParticipantsList = () => {
@@ -25,27 +25,20 @@ const TopParticipantsList = () => {
           user_id,
           total_points,
           current_rank,
-          members (
+          member:members!fk_user_points_member (
             first_name,
             last_name
           )
         `)
-        .order('total_points', { ascending: false });
+        .order('total_points', { ascending: false })
+        .limit(25);
 
       if (error) {
         console.error('Error fetching participants:', error);
         throw error;
       }
       
-      return (data || []).map(item => ({
-        user_id: String(item.user_id),
-        total_points: Number(item.total_points),
-        current_rank: String(item.current_rank),
-        members: Array.isArray(item.members) ? item.members.map(member => ({
-          first_name: String(member.first_name),
-          last_name: String(member.last_name)
-        })) : null
-      }));
+      return data || [];
     }
   });
 
@@ -114,7 +107,7 @@ const TopParticipantsList = () => {
                 </div>
                 <div>
                   <span className="font-medium">
-                    {participant.members?.[0]?.first_name} {participant.members?.[0]?.last_name}
+                    {participant.member?.first_name} {participant.member?.last_name}
                   </span>
                   <div className="text-sm text-gray-500">
                     {participant.current_rank}
