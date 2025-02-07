@@ -16,7 +16,7 @@ interface TopParticipant {
 }
 
 const TopParticipantsList = () => {
-  const { data: topParticipants, isLoading } = useQuery<TopParticipant[]>({
+  const { data: topParticipants, isLoading, error } = useQuery<TopParticipant[]>({
     queryKey: ['top-participants'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -25,14 +25,17 @@ const TopParticipantsList = () => {
           user_id,
           total_points,
           current_rank,
-          members!inner (
+          members (
             first_name,
             last_name
           )
         `)
         .order('total_points', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching participants:', error);
+        throw error;
+      }
       
       return (data || []).map(item => ({
         user_id: String(item.user_id),
@@ -64,6 +67,17 @@ const TopParticipantsList = () => {
               />
             ))}
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    console.error('Error in TopParticipantsList:', error);
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-red-500">
+          Une erreur est survenue lors du chargement du classement.
         </CardContent>
       </Card>
     );
