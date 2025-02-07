@@ -41,7 +41,14 @@ const Campeones = () => {
         .limit(25);
 
       if (error) throw error;
-      return data as UserPoints[];
+      
+      // Transform the data to match our interface
+      return (data || []).map(item => ({
+        total_points: item.total_points,
+        best_streak: item.best_streak,
+        current_rank: item.current_rank,
+        members: item.members as Member
+      }));
     }
   });
 
@@ -61,7 +68,12 @@ const Campeones = () => {
         .limit(10);
 
       if (error) throw error;
-      return data as StreakStats[];
+      
+      // Transform the data to match our interface
+      return (data || []).map(item => ({
+        best_streak: item.best_streak,
+        members: item.members as Member
+      }));
     }
   });
 
