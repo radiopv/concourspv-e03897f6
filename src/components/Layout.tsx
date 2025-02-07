@@ -6,16 +6,12 @@ import { Toaster } from './ui/toaster';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Grid, Users, Settings, Database, Edit, Gift, BookOpen, Trophy } from 'lucide-react';
 import { Button } from './ui/button';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { MobileExperienceAlert } from './alerts/MobileExperienceAlert';
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout = ({ children }: LayoutProps) => {
+const Layout = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -104,7 +100,7 @@ const Layout = ({ children }: LayoutProps) => {
       )}
 
       <main className={`container mx-auto ${isMobile ? 'px-2 pb-20' : 'px-4'} py-8`}>
-        {children}
+        <Outlet />
       </main>
       {user && <MobileNavBar isAdmin={isAdmin} />}
       <Toaster />
