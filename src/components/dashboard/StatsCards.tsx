@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Star, Trophy } from "lucide-react";
+import { Target, Trophy } from "lucide-react";
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -50,7 +50,6 @@ const StatsCards = ({ stats }: StatsCardsProps) => {
   });
 
   const participations = realStats?.contests_participated || 0;
-  const points = realStats?.total_points || 0;
   const wins = realStats?.contests_won || 0;
 
   const cardVariants = {
@@ -66,7 +65,7 @@ const StatsCards = ({ stats }: StatsCardsProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       <motion.div
         custom={0}
         variants={cardVariants}
@@ -89,26 +88,6 @@ const StatsCards = ({ stats }: StatsCardsProps) => {
 
       <motion.div
         custom={1}
-        variants={cardVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <Card className="glass-card hover:shadow-lg transition-all duration-300">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl flex items-center gap-2 text-amber-700">
-              <Star className="h-6 w-6 text-amber-500" />
-              Points
-            </CardTitle>
-            <CardDescription>Points accumulés</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-amber-600">{Math.round(points)}</p>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        custom={2}
         variants={cardVariants}
         initial="hidden"
         animate="visible"
