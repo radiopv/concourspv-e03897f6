@@ -106,7 +106,7 @@ const TopParticipantsList = () => {
                     {participant.first_name} {participant.last_name}
                   </span>
                   <div className="text-sm text-gray-500">
-                    {participant.current_rank}
+                    {participant.current_rank || 'NOVATO'}
                   </div>
                 </div>
               </div>

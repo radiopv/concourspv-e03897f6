@@ -310,6 +310,7 @@ export type Database = {
           completed_at: string | null
           contest_id: string | null
           created_at: string | null
+          current_rank: string | null
           email: string
           first_name: string
           id: string
@@ -324,6 +325,7 @@ export type Database = {
           completed_at?: string | null
           contest_id?: string | null
           created_at?: string | null
+          current_rank?: string | null
           email: string
           first_name: string
           id?: string
@@ -338,6 +340,7 @@ export type Database = {
           completed_at?: string | null
           contest_id?: string | null
           created_at?: string | null
+          current_rank?: string | null
           email?: string
           first_name?: string
           id?: string
