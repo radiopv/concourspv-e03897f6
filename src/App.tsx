@@ -1,66 +1,20 @@
-import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '@/contexts/AuthContext';
-import Layout from '@/components/layout/Layout';
-import { Routes, Route } from 'react-router-dom';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import Dashboard from '@/pages/Dashboard';
-import Instructions from '@/pages/Instructions';
-import ContestsList from '@/pages/ContestsList';
-import Contest from '@/pages/Contest';
-import Points from '@/pages/Points';
-import Prizes from '@/pages/Prizes';
-import QuizCompletion from '@/pages/QuizCompletion';
-import Admin from '@/pages/Admin';
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-// Protected Route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return <>{children}</>;
-};
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Home from './pages/Home';
+import Points from './pages/Points';
+import Campeones from './pages/Campeones';
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<ContestsList />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/instructions" element={<Instructions />} />
-              <Route path="/contests" element={<ContestsList />} />
-              <Route path="/contest/:id" element={<Contest />} />
-              
-              {/* Protected routes */}
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/points" element={<ProtectedRoute><Points /></ProtectedRoute>} />
-              <Route path="/prizes" element={<ProtectedRoute><Prizes /></ProtectedRoute>} />
-              <Route path="/quiz-completion/:contestId" element={<ProtectedRoute><QuizCompletion /></ProtectedRoute>} />
-              <Route path="/admin/*" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-            </Routes>
-          </Layout>
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="points" element={<Points />} />
+          <Route path="campeones" element={<Campeones />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 };
 
