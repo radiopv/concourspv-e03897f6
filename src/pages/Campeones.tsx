@@ -47,7 +47,10 @@ const Campeones = () => {
         total_points: item.total_points,
         best_streak: item.best_streak,
         current_rank: item.current_rank,
-        members: item.members as Member
+        members: {
+          first_name: item.members.first_name,
+          last_name: item.members.last_name
+        }
       }));
     }
   });
@@ -72,7 +75,10 @@ const Campeones = () => {
       // Transform the data to match our interface
       return (data || []).map(item => ({
         best_streak: item.best_streak,
-        members: item.members as Member
+        members: {
+          first_name: item.members.first_name,
+          last_name: item.members.last_name
+        }
       }));
     }
   });
