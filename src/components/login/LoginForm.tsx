@@ -67,9 +67,6 @@ export const LoginForm = () => {
     try {
       console.log("Attempting login for:", values.email);
       
-      // Clear any existing session first
-      await supabase.auth.signOut();
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
@@ -102,6 +99,13 @@ export const LoginForm = () => {
 
       if (data?.user) {
         console.log("Login successful for:", data.user.email);
+        
+        // Vérifier que la session est bien établie
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          throw new Error("Session non établie après connexion");
+        }
         
         toast({
           title: "Connexion réussie",
