@@ -28,6 +28,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         .order('order_number');
       
       if (error) throw error;
+      console.log('Questions fetched:', data);
       return data as Question[];
     }
   });
