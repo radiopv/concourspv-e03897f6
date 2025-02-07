@@ -35,18 +35,18 @@ const Campeones = () => {
         .from('participant_prizes')
         .select(`
           id,
-          participant:participants!inner(
+          participant:participants(
             id,
             first_name,
             last_name
           ),
-          contest:contests!inner(
+          contest:contests(
             id,
             title
           ),
-          prize:prizes!inner(
+          prize:prizes(
             id,
-            prize_catalog!inner(
+            prize_catalog:prize_catalog(
               name,
               description,
               image_url
@@ -60,27 +60,35 @@ const Campeones = () => {
         throw error;
       }
 
-      console.log('Winners data:', participantPrizes);
-      
       return (participantPrizes || []).map((winner): Winner => {
-        if (!winner || !winner.participant || !winner.contest || !winner.prize) {
+        if (!winner) {
           throw new Error('Invalid winner data structure');
         }
 
-        const participant = Array.isArray(winner.participant) 
-          ? winner.participant[0] 
-          : winner.participant;
+        const participant = winner.participant ? 
+          Array.isArray(winner.participant) ? winner.participant[0] : winner.participant 
+          : null;
 
-        const contest = Array.isArray(winner.contest)
-          ? winner.contest[0]
-          : winner.contest;
+        const contest = winner.contest ? 
+          Array.isArray(winner.contest) ? winner.contest[0] : winner.contest 
+          : null;
 
-        const prize = Array.isArray(winner.prize)
-          ? winner.prize[0]
-          : winner.prize;
+        const prizeData = winner.prize ? 
+          Array.isArray(winner.prize) ? winner.prize[0] : winner.prize 
+          : null;
 
-        if (!participant || !contest || !prize?.prize_catalog) {
-          throw new Error('Missing required winner data');
+        const prizeCatalog = prizeData?.prize_catalog ? 
+          Array.isArray(prizeData.prize_catalog) ? prizeData.prize_catalog[0] : prizeData.prize_catalog 
+          : null;
+
+        if (!participant || !contest || !prizeCatalog) {
+          console.warn('Missing required winner data:', winner);
+          return {
+            id: winner.id,
+            participant: null,
+            contest: null,
+            prize: null
+          };
         }
 
         return {
@@ -95,10 +103,10 @@ const Campeones = () => {
             title: contest.title
           },
           prize: {
-            id: prize.id,
-            name: prize.prize_catalog.name || 'Prix non spécifié',
-            description: prize.prize_catalog.description || null,
-            image_url: prize.prize_catalog.image_url || null
+            id: prizeData?.id || '',
+            name: prizeCatalog.name || 'Prix non spécifié',
+            description: prizeCatalog.description || null,
+            image_url: prizeCatalog.image_url || null
           }
         };
       });
@@ -196,3 +204,4 @@ const Campeones = () => {
 };
 
 export default Campeones;
+
