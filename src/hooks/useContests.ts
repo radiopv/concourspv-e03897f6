@@ -58,8 +58,8 @@ export const useContests = () => {
           .not('status', 'eq', 'pending');
 
         // Calculer les statistiques
-        const validParticipants = participants?.filter(p => p.score != null && p.score > 0) || [];
-        const eligibleParticipants = participants?.filter(p => p.status === 'eligible') || [];
+        const validParticipants = participants?.filter(p => p.score !== null && p.score > 0) || [];
+        const eligibleParticipants = participants?.filter(p => p.score >= 80) || [];
         const averageScore = validParticipants.length > 0
           ? Math.round(validParticipants.reduce((acc, p) => acc + (p.score || 0), 0) / validParticipants.length)
           : 0;
