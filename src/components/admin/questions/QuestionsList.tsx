@@ -27,30 +27,38 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         .from('questions')
         .select('*')
         .eq('contest_id', contestId)
-        .order('order_number', { ascending: true });
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching questions:', error);
         throw error;
       }
 
-      // Log détaillé pour le débogage
-      console.log(`Total questions found for contest ${contestId}:`, data?.length);
-      console.log('Questions data:', data);
+      console.log('Raw questions data:', data);
+      console.log('Number of questions fetched:', data?.length);
 
-      // Vérifier que les questions ont toutes les propriétés requises
-      const validatedQuestions = data?.map(question => ({
-        ...question,
+      if (!data) return [];
+
+      // S'assurer que chaque question a toutes les propriétés requises
+      const validatedQuestions = data.map(question => ({
+        id: question.id,
+        question_text: question.question_text || '',
         options: Array.isArray(question.options) ? question.options : [],
+        correct_answer: question.correct_answer || '',
         article_url: question.article_url || '',
         type: question.type || 'multiple_choice',
-        status: question.status || 'available'
+        status: question.status || 'available',
+        order_number: question.order_number || 0,
+        contest_id: question.contest_id,
+        created_at: question.created_at,
+        updated_at: question.updated_at
       }));
 
       console.log('Validated questions:', validatedQuestions);
-
-      return validatedQuestions as Question[];
-    }
+      return validatedQuestions;
+    },
+    staleTime: 1000, // Rafraîchir toutes les secondes
+    refetchOnWindowFocus: true // Rafraîchir quand la fenêtre regagne le focus
   });
 
   const handleAddQuestion = async () => {

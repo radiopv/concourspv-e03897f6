@@ -12,7 +12,6 @@ const QuestionBank = () => {
   const { data: questions, isLoading } = useQuery({
     queryKey: ['question-bank'],
     queryFn: async () => {
-      // Log avant la requête
       console.log('Fetching all questions from question bank...');
       
       const { data, error } = await supabase
@@ -24,12 +23,31 @@ const QuestionBank = () => {
         console.error('Error fetching questions:', error);
         throw error;
       }
-      
-      // Log après la requête pour voir toutes les questions
+
+      console.log('Raw questions data:', data);
       console.log('Total questions in database:', data?.length);
-      console.log('Fetched questions:', data);
-      return data;
-    }
+
+      if (!data) return [];
+
+      // Valider les questions
+      const validatedQuestions = data.map(question => ({
+        id: question.id,
+        question_text: question.question_text || '',
+        options: Array.isArray(question.options) ? question.options : [],
+        correct_answer: question.correct_answer || '',
+        article_url: question.article_url || '',
+        type: question.type || 'multiple_choice',
+        status: question.status || 'available',
+        contest_id: question.contest_id,
+        created_at: question.created_at,
+        updated_at: question.updated_at
+      }));
+
+      console.log('Validated questions:', validatedQuestions);
+      return validatedQuestions;
+    },
+    staleTime: 1000,
+    refetchOnWindowFocus: true
   });
 
   if (isLoading) {
