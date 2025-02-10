@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from "framer-motion";
 import UserRankProgress from '@/components/points/UserRankProgress';
@@ -23,7 +24,6 @@ const Points = () => {
 
         <div className="grid gap-8 md:grid-cols-2">
           <div className="space-y-8">
-            <UserRankProgress />
             <TopParticipantsList />
           </div>
           <div>

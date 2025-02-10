@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -15,7 +16,7 @@ const Prizes = () => {
       const { data, error } = await supabase
         .from('prize_catalog')
         .select('*')
-        .eq('is_active', true)
+        .eq('is_visible', true)
         .order('value', { ascending: false });
       
       if (error) {

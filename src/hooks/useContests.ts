@@ -1,27 +1,14 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
 export const useContests = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   return useQuery({
     queryKey: ['active-contests'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          variant: "destructive",
-          title: "Non connecté",
-          description: "Veuillez vous connecter pour voir les concours.",
-        });
-        navigate('/login');
-        return [];
-      }
-
       console.log('Fetching contests...');
       
       const { data: contests, error } = await supabase
@@ -42,11 +29,15 @@ export const useContests = () => {
             )
           )
         `)
-        .eq('status', 'active')
-        .eq('participants.status', 'completed');
+        .eq('status', 'active');
 
       if (error) {
         console.error('Error fetching contests:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les concours.",
+        });
         throw error;
       }
 

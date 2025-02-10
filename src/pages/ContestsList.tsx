@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from "react-router-dom";
 import { Trophy } from "lucide-react";
@@ -7,32 +8,12 @@ import { motion } from "framer-motion";
 import ContestCard from "@/components/contests/ContestCard";
 import { useContests } from "@/hooks/useContests";
 import PageMetadata from "@/components/seo/PageMetadata";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 import { RANK_POINTS } from '@/constants/ranks';
 
 const ContestsList = () => {
   const navigate = useNavigate();
   const { data: contests, isLoading } = useContests();
   const canonicalUrl = `${window.location.origin}/contests`;
-
-  const { data: userPoints } = useQuery({
-    queryKey: ['user-points'],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
-
-      const { data } = await supabase
-        .from('user_points')
-        .select('current_rank')
-        .eq('user_id', session.user.id)
-        .single();
-
-      return data;
-    }
-  });
-
-  const userRank = userPoints?.current_rank || 'NOVATO';
 
   if (isLoading) {
     return (
@@ -68,27 +49,12 @@ const ContestsList = () => {
     );
   }
 
-  // Filtrer les concours pour n'afficher que ceux accessibles à l'utilisateur
-  const filteredContests = contests.filter(contest => {
-    if (!contest.is_rank_restricted) return true;
-    const userPoints = RANK_POINTS[userRank as keyof typeof RANK_POINTS];
-    const requiredPoints = RANK_POINTS[contest.min_rank as keyof typeof RANK_POINTS];
-    return userPoints >= requiredPoints;
-  });
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#2D243B] py-12">
       <PageMetadata
         title="Concours en ligne - Participez et gagnez des prix"
         description="Découvrez nos concours en ligne, participez et tentez de gagner des prix exceptionnels. Nouveaux concours ajoutés régulièrement."
         pageUrl={canonicalUrl}
-        keywords={[
-          "concours en ligne",
-          "jeux concours",
-          "gagner des prix",
-          "participation gratuite",
-          "concours du moment"
-        ]}
       />
       <div className="container mx-auto px-4 max-w-7xl">
         <motion.div
@@ -108,13 +74,12 @@ const ContestsList = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {filteredContests.map((contest, index) => (
+          {contests.map((contest, index) => (
             <div key={contest.id} className="w-full">
               <ContestCard
                 contest={contest}
                 onSelect={(id) => navigate(`/contest/${id}`)}
                 index={index}
-                userRank={userRank}
               />
             </div>
           ))}
