@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { Prize } from "@/types/prize";
 
 export const useContests = () => {
   const { toast } = useToast();
@@ -91,13 +92,14 @@ export const useContests = () => {
           scores: validParticipants.map(p => p.score)
         });
 
-        const prizes = contest.prizes?.map(prize => ({
+        // Transform prizes data
+        const prizes: Prize[] = contest.prizes?.map(prize => ({
           id: prize.id,
-          name: prize.prize_catalog?.name,
-          description: prize.prize_catalog?.description,
-          image_url: prize.prize_catalog?.image_url,
-          shop_url: prize.prize_catalog?.shop_url,
-          value: prize.prize_catalog?.value
+          name: prize.prize_catalog?.name || '',
+          description: prize.prize_catalog?.description || '',
+          image_url: prize.prize_catalog?.image_url || '',
+          shop_url: prize.prize_catalog?.shop_url || '',
+          value: prize.prize_catalog?.value || 0
         })) || [];
 
         return {
