@@ -14,13 +14,13 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
     queryFn: async () => {
       console.log('Fetching contest stats for:', contestId);
       
-      // Récupérer uniquement les participants qui ont terminé avec un score valide
+      // Récupérer tous les participants qui ont terminé
       const { data: participantsData, error } = await supabase
         .from('participants')
         .select('score')
         .eq('contest_id', contestId)
         .eq('status', 'completed')
-        .gt('score', 0) // S'assurer que le score est supérieur à 0
+        .gt('score', 0) // Exclure les scores nuls ou négatifs
         .order('score', { ascending: false });
 
       if (error) {
@@ -30,25 +30,26 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
 
       console.log('Raw participants data:', participantsData);
 
-      // Filtrer les scores non valides
-      const validScores = participantsData?.filter(p => p.score != null && p.score > 0) || [];
+      // Filtrer les scores valides (>= 90%)
+      const validScores = participantsData?.filter(p => p.score != null && p.score >= 90) || [];
+      const totalParticipants = participantsData?.length || 0;
       
       console.log('Valid scores:', validScores);
 
       // Calculer le score moyen
-      const totalValidScores = validScores.length;
-      const averageScore = totalValidScores > 0
-        ? Math.round(validScores.reduce((sum, p) => sum + p.score, 0) / totalValidScores)
+      const averageScore = totalParticipants > 0
+        ? Math.round(participantsData.reduce((sum, p) => sum + p.score, 0) / totalParticipants)
         : 0;
 
       console.log('Score calculation:', {
-        totalValidScores,
-        sum: validScores.reduce((sum, p) => sum + p.score, 0),
+        totalParticipants,
+        qualifiedParticipants: validScores.length,
+        sum: participantsData?.reduce((sum, p) => sum + p.score, 0) || 0,
         averageScore
       });
 
       return {
-        participantsCount: totalValidScores,
+        participantsCount: totalParticipants,
         averageScore,
       };
     }
