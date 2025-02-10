@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -28,10 +29,18 @@ export const useAnswerHandling = (
       return;
     }
 
+    state.setIsSubmitting(true);
     const currentQuestion = questions[state.currentQuestionIndex];
     const isCorrect = currentQuestion?.correct_answer === state.selectedAnswer;
 
     try {
+      console.log('Saving answer:', {
+        participationId: participant?.participation_id,
+        questionId: currentQuestion.id,
+        answer: state.selectedAnswer,
+        isCorrect
+      });
+
       // Sauvegarder la réponse
       const { error: answerError } = await supabase
         .from('participant_answers')
@@ -44,9 +53,16 @@ export const useAnswerHandling = (
           attempt_number: participant.attempts || 1
         }]);
 
-      if (answerError) throw answerError;
+      if (answerError) {
+        console.error('Error saving answer:', answerError);
+        throw answerError;
+      }
+
+      state.setIsCorrect(isCorrect);
+      state.setHasAnswered(true);
 
       if (isCorrect) {
+        state.incrementStreak();
         state.setTotalAnswered(prev => prev + 1);
         
         const { data: { session } } = await supabase.auth.getSession();
@@ -58,19 +74,28 @@ export const useAnswerHandling = (
               points: 10,
               source: 'contest_answer',
               contest_id: contestId,
-              streak: state.totalAnswered + 1
+              streak: state.getCurrentStreak()
             }]);
         }
+      } else {
+        state.resetStreak();
       }
 
-      if (state.currentQuestionIndex < questions.length - 1) {
-        state.setCurrentQuestionIndex(prev => prev + 1);
-        state.setSelectedAnswer('');
-        state.setHasAnswered(false);
-        state.setHasClickedLink(false);
-      } else {
-        navigate(`/quiz-completion/${contestId}`);
-      }
+      // Attendre un moment pour montrer le résultat
+      setTimeout(() => {
+        if (state.currentQuestionIndex < questions.length - 1) {
+          state.setCurrentQuestionIndex(prev => prev + 1);
+          state.setSelectedAnswer('');
+          state.setHasAnswered(false);
+          state.setHasClickedLink(false);
+          state.setIsCorrect(null);
+        } else {
+          // Questionnaire terminé
+          navigate(`/quiz-completion/${contestId}`);
+        }
+        state.setIsSubmitting(false);
+      }, 2000);
+
     } catch (error) {
       console.error('Error handling answer:', error);
       toast({
@@ -78,6 +103,7 @@ export const useAnswerHandling = (
         description: "Une erreur est survenue lors de l'enregistrement de votre réponse",
         variant: "destructive"
       });
+      state.setIsSubmitting(false);
     }
   };
 
