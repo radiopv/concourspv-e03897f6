@@ -26,12 +26,13 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         .from('questions')
         .select('*')
         .eq('contest_id', contestId)
-        .order('order_number');
+        .order('order_number', { ascending: true });
       
       if (error) {
         console.error('Error fetching questions:', error);
         throw error;
       }
+      console.log('Total questions fetched:', data?.length);
       console.log('Questions fetched:', data);
       return data as Question[];
     }
@@ -128,7 +129,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Questions du concours</CardTitle>
+        <CardTitle>Questions du concours ({questions?.length || 0})</CardTitle>
         <Button
           onClick={handleAddQuestion}
           className="flex items-center gap-2"
@@ -153,6 +154,11 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
             onCancel={() => setEditingQuestionId(null)}
           />
         ))}
+        {(!questions || questions.length === 0) && (
+          <div className="text-center py-4 text-gray-500">
+            Aucune question trouvée pour ce concours
+          </div>
+        )}
       </CardContent>
     </Card>
   );
