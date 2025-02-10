@@ -57,7 +57,7 @@ export const calculateFinalScore = async (participantId: string) => {
       .from('participants')
       .update({ 
         score: finalScore,
-        status: 'completed'
+        status: finalScore >= 80 ? 'eligible' : 'completed'
       })
       .eq('participation_id', participantId);
 
