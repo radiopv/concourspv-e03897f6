@@ -14,12 +14,16 @@ export const useContests = () => {
       const { data: contests, error } = await supabase
         .from('contests')
         .select(`
-          *,
-          participants(
-            score,
-            status
-          ),
-          questions(count),
+          id,
+          title,
+          description,
+          status,
+          is_new,
+          has_big_prizes,
+          is_rank_restricted,
+          min_rank,
+          start_date,
+          end_date,
           prizes(
             id,
             prize_catalog_id,
@@ -51,36 +55,44 @@ export const useContests = () => {
         return [];
       }
 
-      // Pour chaque concours, calculer les statistiques détaillées
-      const processedContests = contests.map(contest => {
-        // Obtenir tous les participants qui ont complété le concours
-        const completedParticipants = contest.participants?.filter(p => 
-          p.status === 'completed' || p.status === 'eligible'
+      // Fetch participants data separately for each contest
+      const processedContests = await Promise.all(contests.map(async contest => {
+        // Get all participants for this contest
+        const { data: participants } = await supabase
+          .from('participants')
+          .select('score, status')
+          .eq('contest_id', contest.id);
+
+        console.log(`Participants for contest ${contest.id}:`, participants);
+
+        // Only consider completed or eligible participants with a valid score
+        const validParticipants = participants?.filter(p => 
+          (p.status === 'completed' || p.status === 'eligible') && 
+          p.score != null
         ) || [];
 
-        // Calculer le nombre de participants éligibles (score >= 80)
-        const eligibleParticipants = completedParticipants.filter(p => p.score >= 80);
+        // Calculate eligible participants (those with score >= 80)
+        const eligibleParticipants = validParticipants.filter(p => p.score >= 80);
 
-        // Calculer le score moyen
-        const totalScore = completedParticipants.reduce((acc, p) => acc + (p.score || 0), 0);
-        const averageScore = completedParticipants.length > 0
-          ? Math.round(totalScore / completedParticipants.length)
+        // Calculate average score
+        const totalScore = validParticipants.reduce((acc, p) => acc + p.score, 0);
+        const averageScore = validParticipants.length > 0
+          ? Math.round(totalScore / validParticipants.length)
           : 0;
 
         console.log('Contest stats:', {
           id: contest.id,
-          totalParticipants: completedParticipants.length,
+          validParticipants: validParticipants.length,
           eligibleParticipants: eligibleParticipants.length,
           averageScore,
-          scores: completedParticipants.map(p => p.score)
+          scores: validParticipants.map(p => p.score)
         });
 
         return {
           ...contest,
-          participants: { count: completedParticipants.length },
-          questions: { count: contest.questions?.[0]?.count || 0 },
+          participants: { count: validParticipants.length },
           stats: {
-            totalParticipants: completedParticipants.length,
+            totalParticipants: validParticipants.length,
             eligibleParticipants: eligibleParticipants.length,
             averageScore
           },
@@ -93,7 +105,7 @@ export const useContests = () => {
             value: prize.prize_catalog.value
           })) || []
         };
-      });
+      }));
 
       console.log('Processed contests:', processedContests);
       return processedContests;
