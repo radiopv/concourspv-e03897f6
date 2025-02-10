@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Target } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -11,20 +12,28 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
   const { data: stats } = useQuery({
     queryKey: ['contest-stats', contestId],
     queryFn: async () => {
-      // Récupérer les statistiques de participation
+      console.log('Fetching contest stats for:', contestId);
+      
+      // Récupérer uniquement les participants qui ont terminé
       const { data: participantsData } = await supabase
         .from('participants')
         .select('score')
-        .eq('contest_id', contestId);
+        .eq('contest_id', contestId)
+        .eq('status', 'completed')
+        .not('score', 'is', null);
+
+      console.log('Participants data:', participantsData);
 
       // Calculer le score moyen
       const averageScore = participantsData?.length 
-        ? participantsData.reduce((sum, p) => sum + (p.score || 0), 0) / participantsData.length 
+        ? Math.round(participantsData.reduce((sum, p) => sum + (p.score || 0), 0) / participantsData.length)
         : 0;
+
+      console.log('Calculated average score:', averageScore);
 
       return {
         participantsCount: participantsData?.length || 0,
-        averageScore: Math.round(averageScore),
+        averageScore,
       };
     }
   });
