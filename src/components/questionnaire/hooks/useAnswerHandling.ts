@@ -38,8 +38,23 @@ export const useAnswerHandling = (
         participationId: participant?.participation_id,
         questionId: currentQuestion.id,
         answer: state.selectedAnswer,
-        isCorrect
+        isCorrect,
+        attemptNumber: participant.attempts || 1
       });
+
+      // Vérifier si une réponse existe déjà pour cette question et cette tentative
+      const { data: existingAnswer } = await supabase
+        .from('participant_answers')
+        .select('id')
+        .eq('participant_id', participant?.participation_id)
+        .eq('question_id', currentQuestion.id)
+        .eq('attempt_number', participant.attempts || 1)
+        .maybeSingle();
+
+      if (existingAnswer) {
+        console.log('Answer already exists for this question and attempt');
+        return;
+      }
 
       // Sauvegarder la réponse
       const { error: answerError } = await supabase
@@ -50,7 +65,8 @@ export const useAnswerHandling = (
           contest_id: contestId,
           answer: state.selectedAnswer,
           is_correct: isCorrect,
-          attempt_number: participant.attempts || 1
+          attempt_number: participant.attempts || 1,
+          answered_at: new Date().toISOString()
         }]);
 
       if (answerError) {

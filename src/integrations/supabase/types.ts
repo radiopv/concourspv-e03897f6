@@ -213,6 +213,7 @@ export type Database = {
       participant_answers: {
         Row: {
           answer: string | null
+          answered_at: string | null
           attempt_number: number
           contest_id: string | null
           created_at: string | null
@@ -223,6 +224,7 @@ export type Database = {
         }
         Insert: {
           answer?: string | null
+          answered_at?: string | null
           attempt_number: number
           contest_id?: string | null
           created_at?: string | null
@@ -233,6 +235,7 @@ export type Database = {
         }
         Update: {
           answer?: string | null
+          answered_at?: string | null
           attempt_number?: number
           contest_id?: string | null
           created_at?: string | null

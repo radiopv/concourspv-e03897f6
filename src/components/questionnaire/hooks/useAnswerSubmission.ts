@@ -14,17 +14,33 @@ export const useAnswerSubmission = (contestId: string) => {
     participationId: string,
     currentQuestion: Question,
     selectedAnswer: string,
-    totalQuestions: number
+    totalQuestions: number,
+    attemptNumber: number = 1
   ) => {
     const isCorrect = selectedAnswer === currentQuestion.correct_answer;
     console.log('Submitting answer:', {
       participationId,
       questionId: currentQuestion.id,
       answer: selectedAnswer,
-      isCorrect
+      isCorrect,
+      attemptNumber
     });
 
     try {
+      // Vérifier si une réponse existe déjà
+      const { data: existingAnswer } = await supabase
+        .from('participant_answers')
+        .select('id')
+        .eq('participant_id', participationId)
+        .eq('question_id', currentQuestion.id)
+        .eq('attempt_number', attemptNumber)
+        .maybeSingle();
+
+      if (existingAnswer) {
+        console.log('Answer already exists for this question and attempt');
+        return isCorrect;
+      }
+
       const { error: answerError } = await supabase
         .from('participant_answers')
         .insert({
@@ -33,7 +49,8 @@ export const useAnswerSubmission = (contestId: string) => {
           question_id: currentQuestion.id,
           answer: selectedAnswer,
           is_correct: isCorrect,
-          attempt_number: 1
+          attempt_number: attemptNumber,
+          answered_at: new Date().toISOString()
         });
 
       if (answerError) {
@@ -101,7 +118,7 @@ export const useAnswerSubmission = (contestId: string) => {
           .from('point_history')
           .insert([{
             user_id: session.user.id,
-            points: 50, // Bonus de complétion
+            points: 50,
             source: 'contest_completion',
             contest_id: contestId
           }]);
