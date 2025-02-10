@@ -93,11 +93,11 @@ export const useContests = () => {
 
         const prizes = contest.prizes?.map(prize => ({
           id: prize.id,
-          name: prize.prize_catalog.name,
-          description: prize.prize_catalog.description,
-          image_url: prize.prize_catalog.image_url,
-          shop_url: prize.prize_catalog.shop_url,
-          value: prize.prize_catalog.value
+          name: prize.prize_catalog?.name,
+          description: prize.prize_catalog?.description,
+          image_url: prize.prize_catalog?.image_url,
+          shop_url: prize.prize_catalog?.shop_url,
+          value: prize.prize_catalog?.value
         })) || [];
 
         return {
