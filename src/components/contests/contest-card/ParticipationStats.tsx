@@ -44,4 +44,3 @@ const ParticipationStats = ({ participantsCount, eligibleCount, averageScore }: 
 };
 
 export default ParticipationStats;
-

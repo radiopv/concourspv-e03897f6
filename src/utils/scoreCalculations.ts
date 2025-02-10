@@ -1,3 +1,4 @@
+
 export const calculateCorrectAnswers = (score: number, totalQuestions: number): number => {
   // Ensure we're working with valid numbers
   if (!score || !totalQuestions) return 0;

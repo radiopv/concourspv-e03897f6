@@ -51,7 +51,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
       if (!allParticipants) return null;
 
       const validParticipants = allParticipants.filter(p => p.score != null && p.score > 0);
-      const eligibleParticipants = allParticipants.filter(p => p.score != null && p.score >= 90);
+      const eligibleParticipants = allParticipants.filter(p => p.score != null && p.score >= 80);
       
       const averageScore = validParticipants.length > 0
         ? Math.round(validParticipants.reduce((acc, p) => acc + (p.score || 0), 0) / validParticipants.length)
