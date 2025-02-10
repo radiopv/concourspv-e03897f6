@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -25,9 +26,11 @@ const QuestionsList = () => {
   const { data: questions, isLoading, error } = useQuery({
     queryKey: ['questions-list'],
     queryFn: async () => {
+      console.log('Fetching questions from questions table');
       const { data, error } = await supabase
-        .from('question_bank')
+        .from('questions')
         .select('*')
+        .is('contest_id', null)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -41,7 +44,7 @@ const QuestionsList = () => {
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('question_bank')
+        .from('questions')
         .delete()
         .eq('id', id);
 
@@ -115,11 +118,11 @@ const QuestionsList = () => {
                 <div className="space-y-2">
                   <p className="text-sm text-gray-500">Options :</p>
                   <ul className="list-disc pl-5 space-y-1">
-                    {question.options.map((option: string, index: number) => (
+                    {Array.isArray(question.options) ? question.options.map((option: string, index: number) => (
                       <li key={index} className="text-sm">
                         {option}
                       </li>
-                    ))}
+                    )) : null}
                   </ul>
                   <p className="text-sm">
                     <span className="font-medium">Réponse correcte :</span>{" "}
