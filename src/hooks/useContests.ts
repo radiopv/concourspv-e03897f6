@@ -57,12 +57,24 @@ export const useContests = () => {
           .eq('contest_id', contest.id)
           .not('status', 'eq', 'pending');
 
+        console.log('Participants for contest:', contest.id, participants);
+
         // Calculer les statistiques
-        const validParticipants = participants?.filter(p => p.score !== null && p.score > 0) || [];
+        const validParticipants = participants?.filter(p => p.score !== null) || [];
         const eligibleParticipants = participants?.filter(p => p.score >= 80) || [];
+        
+        const totalScore = validParticipants.reduce((acc, p) => acc + (p.score || 0), 0);
         const averageScore = validParticipants.length > 0
-          ? Math.round(validParticipants.reduce((acc, p) => acc + (p.score || 0), 0) / validParticipants.length)
+          ? Math.round(totalScore / validParticipants.length)
           : 0;
+
+        console.log('Stats calculation:', {
+          totalParticipants: participants?.length || 0,
+          validParticipants: validParticipants.length,
+          eligibleParticipants: eligibleParticipants.length,
+          totalScore,
+          averageScore
+        });
 
         return {
           ...contest,
