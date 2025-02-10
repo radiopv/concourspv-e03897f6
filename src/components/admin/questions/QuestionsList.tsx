@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +28,10 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         .eq('contest_id', contestId)
         .order('order_number');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
       console.log('Questions fetched:', data);
       return data as Question[];
     }
@@ -44,7 +48,8 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
           correct_answer: "Option 1",
           order_number: (questions?.length || 0) + 1,
           type: 'multiple_choice',
-          article_url: ''
+          article_url: '',
+          status: 'available'
         }]);
 
       if (error) throw error;

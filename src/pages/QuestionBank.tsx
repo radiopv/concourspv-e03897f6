@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,30 +15,34 @@ const QuestionBank = () => {
       const { data, error } = await supabase
         .from('questions')
         .select('*')
-        .is('contest_id', null)
-        .eq('status', 'available');
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
+      }
+      
+      console.log('Fetched questions:', data);
       return data;
     }
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Chargement des questions...</div>;
   }
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Question Bank</CardTitle>
+          <CardTitle>Banque de Questions</CardTitle>
         </CardHeader>
         <CardContent>
           <AddQuestionForm />
           <div className="mt-4">
             <Button variant="outline" className="w-full">
               <Plus className="w-4 h-4 mr-2" />
-              Add Question
+              Ajouter une Question
             </Button>
           </div>
         </CardContent>
