@@ -23,7 +23,6 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
     queryFn: async () => {
       console.log('Fetching questions for contest:', contestId);
       
-      // Fetch ALL questions for this contest without any filtering
       const { data, error } = await supabase
         .from('questions')
         .select('*')
@@ -35,11 +34,22 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         throw error;
       }
 
-      // Log the total number of questions fetched for debugging
-      console.log('Total questions in database:', data?.length);
+      // Log détaillé pour le débogage
+      console.log(`Total questions found for contest ${contestId}:`, data?.length);
       console.log('Questions data:', data);
 
-      return data as Question[];
+      // Vérifier que les questions ont toutes les propriétés requises
+      const validatedQuestions = data?.map(question => ({
+        ...question,
+        options: Array.isArray(question.options) ? question.options : [],
+        article_url: question.article_url || '',
+        type: question.type || 'multiple_choice',
+        status: question.status || 'available'
+      }));
+
+      console.log('Validated questions:', validatedQuestions);
+
+      return validatedQuestions as Question[];
     }
   });
 
@@ -131,13 +141,10 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
     return <div>Chargement des questions...</div>;
   }
 
-  // Afficher le nombre total de questions pour le débogage
-  console.log('Rendering questions list, total questions:', questions?.length);
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Questions du concours ({questions?.length || 0})</CardTitle>
+        <CardTitle>Questions du concours ({questions?.length || 0} questions)</CardTitle>
         <Button
           onClick={handleAddQuestion}
           className="flex items-center gap-2"
@@ -149,11 +156,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         {Array.isArray(questions) && questions.map((question: Question) => (
           <QuestionCard
             key={question.id}
-            question={{
-              ...question,
-              options: Array.isArray(question.options) ? question.options : [],
-              article_url: question.article_url || ''
-            }}
+            question={question}
             contestId={contestId}
             isEditing={editingQuestionId === question.id}
             onEdit={() => setEditingQuestionId(question.id)}

@@ -12,6 +12,9 @@ const QuestionBank = () => {
   const { data: questions, isLoading } = useQuery({
     queryKey: ['question-bank'],
     queryFn: async () => {
+      // Log avant la requête
+      console.log('Fetching all questions from question bank...');
+      
       const { data, error } = await supabase
         .from('questions')
         .select('*')
@@ -22,6 +25,8 @@ const QuestionBank = () => {
         throw error;
       }
       
+      // Log après la requête pour voir toutes les questions
+      console.log('Total questions in database:', data?.length);
       console.log('Fetched questions:', data);
       return data;
     }
@@ -35,7 +40,7 @@ const QuestionBank = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Banque de Questions</CardTitle>
+          <CardTitle>Banque de Questions ({questions?.length || 0} questions)</CardTitle>
         </CardHeader>
         <CardContent>
           <AddQuestionForm />
