@@ -1,19 +1,19 @@
 
 import React from 'react';
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Star, Gift, ExternalLink, DollarSign, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Prize } from "@/types/prize";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import ParticipationStats from './contest-card/ParticipationStats';
+import ContestBadges from './contest-card/ContestBadges';
+import ContestDates from './contest-card/ContestDates';
+import ContestPrizes from './contest-card/ContestPrizes';
+import { RANK_POINTS } from '@/constants/ranks';
+import { Prize } from "@/types/prize";
 
 interface ContestCardProps {
   contest: {
@@ -33,15 +33,6 @@ interface ContestCardProps {
   index: number;
   userRank?: string;
 }
-
-const RANK_POINTS = {
-  'NOVATO': 0,
-  'HAVANA': 1000,
-  'SANTIAGO': 2500,
-  'RIO': 5000,
-  'CARNIVAL': 10000,
-  'ELDORADO': 25000
-};
 
 const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestCardProps) => {
   const { toast } = useToast();
@@ -65,14 +56,6 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
       const averageScore = validParticipants.length > 0
         ? Math.round(validParticipants.reduce((acc, p) => acc + (p.score || 0), 0) / validParticipants.length)
         : 0;
-
-      console.log('Contest Stats Calculation:', {
-        contestId: contest.id,
-        totalParticipants: allParticipants.length,
-        validParticipants: validParticipants.length,
-        eligibleParticipants: eligibleParticipants.length,
-        averageScore
-      });
 
       return {
         totalParticipants: allParticipants.length,
@@ -143,36 +126,23 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
             <CardTitle className="text-2xl font-bold text-gray-800">
               {cleanTitle}
             </CardTitle>
-            <div className="flex flex-wrap gap-2">
-              {contest.is_new && (
-                <Badge className="bg-[#9b87f5] text-white">
-                  Nouveau
-                </Badge>
-              )}
-              {contest.has_big_prizes && (
-                <Badge className="bg-[#F97316] text-white">
-                  Gros Lots
-                </Badge>
-              )}
-              {contest.is_rank_restricted && contest.min_rank && (
-                <Badge className={isLocked ? "bg-red-500 text-white" : "bg-green-500 text-white"}>
-                  {isLocked ? <Lock className="w-3 h-3 mr-1 inline" /> : null}
-                  Rang {contest.min_rank}
-                </Badge>
-              )}
-            </div>
+            <ContestBadges
+              isNew={contest.is_new}
+              hasBigPrizes={contest.has_big_prizes}
+              isRankRestricted={contest.is_rank_restricted || false}
+              minRank={contest.min_rank}
+              isLocked={isLocked}
+            />
           </div>
           {contest.description && (
             <p className="text-gray-700 mt-4 text-sm leading-relaxed">
               {contest.description}
             </p>
           )}
-          {contest.start_date && contest.end_date && (
-            <div className="mt-4 text-sm text-gray-600">
-              <p>Du {format(new Date(contest.start_date), 'dd MMMM yyyy', { locale: fr })}</p>
-              <p>Au {format(new Date(contest.end_date), 'dd MMMM yyyy', { locale: fr })}</p>
-            </div>
-          )}
+          <ContestDates
+            startDate={contest.start_date}
+            endDate={contest.end_date}
+          />
         </CardHeader>
 
         <CardContent className="pt-6 space-y-6 flex-grow">
@@ -184,88 +154,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
             />
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white/50 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
-                <Users className="w-4 h-4" />
-                <h3 className="font-medium">Participants</h3>
-              </div>
-              <p className="text-2xl font-bold text-gray-800">
-                {stats?.totalParticipants || 0}
-              </p>
-            </div>
-
-            <div className="bg-white/50 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-[#F97316] mb-2">
-                <Star className="w-4 h-4" />
-                <h3 className="font-medium">Score Moyen</h3>
-              </div>
-              <p className="text-2xl font-bold text-gray-800">
-                {stats?.averageScore || 0}%
-              </p>
-            </div>
-
-            <div className="bg-white/50 p-4 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
-                <Trophy className="w-4 h-4" />
-                <h3 className="font-medium">Éligibles</h3>
-              </div>
-              <p className="text-2xl font-bold text-gray-800">
-                {stats?.eligibleParticipants || 0}
-              </p>
-            </div>
-          </div>
-
-          {contest.prizes && contest.prizes.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 justify-center">
-                <Gift className="w-5 h-5 text-[#F97316]" />
-                Prix à gagner
-              </h3>
-              <div className="grid grid-cols-1 gap-4">
-                {contest.prizes.map((prize) => (
-                  <div 
-                    key={prize.id} 
-                    className="group relative overflow-hidden rounded-lg border border-gray-200/20 bg-white/70 backdrop-blur-sm p-4"
-                  >
-                    <div className="flex items-center gap-4">
-                      {prize.image_url && (
-                        <div className="w-20 h-20 flex-shrink-0">
-                          <img
-                            src={prize.image_url}
-                            alt={prize.name}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                        </div>
-                      )}
-                      <div className="flex-grow">
-                        <h4 className="font-semibold text-gray-800">
-                          {prize.name}
-                        </h4>
-                        {prize.value && (
-                          <p className="flex items-center gap-1 text-[#F97316] text-sm mt-1">
-                            <DollarSign className="w-4 h-4" />
-                            Valeur: {prize.value} CAD $
-                          </p>
-                        )}
-                        {prize.shop_url && (
-                          <a
-                            href={prize.shop_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm text-[#9b87f5] hover:text-[#F97316] transition-colors mt-2"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            Voir le cadeau
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {contest.prizes && <ContestPrizes prizes={contest.prizes} />}
 
           <div className="mt-8 flex justify-center p-4">
             <Button
@@ -287,4 +176,3 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
 };
 
 export default ContestCard;
-

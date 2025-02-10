@@ -1,3 +1,4 @@
+
 import { Gift, ExternalLink, DollarSign } from "lucide-react";
 import { Prize } from "@/types/prize";
 
@@ -10,53 +11,48 @@ const ContestPrizes = ({ prizes }: ContestPrizesProps) => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold flex items-center gap-2 text-[#F97316]">
-        <Gift className="w-5 h-5" />
+      <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 justify-center">
+        <Gift className="w-5 h-5 text-[#F97316]" />
         Prix à gagner
       </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {prizes.map((prize, idx) => (
+      <div className="grid grid-cols-1 gap-4">
+        {prizes.map((prize) => (
           <div 
-            key={idx} 
-            className="group relative overflow-hidden rounded-lg border border-[#9b87f5]/20 bg-black/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+            key={prize.id} 
+            className="group relative overflow-hidden rounded-lg border border-gray-200/20 bg-white/70 backdrop-blur-sm p-4"
           >
-            {prize.image_url && (
-              <div className="aspect-video relative">
-                <img
-                  src={prize.image_url}
-                  alt={prize.name}
-                  className="w-full h-full object-cover transform transition-transform group-hover:scale-105"
-                />
-              </div>
-            )}
-            <div className="p-4 space-y-3">
-              <h4 className="font-semibold text-lg text-[#9b87f5] text-center">
-                {prize.name}
-              </h4>
-              {prize.value && (
-                <p className="flex items-center justify-center gap-1 text-[#F97316] font-medium">
-                  <DollarSign className="w-4 h-4" />
-                  Valeur: {prize.value}€
-                </p>
+            <div className="flex items-center gap-4">
+              {prize.image_url && (
+                <div className="w-20 h-20 flex-shrink-0">
+                  <img
+                    src={prize.image_url}
+                    alt={prize.name}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
               )}
-              {prize.description && (
-                <p className="text-sm text-gray-300 text-center line-clamp-2">
-                  {prize.description}
-                </p>
-              )}
-              {prize.shop_url && (
-                <div className="text-center">
+              <div className="flex-grow">
+                <h4 className="font-semibold text-gray-800">
+                  {prize.name}
+                </h4>
+                {prize.value && (
+                  <p className="flex items-center gap-1 text-[#F97316] text-sm mt-1">
+                    <DollarSign className="w-4 h-4" />
+                    Valeur: {prize.value} CAD $
+                  </p>
+                )}
+                {prize.shop_url && (
                   <a
                     href={prize.shop_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-1 text-sm text-[#9b87f5] hover:text-[#F97316] transition-colors bg-black/20 px-4 py-2 rounded-full hover:bg-black/40"
+                    className="inline-flex items-center gap-1 text-sm text-[#9b87f5] hover:text-[#F97316] transition-colors mt-2"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Voir le cadeau
                   </a>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         ))}
