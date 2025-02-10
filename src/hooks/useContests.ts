@@ -48,18 +48,40 @@ export const useContests = () => {
         return [];
       }
 
-      const processedContests = contests.map(contest => ({
-        ...contest,
-        participants: { count: contest.participants?.[0]?.count || 0 },
-        questions: { count: contest.questions?.[0]?.count || 0 },
-        prizes: contest.prizes?.map(prize => ({
-          id: prize.id,
-          name: prize.prize_catalog.name,
-          description: prize.prize_catalog.description,
-          image_url: prize.prize_catalog.image_url,
-          shop_url: prize.prize_catalog.shop_url,
-          value: prize.prize_catalog.value
-        })) || []
+      // Pour chaque concours, calculer les statistiques détaillées
+      const processedContests = await Promise.all(contests.map(async contest => {
+        // Récupérer tous les participants avec leurs scores
+        const { data: participants } = await supabase
+          .from('participants')
+          .select('score, status')
+          .eq('contest_id', contest.id)
+          .not('status', 'eq', 'pending');
+
+        // Calculer les statistiques
+        const validParticipants = participants?.filter(p => p.score != null && p.score > 0) || [];
+        const eligibleParticipants = participants?.filter(p => p.status === 'eligible') || [];
+        const averageScore = validParticipants.length > 0
+          ? Math.round(validParticipants.reduce((acc, p) => acc + (p.score || 0), 0) / validParticipants.length)
+          : 0;
+
+        return {
+          ...contest,
+          participants: { count: participants?.length || 0 },
+          questions: { count: contest.questions?.[0]?.count || 0 },
+          stats: {
+            totalParticipants: participants?.length || 0,
+            eligibleParticipants: eligibleParticipants.length,
+            averageScore
+          },
+          prizes: contest.prizes?.map(prize => ({
+            id: prize.id,
+            name: prize.prize_catalog.name,
+            description: prize.prize_catalog.description,
+            image_url: prize.prize_catalog.image_url,
+            shop_url: prize.prize_catalog.shop_url,
+            value: prize.prize_catalog.value
+          })) || []
+        };
       }));
 
       console.log('Processed contests:', processedContests);

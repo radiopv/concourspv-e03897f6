@@ -28,6 +28,11 @@ interface ContestCardProps {
     min_rank?: string;
     start_date?: string;
     end_date?: string;
+    stats?: {
+      totalParticipants: number;
+      eligibleParticipants: number;
+      averageScore: number;
+    };
   };
   onSelect: (id: string) => void;
   index: number;
@@ -38,32 +43,6 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const { data: stats } = useQuery({
-    queryKey: ['contest-detailed-stats', contest.id],
-    queryFn: async () => {
-      const { data: allParticipants } = await supabase
-        .from('participants')
-        .select('score, status')
-        .eq('contest_id', contest.id)
-        .eq('status', 'completed');
-
-      if (!allParticipants) return null;
-
-      const validParticipants = allParticipants.filter(p => p.score != null && p.score > 0);
-      const eligibleParticipants = allParticipants.filter(p => p.score != null && p.score >= 80);
-      
-      const averageScore = validParticipants.length > 0
-        ? Math.round(validParticipants.reduce((acc, p) => acc + (p.score || 0), 0) / validParticipants.length)
-        : 0;
-
-      return {
-        totalParticipants: allParticipants.length,
-        eligibleParticipants: eligibleParticipants.length,
-        averageScore
-      };
-    }
-  });
 
   const handleParticipate = () => {
     if (!user) {
@@ -146,11 +125,11 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
         </CardHeader>
 
         <CardContent className="pt-6 space-y-6 flex-grow">
-          {stats && (
+          {contest.stats && (
             <ParticipationStats 
-              participantsCount={stats.totalParticipants}
-              eligibleCount={stats.eligibleParticipants}
-              averageScore={stats.averageScore}
+              participantsCount={contest.stats.totalParticipants}
+              eligibleCount={contest.stats.eligibleParticipants}
+              averageScore={contest.stats.averageScore}
             />
           )}
 
