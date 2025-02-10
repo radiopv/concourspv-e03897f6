@@ -65,17 +65,20 @@ export const useContests = () => {
 
         console.log(`Participants for contest ${contest.id}:`, participants);
 
-        // Only consider completed or eligible participants with a valid score
+        // Only consider completed participants with a valid score
         const validParticipants = participants?.filter(p => 
-          (p.status === 'completed' || p.status === 'eligible') && 
-          p.score != null
+          p.status === 'completed' && 
+          typeof p.score === 'number' && 
+          p.score > 0
         ) || [];
+
+        console.log('Valid participants:', validParticipants);
 
         // Calculate eligible participants (those with score >= 80)
         const eligibleParticipants = validParticipants.filter(p => p.score >= 80);
 
         // Calculate average score
-        const totalScore = validParticipants.reduce((acc, p) => acc + p.score, 0);
+        const totalScore = validParticipants.reduce((acc, p) => acc + (p.score || 0), 0);
         const averageScore = validParticipants.length > 0
           ? Math.round(totalScore / validParticipants.length)
           : 0;
@@ -88,6 +91,15 @@ export const useContests = () => {
           scores: validParticipants.map(p => p.score)
         });
 
+        const prizes = contest.prizes?.map(prize => ({
+          id: prize.id,
+          name: prize.prize_catalog.name,
+          description: prize.prize_catalog.description,
+          image_url: prize.prize_catalog.image_url,
+          shop_url: prize.prize_catalog.shop_url,
+          value: prize.prize_catalog.value
+        })) || [];
+
         return {
           ...contest,
           participants: { count: validParticipants.length },
@@ -96,14 +108,7 @@ export const useContests = () => {
             eligibleParticipants: eligibleParticipants.length,
             averageScore
           },
-          prizes: contest.prizes?.map(prize => ({
-            id: prize.id,
-            name: prize.prize_catalog.name,
-            description: prize.prize_catalog.description,
-            image_url: prize.prize_catalog.image_url,
-            shop_url: prize.prize_catalog.shop_url,
-            value: prize.prize_catalog.value
-          })) || []
+          prizes
         };
       }));
 
