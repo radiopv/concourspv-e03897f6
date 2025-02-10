@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import ParticipationStats from './contest-card/ParticipationStats';
 
 interface ContestCardProps {
   contest: {
@@ -49,22 +50,32 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
   const { data: stats } = useQuery({
     queryKey: ['contest-detailed-stats', contest.id],
     queryFn: async () => {
-      const { data: participants } = await supabase
+      const { data: allParticipants } = await supabase
         .from('participants')
         .select('score, status')
         .eq('contest_id', contest.id)
         .eq('status', 'completed');
 
-      if (!participants) return null;
+      if (!allParticipants) return null;
 
-      const qualifiedParticipants = participants.filter(p => p.score >= 90);
-      const averageScore = participants.length > 0
-        ? Math.round(participants.reduce((acc, p) => acc + (p.score || 0), 0) / participants.length)
+      const validParticipants = allParticipants.filter(p => p.score != null && p.score > 0);
+      const eligibleParticipants = allParticipants.filter(p => p.score != null && p.score >= 90);
+      
+      const averageScore = validParticipants.length > 0
+        ? Math.round(validParticipants.reduce((acc, p) => acc + (p.score || 0), 0) / validParticipants.length)
         : 0;
 
+      console.log('Contest Stats Calculation:', {
+        contestId: contest.id,
+        totalParticipants: allParticipants.length,
+        validParticipants: validParticipants.length,
+        eligibleParticipants: eligibleParticipants.length,
+        averageScore
+      });
+
       return {
-        totalParticipants: participants.length,
-        qualifiedParticipants: qualifiedParticipants.length,
+        totalParticipants: allParticipants.length,
+        eligibleParticipants: eligibleParticipants.length,
         averageScore
       };
     }
@@ -164,6 +175,14 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
         </CardHeader>
 
         <CardContent className="pt-6 space-y-6 flex-grow">
+          {stats && (
+            <ParticipationStats 
+              participantsCount={stats.totalParticipants}
+              eligibleCount={stats.eligibleParticipants}
+              averageScore={stats.averageScore}
+            />
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white/50 p-4 rounded-lg backdrop-blur-sm">
               <div className="flex items-center gap-2 text-[#9b87f5] mb-2">
