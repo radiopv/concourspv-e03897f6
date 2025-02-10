@@ -563,7 +563,7 @@ export type Database = {
       }
       questions: {
         Row: {
-          article_url: string
+          article_url: string | null
           contest_id: string | null
           correct_answer: string | null
           created_at: string | null
@@ -577,7 +577,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          article_url: string
+          article_url?: string | null
           contest_id?: string | null
           correct_answer?: string | null
           created_at?: string | null
@@ -591,7 +591,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          article_url?: string
+          article_url?: string | null
           contest_id?: string | null
           correct_answer?: string | null
           created_at?: string | null

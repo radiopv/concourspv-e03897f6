@@ -18,7 +18,7 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
   const queryClient = useQueryClient();
   const [editingQuestionId, setEditingQuestionId] = React.useState<string | null>(null);
 
-  const { data: questions, isLoading } = useQuery({
+  const { data: questions, isLoading, error } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
       console.log('Fetching questions for contest:', contestId);
@@ -34,16 +34,18 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         throw error;
       }
 
+      console.log('Questions fetched:', data?.length);
       console.log('Raw questions data:', data);
-      console.log('Number of questions fetched:', data?.length);
 
       if (!data) return [];
 
-      // S'assurer que chaque question a toutes les propriétés requises
+      // Validation des questions
       const validatedQuestions = data.map(question => ({
         id: question.id,
         question_text: question.question_text || '',
-        options: Array.isArray(question.options) ? question.options : [],
+        options: Array.isArray(question.options) ? question.options : 
+                typeof question.options === 'object' ? Object.values(question.options) : 
+                [],
         correct_answer: question.correct_answer || '',
         article_url: question.article_url || '',
         type: question.type || 'multiple_choice',
@@ -57,9 +59,19 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
       console.log('Validated questions:', validatedQuestions);
       return validatedQuestions;
     },
-    staleTime: 1000, // Rafraîchir toutes les secondes
-    refetchOnWindowFocus: true // Rafraîchir quand la fenêtre regagne le focus
+    staleTime: 1000,
+    refetchInterval: 5000, // Rafraîchir toutes les 5 secondes
+    refetchOnWindowFocus: true
   });
+
+  if (error) {
+    console.error('Query error:', error);
+    toast({
+      title: "Erreur",
+      description: "Impossible de charger les questions",
+      variant: "destructive",
+    });
+  }
 
   const handleAddQuestion = async () => {
     try {
@@ -161,19 +173,20 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {Array.isArray(questions) && questions.map((question: Question) => (
-          <QuestionCard
-            key={question.id}
-            question={question}
-            contestId={contestId}
-            isEditing={editingQuestionId === question.id}
-            onEdit={() => setEditingQuestionId(question.id)}
-            onDelete={() => handleDelete(question.id)}
-            onSave={(updatedQuestion) => handleSave(question.id, updatedQuestion)}
-            onCancel={() => setEditingQuestionId(null)}
-          />
-        ))}
-        {(!questions || questions.length === 0) && (
+        {questions && questions.length > 0 ? (
+          questions.map((question: Question) => (
+            <QuestionCard
+              key={question.id}
+              question={question}
+              contestId={contestId}
+              isEditing={editingQuestionId === question.id}
+              onEdit={() => setEditingQuestionId(question.id)}
+              onDelete={() => handleDelete(question.id)}
+              onSave={(updatedQuestion) => handleSave(question.id, updatedQuestion)}
+              onCancel={() => setEditingQuestionId(null)}
+            />
+          ))
+        ) : (
           <div className="text-center py-4 text-gray-500">
             Aucune question trouvée pour ce concours
           </div>
