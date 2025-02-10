@@ -1,3 +1,4 @@
+
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -50,12 +51,12 @@ const App = () => {
               <Route path="/instructions" element={<Instructions />} />
               <Route path="/contests" element={<ContestsList />} />
               <Route path="/contest/:id" element={<Contest />} />
+              <Route path="/points" element={<Points />} />
+              <Route path="/prizes" element={<Prizes />} />
               <Route path="/campeones" element={<Campeones />} />
               
               {/* Protected routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/points" element={<ProtectedRoute><Points /></ProtectedRoute>} />
-              <Route path="/prizes" element={<ProtectedRoute><Prizes /></ProtectedRoute>} />
               <Route path="/quiz-completion/:contestId" element={<ProtectedRoute><QuizCompletion /></ProtectedRoute>} />
               <Route path="/admin/*" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             </Routes>

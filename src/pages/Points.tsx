@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { motion } from "framer-motion";
-import UserRankProgress from '@/components/points/UserRankProgress';
 import RanksList from '@/components/points/RanksList';
 import TopParticipantsList from '@/components/points/TopParticipantsList';
 
