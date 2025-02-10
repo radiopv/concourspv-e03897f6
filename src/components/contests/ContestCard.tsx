@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -210,7 +211,7 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
                 <h3 className="font-medium">Éligibles</h3>
               </div>
               <p className="text-2xl font-bold text-gray-800">
-                {stats?.qualifiedParticipants || 0}
+                {stats?.eligibleParticipants || 0}
               </p>
             </div>
           </div>
@@ -286,3 +287,4 @@ const ContestCard = ({ contest, onSelect, index, userRank = 'NOVATO' }: ContestC
 };
 
 export default ContestCard;
+

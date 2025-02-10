@@ -1,6 +1,5 @@
 
-import { Users, Percent, Star } from "lucide-react";
-import { calculateWinningChance } from "../../../utils/contestCalculations";
+import { Users, Star, Trophy } from "lucide-react";
 
 interface ParticipationStatsProps {
   participantsCount: number;
@@ -45,3 +44,4 @@ const ParticipationStats = ({ participantsCount, eligibleCount, averageScore }: 
 };
 
 export default ParticipationStats;
+
