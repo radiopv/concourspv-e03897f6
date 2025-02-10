@@ -35,6 +35,7 @@ export type Database = {
           is_featured: boolean | null
           is_new: boolean | null
           is_rank_restricted: boolean | null
+          is_visible: boolean | null
           main_image_url: string | null
           min_rank: string | null
           prize_image_url: string | null
@@ -55,6 +56,7 @@ export type Database = {
           is_featured?: boolean | null
           is_new?: boolean | null
           is_rank_restricted?: boolean | null
+          is_visible?: boolean | null
           main_image_url?: string | null
           min_rank?: string | null
           prize_image_url?: string | null
@@ -75,6 +77,7 @@ export type Database = {
           is_featured?: boolean | null
           is_new?: boolean | null
           is_rank_restricted?: boolean | null
+          is_visible?: boolean | null
           main_image_url?: string | null
           min_rank?: string | null
           prize_image_url?: string | null
