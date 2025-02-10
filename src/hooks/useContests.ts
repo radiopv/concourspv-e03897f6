@@ -4,6 +4,17 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Prize } from "@/types/prize";
 
+type PrizeWithCatalog = {
+  id: string;
+  prize_catalog: {
+    name: string;
+    description: string | null;
+    image_url: string | null;
+    shop_url: string | null;
+    value: number | null;
+  } | null;
+}
+
 export const useContests = () => {
   const { toast } = useToast();
 
@@ -93,14 +104,14 @@ export const useContests = () => {
         });
 
         // Transform prizes data
-        const prizes: Prize[] = contest.prizes?.map(prize => ({
+        const prizes: Prize[] = (contest.prizes as PrizeWithCatalog[] || []).map(prize => ({
           id: prize.id,
           name: prize.prize_catalog?.name || '',
           description: prize.prize_catalog?.description || '',
           image_url: prize.prize_catalog?.image_url || '',
           shop_url: prize.prize_catalog?.shop_url || '',
           value: prize.prize_catalog?.value || 0
-        })) || [];
+        }));
 
         return {
           ...contest,
