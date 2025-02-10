@@ -22,6 +22,8 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
     queryKey: ['questions', contestId],
     queryFn: async () => {
       console.log('Fetching questions for contest:', contestId);
+      
+      // Fetch ALL questions for this contest without any filtering
       const { data, error } = await supabase
         .from('questions')
         .select('*')
@@ -32,8 +34,11 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
         console.error('Error fetching questions:', error);
         throw error;
       }
-      console.log('Total questions fetched:', data?.length);
-      console.log('Questions fetched:', data);
+
+      // Log the total number of questions fetched for debugging
+      console.log('Total questions in database:', data?.length);
+      console.log('Questions data:', data);
+
       return data as Question[];
     }
   });
@@ -125,6 +130,9 @@ const QuestionsList = ({ contestId }: QuestionsListProps) => {
   if (isLoading) {
     return <div>Chargement des questions...</div>;
   }
+
+  // Afficher le nombre total de questions pour le débogage
+  console.log('Rendering questions list, total questions:', questions?.length);
 
   return (
     <Card>
