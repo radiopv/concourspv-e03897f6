@@ -14,25 +14,41 @@ const ContestStats = ({ contestId }: ContestStatsProps) => {
     queryFn: async () => {
       console.log('Fetching contest stats for:', contestId);
       
-      // Récupérer uniquement les participants qui ont terminé
-      const { data: participantsData } = await supabase
+      // Récupérer uniquement les participants qui ont terminé avec un score valide
+      const { data: participantsData, error } = await supabase
         .from('participants')
         .select('score')
         .eq('contest_id', contestId)
         .eq('status', 'completed')
-        .not('score', 'is', null);
+        .gt('score', 0) // S'assurer que le score est supérieur à 0
+        .order('score', { ascending: false });
 
-      console.log('Participants data:', participantsData);
+      if (error) {
+        console.error('Error fetching participants:', error);
+        throw error;
+      }
+
+      console.log('Raw participants data:', participantsData);
+
+      // Filtrer les scores non valides
+      const validScores = participantsData?.filter(p => p.score != null && p.score > 0) || [];
+      
+      console.log('Valid scores:', validScores);
 
       // Calculer le score moyen
-      const averageScore = participantsData?.length 
-        ? Math.round(participantsData.reduce((sum, p) => sum + (p.score || 0), 0) / participantsData.length)
+      const totalValidScores = validScores.length;
+      const averageScore = totalValidScores > 0
+        ? Math.round(validScores.reduce((sum, p) => sum + p.score, 0) / totalValidScores)
         : 0;
 
-      console.log('Calculated average score:', averageScore);
+      console.log('Score calculation:', {
+        totalValidScores,
+        sum: validScores.reduce((sum, p) => sum + p.score, 0),
+        averageScore
+      });
 
       return {
-        participantsCount: participantsData?.length || 0,
+        participantsCount: totalValidScores,
         averageScore,
       };
     }
