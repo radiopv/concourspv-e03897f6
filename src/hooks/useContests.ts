@@ -16,6 +16,11 @@ interface PrizeWithCatalog {
   } | null;
 }
 
+interface ContestParticipant {
+  score: number;
+  status: string;
+}
+
 export const useContests = () => {
   const { toast } = useToast();
 
@@ -79,11 +84,11 @@ export const useContests = () => {
         console.log(`Participants for contest ${contest.id}:`, participants);
 
         // Only consider completed participants with a valid score
-        const validParticipants = participants?.filter(p => 
+        const validParticipants = (participants as ContestParticipant[] || []).filter(p => 
           p.status === 'completed' && 
           typeof p.score === 'number' && 
           p.score > 0
-        ) || [];
+        );
 
         console.log('Valid participants:', validParticipants);
 
@@ -104,8 +109,8 @@ export const useContests = () => {
           scores: validParticipants.map(p => p.score)
         });
 
-        // Transform prizes data
-        const prizes: Prize[] = (contest.prizes || []).map((prize: PrizeWithCatalog) => ({
+        // Transform prizes data with proper type checking
+        const prizes: Prize[] = (Array.isArray(contest.prizes) ? contest.prizes : []).map((prize: any) => ({
           id: prize.id,
           name: prize.prize_catalog?.name || '',
           description: prize.prize_catalog?.description || '',
