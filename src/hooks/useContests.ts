@@ -139,6 +139,6 @@ export const useContests = () => {
     refetchOnWindowFocus: true, // Activer la mise à jour lors du focus
     refetchInterval: 30000, // Réduire l'intervalle à 30 secondes pour plus de réactivité
     staleTime: 15000, // Réduire le staleTime pour une mise à jour plus rapide
-    cacheTime: 0, // Désactiver le cache pour forcer le rechargement complet
+    gcTime: 0, // Utiliser gcTime au lieu de cacheTime pour désactiver le cache
   });
 };
