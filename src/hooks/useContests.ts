@@ -75,11 +75,12 @@ export const useContests = () => {
 
       // Fetch participants data separately for each contest
       const processedContests = await Promise.all(contests.map(async contest => {
-        // Get all participants for this contest
+        // Get all participants for this contest with active status
         const { data: participants } = await supabase
           .from('participants')
           .select('score, status')
-          .eq('contest_id', contest.id);
+          .eq('contest_id', contest.id)
+          .not('status', 'eq', 'reset'); // Exclure les participants réinitialisés
 
         console.log(`Participants for contest ${contest.id}:`, participants);
 
@@ -95,7 +96,7 @@ export const useContests = () => {
         // Calculate eligible participants (those with score >= 80)
         const eligibleParticipants = validParticipants.filter(p => p.score >= 80);
 
-        // Calculate average score
+        // Calculate average score only if there are valid participants
         const totalScore = validParticipants.reduce((acc, p) => acc + (p.score || 0), 0);
         const averageScore = validParticipants.length > 0
           ? Math.round(totalScore / validParticipants.length)
@@ -135,8 +136,9 @@ export const useContests = () => {
       return processedContests;
     },
     retry: 1,
-    refetchOnWindowFocus: false,
-    refetchInterval: 300000, // 5 minutes
-    staleTime: 300000, // 5 minutes
+    refetchOnWindowFocus: true, // Activer la mise à jour lors du focus
+    refetchInterval: 30000, // Réduire l'intervalle à 30 secondes pour plus de réactivité
+    staleTime: 15000, // Réduire le staleTime pour une mise à jour plus rapide
+    cacheTime: 0, // Désactiver le cache pour forcer le rechargement complet
   });
 };
