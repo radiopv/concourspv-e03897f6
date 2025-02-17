@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Settings, LogOut, User, Trophy, BookOpen, Gift, Award } from 'lucide-react';
+import { Settings, LogOut, User, Trophy, Gift, Award } from 'lucide-react';
 import UserPoints from './UserPoints';
 
 interface UserNavBarProps {
@@ -29,21 +30,15 @@ const UserNavBar = ({ isAdmin }: UserNavBarProps) => {
               <span className="font-bold text-lg">Passion Varadero</span>
             </Link>
             <div className="hidden md:flex space-x-4">
-              <Link to="/instructions" className="text-white hover:text-amber-100">
-                <span className="flex items-center">
-                  <BookOpen className="h-4 w-4 mr-1" />
-                  Instructions
-                </span>
-              </Link>
               <Link to="/contests" className="text-white hover:text-amber-100">
                 Concours
+              </Link>
+              <Link to="/points" className="text-white hover:text-amber-100">
+                Points & Instructions
               </Link>
               <Link to="/prizes" className="text-white hover:text-amber-100 flex items-center">
                 <Gift className="h-4 w-4 mr-1" />
                 Prix à Gagner
-              </Link>
-              <Link to="/points" className="text-white hover:text-amber-100">
-                Points
               </Link>
               <Link to="/campeones" className="text-white hover:text-amber-100 flex items-center">
                 <Award className="h-4 w-4 mr-1" />

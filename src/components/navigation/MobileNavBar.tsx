@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Home, Settings, User, Trophy, BookOpen, Grid, Gift, Award } from "lucide-react";
+import { Home, Settings, User, Trophy, Grid, Gift, Award } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -20,9 +21,9 @@ const MobileNavBar = ({ isAdmin }: MobileNavBarProps) => {
       icon: Home
     },
     {
-      title: "Instructions",
-      path: "/instructions",
-      icon: BookOpen
+      title: "Points",
+      path: "/points",
+      icon: Trophy
     },
     {
       title: "Concours",
@@ -32,11 +33,6 @@ const MobileNavBar = ({ isAdmin }: MobileNavBarProps) => {
     {
       title: "Prix",
       path: "/prizes",
-      icon: Gift
-    },
-    {
-      title: "Points",
-      path: "/points",
       icon: Gift
     },
     {
