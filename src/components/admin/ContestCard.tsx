@@ -19,9 +19,11 @@ import { useToast } from "@/hooks/use-toast";
 interface ContestCardProps {
   contest: Contest;
   onSelectContest: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-const ContestCard = ({ contest, onSelectContest }: ContestCardProps) => {
+const ContestCard = ({ contest, onSelectContest, onEdit, onDelete }: ContestCardProps) => {
   const { statusUpdateMutation } = useContestMutations();
   const [isEditingDates, setIsEditingDates] = useState(false);
   const [startDate, setStartDate] = useState(contest.start_date?.split('T')[0] || '');
@@ -54,7 +56,15 @@ const ContestCard = ({ contest, onSelectContest }: ContestCardProps) => {
   return (
     <Card className="mb-6">
       <CardHeader>
-        <ContestCardHeader contest={contest} />
+        <ContestCardHeader 
+          title={contest.title}
+          contestId={contest.id}
+          onSelect={onSelectContest}
+          onEdit={onEdit || onSelectContest}
+          onArchive={(id) => statusUpdateMutation.mutate({ id, updates: { status: 'archived' }})}
+          onDelete={onDelete || (() => {})}
+          status={contest.status}
+        />
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center space-x-2">
             <Calendar className="h-5 w-5 text-gray-500" />
@@ -100,16 +110,52 @@ const ContestCard = ({ contest, onSelectContest }: ContestCardProps) => {
               </div>
             )}
           </div>
-          <ContestCardBadges contest={contest} />
+          <ContestCardBadges 
+            isNew={contest.is_new}
+            hasBigPrizes={contest.has_big_prizes}
+            isFeatured={contest.is_featured}
+            isExclusive={contest.is_exclusive}
+            isLimited={contest.is_limited}
+            isVip={contest.is_vip}
+          />
         </div>
-        <ContestCardToggles contest={contest} />
+        <ContestCardToggles
+          contestId={contest.id}
+          isFeatured={contest.is_featured}
+          isNew={contest.is_new}
+          hasBigPrizes={contest.has_big_prizes}
+          isExclusive={contest.is_exclusive}
+          isLimited={contest.is_limited}
+          isVip={contest.is_vip}
+          onFeatureToggle={(id, featured) => 
+            statusUpdateMutation.mutate({ id, updates: { is_featured: featured }})
+          }
+          onStatusUpdate={(id, updates) => 
+            statusUpdateMutation.mutate({ id, updates })
+          }
+        />
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <ContestCardStats contest={contest} />
-        <ContestParticipants contest={contest} onSelectContest={onSelectContest} />
-        <ContestCardPrize contest={contest} />
-        <ContestDraw contest={contest} />
+        <ContestCardStats 
+          participantsCount={contest.participants?.count || 0}
+          questionsCount={contest.questions?.count || 0}
+          endDate={contest.end_date}
+        />
+        <ContestParticipants 
+          contestId={contest.id}
+          onSelectContest={onSelectContest}
+          participantsCount={contest.participants?.count || 0}
+        />
+        <ContestCardPrize 
+          contestId={contest.id}
+          prizes={contest.prizes || []}
+        />
+        <ContestDraw 
+          contestId={contest.id}
+          drawDate={contest.draw_date}
+          status={contest.status}
+        />
       </CardContent>
     </Card>
   );

@@ -1,3 +1,4 @@
+
 import React from "react";
 import ContestCard from "../ContestCard";
 import { useContestMutations } from "../hooks/useContestMutations";
@@ -25,6 +26,7 @@ const ContestListGrid: React.FC<ContestListGridProps> = ({ contests, onSelectCon
         <ContestCard
           key={contest.id}
           contest={contest}
+          onSelectContest={onSelectContest}
           onEdit={onSelectContest}
           onDelete={(id) => deleteMutation.mutate(id)}
         />
