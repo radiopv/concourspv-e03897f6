@@ -42,6 +42,7 @@ export const useContests = () => {
           min_rank,
           start_date,
           end_date,
+          draw_date,
           prizes(
             id,
             prize_catalog_id,
@@ -75,16 +76,14 @@ export const useContests = () => {
 
       // Fetch participants data separately for each contest
       const processedContests = await Promise.all(contests.map(async contest => {
-        // Get all participants for this contest with active status
         const { data: participants } = await supabase
           .from('participants')
           .select('score, status')
           .eq('contest_id', contest.id)
-          .not('status', 'eq', 'reset'); // Exclure les participants réinitialisés
+          .not('status', 'eq', 'reset');
 
         console.log(`Participants for contest ${contest.id}:`, participants);
 
-        // Only consider completed participants with a valid score
         const validParticipants = (participants as ContestParticipant[] || []).filter(p => 
           p.status === 'completed' && 
           typeof p.score === 'number' && 
@@ -93,10 +92,8 @@ export const useContests = () => {
 
         console.log('Valid participants:', validParticipants);
 
-        // Calculate eligible participants (those with score >= 80)
         const eligibleParticipants = validParticipants.filter(p => p.score >= 80);
 
-        // Calculate average score only if there are valid participants
         const totalScore = validParticipants.reduce((acc, p) => acc + (p.score || 0), 0);
         const averageScore = validParticipants.length > 0
           ? Math.round(totalScore / validParticipants.length)
@@ -110,7 +107,6 @@ export const useContests = () => {
           scores: validParticipants.map(p => p.score)
         });
 
-        // Transform prizes data with proper type checking
         const prizes: Prize[] = (Array.isArray(contest.prizes) ? contest.prizes : []).map((prize: any) => ({
           id: prize.id,
           name: prize.prize_catalog?.name || '',
@@ -136,9 +132,9 @@ export const useContests = () => {
       return processedContests;
     },
     retry: 1,
-    refetchOnWindowFocus: true, // Activer la mise à jour lors du focus
-    refetchInterval: 30000, // Réduire l'intervalle à 30 secondes pour plus de réactivité
-    staleTime: 15000, // Réduire le staleTime pour une mise à jour plus rapide
-    gcTime: 0, // Utiliser gcTime au lieu de cacheTime pour désactiver le cache
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Rafraîchir toutes les 10 secondes
+    staleTime: 5000, // Considérer les données comme périmées après 5 secondes
+    gcTime: 0, // Désactiver le cache
   });
 };
