@@ -17,7 +17,10 @@ const TopParticipantsList = () => {
   const { data: topParticipants, isLoading, error } = useQuery<TopParticipant[]>({
     queryKey: ['top-participants'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      console.log('Fetching top participants...');
+      
+      // Récupérer les participants avec leurs meilleurs scores
+      const { data: participants, error } = await supabase
         .from('participants')
         .select(`
           id,
@@ -26,6 +29,7 @@ const TopParticipantsList = () => {
           last_name,
           current_rank
         `)
+        .eq('status', 'completed') // Ne sélectionner que les participations complétées
         .order('score', { ascending: false })
         .limit(25);
 
@@ -34,8 +38,17 @@ const TopParticipantsList = () => {
         throw error;
       }
       
-      return data || [];
-    }
+      console.log('Participants data:', participants);
+
+      // Traiter les données pour s'assurer que les scores sont correctement formatés
+      const processedParticipants = participants?.map(participant => ({
+        ...participant,
+        score: participant.score || 0 // S'assurer que le score n'est jamais null
+      })) || [];
+
+      return processedParticipants;
+    },
+    refetchInterval: 30000 // Rafraîchir toutes les 30 secondes
   });
 
   if (isLoading) {
