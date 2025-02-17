@@ -1,3 +1,4 @@
+
 -- Add new columns for enhanced contest features
 ALTER TABLE contests
 ADD COLUMN IF NOT EXISTS is_exclusive boolean DEFAULT false,
