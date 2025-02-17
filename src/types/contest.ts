@@ -13,6 +13,10 @@ export interface Prize {
 export interface ContestStatusUpdate {
   is_new?: boolean;
   has_big_prizes?: boolean;
+  is_featured?: boolean;
+  is_exclusive?: boolean;
+  is_limited?: boolean;
+  is_vip?: boolean;
   status?: ContestStatus;
   start_date?: string;
   end_date?: string;

@@ -1,124 +1,38 @@
+
 import React from 'react';
-import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import PrizeCatalogSelector from './prize/PrizeCatalogSelector';
-import PrizeDisplay from './prize/PrizeDisplay';
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../../lib/supabase";
+import { Prize } from '@/types/contest';
 
 interface ContestCardPrizeProps {
   contestId: string;
+  prizes: Prize[];
 }
 
-const ContestCardPrize = ({ contestId }: ContestCardPrizeProps) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Requête pour obtenir tous les prix associés au concours
-  const { data: contestPrizes, isLoading } = useQuery({
-    queryKey: ['contest-prizes', contestId],
-    queryFn: async () => {
-      console.log('Fetching prizes for contest:', contestId);
-      const { data, error } = await supabase
-        .from('prizes')
-        .select(`
-          *,
-          catalog_item:prize_catalog(*)
-        `)
-        .eq('contest_id', contestId)
-        .order('created_at', { ascending: true });
-      
-      if (error) {
-        console.error('Error fetching prizes:', error);
-        throw error;
-      }
-      console.log('Contest prizes data:', data);
-      return data;
-    }
-  });
-
-  const handlePrizeSelect = async (catalogItemId: string) => {
-    try {
-      console.log('Adding new prize to contest:', contestId, 'catalog item:', catalogItemId);
-      
-      // Ajouter directement un nouveau prix
-      const result = await supabase
-        .from('prizes')
-        .insert([{
-          contest_id: contestId,
-          catalog_item_id: catalogItemId
-        }]);
-          
-      console.log('Insert result:', result);
-
-      if (result.error) throw result.error;
-
-      // Invalider les requêtes pour forcer un rafraîchissement
-      queryClient.invalidateQueries({ queryKey: ['contest-prizes', contestId] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
-      
-      toast({
-        title: "Succès",
-        description: "Le prix a été ajouté au concours",
-      });
-    } catch (error) {
-      console.error('Error selecting prize:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le prix au concours",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handlePrizeRemove = async (prizeId: string) => {
-    try {
-      console.log('Removing prize from contest:', contestId, 'prize:', prizeId);
-      
-      const { error } = await supabase
-        .from('prizes')
-        .delete()
-        .eq('id', prizeId);
-
-      if (error) throw error;
-
-      // Invalider les requêtes pour forcer un rafraîchissement
-      queryClient.invalidateQueries({ queryKey: ['contest-prizes', contestId] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
-      
-      toast({
-        title: "Succès",
-        description: "Le prix a été retiré du concours",
-      });
-    } catch (error) {
-      console.error('Error removing prize:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de retirer le prix",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (isLoading) {
-    return <div>Chargement des prix...</div>;
-  }
-
+const ContestCardPrize = ({ contestId, prizes }: ContestCardPrizeProps) => {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {contestPrizes?.map((prize) => (
-          <PrizeDisplay
-            key={prize.id}
-            imageUrl={prize.catalog_item?.image_url}
-            shopUrl={prize.catalog_item?.shop_url}
-            onRemove={() => handlePrizeRemove(prize.id)}
-          />
+      <h3 className="text-lg font-semibold">Prix à gagner</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {prizes.map((prize) => (
+          <div key={prize.id} className="p-4 border rounded-lg">
+            {prize.image_url && (
+              <img 
+                src={prize.image_url} 
+                alt={prize.name}
+                className="w-full h-32 object-contain mb-2" 
+              />
+            )}
+            <h4 className="font-medium">{prize.name}</h4>
+            {prize.description && (
+              <p className="text-sm text-gray-600">{prize.description}</p>
+            )}
+            {prize.value && (
+              <p className="text-sm font-semibold text-green-600">
+                Valeur: {prize.value}€
+              </p>
+            )}
+          </div>
         ))}
       </div>
-      <PrizeCatalogSelector onSelectPrize={handlePrizeSelect} />
     </div>
   );
 };

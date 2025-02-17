@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -14,9 +15,11 @@ import { fr } from "date-fns/locale";
 
 interface ContestParticipantsProps {
   contestId: string;
+  onSelectContest: (id: string) => void;
+  participantsCount: number;
 }
 
-const ContestParticipants = ({ contestId }: ContestParticipantsProps) => {
+const ContestParticipants = ({ contestId, onSelectContest, participantsCount }: ContestParticipantsProps) => {
   const { data: participants, isLoading } = useQuery({
     queryKey: ['contest-participants', contestId],
     queryFn: async () => {
@@ -76,4 +79,3 @@ const ContestParticipants = ({ contestId }: ContestParticipantsProps) => {
 };
 
 export default ContestParticipants;
-
