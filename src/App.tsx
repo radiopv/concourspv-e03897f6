@@ -7,7 +7,6 @@ import { Routes, Route } from 'react-router-dom';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import Dashboard from '@/pages/Dashboard';
-import Instructions from '@/pages/Instructions';
 import ContestsList from '@/pages/ContestsList';
 import Contest from '@/pages/Contest';
 import Points from '@/pages/Points';
@@ -48,7 +47,6 @@ const App = () => {
               <Route path="/" element={<ContestsList />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/instructions" element={<Instructions />} />
               <Route path="/contests" element={<ContestsList />} />
               <Route path="/contest/:id" element={<Contest />} />
               <Route path="/points" element={<Points />} />
