@@ -1,3 +1,4 @@
+
 export type ContestStatus = 'draft' | 'active' | 'archived';
 
 export interface Prize {
@@ -13,6 +14,8 @@ export interface ContestStatusUpdate {
   is_new?: boolean;
   has_big_prizes?: boolean;
   status?: ContestStatus;
+  start_date?: string;
+  end_date?: string;
 }
 
 export interface Contest {
