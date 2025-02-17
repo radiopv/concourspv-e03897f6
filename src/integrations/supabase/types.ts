@@ -112,7 +112,15 @@ export type Database = {
           id?: string
           participant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_draw_history_participant"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["participation_id"]
+          },
+        ]
       }
       featured_winners: {
         Row: {
