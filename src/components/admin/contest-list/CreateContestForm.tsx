@@ -63,6 +63,7 @@ const CreateContestForm: React.FC<CreateContestFormProps> = ({ onContestCreated,
         is_featured: false,
         is_new: true,
         has_big_prizes: false,
+        // min_rank is left undefined here, which is fine as it's optional
       });
 
       if (data) {

@@ -27,7 +27,7 @@ export interface ContestStatusUpdate {
 export interface Contest {
   id: string;
   title: string;
-  description: string; // Changed from optional to required to match create function
+  description: string;
   status: ContestStatus;
   start_date: string;
   end_date: string;
@@ -39,7 +39,7 @@ export interface Contest {
   is_limited: boolean;
   is_vip: boolean;
   is_rank_restricted: boolean;
-  min_rank?: string;
+  min_rank?: string; // This is clearly marked as optional
   created_at: string;
   updated_at: string;
   participants?: { count: number };

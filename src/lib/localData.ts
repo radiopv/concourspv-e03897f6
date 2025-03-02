@@ -1,4 +1,3 @@
-
 // This file replaces Supabase with local JSON-based data management
 
 import contestsData from '@/data/contests.json';
@@ -147,7 +146,7 @@ export const localData = {
       const newContest: Contest = {
         id: uuidv4(),
         title: contestData.title || '',
-        description: contestData.description || '', // Ensure description is never undefined
+        description: contestData.description || '', 
         status: contestData.status || 'draft',
         start_date: contestData.start_date || new Date().toISOString(),
         end_date: contestData.end_date || new Date().toISOString(),
@@ -159,7 +158,7 @@ export const localData = {
         is_limited: contestData.is_limited || false,
         is_vip: contestData.is_vip || false,
         is_rank_restricted: contestData.is_rank_restricted || false,
-        min_rank: contestData.min_rank || 'NOVATO',
+        min_rank: contestData.min_rank,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
