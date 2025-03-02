@@ -10,7 +10,7 @@ export const useContests = () => {
   return useQuery({
     queryKey: ['active-contests'],
     queryFn: async (): Promise<Contest[]> => {
-      console.log('Fetching contests...');
+      console.log('Fetching active contests...');
       
       try {
         const contests = await localData.contests.getActive();

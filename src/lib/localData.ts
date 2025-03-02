@@ -109,6 +109,57 @@ export const localData = {
       return processedContests;
     },
     
+    getAllContests: async () => {
+      console.log('Fetching ALL contests for admin...');
+      
+      // Process all contests to include additional data (not just active ones)
+      const processedContests = await Promise.all(contests.map(async contest => {
+        // Get participants for this contest
+        const contestParticipants = participants.filter(p => p.contest_id === contest.id);
+        
+        // Calculate statistics
+        const validParticipants = contestParticipants.filter(p => 
+          p.status === 'completed' && 
+          typeof p.score === 'number' && 
+          p.score > 0
+        );
+        
+        const eligibleParticipants = validParticipants.filter(p => p.score >= 80);
+        
+        const totalScore = validParticipants.reduce((acc, p) => acc + (p.score || 0), 0);
+        const averageScore = validParticipants.length > 0
+          ? Math.round(totalScore / validParticipants.length)
+          : 0;
+        
+        // Get prizes for this contest
+        const contestPrizes = prizes.filter(p => p.contest_id === contest.id).map(prize => {
+          const catalogItem = prizeCatalog.find(pc => pc.id === prize.prize_catalog_id);
+          return {
+            id: prize.id,
+            name: catalogItem?.name || '',
+            description: catalogItem?.description || '',
+            image_url: catalogItem?.image_url || '',
+            shop_url: catalogItem?.shop_url || '',
+            value: catalogItem?.value || 0
+          };
+        });
+        
+        return {
+          ...contest,
+          participants: { count: validParticipants.length },
+          stats: {
+            totalParticipants: validParticipants.length,
+            eligibleParticipants: eligibleParticipants.length,
+            averageScore
+          },
+          prizes: contestPrizes
+        };
+      }));
+      
+      console.log('All contests for admin:', processedContests);
+      return processedContests;
+    },
+    
     getById: async (id: string) => {
       const contest = contests.find(c => c.id === id);
       if (!contest) return null;

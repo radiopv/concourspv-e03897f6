@@ -9,6 +9,7 @@ export const useContestMutations = () => {
   const queryClient = useQueryClient();
 
   const invalidateQueries = () => {
+    // Important: invalidate all contest-related queries, including 'admin-contests'
     queryClient.invalidateQueries({ queryKey: ['contests'] });
     queryClient.invalidateQueries({ queryKey: ['active-contests'] });
     queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
