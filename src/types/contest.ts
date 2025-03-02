@@ -39,7 +39,7 @@ export interface Contest {
   is_limited: boolean;
   is_vip: boolean;
   is_rank_restricted: boolean;
-  min_rank?: string; // This is clearly marked as optional
+  min_rank?: string; // Keep this optional
   created_at: string;
   updated_at: string;
   participants?: { count: number };

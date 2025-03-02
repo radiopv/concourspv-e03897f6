@@ -1,3 +1,4 @@
+
 // This file replaces Supabase with local JSON-based data management
 
 import contestsData from '@/data/contests.json';
@@ -96,13 +97,14 @@ export const localData = {
         return {
           ...contest,
           participants: { count: validParticipants.length },
+          questions: { count: questions.filter(q => q.contest_id === contest.id).length },
           stats: {
             totalParticipants: validParticipants.length,
             eligibleParticipants: eligibleParticipants.length,
             averageScore
           },
           prizes: contestPrizes
-        };
+        } as Contest;
       }));
       
       console.log('Processed contests:', processedContests);
@@ -147,13 +149,15 @@ export const localData = {
         return {
           ...contest,
           participants: { count: validParticipants.length },
+          questions: { count: questions.filter(q => q.contest_id === contest.id).length },
           stats: {
             totalParticipants: validParticipants.length,
             eligibleParticipants: eligibleParticipants.length,
             averageScore
           },
-          prizes: contestPrizes
-        };
+          prizes: contestPrizes,
+          status: contest.status as ContestStatus
+        } as Contest;
       }));
       
       console.log('All contests for admin:', processedContests);
@@ -198,7 +202,7 @@ export const localData = {
         id: uuidv4(),
         title: contestData.title || '',
         description: contestData.description || '', 
-        status: contestData.status || 'draft',
+        status: contestData.status || 'draft' as ContestStatus,
         start_date: contestData.start_date || new Date().toISOString(),
         end_date: contestData.end_date || new Date().toISOString(),
         draw_date: contestData.draw_date || new Date().toISOString(),
@@ -254,7 +258,7 @@ export const localData = {
       const index = contests.findIndex(c => c.id === id);
       if (index === -1) throw new Error('Contest not found');
       
-      contests[index].status = 'archived';
+      contests[index].status = 'archived' as ContestStatus;
       saveData('contests', contests);
       
       return contests[index];

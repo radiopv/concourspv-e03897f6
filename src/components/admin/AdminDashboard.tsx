@@ -5,6 +5,7 @@ import ContestList from "./ContestList";
 import ParticipantsList from "./ParticipantsList";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { localData } from "@/lib/localData";
+import { Contest } from "@/types/contest";
 
 const AdminDashboard = () => {
   const [selectedContestId, setSelectedContestId] = useState<string | null>(null);
@@ -21,10 +22,10 @@ const AdminDashboard = () => {
           ...contest,
           participants: { count: contest.participants?.count || 0 },
           questions: { count: contest.questions?.count || 0 }
-        }));
+        })) as Contest[];
       } catch (error) {
         console.error('Error fetching all contests for admin:', error);
-        return [];
+        return [] as Contest[];
       }
     }
   });
