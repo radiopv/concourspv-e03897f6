@@ -142,7 +142,7 @@ export const localData = {
     },
     
     create: async (contestData: Partial<Contest>) => {
-      const newContest = {
+      const newContest: Contest = {
         id: uuidv4(),
         title: contestData.title || '',
         description: contestData.description || '',
@@ -162,10 +162,10 @@ export const localData = {
         updated_at: new Date().toISOString()
       };
       
-      contests.push(newContest as Contest);
+      contests.push(newContest);
       saveData('contests', contests);
       
-      return newContest as Contest;
+      return newContest;
     },
     
     delete: async (id: string) => {
