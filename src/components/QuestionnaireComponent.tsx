@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuestions } from './questionnaire/useQuestions';
@@ -47,7 +48,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
 
     const isCorrect = await submitAnswer(participationId, {
       ...currentQuestion,
-      status: currentQuestion.status || 'available'
+      status: currentQuestion.status as 'available' | 'archived' | 'in_use'
     }, selectedAnswer, totalQuestions);
     
     setHasAnswered(true);

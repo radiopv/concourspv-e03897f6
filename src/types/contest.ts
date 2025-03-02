@@ -17,6 +17,8 @@ export interface ContestStatusUpdate {
   is_exclusive?: boolean;
   is_limited?: boolean;
   is_vip?: boolean;
+  is_rank_restricted?: boolean;
+  min_rank?: string;
   status?: ContestStatus;
   start_date?: string;
   end_date?: string;
@@ -36,6 +38,10 @@ export interface Contest {
   is_exclusive: boolean;
   is_limited: boolean;
   is_vip: boolean;
+  is_rank_restricted: boolean;
+  min_rank?: string;
+  created_at: string;
+  updated_at: string;
   participants?: { count: number };
   questions?: { count: number };
   prizes?: Prize[];

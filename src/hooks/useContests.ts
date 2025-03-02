@@ -2,14 +2,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { localData } from "@/lib/localData";
-import { Prize } from "@/types/prize";
+import { Contest } from "@/types/contest";
 
 export const useContests = () => {
   const { toast } = useToast();
 
   return useQuery({
     queryKey: ['active-contests'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Contest[]> => {
       console.log('Fetching contests...');
       
       try {
