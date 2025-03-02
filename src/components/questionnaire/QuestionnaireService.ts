@@ -1,19 +1,26 @@
-import { supabase } from "@/lib/supabase";
+
+import { localData } from "@/lib/localData";
 
 export const saveQuestionnaireCompletion = async (contestId: string) => {
-  const { data: session } = await supabase.auth.getSession();
-  if (!session?.session?.user?.id) {
-    throw new Error("User not authenticated");
-  }
+  // In a real application with authentication, you would get the user ID
+  // For this example, we'll use a mock user ID
+  const mockUserId = "user123";
 
-  // Mettre à jour le statut du participant à 'completed'
-  const { error } = await supabase
-    .from('participants')
-    .update({ status: 'completed' })
-    .eq('contest_id', contestId)
-    .eq('id', session.session.user.id);
-
-  if (error) {
+  try {
+    // Update participant status to 'completed'
+    const participants = await localData.participants.getByContestId(contestId);
+    const participant = participants.find(p => p.id === mockUserId);
+    
+    if (participant) {
+      await localData.participants.update(participant.id, { 
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      });
+    } else {
+      throw new Error("Participant not found");
+    }
+  } catch (error) {
+    console.error("Error completing questionnaire:", error);
     throw error;
   }
 };

@@ -1,18 +1,19 @@
+
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { localData } from "@/lib/localData";
 
 export const useQuestions = (contestId: string) => {
   return useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('id, question_text, options, correct_answer, article_url, order_number, type, status')
-        .eq('contest_id', contestId)
-        .order('order_number');
-      
-      if (error) throw error;
-      return data;
-    }
+      try {
+        const questions = await localData.questions.getByContestId(contestId);
+        return questions.sort((a, b) => a.order_number - b.order_number);
+      } catch (error) {
+        console.error("Error fetching questions:", error);
+        throw error;
+      }
+    },
+    enabled: !!contestId
   });
 };

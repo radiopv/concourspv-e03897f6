@@ -1,0 +1,55 @@
+
+[
+  {
+    "id": "q1e7b4d1-1234-5678-9abc-def012345678",
+    "question_text": "Quelle année a été fondée La Havane ?",
+    "options": ["1515", "1519", "1533", "1550"],
+    "correct_answer": "1519",
+    "article_url": "https://example.com/histoire-la-havane",
+    "order_number": 1,
+    "type": "multiple_choice",
+    "status": "available",
+    "contest_id": "01e7b4d1-1234-5678-9abc-def012345678",
+    "created_at": "2024-08-15T00:00:00.000Z",
+    "updated_at": "2024-08-15T00:00:00.000Z"
+  },
+  {
+    "id": "q2e7b4d1-1234-5678-9abc-def012345678",
+    "question_text": "Quel est le nom complet du Malecón, la célèbre promenade de La Havane ?",
+    "options": ["Avenida de Maceo", "Avenida de los Presidentes", "Avenida del Puerto", "Avenida del Mar"],
+    "correct_answer": "Avenida de Maceo",
+    "article_url": "https://example.com/malecon-la-havane",
+    "order_number": 2,
+    "type": "multiple_choice",
+    "status": "available",
+    "contest_id": "01e7b4d1-1234-5678-9abc-def012345678",
+    "created_at": "2024-08-15T00:00:00.000Z",
+    "updated_at": "2024-08-15T00:00:00.000Z"
+  },
+  {
+    "id": "q3e7b4d1-1234-5678-9abc-def012345678",
+    "question_text": "En quelle année le cabaret Tropicana a-t-il ouvert ses portes ?",
+    "options": ["1939", "1945", "1952", "1960"],
+    "correct_answer": "1939",
+    "article_url": "https://example.com/histoire-tropicana",
+    "order_number": 1,
+    "type": "multiple_choice",
+    "status": "available",
+    "contest_id": "02e7b4d1-1234-5678-9abc-def012345678",
+    "created_at": "2024-08-05T00:00:00.000Z",
+    "updated_at": "2024-08-05T00:00:00.000Z"
+  },
+  {
+    "id": "q4e7b4d1-1234-5678-9abc-def012345678",
+    "question_text": "Qui est le compositeur cubain le plus connu du Buena Vista Social Club ?",
+    "options": ["Ibrahim Ferrer", "Compay Segundo", "Rubén González", "Omara Portuondo"],
+    "correct_answer": "Compay Segundo",
+    "article_url": "https://example.com/buena-vista-social-club",
+    "order_number": 1,
+    "type": "multiple_choice",
+    "status": "available",
+    "contest_id": "03e7b4d1-1234-5678-9abc-def012345678",
+    "created_at": "2024-07-25T00:00:00.000Z",
+    "updated_at": "2024-07-25T00:00:00.000Z"
+  }
+]

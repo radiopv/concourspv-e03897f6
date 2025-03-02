@@ -1,17 +1,14 @@
-import { supabase } from "@/lib/supabase";
+
+import { localData } from "@/lib/localData";
 
 export const checkExistingParticipant = async (email: string, contestId: string) => {
-  const { data, error } = await supabase
-    .from('participants')
-    .select()
-    .eq('email', email)
-    .eq('contest_id', contestId);
-
-  if (error) {
+  try {
+    const participants = await localData.participants.getByContestId(contestId);
+    return participants.find(p => p.email === email) || null;
+  } catch (error) {
+    console.error("Error checking existing participant:", error);
     throw error;
   }
-
-  return data && data.length > 0 ? data[0] : null;
 };
 
 export const createParticipant = async (
@@ -20,19 +17,16 @@ export const createParticipant = async (
   email: string,
   contestId: string
 ) => {
-  const { error } = await supabase
-    .from('participants')
-    .insert([
-      {
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
-        contest_id: contestId,
-        status: 'pending'
-      }
-    ]);
-
-  if (error) {
+  try {
+    await localData.participants.create({
+      first_name: firstName,
+      last_name: lastName,
+      email: email,
+      contest_id: contestId,
+      status: 'pending'
+    });
+  } catch (error) {
+    console.error("Error creating participant:", error);
     throw error;
   }
 };

@@ -1,41 +1,37 @@
+
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { localData } from "@/lib/localData";
 
 export const useContestQueries = () => {
   const { data: contestsWithCounts, isLoading } = useQuery({
     queryKey: ['admin-contests-with-counts'],
     queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session?.access_token) {
-        throw new Error("Not authenticated");
+      try {
+        // For this simplified version, we can just use our getActive method
+        // In a real app, you might want separate methods for admin vs user views
+        const contests = await localData.contests.getActive();
+        
+        if (!contests) {
+          return [];
+        }
+        
+        // Add participant and question counts
+        const contestsWithQuestionCounts = await Promise.all(contests.map(async (contest) => {
+          const participants = await localData.participants.getByContestId(contest.id);
+          const questions = await localData.questions.getByContestId(contest.id);
+          
+          return {
+            ...contest,
+            participants: { count: participants.length },
+            questions: { count: questions.length }
+          };
+        }));
+        
+        return contestsWithQuestionCounts;
+      } catch (error) {
+        console.error("Error fetching contests with counts:", error);
+        throw error;
       }
-
-      const { data: contests, error: contestsError } = await supabase
-        .from('contests')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (contestsError) throw contestsError;
-
-      const contestsWithQuestionCounts = await Promise.all(contests.map(async (contest) => {
-        const { count: participantsCount } = await supabase
-          .from('participants')
-          .select('*', { count: 'exact', head: true })
-          .eq('contest_id', contest.id);
-
-        const { count: questionsCount } = await supabase
-          .from('questions')
-          .select('*', { count: 'exact', head: true })
-          .eq('contest_id', contest.id);
-
-        return {
-          ...contest,
-          participants: { count: participantsCount || 0 },
-          questions: { count: questionsCount || 0 }
-        };
-      }));
-
-      return contestsWithQuestionCounts;
     },
     refetchOnWindowFocus: true,
     refetchOnMount: true,

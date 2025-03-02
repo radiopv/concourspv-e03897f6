@@ -1,6 +1,7 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { localData } from "@/lib/localData";
 
 export const usePrizeMutations = (contestId?: string) => {
   const { toast } = useToast();
@@ -13,11 +14,7 @@ export const usePrizeMutations = (contestId?: string) => {
   const addPrizeToCatalog = useMutation({
     mutationFn: async (data: any) => {
       console.log("Adding prize to catalog:", data);
-      const { error } = await supabase
-        .from('prize_catalog')
-        .insert([data]);
-      
-      if (error) throw error;
+      await localData.prizeCatalog.create(data);
     },
     onSuccess: () => {
       invalidateQueries();
@@ -39,12 +36,7 @@ export const usePrizeMutations = (contestId?: string) => {
   const updatePrize = useMutation({
     mutationFn: async ({ prizeId, data }: { prizeId: string, data: any }) => {
       console.log("Updating prize:", prizeId, data);
-      const { error } = await supabase
-        .from('prize_catalog')
-        .update(data)
-        .eq('id', prizeId);
-      
-      if (error) throw error;
+      await localData.prizeCatalog.update(prizeId, data);
     },
     onSuccess: () => {
       invalidateQueries();
@@ -69,12 +61,7 @@ export const usePrizeMutations = (contestId?: string) => {
   const deletePrize = useMutation({
     mutationFn: async (prizeId: string) => {
       console.log("Deleting prize:", prizeId);
-      const { error } = await supabase
-        .from('prize_catalog')
-        .delete()
-        .eq('id', prizeId);
-      
-      if (error) throw error;
+      await localData.prizeCatalog.delete(prizeId);
     },
     onSuccess: () => {
       invalidateQueries();

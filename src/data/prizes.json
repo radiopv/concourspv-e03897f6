@@ -1,0 +1,31 @@
+
+[
+  {
+    "id": "pr1e7b4d1-1234-5678-9abc-def012345678",
+    "prize_catalog_id": "pc1e7b4d1-1234-5678-9abc-def012345678",
+    "contest_id": "01e7b4d1-1234-5678-9abc-def012345678",
+    "created_at": "2024-08-15T00:00:00.000Z",
+    "is_choice": false
+  },
+  {
+    "id": "pr2e7b4d1-1234-5678-9abc-def012345678",
+    "prize_catalog_id": "pc2e7b4d1-1234-5678-9abc-def012345678",
+    "contest_id": "01e7b4d1-1234-5678-9abc-def012345678",
+    "created_at": "2024-08-15T00:00:00.000Z",
+    "is_choice": false
+  },
+  {
+    "id": "pr3e7b4d1-1234-5678-9abc-def012345678",
+    "prize_catalog_id": "pc3e7b4d1-1234-5678-9abc-def012345678",
+    "contest_id": "02e7b4d1-1234-5678-9abc-def012345678",
+    "created_at": "2024-08-05T00:00:00.000Z",
+    "is_choice": false
+  },
+  {
+    "id": "pr4e7b4d1-1234-5678-9abc-def012345678",
+    "prize_catalog_id": "pc4e7b4d1-1234-5678-9abc-def012345678",
+    "contest_id": "03e7b4d1-1234-5678-9abc-def012345678",
+    "created_at": "2024-07-25T00:00:00.000Z",
+    "is_choice": false
+  }
+]

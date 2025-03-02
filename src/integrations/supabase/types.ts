@@ -24,6 +24,359 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cocktail_ingredients: {
+        Row: {
+          cocktail_id: string
+          display_order: number | null
+          ingredient_id: string
+          is_optional: boolean | null
+          notes: string | null
+          original_measure: string | null
+          original_notes: string | null
+          original_unit: string | null
+          quantity: number | null
+          translated_measure: string | null
+          translated_unit: string | null
+          unit: string | null
+        }
+        Insert: {
+          cocktail_id: string
+          display_order?: number | null
+          ingredient_id: string
+          is_optional?: boolean | null
+          notes?: string | null
+          original_measure?: string | null
+          original_notes?: string | null
+          original_unit?: string | null
+          quantity?: number | null
+          translated_measure?: string | null
+          translated_unit?: string | null
+          unit?: string | null
+        }
+        Update: {
+          cocktail_id?: string
+          display_order?: number | null
+          ingredient_id?: string
+          is_optional?: boolean | null
+          notes?: string | null
+          original_measure?: string | null
+          original_notes?: string | null
+          original_unit?: string | null
+          quantity?: number | null
+          translated_measure?: string | null
+          translated_unit?: string | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cocktail_ingredients_cocktail_id_fkey"
+            columns: ["cocktail_id"]
+            isOneToOne: false
+            referencedRelation: "cocktails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cocktail_ingredients_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_cocktail_id"
+            columns: ["cocktail_id"]
+            isOneToOne: false
+            referencedRelation: "cocktails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ingredient_id"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cocktail_reviews: {
+        Row: {
+          cocktail_id: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cocktail_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cocktail_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cocktail_reviews_cocktail_id_fkey"
+            columns: ["cocktail_id"]
+            isOneToOne: false
+            referencedRelation: "cocktails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cocktail_tag_relations: {
+        Row: {
+          cocktail_id: string
+          created_at: string
+          tag_id: string
+        }
+        Insert: {
+          cocktail_id: string
+          created_at?: string
+          tag_id: string
+        }
+        Update: {
+          cocktail_id?: string
+          created_at?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cocktail_tag_relations_cocktail_id_fkey"
+            columns: ["cocktail_id"]
+            isOneToOne: false
+            referencedRelation: "cocktails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cocktail_tag_relations_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "cocktail_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cocktail_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cocktail_views: {
+        Row: {
+          cocktail_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          cocktail_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          cocktail_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cocktail_views_cocktail_id_fkey"
+            columns: ["cocktail_id"]
+            isOneToOne: false
+            referencedRelation: "cocktails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cocktails: {
+        Row: {
+          alcohol_level: string | null
+          author_id: string | null
+          category_id: string | null
+          cooking_time: number | null
+          created_at: string | null
+          creative_commons: boolean | null
+          description: string | null
+          difficulty: string | null
+          garnish: string | null
+          glass_id: string | null
+          glass_type: string | null
+          glassware_notes: string | null
+          iba_category: string | null
+          id: string
+          image_url: string | null
+          instructions: string | null
+          is_alcoholic: boolean | null
+          is_featured: boolean | null
+          original_description: string | null
+          original_instructions: string | null
+          original_lang: string | null
+          original_title: string | null
+          preparation_time: number | null
+          servings: number | null
+          slug: string | null
+          tags: string[] | null
+          title: string | null
+          translated_garnish: string | null
+          updated_at: string | null
+          video_url: string | null
+          view_count: number | null
+        }
+        Insert: {
+          alcohol_level?: string | null
+          author_id?: string | null
+          category_id?: string | null
+          cooking_time?: number | null
+          created_at?: string | null
+          creative_commons?: boolean | null
+          description?: string | null
+          difficulty?: string | null
+          garnish?: string | null
+          glass_id?: string | null
+          glass_type?: string | null
+          glassware_notes?: string | null
+          iba_category?: string | null
+          id?: string
+          image_url?: string | null
+          instructions?: string | null
+          is_alcoholic?: boolean | null
+          is_featured?: boolean | null
+          original_description?: string | null
+          original_instructions?: string | null
+          original_lang?: string | null
+          original_title?: string | null
+          preparation_time?: number | null
+          servings?: number | null
+          slug?: string | null
+          tags?: string[] | null
+          title?: string | null
+          translated_garnish?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          alcohol_level?: string | null
+          author_id?: string | null
+          category_id?: string | null
+          cooking_time?: number | null
+          created_at?: string | null
+          creative_commons?: boolean | null
+          description?: string | null
+          difficulty?: string | null
+          garnish?: string | null
+          glass_id?: string | null
+          glass_type?: string | null
+          glassware_notes?: string | null
+          iba_category?: string | null
+          id?: string
+          image_url?: string | null
+          instructions?: string | null
+          is_alcoholic?: boolean | null
+          is_featured?: boolean | null
+          original_description?: string | null
+          original_instructions?: string | null
+          original_lang?: string | null
+          original_title?: string | null
+          preparation_time?: number | null
+          servings?: number | null
+          slug?: string | null
+          tags?: string[] | null
+          title?: string | null
+          translated_garnish?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cocktails_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cocktails_glass_id_fkey"
+            columns: ["glass_id"]
+            isOneToOne: false
+            referencedRelation: "glasses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cocktails_glass_id_fkey1"
+            columns: ["glass_id"]
+            isOneToOne: false
+            referencedRelation: "glasses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_cocktails_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contests: {
         Row: {
           created_at: string | null
@@ -149,6 +502,108 @@ export type Database = {
           is_active?: boolean | null
           last_name?: string
           photo_url?: string | null
+        }
+        Relationships: []
+      }
+      glasses: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      imports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          current_letter: string | null
+          error_message: string | null
+          file_name: string
+          file_path: string
+          id: string
+          import_type: string
+          last_processed: string | null
+          processed_rows: number | null
+          status: Database["public"]["Enums"]["import_status"] | null
+          total_rows: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          current_letter?: string | null
+          error_message?: string | null
+          file_name: string
+          file_path: string
+          id?: string
+          import_type: string
+          last_processed?: string | null
+          processed_rows?: number | null
+          status?: Database["public"]["Enums"]["import_status"] | null
+          total_rows?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          current_letter?: string | null
+          error_message?: string | null
+          file_name?: string
+          file_path?: string
+          id?: string
+          import_type?: string
+          last_processed?: string | null
+          processed_rows?: number | null
+          status?: Database["public"]["Enums"]["import_status"] | null
+          total_rows?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ingredients: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -834,6 +1289,32 @@ export type Database = {
           },
         ]
       }
+      user_favorites: {
+        Row: {
+          cocktail_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          cocktail_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          cocktail_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorites_cocktail_id_fkey"
+            columns: ["cocktail_id"]
+            isOneToOne: false
+            referencedRelation: "cocktails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_points: {
         Row: {
           best_streak: number | null
@@ -917,6 +1398,12 @@ export type Database = {
         }
         Returns: number
       }
+      check_cocktail_exists: {
+        Args: {
+          title_to_check: string
+        }
+        Returns: boolean
+      }
       get_contest_share_metadata: {
         Args: {
           input_contest_id: string
@@ -969,6 +1456,18 @@ export type Database = {
         }
         Returns: Json
       }
+      has_role: {
+        Args: {
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      increment_cocktail_views: {
+        Args: {
+          cocktail_id_param: string
+        }
+        Returns: undefined
+      }
       log_user_activity: {
         Args: {
           input_user_id: string
@@ -988,6 +1487,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "driver"
       driver_role: "admin" | "driver"
+      import_status: "pending" | "processing" | "completed" | "failed"
       review_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {

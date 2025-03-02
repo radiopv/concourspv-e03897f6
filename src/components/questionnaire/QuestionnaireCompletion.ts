@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase";
+import { localData } from "@/lib/localData";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -9,42 +9,26 @@ export const useQuestionnaireCompletion = () => {
 
   const completeQuestionnaire = async (contestId: string) => {
     try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user?.id) {
-        throw new Error("User not authenticated");
-      }
-
+      // Mock user ID for demonstration purposes
+      const mockUserId = "user123";
+      
       console.log('Completing questionnaire for contest:', contestId);
 
-      // Mettre à jour le statut du participant à 'completed'
-      const { error: updateError } = await supabase
-        .from('participants')
-        .update({ 
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        })
-        .eq('contest_id', contestId)
-        .eq('id', session.session.user.id);
-
-      if (updateError) {
-        console.error('Error updating participant status:', updateError);
-        throw updateError;
+      // Get participant
+      const participants = await localData.participants.getByContestId(contestId);
+      const participant = participants.find(p => p.id === mockUserId);
+      
+      if (!participant) {
+        throw new Error("Participant not found");
       }
 
-      // Ajouter les points de complétion
-      const { error: pointsError } = await supabase
-        .from('point_history')
-        .insert([{
-          user_id: session.session.user.id,
-          points: 50,
-          source: 'contest_completion',
-          contest_id: contestId
-        }]);
+      // Update participant status
+      await localData.participants.update(participant.id, { 
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      });
 
-      if (pointsError) {
-        console.error('Error adding completion points:', pointsError);
-        throw pointsError;
-      }
+      console.log('Participant status updated successfully');
 
       // Afficher le toast de succès
       toast({
