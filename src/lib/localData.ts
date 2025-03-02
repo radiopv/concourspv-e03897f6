@@ -1,4 +1,3 @@
-
 // This file replaces Supabase with local JSON-based data management
 
 import contestsData from '@/data/contests.json';
@@ -161,12 +160,12 @@ export const localData = {
         min_rank: contestData.min_rank || 'NOVATO',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      } as Contest;
+      };
       
-      contests.push(newContest);
+      contests.push(newContest as Contest);
       saveData('contests', contests);
       
-      return newContest;
+      return newContest as Contest;
     },
     
     delete: async (id: string) => {
