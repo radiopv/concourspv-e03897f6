@@ -1,6 +1,7 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { localData } from "@/lib/localData";
 import { ContestStatus, ContestStatusUpdate } from "@/types/contest";
 
 export const useContestMutations = () => {
@@ -16,12 +17,13 @@ export const useContestMutations = () => {
   const resetContestMutation = useMutation({
     mutationFn: async (contestId: string) => {
       console.log('Resetting contest:', contestId);
-      const { error } = await supabase
-        .from('participants')
-        .delete()
-        .eq('contest_id', contestId);
+      // Get all participants for this contest
+      const contestParticipants = await localData.participants.getByContestId(contestId);
       
-      if (error) throw error;
+      // Delete each participant
+      for (const participant of contestParticipants) {
+        await localData.participants.delete(participant.id);
+      }
     },
     onSuccess: () => {
       invalidateQueries();
@@ -42,12 +44,7 @@ export const useContestMutations = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('contests')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      await localData.contests.delete(id);
     },
     onSuccess: () => {
       invalidateQueries();
@@ -68,12 +65,7 @@ export const useContestMutations = () => {
 
   const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('contests')
-        .update({ status: 'archived' as ContestStatus })
-        .eq('id', id);
-      
-      if (error) throw error;
+      await localData.contests.archive(id);
     },
     onSuccess: () => {
       invalidateQueries();
@@ -94,12 +86,7 @@ export const useContestMutations = () => {
 
   const featureToggleMutation = useMutation({
     mutationFn: async ({ id, featured }: { id: string; featured: boolean }) => {
-      const { error } = await supabase
-        .from('contests')
-        .update({ is_featured: featured })
-        .eq('id', id);
-      
-      if (error) throw error;
+      await localData.contests.update(id, { is_featured: featured });
     },
     onSuccess: () => {
       invalidateQueries();
@@ -123,12 +110,7 @@ export const useContestMutations = () => {
       id: string; 
       updates: ContestStatusUpdate;
     }) => {
-      const { error } = await supabase
-        .from('contests')
-        .update(updates)
-        .eq('id', id);
-      
-      if (error) throw error;
+      await localData.contests.update(id, updates);
     },
     onSuccess: () => {
       invalidateQueries();

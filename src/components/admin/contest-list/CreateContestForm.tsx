@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { localData } from "@/lib/localData";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface CreateContestFormProps {
@@ -41,12 +42,8 @@ const CreateContestForm: React.FC<CreateContestFormProps> = ({ onContestCreated,
     
     try {
       // Get the current highest contest number
-      const { data: contests } = await supabase
-        .from('contests')
-        .select('title')
-        .order('created_at', { ascending: false })
-        .limit(1);
-
+      const contests = await localData.contests.getActive();
+      
       let nextNumber = 2; // Default starting number
       if (contests && contests.length > 0) {
         const lastTitle = contests[0].title;
@@ -56,26 +53,18 @@ const CreateContestForm: React.FC<CreateContestFormProps> = ({ onContestCreated,
         }
       }
 
-      const { data, error } = await supabase
-        .from('contests')
-        .insert([
-          {
-            title: `${formData.title} ${nextNumber}`,
-            description: formData.description,
-            status: 'draft',
-            start_date: formData.start_date,
-            end_date: formData.end_date,
-            draw_date: formData.draw_date,
-            is_featured: false,
-            is_new: true,
-            has_big_prizes: false,
-          }
-        ])
-        .select()
-        .single();
+      const data = await localData.contests.create({
+        title: `${formData.title} ${nextNumber}`,
+        description: formData.description,
+        status: 'draft',
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        draw_date: formData.draw_date,
+        is_featured: false,
+        is_new: true,
+        has_big_prizes: false,
+      });
 
-      if (error) throw error;
-      
       if (data) {
         await queryClient.invalidateQueries({ queryKey: ['contests'] });
         toast({

@@ -163,10 +163,10 @@ export const localData = {
         updated_at: new Date().toISOString()
       };
       
-      contests.push(newContest as Contest);
+      contests.push(newContest);
       saveData('contests', contests);
       
-      return newContest as Contest;
+      return newContest;
     },
     
     delete: async (id: string) => {
