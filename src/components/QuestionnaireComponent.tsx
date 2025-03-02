@@ -7,6 +7,7 @@ import QuestionnaireProgress from './questionnaire/QuestionnaireProgress';
 import { useQuestionnaireQueries } from './questionnaire/hooks/useQuestionnaireQueries';
 import { useParticipantManagement } from './questionnaire/hooks/useParticipantManagement';
 import { useAnswerSubmission } from './questionnaire/hooks/useAnswerSubmission';
+import { Question } from '@/types/database';
 
 interface QuestionnaireComponentProps {
   contestId: string;
@@ -46,10 +47,13 @@ const QuestionnaireComponent: React.FC<QuestionnaireComponentProps> = ({ contest
     const participationId = await createOrUpdateParticipant();
     if (!participationId) return;
 
-    const isCorrect = await submitAnswer(participationId, {
+    const questionWithTypedStatus: Question = {
       ...currentQuestion,
-      status: currentQuestion.status as 'available' | 'archived' | 'in_use'
-    }, selectedAnswer, totalQuestions);
+      type: 'multiple_choice',
+      status: (currentQuestion.status as 'available' | 'in_use' | 'archived') || 'available'
+    };
+    
+    const isCorrect = await submitAnswer(participationId, questionWithTypedStatus, selectedAnswer, totalQuestions);
     
     setHasAnswered(true);
 
