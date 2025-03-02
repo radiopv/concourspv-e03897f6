@@ -1,7 +1,8 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { localData } from '@/lib/localData';
 
 export const useParticipantManagement = (contestId: string) => {
   const navigate = useNavigate();
@@ -9,21 +10,11 @@ export const useParticipantManagement = (contestId: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const checkExistingParticipation = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) return null;
-
-    const { data: existingParticipation, error } = await supabase
-      .from('participants')
-      .select('participation_id, status, score')
-      .eq('contest_id', contestId)
-      .eq('id', session.user.id)
-      .eq('status', 'completed')
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error checking participation:', error);
-      return null;
-    }
+    // Check for existing completed participation
+    const allParticipants = await localData.participants.getByContestId(contestId);
+    const existingParticipation = allParticipants.find(p => 
+      p.status === 'completed'
+    );
 
     if (existingParticipation) {
       toast({
@@ -39,21 +30,14 @@ export const useParticipantManagement = (contestId: string) => {
   const createOrUpdateParticipant = async () => {
     try {
       setIsSubmitting(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      const { data: userProfile, error: profileError } = await supabase
-        .from('members')
-        .select('first_name, last_name, email')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        throw new Error('Could not fetch user profile');
-      }
+      
+      // Mock user profile data for demonstration
+      // In a real app, this would come from authentication
+      const userProfile = {
+        first_name: "Test",
+        last_name: "User",
+        email: "test@example.com"
+      };
 
       if (!userProfile?.first_name || !userProfile?.last_name || !userProfile?.email) {
         toast({
@@ -65,36 +49,34 @@ export const useParticipantManagement = (contestId: string) => {
         return null;
       }
 
-      const { data: existingParticipant } = await supabase
-        .from('participants')
-        .select('participation_id')
-        .eq('contest_id', contestId)
-        .eq('id', session.user.id)
-        .maybeSingle();
+      // Check for existing participant
+      const allParticipants = await localData.participants.getByContestId(contestId);
+      const existingParticipant = allParticipants.find(p => 
+        p.email === userProfile.email
+      );
 
       if (existingParticipant?.participation_id) {
         return existingParticipant.participation_id;
       }
 
-      const { data: newParticipant, error: createError } = await supabase
-        .from('participants')
-        .insert({
-          id: session.user.id,
-          contest_id: contestId,
-          status: 'pending',
-          first_name: userProfile.first_name,
-          last_name: userProfile.last_name,
-          email: userProfile.email
-        })
-        .select('participation_id')
-        .single();
-
-      if (createError) {
-        console.error('Error creating participant:', createError);
-        throw createError;
-      }
+      // Create new participant
+      const newParticipant = await localData.participants.create({
+        contest_id: contestId,
+        status: 'pending',
+        first_name: userProfile.first_name,
+        last_name: userProfile.last_name,
+        email: userProfile.email
+      });
 
       return newParticipant.participation_id;
+    } catch (error) {
+      console.error('Error creating/updating participant:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'enregistrement de la participation."
+      });
+      return null;
     } finally {
       setIsSubmitting(false);
     }

@@ -1,3 +1,4 @@
+
 // This file replaces Supabase with local JSON-based data management
 
 import contestsData from '@/data/contests.json';
@@ -142,6 +143,7 @@ export const localData = {
     },
     
     create: async (contestData: Partial<Contest>) => {
+      // Create new contest with proper type handling
       const newContest: Contest = {
         id: uuidv4(),
         title: contestData.title || '',

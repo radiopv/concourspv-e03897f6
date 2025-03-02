@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from "framer-motion";
@@ -8,8 +9,17 @@ import { StatusCard } from '@/components/quiz-completion/StatusCard';
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { localData } from '@/lib/localData';
+
+// Load participant answers from localStorage
+const getParticipantAnswers = () => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('participantAnswers');
+    return stored ? JSON.parse(stored) : [];
+  }
+  return [];
+};
 
 const QuizCompletion = () => {
   const navigate = useNavigate();
@@ -26,27 +36,14 @@ const QuizCompletion = () => {
       if (!contestId) return;
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user?.id) {
-          throw new Error('User not authenticated');
-        }
+        console.log('Fetching results for contest:', contestId);
 
-        console.log('Fetching results for user:', session.user.id);
-
+        // Mock user data - in a real app, this would come from authentication
+        const userEmail = "test@example.com";
+        
         // Get participant information
-        const { data: participant, error: participantError } = await supabase
-          .from('participants')
-          .select('participation_id, status, score')
-          .eq('contest_id', contestId)
-          .eq('id', session.user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (participantError) {
-          console.error('Error fetching participant:', participantError);
-          throw participantError;
-        }
+        const participants = await localData.participants.getByContestId(contestId);
+        const participant = participants.find(p => p.email === userEmail);
 
         if (!participant) {
           console.error('No participant found');
@@ -61,31 +58,22 @@ const QuizCompletion = () => {
         console.log('Found participant:', participant);
 
         // Get all questions for this contest
-        const { data: questions, error: questionsError } = await supabase
-          .from('questions')
-          .select('id')
-          .eq('contest_id', contestId);
-
-        if (questionsError) throw questionsError;
-
-        const totalQuestionsCount = questions?.length || 0;
+        const questions = await localData.questions.getByContestId(contestId);
+        const totalQuestionsCount = questions.length;
         setTotalQuestions(totalQuestionsCount);
 
         console.log('Total questions:', totalQuestionsCount);
 
-        // Get the participant's answers using participation_id
-        const { data: answers, error: answersError } = await supabase
-          .from('participant_answers')
-          .select('is_correct')
-          .eq('participant_id', participant.participation_id)
-          .eq('contest_id', contestId);
+        // Get the participant's answers
+        const allAnswers = getParticipantAnswers();
+        const participantAnswers = allAnswers.filter(
+          (a: any) => a.participant_id === participant.participation_id && a.contest_id === contestId
+        );
 
-        if (answersError) throw answersError;
+        console.log('Participant answers:', participantAnswers);
 
-        console.log('Participant answers:', answers);
-
-        if (answers) {
-          const correct = answers.filter(answer => answer.is_correct).length;
+        if (participantAnswers.length > 0) {
+          const correct = participantAnswers.filter((answer: any) => answer.is_correct).length;
           const calculatedScore = totalQuestionsCount > 0 
             ? Math.round((correct / totalQuestionsCount) * 100) 
             : 0;

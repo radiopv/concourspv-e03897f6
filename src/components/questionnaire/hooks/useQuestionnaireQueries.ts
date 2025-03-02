@@ -1,38 +1,34 @@
+
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { localData } from '@/lib/localData';
+
+// Mock settings data
+const defaultSettings = {
+  default_attempts: 1,
+  required_percentage: 80
+};
+
+// Mock user profile data
+const defaultUserProfile = {
+  first_name: "Test",
+  last_name: "User",
+  email: "test@example.com"
+};
 
 export const useQuestionnaireQueries = (contestId: string) => {
   const { data: settings } = useQuery({
     queryKey: ['global-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('*')
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching settings:', error);
-        return { default_attempts: 1, required_percentage: 80 };
-      }
-      return data || { default_attempts: 1, required_percentage: 80 };
+      // In a real app, this would come from a settings file or API
+      return defaultSettings;
     }
   });
 
   const { data: userProfile } = useQuery({
     queryKey: ['user-profile'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return null;
-
-      const { data, error } = await supabase
-        .from('members')
-        .select('first_name, last_name, email')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
+      // In a real app, this would come from authentication
+      return defaultUserProfile;
     }
   });
 
@@ -40,28 +36,15 @@ export const useQuestionnaireQueries = (contestId: string) => {
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user?.id) return null;
-
-        const { data, error } = await supabase
-          .from('participants')
-          .select('*')
-          .eq('contest_id', contestId)
-          .eq('id', session.user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching participant:', error);
-          // Si l'erreur indique que l'utilisateur a déjà participé, on retourne un objet avec le statut completed
-          if (error.message.includes('déjà participé')) {
-            return { status: 'completed' };
-          }
-          return null;
-        }
-        return data;
-      } catch (error: any) {
+        if (!contestId) return null;
+        
+        const participants = await localData.participants.getByContestId(contestId);
+        // Simulating finding a participant based on current user
+        // In a real app, this would use the authenticated user ID
+        const participant = participants.find(p => p.email === defaultUserProfile.email);
+        
+        return participant || null;
+      } catch (error) {
         console.error('Error fetching participant:', error);
         return null;
       }
@@ -74,14 +57,8 @@ export const useQuestionnaireQueries = (contestId: string) => {
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
       
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('contest_id', contestId)
-        .order('order_number', { ascending: true });
-
-      if (error) throw error;
-      return data;
+      const contestQuestions = await localData.questions.getByContestId(contestId);
+      return contestQuestions;
     },
     enabled: !!contestId
   });

@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import ContestCard from "@/components/contests/ContestCard";
 import { useContests } from "@/hooks/useContests";
 import PageMetadata from "@/components/seo/PageMetadata";
-import { RANK_POINTS } from '@/constants/ranks';
 
 const ContestsList = () => {
   const navigate = useNavigate();
