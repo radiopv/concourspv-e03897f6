@@ -27,7 +27,7 @@ export interface ContestStatusUpdate {
 export interface Contest {
   id: string;
   title: string;
-  description?: string;
+  description?: string; // Explicitly mark as optional
   status: ContestStatus;
   start_date: string;
   end_date: string;

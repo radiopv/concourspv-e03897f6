@@ -42,9 +42,10 @@ export class DataManager {
       ...data,
       id: uuidv4(),
       created_at: new Date().toISOString()
-    } as T;
+    };
     
-    return newItem;
+    // Use type assertion to convert to T
+    return newItem as unknown as T;
   }
 
   /**

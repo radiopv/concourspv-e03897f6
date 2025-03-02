@@ -1,4 +1,3 @@
-
 // This file replaces Supabase with local JSON-based data management
 
 import contestsData from '@/data/contests.json';
@@ -164,10 +163,10 @@ export const localData = {
         updated_at: new Date().toISOString()
       };
       
-      contests.push(newContest);
+      contests.push(newContest as Contest);
       saveData('contests', contests);
       
-      return newContest;
+      return newContest as Contest;
     },
     
     delete: async (id: string) => {
