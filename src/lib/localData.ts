@@ -1,3 +1,4 @@
+
 // This file replaces Supabase with local JSON-based data management
 
 import contestsData from '@/data/contests.json';
@@ -146,7 +147,7 @@ export const localData = {
       const newContest: Contest = {
         id: uuidv4(),
         title: contestData.title || '',
-        description: contestData.description || '',
+        description: contestData.description || '', // Ensure description is never undefined
         status: contestData.status || 'draft',
         start_date: contestData.start_date || new Date().toISOString(),
         end_date: contestData.end_date || new Date().toISOString(),
@@ -170,8 +171,33 @@ export const localData = {
     },
     
     delete: async (id: string) => {
+      // Before deleting, we should check if the ID exists
+      const contestIndex = contests.findIndex(c => c.id === id);
+      
+      if (contestIndex === -1) {
+        console.error(`Contest with ID ${id} not found for deletion`);
+        throw new Error('Contest not found');
+      }
+      
+      console.log(`Deleting contest with ID: ${id}`);
+      
+      // Remove the contest from the array
       contests = contests.filter(c => c.id !== id);
+      
+      // Also delete related data (participants, questions, prizes)
+      participants = participants.filter(p => p.contest_id !== id);
+      questions = questions.filter(q => q.contest_id !== id);
+      prizes = prizes.filter(p => p.contest_id !== id);
+      
+      // Save the updated contests array
       saveData('contests', contests);
+      saveData('participants', participants);
+      saveData('questions', questions);
+      saveData('prizes', prizes);
+      
+      console.log(`Contest with ID ${id} deleted. Contests remaining: ${contests.length}`);
+      
+      return true;
     },
     
     archive: async (id: string) => {

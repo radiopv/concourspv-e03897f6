@@ -27,7 +27,7 @@ export interface ContestStatusUpdate {
 export interface Contest {
   id: string;
   title: string;
-  description?: string; // Explicitly mark as optional
+  description: string; // Changed from optional to required to match create function
   status: ContestStatus;
   start_date: string;
   end_date: string;

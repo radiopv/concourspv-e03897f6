@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { localData } from "@/lib/localData";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -31,7 +31,7 @@ const CreateContestForm: React.FC<CreateContestFormProps> = ({ onContestCreated,
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     title: cubanContestNames[Math.floor(Math.random() * cubanContestNames.length)],
-    description: '',
+    description: '', // Initialize with empty string
     start_date: '',
     end_date: '',
     draw_date: '',
@@ -55,7 +55,7 @@ const CreateContestForm: React.FC<CreateContestFormProps> = ({ onContestCreated,
 
       const data = await localData.contests.create({
         title: `${formData.title} ${nextNumber}`,
-        description: formData.description,
+        description: formData.description || '', // Ensure description is never undefined
         status: 'draft',
         start_date: formData.start_date,
         end_date: formData.end_date,
@@ -67,6 +67,8 @@ const CreateContestForm: React.FC<CreateContestFormProps> = ({ onContestCreated,
 
       if (data) {
         await queryClient.invalidateQueries({ queryKey: ['contests'] });
+        await queryClient.invalidateQueries({ queryKey: ['active-contests'] });
+        await queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
         toast({
           title: "Succès",
           description: "Le concours a été créé",

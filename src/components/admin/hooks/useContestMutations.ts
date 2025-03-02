@@ -10,6 +10,7 @@ export const useContestMutations = () => {
 
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['contests'] });
+    queryClient.invalidateQueries({ queryKey: ['active-contests'] });
     queryClient.invalidateQueries({ queryKey: ['admin-contests'] });
     queryClient.invalidateQueries({ queryKey: ['admin-contests-with-counts'] });
   };
@@ -44,9 +45,18 @@ export const useContestMutations = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await localData.contests.delete(id);
+      console.log('Attempting to delete contest with ID:', id);
+      try {
+        const result = await localData.contests.delete(id);
+        console.log('Delete result:', result);
+        return result;
+      } catch (error) {
+        console.error('Error in deleteMutation:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      console.log('Contest deleted successfully. Invalidating queries...');
       invalidateQueries();
       toast({
         title: "Succès",
