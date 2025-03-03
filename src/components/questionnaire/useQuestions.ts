@@ -15,6 +15,7 @@ export const useQuestions = (contestId: string) => {
       }
     },
     enabled: !!contestId,
-    staleTime: 60000, // 1 minute
+    staleTime: 120000, // 2 minutes (augmenté de 1 minute)
+    gcTime: 300000,    // 5 minutes (ajouté pour conserver le cache plus longtemps)
   });
 };

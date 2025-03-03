@@ -38,9 +38,9 @@ export const useContests = () => {
       }
     },
     retry: 1,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30000, // Rafraîchir toutes les 30 secondes au lieu de 10
-    staleTime: 15000, // Considérer les données comme périmées après 15 secondes au lieu de 5
-    gcTime: 60000, // Conserver le cache pendant 1 minute au lieu de le désactiver
+    refetchOnWindowFocus: false, // Changé de true à false pour éviter les refetch inutiles
+    refetchInterval: 300000, // 5 minutes au lieu de 30 secondes
+    staleTime: 120000, // 2 minutes au lieu de 15 secondes
+    gcTime: 600000, // 10 minutes au lieu de 1 minute
   });
 };
