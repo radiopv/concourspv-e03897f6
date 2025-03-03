@@ -168,9 +168,7 @@ export {
   participants, 
   questions, 
   prizes, 
-  prizeCatalog,
-  invalidateCache,
-  getData
+  prizeCatalog
 };
 
 // Log pour le débogage
