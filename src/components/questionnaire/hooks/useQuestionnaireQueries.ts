@@ -1,6 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { localData } from '@/lib/localData';
+import { localData } from '@/lib/data';
 
 // Mock settings data
 const defaultSettings = {
@@ -16,23 +16,29 @@ const defaultUserProfile = {
 };
 
 export const useQuestionnaireQueries = (contestId: string) => {
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['global-settings'],
     queryFn: async () => {
       // In a real app, this would come from a settings file or API
       return defaultSettings;
-    }
+    },
+    staleTime: Infinity, // Ces données ne changent pas souvent
   });
 
-  const { data: userProfile } = useQuery({
+  const { data: userProfile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['user-profile'],
     queryFn: async () => {
       // In a real app, this would come from authentication
       return defaultUserProfile;
-    }
+    },
+    staleTime: Infinity, // Ces données ne changent pas souvent
   });
 
-  const { data: participant, refetch: refetchParticipant } = useQuery({
+  const { 
+    data: participant, 
+    refetch: refetchParticipant,
+    isLoading: isLoadingParticipant 
+  } = useQuery({
     queryKey: ['participant-status', contestId],
     queryFn: async () => {
       try {
@@ -49,10 +55,11 @@ export const useQuestionnaireQueries = (contestId: string) => {
         return null;
       }
     },
-    enabled: !!contestId
+    enabled: !!contestId,
+    staleTime: 30000, // 30 secondes
   });
 
-  const { data: questions } = useQuery({
+  const { data: questions, isLoading: isLoadingQuestions } = useQuery({
     queryKey: ['questions', contestId],
     queryFn: async () => {
       if (!contestId) throw new Error('Contest ID is required');
@@ -60,14 +67,18 @@ export const useQuestionnaireQueries = (contestId: string) => {
       const contestQuestions = await localData.questions.getByContestId(contestId);
       return contestQuestions;
     },
-    enabled: !!contestId
+    enabled: !!contestId,
+    staleTime: 60000, // 1 minute
   });
+
+  const isLoading = isLoadingSettings || isLoadingProfile || isLoadingParticipant || isLoadingQuestions;
 
   return {
     settings,
     userProfile,
     participant,
     questions,
-    refetchParticipant
+    refetchParticipant,
+    isLoading
   };
 };

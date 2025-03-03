@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { localData } from "@/lib/localData";
+import { localData } from "@/lib/data";
 
 export const useQuestions = (contestId: string) => {
   return useQuery({
@@ -14,6 +14,7 @@ export const useQuestions = (contestId: string) => {
         throw error;
       }
     },
-    enabled: !!contestId
+    enabled: !!contestId,
+    staleTime: 60000, // 1 minute
   });
 };

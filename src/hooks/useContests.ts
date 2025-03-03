@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { localData } from "@/lib/localData";
+import { localData } from "@/lib/data";
 import { Contest, ContestStatus } from "@/types/contest";
 
 export const useContests = () => {
@@ -39,8 +39,8 @@ export const useContests = () => {
     },
     retry: 1,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Rafraîchir toutes les 10 secondes
-    staleTime: 5000, // Considérer les données comme périmées après 5 secondes
-    gcTime: 0, // Désactiver le cache
+    refetchInterval: 30000, // Rafraîchir toutes les 30 secondes au lieu de 10
+    staleTime: 15000, // Considérer les données comme périmées après 15 secondes au lieu de 5
+    gcTime: 60000, // Conserver le cache pendant 1 minute au lieu de le désactiver
   });
 };

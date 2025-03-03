@@ -1,7 +1,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { localData } from "@/lib/localData";
+import { localData } from "@/lib/data";
 import { ContestStatus, ContestStatusUpdate } from "@/types/contest";
 
 export const useContestMutations = () => {
