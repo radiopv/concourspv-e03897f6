@@ -198,7 +198,7 @@ export const localData = {
     
     create: async (contestData: Partial<Contest>) => {
       // Create new contest with proper type handling
-      const newContest: Contest = {
+      const newContest = {
         id: uuidv4(),
         title: contestData.title || '',
         description: contestData.description || '', 
@@ -213,12 +213,13 @@ export const localData = {
         is_limited: contestData.is_limited || false,
         is_vip: contestData.is_vip || false,
         is_rank_restricted: contestData.is_rank_restricted || false,
-        min_rank: contestData.min_rank,
+        min_rank: contestData.min_rank || null, // Set explicit null if undefined
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       
-      contests.push(newContest);
+      // Cast the newContest to 'any' to avoid TypeScript type issues when pushing to the array
+      contests.push(newContest as any);
       saveData('contests', contests);
       
       return newContest;
